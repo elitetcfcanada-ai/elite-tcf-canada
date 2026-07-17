@@ -10,6 +10,11 @@ if (is_file($localConfig)) {
     require_once $localConfig;
 }
 
+$hostingerConfig = __DIR__ . '/config.hostinger.php';
+if (is_file($hostingerConfig)) {
+    require_once $hostingerConfig;
+}
+
 if (!isset($host) || $host === '') {
     $host = 'localhost';
 }
