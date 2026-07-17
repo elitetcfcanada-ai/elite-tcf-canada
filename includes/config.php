@@ -1,8 +1,8 @@
 <?php
 $host = getenv('DB_HOST') ?: ($_ENV['DB_HOST'] ?? 'localhost');
-$dbname = getenv('DB_NAME') ?: ($_ENV['DB_NAME'] ?? 'TCF');
-$username = getenv('DB_USER') ?: ($_ENV['DB_USER'] ?? 'root');
-$password = getenv('DB_PASS') ?: ($_ENV['DB_PASS'] ?? '');
+$dbname = getenv('DB_NAME') ?: ($_ENV['DB_NAME'] ?? 'u648716817_tcf_canada');
+$username = getenv('DB_USER') ?: ($_ENV['DB_USER'] ?? 'u648716817_tcf_canada');
+$password = getenv('DB_PASS') ?: ($_ENV['DB_PASS'] ?? 'Audrey300%');
 $port = getenv('DB_PORT') ?: ($_ENV['DB_PORT'] ?? '');
 
 $localConfig = __DIR__ . '/config.local.php';
