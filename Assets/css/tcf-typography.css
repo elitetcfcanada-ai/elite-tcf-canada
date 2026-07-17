@@ -1,0 +1,105 @@
+/**
+ * Typographie TCF Canada — taille standard (~14px), lisible sans excès.
+ * 87.5% sur html ≈ 14px (entre l’ancien 65.5% trop petit et 100% trop grand).
+ */
+
+html {
+    font-size: var(--tcf-font-root, 87.5%) !important;
+}
+
+body {
+    font-size: 1rem !important;
+    line-height: 1.55 !important;
+}
+
+/* Barre du haut — proportions équilibrées */
+header.header .logo h1 {
+    font-size: clamp(1.15rem, 1.4vw, 1.5rem) !important;
+}
+
+nav .navbar .navLinks li,
+nav .navbar .navLinks li a,
+header.header nav .navbar .navLinks li a {
+    font-size: var(--tcf-font-nav, 1rem) !important;
+}
+
+nav .others .login-btn {
+    font-size: 0.9375rem !important;
+}
+
+nav .others .login-btn i {
+    font-size: 1.1rem !important;
+}
+
+nav .others > i,
+nav .others > a.notification-icon i {
+    font-size: 1.25rem !important;
+}
+
+/* Titres de section — légèrement réduits vs 3rem brut */
+section h4,
+.tcf-main-title {
+    font-size: clamp(1.5rem, 2.8vw, 2rem) !important;
+}
+
+/* Paragraphes — taille corps standard */
+section p,
+.footer-description,
+.tcf-subtitle {
+    font-size: 1rem !important;
+    line-height: 1.6 !important;
+}
+
+.tcf-title {
+    font-size: clamp(1.15rem, 2.2vw, 1.5rem) !important;
+}
+
+.tcf-skill-btn,
+.tcf-cta-btn,
+.info-button {
+    font-size: 0.9375rem !important;
+}
+
+.site-footer .footer-links a,
+.site-footer .footer-description,
+.site-footer .contact-item span {
+    font-size: 0.9375rem !important;
+}
+
+.site-footer h5 {
+    font-size: 1rem !important;
+}
+
+@media (max-width: 767px) {
+    html {
+        font-size: 87.5% !important;
+    }
+
+    body {
+        font-size: 1rem !important;
+    }
+
+    header.header .logo h1 {
+        font-size: 1.15rem !important;
+    }
+
+    header.header nav .navbar .navLinks li a {
+        font-size: 0.9375rem !important;
+    }
+
+    .tcf-mobile-nav__item span {
+        font-size: 0.6875rem !important;
+    }
+
+    .tcf-mobile-nav__item i {
+        font-size: 1.35rem !important;
+    }
+
+    .tcf-mobile-sheet__link {
+        font-size: 0.9375rem !important;
+    }
+
+    .tcf-mobile-sheet__head h2 {
+        font-size: 1rem !important;
+    }
+}

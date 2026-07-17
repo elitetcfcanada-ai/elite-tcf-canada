@@ -1,0 +1,239 @@
+/**
+ * Navigation mobile type application — téléphones et tablettes (≤991px).
+ */
+
+:root {
+    --tcf-mobile-nav-h: 4.6rem;
+}
+
+.tcf-mobile-nav,
+.tcf-mobile-sheet,
+.tcf-mobile-sheet-overlay {
+    display: none;
+}
+
+@media (max-width: 991px) {
+    body.tcf-has-mobile-nav {
+        padding-bottom: calc(var(--tcf-mobile-nav-h) + env(safe-area-inset-bottom, 0px));
+    }
+
+    .tcf-mobile-nav {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1200;
+        display: flex;
+        align-items: stretch;
+        justify-content: space-around;
+        min-height: var(--tcf-mobile-nav-h);
+        padding: 0.35rem 0.25rem calc(0.35rem + env(safe-area-inset-bottom, 0px));
+        background: #ffffff;
+        border-top: 1px solid #e5e7eb;
+        box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.08);
+    }
+
+    .tcf-mobile-nav__item {
+        flex: 1 1 0;
+        min-width: 0;
+        max-width: 5.5rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.15rem;
+        padding: 0.2rem 0.15rem;
+        border: 0;
+        background: transparent;
+        color: #64748b;
+        text-decoration: none;
+        font-family: inherit;
+        cursor: pointer;
+        border-radius: 10px;
+        transition: color 0.15s ease, background 0.15s ease;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .tcf-mobile-nav__item i {
+        font-size: 1.35rem;
+        line-height: 1;
+    }
+
+    .tcf-mobile-nav__item span {
+        font-size: 0.6875rem;
+        font-weight: 600;
+        line-height: 1.15;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+    }
+
+    .tcf-mobile-nav__item:hover,
+    .tcf-mobile-nav__item:focus-visible {
+        color: var(--main-color, #d30d0d);
+        background: rgba(211, 13, 13, 0.06);
+        outline: none;
+    }
+
+    .tcf-mobile-nav__item.is-active {
+        color: var(--main-color, #d30d0d);
+        background: rgba(211, 13, 13, 0.08);
+    }
+
+    .tcf-mobile-sheet-overlay {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 1250;
+        background: rgba(15, 23, 42, 0.45);
+        opacity: 0;
+        transition: opacity 0.22s ease;
+        pointer-events: none;
+    }
+
+    .tcf-mobile-sheet-overlay.is-visible {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .tcf-mobile-sheet {
+        display: flex;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1260;
+        max-height: min(72vh, 520px);
+        background: #fff;
+        border-radius: 18px 18px 0 0;
+        box-shadow: 0 -12px 40px rgba(15, 23, 42, 0.18);
+        transform: translateY(105%);
+        transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+        flex-direction: column;
+        padding-bottom: calc(var(--tcf-mobile-nav-h) + env(safe-area-inset-bottom, 0px));
+    }
+
+    .tcf-mobile-sheet.is-open {
+        transform: translateY(0);
+    }
+
+    .tcf-mobile-sheet__head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 1rem 1.1rem 0.65rem;
+        border-bottom: 1px solid #f1f5f9;
+        flex-shrink: 0;
+    }
+
+    .tcf-mobile-sheet__head h2 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--text-color, #141622);
+    }
+
+    .tcf-mobile-sheet__close {
+        width: 2.25rem;
+        height: 2.25rem;
+        border: 0;
+        border-radius: 50%;
+        background: #f1f5f9;
+        color: #475569;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 1.35rem;
+    }
+
+    .tcf-mobile-sheet__body {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        padding: 0.35rem 0 0.75rem;
+    }
+
+    .tcf-mobile-sheet__link {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        width: 100%;
+        padding: 0.95rem 1.15rem;
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-color, #141622);
+        text-decoration: none;
+        border: 0;
+        background: transparent;
+        text-align: left;
+        font-family: inherit;
+        cursor: pointer;
+        border-bottom: 1px solid #f8fafc;
+    }
+
+    .tcf-mobile-sheet__link i {
+        font-size: 1.35rem;
+        color: var(--main-color, #d30d0d);
+        flex-shrink: 0;
+    }
+
+    .tcf-mobile-sheet__link--btn {
+        appearance: none;
+    }
+
+    body.tcf-mobile-sheet-open {
+        overflow: hidden;
+    }
+
+    /* Bouton remonter — à droite, au-dessus de la barre du bas */
+    .site-footer .scroll-top-footer,
+    .site-footer .scroll-top-footer.show {
+        bottom: calc(var(--tcf-mobile-nav-h) + 1rem + env(safe-area-inset-bottom, 0px)) !important;
+        right: 0.85rem !important;
+        left: auto !important;
+        width: 46px;
+        height: 46px;
+        z-index: 1185 !important;
+    }
+
+    /* Zone réservée à la barre : rien en fixed ne doit la recouvrir */
+    body.tcf-has-mobile-nav {
+        --tcf-mobile-nav-reserve: calc(var(--tcf-mobile-nav-h) + env(safe-area-inset-bottom, 0px));
+        --tcf-mobile-nav-z: 5000;
+    }
+
+    .tcf-mobile-nav {
+        z-index: var(--tcf-mobile-nav-z) !important;
+    }
+
+    .tcf-mobile-sheet-overlay {
+        z-index: 4800 !important;
+        bottom: var(--tcf-mobile-nav-reserve) !important;
+        top: 0 !important;
+        height: auto !important;
+    }
+
+    .tcf-mobile-sheet {
+        z-index: 4900 !important;
+    }
+
+    /* Notifications / profil : panneaux internes, barre du bas toujours visible */
+    body.tcf-has-mobile-nav > .notification-overlay,
+    body.tcf-has-mobile-nav > .profile-overlay.profile-overlay-v2 {
+        bottom: var(--tcf-mobile-nav-reserve) !important;
+        height: auto !important;
+        z-index: 4600 !important;
+    }
+
+    body.tcf-has-mobile-nav > .notification-page,
+    body.tcf-has-mobile-nav > .profile-page.profile-drawer-v2 {
+        top: 0 !important;
+        bottom: var(--tcf-mobile-nav-reserve) !important;
+        height: auto !important;
+        max-height: none !important;
+        z-index: 4700 !important;
+    }
+}

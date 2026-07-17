@@ -1,0 +1,19 @@
+# Fichiers à ignorer
+uploads/videos/*.mp4
+uploads/thumbnails/*.jpeg
+uploads/thumbnails/*.jpg
+uploads/avatars/*.jpg
+uploads/channel/*.jpg
+uploads/co_media/demo1/audio/*.mp3
+uploads/co_media/demo1/image/*.jpg
+Assets/IMAGE/**/*.jpg
+Assets/IMAGE/**/*.png
+*.mp4
+*.avi
+*.mov
+*.log
+__pycache__/
+includes/payment_config.local.php
+includes/config.local.php
+*.zip
+*.pyc

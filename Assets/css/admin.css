@@ -1,0 +1,66 @@
+:root {
+  --admin1-primary: #2563eb;
+  --admin1-primary-dark: #1d4ed8;
+  --admin1-bg: #020617;
+  --admin1-card: #0f172a;
+  --admin1-border: #1f2937;
+  --admin1-text: #e5e7eb;
+}
+
+body.admin1 {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: radial-gradient(circle at top, #1d283a, #020617 60%, #000);
+  color: var(--admin1-text);
+  margin: 0;
+}
+
+.admin1-shell {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  min-height: 100vh;
+}
+
+.admin1-sidebar {
+  background: #020617;
+  border-right: 1px solid var(--admin1-border);
+  padding: 20px 16px;
+}
+
+.admin1-main {
+  padding: 20px 24px;
+}
+
+.admin1-card {
+  background: var(--admin1-card);
+  border-radius: 14px;
+  border: 1px solid var(--admin1-border);
+  padding: 18px 20px;
+}
+
+.admin1-nav-link {
+  display: block;
+  padding: 8px 10px;
+  border-radius: 999px;
+  color: #cbd5f5;
+  text-decoration: none;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.admin1-nav-link--active {
+  background: var(--admin1-primary);
+  color: #f9fafb;
+}
+
+table.admin1-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+table.admin1-table th,
+table.admin1-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--admin1-border);
+}
+

@@ -1,0 +1,10 @@
+DirectoryIndex superAdmin.php
+
+# Limites PHP pour publication de vidéos volumineuses (Apache + mod_php / certains hébergeurs)
+<IfModule mod_php.c>
+    php_value upload_max_filesize 8192M
+    php_value post_max_size 8192M
+    php_value max_execution_time 7200
+    php_value max_input_time 7200
+    php_value memory_limit 1024M
+</IfModule>

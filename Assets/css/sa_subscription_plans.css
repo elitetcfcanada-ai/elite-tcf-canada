@@ -1,0 +1,347 @@
+/**
+ * Admin — forfaits d’abonnement (section Abonnements & monétisation)
+ * Présentation claire, lisible en thème clair ou sombre du tableau de bord
+ */
+
+.tcf-superadmin-app .sa-sub-pro-lead {
+    margin: 0 0 1.25rem;
+    max-width: 48rem;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: var(--sa-muted, #64748b);
+}
+
+.tcf-superadmin-app .sa-subrev-chart-card {
+    background: var(--sa-surface, #fff);
+    border: 1px solid var(--sa-border, #e2e8f0);
+    border-radius: 14px;
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+}
+
+.tcf-superadmin-app .sa-subrev-chart-card .chart-header {
+    padding: 1rem 1.15rem 0;
+}
+
+.tcf-superadmin-app .sa-subrev-chart-card .chart-container {
+    padding: 0.5rem 1rem 1rem;
+}
+
+.tcf-superadmin-app .sa-sub-platform-toggle {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    padding: 1rem 1.15rem;
+    border: 1px solid var(--sa-border, #e2e8f0);
+    border-radius: 12px;
+    background: var(--sa-surface, #fff);
+}
+
+.tcf-superadmin-app .sa-sub-platform-toggle.is-free-mode {
+    border-color: rgba(34, 197, 94, 0.45);
+    background: rgba(34, 197, 94, 0.08);
+}
+
+.tcf-superadmin-app .sa-sub-platform-toggle__info p {
+    margin: 0.35rem 0 0;
+    font-size: 0.9rem;
+    color: var(--sa-muted, #64748b);
+    max-width: 42rem;
+}
+
+.tcf-superadmin-app .sa-visibility-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.35rem 0.55rem 0.35rem 0.35rem;
+    border: 1px solid var(--sa-border, #e2e8f0);
+    border-radius: 999px;
+    background: var(--sa-surface2, #f8fafc);
+    cursor: pointer;
+    font: inherit;
+    color: var(--sa-nav-fg, #0f172a);
+    flex-shrink: 0;
+    transition: border-color 0.2s ease, background 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.tcf-superadmin-app .sa-visibility-switch:hover,
+.tcf-superadmin-app .sa-visibility-switch:focus-visible {
+    border-color: rgba(211, 13, 13, 0.35);
+    outline: none;
+}
+
+.tcf-superadmin-app .sa-visibility-switch__track {
+    position: relative;
+    width: 2.65rem;
+    height: 1.45rem;
+    border-radius: 999px;
+    background: #22c55e;
+    flex-shrink: 0;
+    transition: background 0.22s ease;
+}
+
+.tcf-superadmin-app .sa-visibility-switch.is-off .sa-visibility-switch__track {
+    background: #94a3b8;
+}
+
+.tcf-superadmin-app .sa-visibility-switch__thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 1.15rem;
+    height: 1.15rem;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    transition: transform 0.22s ease;
+}
+
+.tcf-superadmin-app .sa-visibility-switch.is-off .sa-visibility-switch__thumb {
+    transform: translateX(1.15rem);
+}
+
+.tcf-superadmin-app .sa-visibility-switch__label {
+    font-size: 0.875rem;
+    font-weight: 700;
+    min-width: 4.5rem;
+    text-align: left;
+}
+
+.tcf-superadmin-app .sa-visibility-switch:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.tcf-superadmin-app .sa-sub-pro-toolbar {
+    margin-bottom: 1.25rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.tcf-superadmin-app .sa-sub-pro-plans-wrap {
+    margin-top: 0.25rem;
+}
+
+.tcf-superadmin-app .sa-plan-catalog-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+    gap: 1.25rem;
+    align-items: stretch;
+}
+
+.tcf-superadmin-app .sa-plan-catalog-loading,
+.tcf-superadmin-app .sa-plan-catalog-error,
+.tcf-superadmin-app .sa-sub-pro-empty {
+    grid-column: 1 / -1;
+    padding: 1.35rem 1.5rem;
+    border-radius: 12px;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    border: 1px solid var(--sa-border, #e2e8f0);
+    background: var(--sa-surface, #fff);
+    color: var(--text-color, #1e293b);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+
+.tcf-superadmin-app .sa-plan-catalog-error {
+    border-color: rgba(220, 38, 38, 0.35);
+    background: rgba(254, 242, 242, 0.65);
+    color: #991b1b;
+}
+
+.tcf-superadmin-app .sa-sub-pro-empty {
+    text-align: center;
+    color: var(--sa-muted, #64748b);
+}
+
+.tcf-superadmin-app .sa-sub-pro-empty p {
+    margin: 0;
+}
+
+.tcf-superadmin-app .sa-sub-pro-empty-hint {
+    margin-top: 0.5rem !important;
+    font-size: 0.875rem;
+    opacity: 0.9;
+}
+
+.tcf-superadmin-app .sa-plan-orbit-hint {
+    display: block;
+    margin-top: 0.65rem;
+    font-size: 0.8125rem;
+    color: var(--sa-muted, #64748b);
+}
+
+.tcf-superadmin-app .sa-plan-orbit-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    border-radius: 14px;
+    padding: 1.2rem 1.25rem 1.15rem;
+    background: var(--sa-surface, #ffffff);
+    border: 1px solid var(--sa-border, #e2e8f0);
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+    transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.tcf-superadmin-app .sa-plan-orbit-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(211, 13, 13, 0.22);
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.1);
+}
+
+.tcf-superadmin-app .sa-plan-orbit-card-glow {
+    display: none;
+}
+
+.tcf-superadmin-app .sa-plan-orbit-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.65rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.85rem;
+    border-bottom: 1px solid var(--sa-border, #e2e8f0);
+}
+
+.tcf-superadmin-app .sa-plan-key-pill {
+    font-family: ui-monospace, 'Cascadia Code', monospace;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.3rem 0.55rem;
+    border-radius: 6px;
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tcf-superadmin-app .sa-plan-orbit-dur {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--sa-muted, #64748b);
+    white-space: nowrap;
+}
+
+.tcf-superadmin-app .sa-plan-orbit-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    flex: 1;
+}
+
+.tcf-superadmin-app .sa-plan-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    margin: 0;
+}
+
+.tcf-superadmin-app .sa-plan-field > span {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--sa-muted, #64748b);
+}
+
+.tcf-superadmin-app .sa-plan-field--full {
+    flex: 1;
+}
+
+.tcf-superadmin-app .sa-plan-orbit-card .form-control {
+    background: var(--card-bg, #f8fafc);
+    border: 1px solid var(--sa-border, #e2e8f0);
+    color: var(--text-color, #1e293b);
+    border-radius: 10px;
+    font-size: 0.9rem;
+}
+
+.tcf-superadmin-app .sa-plan-orbit-card .form-control:focus {
+    border-color: rgba(211, 13, 13, 0.45);
+    box-shadow: 0 0 0 3px rgba(211, 13, 13, 0.12);
+    outline: none;
+}
+
+.tcf-superadmin-app .sa-plan-orbit-card textarea.form-control {
+    resize: vertical;
+    min-height: 100px;
+    line-height: 1.45;
+}
+
+.tcf-superadmin-app .sa-plan-row2 {
+    display: grid;
+    grid-template-columns: 1fr 100px;
+    gap: 0.65rem;
+}
+
+.tcf-superadmin-app .sa-plan-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--text-color, #334155);
+    cursor: pointer;
+    margin: 0.15rem 0 0;
+}
+
+.tcf-superadmin-app .sa-plan-toggle input {
+    width: 18px;
+    height: 18px;
+    accent-color: #d30d0d;
+}
+
+.tcf-superadmin-app .sa-plan-orbit-card-foot {
+    margin-top: 1.1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--sa-border, #e2e8f0);
+}
+
+.tcf-superadmin-app .sa-plan-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+}
+
+.tcf-superadmin-app .sa-plan-delete-btn {
+    border-color: rgba(220, 38, 38, 0.45) !important;
+    color: #b91c1c !important;
+    background: transparent !important;
+}
+
+.tcf-superadmin-app .sa-plan-delete-btn:hover:not(:disabled) {
+    background: rgba(254, 242, 242, 0.9) !important;
+    border-color: #dc2626 !important;
+}
+
+.tcf-superadmin-app .sa-plan-save-btn {
+    min-width: 8rem;
+    justify-content: center;
+    gap: 0.4rem;
+    font-weight: 600;
+    border-radius: 10px;
+    padding: 0.55rem 1rem;
+}
+
+@media (max-width: 640px) {
+    .tcf-superadmin-app .sa-plan-row2 {
+        grid-template-columns: 1fr;
+    }
+
+    .tcf-superadmin-app .sa-plan-card-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .tcf-superadmin-app .sa-plan-save-btn {
+        width: 100%;
+    }
+}

@@ -1,0 +1,461 @@
+/**
+ * ELITE TCF CANADA — Thème administration (clair / sombre)
+ * Tokens sur html[data-sa-theme] pour éviter le flash au chargement.
+ */
+
+html[data-sa-theme='light'],
+body.tcf-superadmin-app[data-sa-theme='light'] {
+    color-scheme: light;
+    --main-color: #d30d0d;
+    --hover-color: #b00b0b;
+    --text-color: #141622;
+    --background-color: #eef0f4;
+    --card-bg: #ffffff;
+    --border-color: #e1e4e8;
+    --shadow: 0 4px 14px rgba(20, 22, 34, 0.06);
+    --sa-bg: #eef0f4;
+    --sa-surface: #ffffff;
+    --sa-surface2: #f8f9fb;
+    --sa-border: #e1e4e8;
+    --sa-text: #141622;
+    --sa-muted: rgba(20, 22, 34, 0.58);
+    --sa-shell-fg: #141622;
+    --sa-accent: #d30d0d;
+    --sa-accent-hover: #b00b0b;
+    --sa-nav-bg: #12141c;
+    --sa-nav-fg: #eef0f4;
+    --sa-nav-muted: rgba(238, 240, 244, 0.62);
+    --sa-nav-border: rgba(255, 255, 255, 0.08);
+    --sa-nav-hover-bg: rgba(255, 255, 255, 0.06);
+    --sa-nav-active-bg: rgba(224, 18, 18, 0.16);
+    --sa-nav-active-border: rgba(224, 18, 18, 0.45);
+    --sa-header-bg: #ffffff;
+    --sa-header-text: #141622;
+    --sa-header-muted: rgba(20, 22, 34, 0.58);
+    --sa-header-border: #e1e4e8;
+    --sa-bottom-nav-bg: #ffffff;
+    --sa-bottom-nav-text: #141622;
+    --sa-bottom-nav-muted: rgba(20, 22, 34, 0.55);
+    --sa-bottom-nav-border: #e1e4e8;
+    --sa-bottom-nav-active-bg: rgba(211, 13, 13, 0.08);
+    --sa-sheet-bg: #ffffff;
+    --sa-sheet-border: #e5e7eb;
+    --sa-sheet-muted: #94a3b8;
+    --sa-sheet-item-bg: #f8fafc;
+    --sa-sheet-item-fg: #141622;
+    --sa-input-bg: #ffffff;
+    --sa-input-border: #d1d5db;
+    --sa-row-hover: rgba(20, 22, 34, 0.04);
+    --sa-overlay: rgba(15, 23, 42, 0.45);
+    --sa-chart-grid: rgba(20, 22, 34, 0.08);
+    --sa-theme-meta: #ffffff;
+}
+
+html[data-sa-theme='dark'],
+body.tcf-superadmin-app[data-sa-theme='dark'] {
+    color-scheme: dark;
+    --main-color: #e01212;
+    --hover-color: #ff2a2a;
+    --text-color: #eef0f4;
+    --background-color: #0d0f14;
+    --card-bg: #161922;
+    --border-color: rgba(255, 255, 255, 0.1);
+    --shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+    --sa-bg: #0d0f14;
+    --sa-surface: #161922;
+    --sa-surface2: #12141c;
+    --sa-border: rgba(255, 255, 255, 0.1);
+    --sa-text: #eef0f4;
+    --sa-muted: rgba(238, 240, 244, 0.58);
+    --sa-shell-fg: #eef0f4;
+    --sa-accent: #e01212;
+    --sa-accent-hover: #ff2a2a;
+    --sa-nav-bg: #12141c;
+    --sa-nav-fg: #eef0f4;
+    --sa-nav-muted: rgba(238, 240, 244, 0.62);
+    --sa-nav-border: rgba(255, 255, 255, 0.08);
+    --sa-nav-hover-bg: rgba(255, 255, 255, 0.06);
+    --sa-nav-active-bg: rgba(224, 18, 18, 0.16);
+    --sa-nav-active-border: rgba(224, 18, 18, 0.45);
+    --sa-sheet-bg: #12141c;
+    --sa-sheet-border: rgba(255, 255, 255, 0.08);
+    --sa-sheet-muted: rgba(238, 240, 244, 0.45);
+    --sa-sheet-item-bg: rgba(255, 255, 255, 0.05);
+    --sa-sheet-item-fg: #eef0f4;
+    --sa-input-bg: #1a1d28;
+    --sa-input-border: rgba(255, 255, 255, 0.12);
+    --sa-row-hover: rgba(255, 255, 255, 0.04);
+    --sa-overlay: rgba(0, 0, 0, 0.62);
+    --sa-chart-grid: rgba(255, 255, 255, 0.08);
+    --sa-theme-meta: #12141c;
+    /* Barre horizontale toujours claire, même en mode sombre */
+    --sa-header-bg: #ffffff;
+    --sa-header-text: #141622;
+    --sa-header-muted: rgba(20, 22, 34, 0.58);
+    --sa-header-border: #e1e4e8;
+    --sa-bottom-nav-bg: #ffffff;
+    --sa-bottom-nav-text: #141622;
+    --sa-bottom-nav-muted: rgba(20, 22, 34, 0.55);
+    --sa-bottom-nav-border: #e1e4e8;
+    --sa-bottom-nav-active-bg: rgba(224, 18, 18, 0.1);
+}
+
+/* Valeur par défaut avant exécution du script (clair) */
+html:not([data-sa-theme]) {
+    color-scheme: light;
+    --main-color: #d30d0d;
+    --hover-color: #b00b0b;
+    --text-color: #141622;
+    --background-color: #eef0f4;
+    --card-bg: #ffffff;
+    --border-color: #e1e4e8;
+    --shadow: 0 4px 14px rgba(20, 22, 34, 0.06);
+    --sa-bg: #eef0f4;
+    --sa-surface: #ffffff;
+    --sa-surface2: #f8f9fb;
+    --sa-border: #e1e4e8;
+    --sa-text: #141622;
+    --sa-muted: rgba(20, 22, 34, 0.58);
+    --sa-shell-fg: #141622;
+    --sa-accent: #d30d0d;
+    --sa-accent-hover: #b00b0b;
+    --sa-nav-bg: #ffffff;
+    --sa-nav-fg: #141622;
+    --sa-nav-muted: rgba(20, 22, 34, 0.55);
+    --sa-nav-border: #e1e4e8;
+    --sa-nav-hover-bg: rgba(20, 22, 34, 0.05);
+    --sa-nav-active-bg: rgba(211, 13, 13, 0.08);
+    --sa-nav-active-border: rgba(211, 13, 13, 0.35);
+    --sa-sheet-bg: #ffffff;
+    --sa-sheet-border: #e5e7eb;
+    --sa-sheet-muted: #94a3b8;
+    --sa-sheet-item-bg: #f8fafc;
+    --sa-sheet-item-fg: #141622;
+    --sa-input-bg: #ffffff;
+    --sa-input-border: #d1d5db;
+    --sa-row-hover: rgba(20, 22, 34, 0.04);
+    --sa-overlay: rgba(15, 23, 42, 0.45);
+    --sa-chart-grid: rgba(20, 22, 34, 0.08);
+    --sa-theme-meta: #ffffff;
+}
+
+html[data-sa-theme='light'] body.tcf-superadmin-app,
+html[data-sa-theme='dark'] body.tcf-superadmin-app {
+    background: var(--sa-bg);
+    color: var(--sa-text);
+}
+
+/* ——— Interrupteur thème ——— */
+.tcf-superadmin-app .sa-theme-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.55rem 0.25rem 0.35rem;
+    border: 1px solid var(--sa-nav-border);
+    border-radius: 999px;
+    background: var(--sa-surface2);
+    cursor: pointer;
+    font: inherit;
+    color: var(--sa-nav-muted);
+    transition: border-color 0.2s ease, background 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.tcf-superadmin-app .sa-theme-switch:hover,
+.tcf-superadmin-app .sa-theme-switch:focus-visible {
+    border-color: rgba(211, 13, 13, 0.35);
+    outline: none;
+}
+
+.tcf-superadmin-app .sa-theme-switch__track {
+    position: relative;
+    width: 2.65rem;
+    height: 1.45rem;
+    border-radius: 999px;
+    background: var(--sa-border);
+    flex-shrink: 0;
+    transition: background 0.22s ease;
+}
+
+html[data-sa-theme='dark'] .tcf-superadmin-app .sa-theme-switch__track {
+    background: rgba(224, 18, 18, 0.35);
+}
+
+.tcf-superadmin-app .sa-theme-switch__thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 1.15rem;
+    height: 1.15rem;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    display: grid;
+    place-items: center;
+    font-size: 0.72rem;
+    color: #f59e0b;
+    transition: transform 0.22s ease;
+}
+
+html[data-sa-theme='dark'] .tcf-superadmin-app .sa-theme-switch__thumb {
+    transform: translateX(1.15rem);
+    color: #818cf8;
+}
+
+.tcf-superadmin-app .sa-theme-switch__label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--sa-nav-fg);
+    min-width: 2.85rem;
+    text-align: left;
+}
+
+/* ——— Composants sensibles au thème ——— */
+html[data-sa-theme='dark'] .tcf-superadmin-app .form-control,
+html[data-sa-theme='dark'] .tcf-superadmin-app .message-input,
+html[data-sa-theme='dark'] .tcf-superadmin-app select.form-control {
+    background: var(--sa-input-bg);
+    border-color: var(--sa-input-border);
+    color: var(--sa-text);
+}
+
+html[data-sa-theme='dark'] .tcf-superadmin-app .form-control::placeholder {
+    color: rgba(238, 240, 244, 0.4);
+}
+
+html[data-sa-theme='dark'] .tcf-superadmin-app .sa-top-savebar .btn-outline {
+    background: var(--sa-surface2);
+    border-color: var(--sa-border);
+    color: var(--sa-text);
+}
+
+html[data-sa-theme='dark'] .tcf-superadmin-app #users-table tbody tr:hover,
+html[data-sa-theme='dark'] .tcf-superadmin-app #topics-table tbody tr:hover,
+html[data-sa-theme='dark'] .tcf-superadmin-app #admins-table tbody tr:hover,
+html[data-sa-theme='dark'] .tcf-superadmin-app table.table tbody tr:hover {
+    background: var(--sa-row-hover);
+}
+
+html[data-sa-theme='dark'] .tcf-superadmin-app .modal-content {
+    background: var(--sa-surface);
+    color: var(--sa-text);
+    border: 1px solid var(--sa-border);
+}
+
+html[data-sa-theme='dark'] .tcf-superadmin-app .modal-close {
+    color: var(--sa-muted);
+}
+
+html[data-sa-theme='dark'] .tcf-superadmin-app .trace-map {
+    filter: brightness(0.92) contrast(1.05);
+}
+
+html[data-sa-theme='dark'] body.tcf-superadmin-app > .notification-page {
+    background: var(--sa-surface) !important;
+    border-left-color: var(--sa-border) !important;
+}
+
+html[data-sa-theme='dark'] body.tcf-superadmin-app > .notification-page .notification-content {
+    background: var(--sa-surface) !important;
+}
+
+html[data-sa-theme='dark'] body.tcf-superadmin-app .notification-page .notification-item {
+    background: var(--sa-surface) !important;
+    border-bottom-color: var(--sa-border) !important;
+    color: var(--sa-text);
+}
+
+html[data-sa-theme='dark'] body.tcf-superadmin-app .notification-page .notification-item.unread {
+    background: var(--sa-surface2) !important;
+}
+
+html[data-sa-theme='dark'] body.tcf-superadmin-app .notification-page .notification-item__title,
+html[data-sa-theme='dark'] body.tcf-superadmin-app .notification-page .notification-item__text {
+    color: var(--sa-text) !important;
+}
+
+html[data-sa-theme='dark'] .tcf-superadmin-app .sa-badge--free {
+    background: rgba(148, 163, 184, 0.15);
+    color: #94a3b8;
+}
+
+html[data-sa-theme='dark'] .tcf-superadmin-app .btn-outline {
+    background: transparent;
+    border-color: var(--sa-border);
+    color: var(--sa-text);
+}
+
+html[data-sa-theme='dark'] .tcf-superadmin-app .btn-outline:hover {
+    background: var(--sa-nav-hover-bg);
+    border-color: rgba(224, 18, 18, 0.35);
+    color: var(--sa-accent);
+}
+
+html[data-sa-theme='dark'] .tcf-superadmin-app .tcf-admin-toast,
+html[data-sa-theme='dark'] .tcf-superadmin-app #notification-toast {
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
+}
+
+html[data-sa-theme='dark'] body.tcf-superadmin-app .notification-page .notification-title {
+    color: var(--sa-text) !important;
+}
+
+html[data-sa-theme='dark'] body.tcf-superadmin-app .notification-page .notification-desc,
+html[data-sa-theme='dark'] body.tcf-superadmin-app .notification-page .notification-time {
+    color: var(--sa-muted) !important;
+}
+
+html[data-sa-theme='dark'] .tcf-superadmin-app .stat-card,
+html[data-sa-theme='dark'] .tcf-superadmin-app .card,
+html[data-sa-theme='dark'] .tcf-superadmin-app .content-card,
+html[data-sa-theme='dark'] .tcf-superadmin-app .sa-panel {
+    background: var(--card-bg);
+    border-color: var(--sa-border);
+    color: var(--sa-text);
+}
+
+html[data-sa-theme='dark'] .tcf-superadmin-app .stat-info h3,
+html[data-sa-theme='dark'] .tcf-superadmin-app .stat-info p,
+html[data-sa-theme='dark'] .tcf-superadmin-app .section-title,
+html[data-sa-theme='dark'] .tcf-superadmin-app h2,
+html[data-sa-theme='dark'] .tcf-superadmin-app h3,
+html[data-sa-theme='dark'] .tcf-superadmin-app h4 {
+    color: var(--sa-text);
+}
+
+html[data-sa-theme='dark'] .tcf-superadmin-app .stat-info p,
+html[data-sa-theme='dark'] .tcf-superadmin-app .sa-muted,
+html[data-sa-theme='dark'] .tcf-superadmin-app .text-muted {
+    color: var(--sa-muted);
+}
+
+html[data-sa-theme='dark'] .tcf-superadmin-app .activity-item,
+html[data-sa-theme='dark'] .tcf-superadmin-app .sa-activity-row,
+html[data-sa-theme='dark'] .tcf-superadmin-app .sa-filter-bar,
+html[data-sa-theme='dark'] .tcf-superadmin-app .search-box,
+html[data-sa-theme='dark'] .tcf-superadmin-app .sa-top-savebar {
+    background: var(--sa-surface);
+    border-color: var(--sa-border);
+    color: var(--sa-text);
+}
+
+html[data-sa-theme='dark'] .tcf-superadmin-app .sa-sub-plans-card,
+html[data-sa-theme='dark'] .tcf-superadmin-app .sa-sub-plans-table-wrap,
+html[data-sa-theme='dark'] .tcf-superadmin-app .sa-sub-plan-row {
+    background: var(--sa-surface);
+    border-color: var(--sa-border);
+    color: var(--sa-text);
+}
+
+html[data-sa-theme='dark'] .tcf-superadmin-app .sa-sub-plans-table th {
+    background: var(--sa-surface2);
+    color: var(--sa-muted);
+}
+
+html[data-sa-theme='dark'] .tcf-superadmin-app .sa-sub-plan-row--highlight {
+    background: rgba(224, 18, 18, 0.08) !important;
+}
+
+html[data-sa-theme='dark'] .tcf-superadmin-app .sa-sub-plan-badge--active {
+    background: rgba(34, 197, 94, 0.12);
+    color: #86efac;
+}
+
+html[data-sa-theme='dark'] .tcf-superadmin-app .sa-channel-crop-modal__dialog,
+html[data-sa-theme='dark'] .tcf-superadmin-app .sa-channel-crop-modal__footer {
+    background: var(--sa-surface);
+    border-color: var(--sa-border);
+    color: var(--sa-text);
+}
+
+html[data-sa-theme='dark'] .tcf-superadmin-app .notifications-panel {
+    background: var(--card-bg);
+    color: var(--sa-text);
+}
+
+html[data-sa-theme='dark'] .tcf-superadmin-app .sa-notif-item--unread {
+    background: rgba(224, 18, 18, 0.1);
+    border-color: rgba(224, 18, 18, 0.25);
+}
+
+html[data-sa-theme='dark'] .tcf-superadmin-app input[type='search'],
+html[data-sa-theme='dark'] .tcf-superadmin-app input[type='text'],
+html[data-sa-theme='dark'] .tcf-superadmin-app input[type='email'],
+html[data-sa-theme='dark'] .tcf-superadmin-app input[type='password'],
+html[data-sa-theme='dark'] .tcf-superadmin-app input[type='number'],
+html[data-sa-theme='dark'] .tcf-superadmin-app textarea {
+    background: var(--sa-input-bg);
+    border-color: var(--sa-input-border);
+    color: var(--sa-text);
+}
+
+html[data-sa-theme='dark'] .tcf-superadmin-app .leaflet-container {
+    background: var(--sa-surface2);
+}
+
+/* Application forcée sur le shell admin */
+html[data-sa-theme='light'] body.tcf-superadmin-app,
+html[data-sa-theme='dark'] body.tcf-superadmin-app,
+body.tcf-superadmin-app[data-sa-theme='light'],
+body.tcf-superadmin-app[data-sa-theme='dark'] {
+    background-color: var(--sa-bg) !important;
+    color: var(--sa-text) !important;
+}
+
+body.tcf-superadmin-app .sidebar,
+body.tcf-superadmin-app .header,
+body.tcf-superadmin-app .main-content,
+body.tcf-superadmin-app .dashboard-section,
+body.tcf-superadmin-app .stat-card {
+    transition: background-color 0.22s ease, color 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+}
+
+/* Barre de navigation horizontale : fond blanc en clair et en sombre */
+.tcf-superadmin-app .header {
+    background: var(--sa-header-bg, #ffffff) !important;
+    color: var(--sa-header-text, #141622) !important;
+    border-bottom-color: var(--sa-header-border, #e1e4e8) !important;
+}
+
+.tcf-superadmin-app .header .page-title {
+    color: var(--sa-header-text, #141622) !important;
+}
+
+.tcf-superadmin-app .header .sa-nav-notification-icon,
+.tcf-superadmin-app .header .sa-nav-assistant-trigger,
+.tcf-superadmin-app .header .tcf-sa-header-menu-btn {
+    color: var(--sa-header-muted, rgba(20, 22, 34, 0.58));
+}
+
+.tcf-superadmin-app .header .sa-nav-notification-icon:hover,
+.tcf-superadmin-app .header .sa-nav-assistant-trigger:hover,
+.tcf-superadmin-app .header .tcf-sa-header-menu-btn:hover {
+    color: var(--sa-header-text, #141622);
+    background: rgba(20, 22, 34, 0.06);
+}
+
+.tcf-superadmin-app .header .sa-theme-switch__label {
+    color: var(--sa-header-text, #141622);
+}
+
+.tcf-superadmin-app .header .sa-theme-switch {
+    background: rgba(20, 22, 34, 0.04);
+    border-color: var(--sa-header-border, #e1e4e8);
+    color: var(--sa-header-muted, rgba(20, 22, 34, 0.58));
+}
+
+.tcf-superadmin-app .header .sa-theme-switch__track {
+    background: rgba(20, 22, 34, 0.12);
+}
+
+.tcf-superadmin-app .header .sa-nav-notification-icon,
+.tcf-superadmin-app .header .sa-nav-assistant-trigger {
+    color: var(--sa-header-muted, rgba(20, 22, 34, 0.58));
+}
+
+.tcf-superadmin-app .header .sa-nav-notification-icon:hover,
+.tcf-superadmin-app .header .sa-nav-assistant-trigger:hover {
+    color: var(--sa-header-text, #141622);
+    background: rgba(20, 22, 34, 0.06);
+}

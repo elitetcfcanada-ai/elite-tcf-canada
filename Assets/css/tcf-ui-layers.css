@@ -1,0 +1,68 @@
+/**
+ * Panneaux notifications / profil — au-dessus du contenu, sous la barre du bas mobile.
+ * Ne pas masquer le header ni la navigation mobile.
+ */
+
+:root {
+    --tcf-header-h: 4rem;
+    --tcf-sa-header-h: 3.75rem;
+}
+
+@media (max-width: 991px) {
+    body.tcf-has-mobile-nav > .notification-overlay,
+    body.tcf-has-mobile-nav > .profile-overlay.profile-overlay-v2 {
+        top: var(--tcf-header-h) !important;
+        bottom: var(--tcf-mobile-nav-reserve, calc(var(--tcf-mobile-nav-h, 4.6rem) + env(safe-area-inset-bottom, 0px))) !important;
+        height: auto !important;
+        z-index: 4980 !important;
+    }
+
+    body.tcf-has-mobile-nav > .notification-page,
+    body.tcf-has-mobile-nav > .profile-page.profile-drawer-v2 {
+        top: var(--tcf-header-h) !important;
+        bottom: var(--tcf-mobile-nav-reserve, calc(var(--tcf-mobile-nav-h, 4.6rem) + env(safe-area-inset-bottom, 0px))) !important;
+        height: auto !important;
+        max-height: none !important;
+        width: min(420px, 100vw) !important;
+        z-index: 4990 !important;
+    }
+
+    body.tcf-has-mobile-nav > .profile-page.profile-drawer-v2 {
+        width: min(440px, 100vw) !important;
+    }
+}
+
+@media (max-width: 900px) {
+    body.tcf-sa-has-mobile-nav > .notification-overlay,
+    body.tcf-sa-has-mobile-nav > .profile-overlay.profile-overlay-v2 {
+        top: var(--tcf-sa-header-h) !important;
+        bottom: var(--tcf-sa-mobile-nav-reserve, calc(var(--tcf-sa-mobile-nav-h, 4.5rem) + env(safe-area-inset-bottom, 0px))) !important;
+        height: auto !important;
+        z-index: 4980 !important;
+    }
+
+    body.tcf-sa-has-mobile-nav > .notification-page,
+    body.tcf-sa-has-mobile-nav > .profile-page.profile-drawer-v2 {
+        top: var(--tcf-sa-header-h) !important;
+        bottom: var(--tcf-sa-mobile-nav-reserve, calc(var(--tcf-sa-mobile-nav-h, 4.5rem) + env(safe-area-inset-bottom, 0px))) !important;
+        height: auto !important;
+        max-height: none !important;
+        z-index: 4990 !important;
+    }
+}
+
+/* Bouton remonter — toujours à droite */
+#tcf-scroll-top,
+.site-footer .scroll-top-footer {
+    right: 2.5rem !important;
+    left: auto !important;
+}
+
+@media (max-width: 991px) {
+    #tcf-scroll-top,
+    .site-footer .scroll-top-footer,
+    .site-footer .scroll-top-footer.show {
+        right: 0.85rem !important;
+        left: auto !important;
+    }
+}

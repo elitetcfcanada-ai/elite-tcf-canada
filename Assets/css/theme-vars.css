@@ -1,0 +1,47 @@
+/**
+ * Palette centrale du site TCF Canada.
+ * Modifiez uniquement ce fichier pour changer les couleurs sur l’ensemble du site
+ * (après avoir lié theme-vars.css en premier dans vos pages).
+ */
+:root {
+    --tcf-primary: #d30d0d;
+    --tcf-primary-dark: #a50a0a;
+    --tcf-secondary: #141622;
+    --tcf-accent-light: #ff6b6b;
+    --tcf-text: #141622;
+    --tcf-text-muted: #6c757d;
+    --tcf-bg: #f8f9fa;
+    --tcf-white: #ffffff;
+    --tcf-border: #e9ecef;
+    --tcf-gradient: linear-gradient(135deg, var(--tcf-primary) 0%, var(--tcf-primary-dark) 100%);
+    --tcf-footer-bg: #141622;
+    --tcf-text-on-dark: #ffffff;
+
+    /* Alias pour compatibilité avec header_footer / anciens styles */
+    --main-color: var(--tcf-primary);
+    --secondary-color: var(--tcf-primary-dark);
+    --text-color: var(--tcf-text);
+
+    /* Typographie standard (~14px de base) */
+    --tcf-font-root: 100%;
+    --tcf-font-body: 1rem;
+    --tcf-font-nav: 1rem;
+    --tcf-font-nav-mobile: 0.9375rem;
+}
+
+html {
+    font-size: var(--tcf-font-root);
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
+}
+
+body {
+    font-size: var(--tcf-font-body);
+    line-height: 1.55;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
+    margin: 0;
+    padding: 0;
+}

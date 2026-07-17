@@ -1,0 +1,394 @@
+/**
+ * Admin / Super Admin — navigation mobile type application (≤900px)
+ */
+
+:root {
+    --tcf-sa-mobile-nav-h: 4.5rem;
+}
+
+.tcf-sa-header-menu-btn,
+.tcf-sa-sidebar-backdrop,
+.tcf-sa-mobile-nav,
+.tcf-sa-subnav-sheet,
+.tcf-sa-subnav-sheet-overlay,
+.tcf-sa-sidebar-close {
+    display: none;
+}
+
+@media (max-width: 900px) {
+    .tcf-superadmin-app.tcf-sa-has-mobile-nav {
+        padding-bottom: calc(var(--tcf-sa-mobile-nav-h) + env(safe-area-inset-bottom, 0px));
+    }
+
+    .tcf-superadmin-app.tcf-sa-has-mobile-nav .main-content {
+        padding-bottom: calc(var(--tcf-sa-mobile-nav-h) + env(safe-area-inset-bottom, 0px) + 0.5rem);
+    }
+
+    .tcf-sa-header-menu-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.5rem;
+        height: 2.5rem;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        border-radius: 10px;
+        background: rgba(20, 22, 34, 0.06);
+        color: var(--sa-header-text, #141622);
+        cursor: pointer;
+        flex-shrink: 0;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .tcf-sa-header-menu-btn i {
+        font-size: 1.45rem;
+        line-height: 1;
+    }
+
+    .tcf-sa-header-menu-btn:hover,
+    .tcf-sa-header-menu-btn:focus-visible {
+        background: rgba(211, 13, 13, 0.1);
+        color: var(--main-color, #d30d0d);
+        outline: none;
+    }
+
+    .tcf-superadmin-app .sa-header-start {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+
+    .tcf-superadmin-app .page-title {
+        font-size: 1rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
+    }
+
+    .tcf-superadmin-app .header {
+        padding: 0.65rem 0.85rem;
+        gap: 0.45rem;
+        flex-wrap: nowrap;
+    }
+
+    .tcf-superadmin-app .admin-info {
+        gap: 0.25rem;
+        flex-wrap: nowrap;
+    }
+
+    .tcf-superadmin-app .header .sa-theme-switch__label {
+        display: none;
+    }
+
+    .tcf-superadmin-app .header .sa-theme-switch {
+        padding: 0.2rem 0.35rem;
+    }
+
+    .tcf-superadmin-app .content-section {
+        padding: 0.85rem 0.85rem 1rem;
+    }
+
+    .tcf-superadmin-app .section-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .tcf-superadmin-app .section-header .btn,
+    .tcf-superadmin-app .section-header button.btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Sidebar + overlay */
+    .tcf-sa-sidebar-backdrop {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 1090;
+        background: rgba(15, 23, 42, 0.5);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.25s ease, visibility 0.25s ease;
+    }
+
+    .tcf-sa-sidebar-backdrop.is-visible {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .tcf-superadmin-app .sidebar {
+        z-index: 1100;
+        width: min(288px, 88vw);
+        padding-top: 0.5rem;
+        box-shadow: 8px 0 32px rgba(0, 0, 0, 0.15);
+        background: var(--sa-nav-bg);
+    }
+
+    .tcf-sa-sidebar-close {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.25rem;
+        height: 2.25rem;
+        margin: 0 0 0.5rem 0.35rem;
+        padding: 0;
+        border: 0;
+        border-radius: 8px;
+        background: var(--sa-nav-hover-bg);
+        color: var(--sa-nav-fg);
+        cursor: pointer;
+    }
+
+    .tcf-sa-sidebar-close i {
+        font-size: 1.35rem;
+    }
+
+    body.tcf-sa-sidebar-open {
+        overflow: hidden;
+    }
+
+    /* Bottom tab bar — blanche comme la barre du haut (style app mobile) */
+    .tcf-sa-mobile-nav {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1300;
+        display: flex;
+        align-items: stretch;
+        justify-content: space-around;
+        min-height: var(--tcf-sa-mobile-nav-h);
+        padding: 0.3rem 0.2rem calc(0.3rem + env(safe-area-inset-bottom, 0px));
+        background: var(--sa-bottom-nav-bg, #ffffff);
+        border-top: 1px solid var(--sa-bottom-nav-border, #e1e4e8);
+        box-shadow: 0 -4px 18px rgba(15, 23, 42, 0.08);
+    }
+
+    .tcf-sa-mobile-nav__item {
+        flex: 1 1 0;
+        min-width: 0;
+        max-width: 5.25rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.12rem;
+        padding: 0.15rem 0.1rem;
+        border: 0;
+        background: transparent;
+        color: var(--sa-bottom-nav-muted, rgba(20, 22, 34, 0.55));
+        text-decoration: none;
+        font-family: inherit;
+        cursor: pointer;
+        border-radius: 10px;
+        transition: color 0.15s ease, background 0.15s ease;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .tcf-sa-mobile-nav__item i {
+        font-size: 1.3rem;
+        line-height: 1;
+    }
+
+    .tcf-sa-mobile-nav__item span {
+        font-size: 0.625rem;
+        font-weight: 700;
+        line-height: 1.1;
+        text-align: center;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .tcf-sa-mobile-nav__item.is-active,
+    .tcf-sa-mobile-nav__item.is-submenu-open {
+        color: var(--main-color, #d30d0d);
+        background: var(--sa-bottom-nav-active-bg, rgba(211, 13, 13, 0.08));
+    }
+
+    .tcf-sa-mobile-nav__item:hover,
+    .tcf-sa-mobile-nav__item:focus-visible {
+        color: var(--main-color, #d30d0d);
+        background: rgba(20, 22, 34, 0.05);
+        outline: none;
+    }
+
+    /* Sous-menu déroulant (Épreuves / Vidéos) — mêmes entrées que la sidebar desktop */
+    .tcf-sa-subnav-sheet-overlay {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 1310;
+        background: rgba(15, 23, 42, 0.5);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.25s ease, visibility 0.25s ease;
+    }
+
+    .tcf-sa-subnav-sheet-overlay.is-visible {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .tcf-sa-subnav-sheet {
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1320;
+        max-height: min(55vh, 420px);
+        background: var(--sa-sheet-bg);
+        border-radius: 18px 18px 0 0;
+        border-top: 1px solid var(--sa-sheet-border);
+        box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.12);
+        transform: translateY(105%);
+        transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+        padding-bottom: calc(var(--tcf-sa-mobile-nav-h) + env(safe-area-inset-bottom, 0px));
+    }
+
+    .tcf-sa-subnav-sheet.is-open {
+        transform: translateY(0);
+    }
+
+    .tcf-sa-subnav-sheet__head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 1.1rem 0.65rem;
+        border-bottom: 1px solid var(--sa-sheet-border);
+        flex-shrink: 0;
+    }
+
+    .tcf-sa-subnav-sheet__head h2 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 800;
+        color: var(--sa-nav-fg);
+    }
+
+    .tcf-sa-subnav-sheet__close {
+        width: 2.25rem;
+        height: 2.25rem;
+        border: 0;
+        border-radius: 8px;
+        background: var(--sa-nav-hover-bg);
+        color: var(--sa-nav-muted);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .tcf-sa-subnav-sheet__body {
+        overflow-y: auto;
+        padding: 0.5rem 0.85rem 1rem;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .tcf-sa-subnav-sheet__link {
+        display: block;
+        width: 100%;
+        padding: 0.85rem 0.85rem 0.85rem 2.2rem;
+        margin-bottom: 0.15rem;
+        border: 0;
+        border-radius: 8px;
+        background: transparent;
+        color: var(--sa-sheet-item-fg);
+        font-size: 0.9375rem;
+        font-weight: 600;
+        text-align: left;
+        cursor: pointer;
+        font-family: inherit;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .tcf-sa-subnav-sheet__link:hover,
+    .tcf-sa-subnav-sheet__link:focus-visible {
+        background: var(--sa-nav-hover-bg);
+        color: var(--sa-nav-fg);
+        outline: none;
+    }
+
+    body.tcf-sa-sheet-open {
+        overflow: hidden;
+    }
+
+    /* Barre du bas toujours au-dessus des overlays / panneaux */
+    body.tcf-sa-has-mobile-nav {
+        --tcf-sa-mobile-nav-reserve: calc(var(--tcf-sa-mobile-nav-h) + env(safe-area-inset-bottom, 0px));
+        --tcf-sa-mobile-nav-z: 5000;
+    }
+
+    body.tcf-sa-has-mobile-nav .tcf-sa-mobile-nav {
+        z-index: var(--tcf-sa-mobile-nav-z) !important;
+    }
+
+    body.tcf-sa-has-mobile-nav .tcf-sa-sidebar-backdrop {
+        bottom: var(--tcf-sa-mobile-nav-reserve) !important;
+        height: auto !important;
+    }
+
+    body.tcf-sa-has-mobile-nav .tcf-sa-subnav-sheet-overlay {
+        bottom: var(--tcf-sa-mobile-nav-reserve) !important;
+        height: auto !important;
+        z-index: 4800 !important;
+    }
+
+    body.tcf-sa-has-mobile-nav .tcf-sa-subnav-sheet {
+        z-index: 4900 !important;
+    }
+
+    body.tcf-sa-has-mobile-nav > .notification-overlay {
+        bottom: var(--tcf-sa-mobile-nav-reserve) !important;
+        height: auto !important;
+        z-index: 4600 !important;
+    }
+
+    body.tcf-sa-has-mobile-nav > .notification-page {
+        top: 0 !important;
+        bottom: var(--tcf-sa-mobile-nav-reserve) !important;
+        height: auto !important;
+        max-height: none !important;
+        z-index: 4700 !important;
+    }
+
+    /* Tableaux & actions — empilage mobile */
+    .tcf-superadmin-app .sa-actions-row {
+        flex-wrap: wrap !important;
+        width: 100% !important;
+        justify-content: flex-start !important;
+    }
+
+    .tcf-superadmin-app .sa-table-actions {
+        min-width: 0;
+        white-space: normal;
+    }
+
+    .tcf-superadmin-app .stats-container {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 0.65rem !important;
+    }
+
+    .tcf-superadmin-app .stat-card {
+        padding: 0.85rem !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .tcf-superadmin-app .stats-container {
+        grid-template-columns: 1fr !important;
+    }
+
+    .tcf-superadmin-app .admin-nav-avatar-wrap,
+    .tcf-superadmin-app .admin-nav-avatar-img {
+        width: 34px !important;
+        height: 34px !important;
+    }
+}

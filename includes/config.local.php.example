@@ -1,0 +1,11 @@
+<?php
+/*
+Copiez ce fichier vers includes/config.local.php
+et renseignez vos identifiants Hostinger.
+*/
+
+$host = 'localhost';
+$dbname = 'nom_de_la_base';
+$username = 'nom_utilisateur';
+$password = 'mot_de_passe';
+$port = '';

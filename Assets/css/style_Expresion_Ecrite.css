@@ -1,0 +1,706 @@
+
+:root {
+    --main-color: #d30d0d;
+    --primary-color: #d30d0d;
+    --secondary-color: #9c0a0a;
+    --accent-color: #ff5252;
+    --light-color: #f9f0f0;
+    --dark-color: #3a0c0c;
+    --success-color: #2ecc71;
+    --warning-color: #f39c12;
+    --text-color: #141622;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: #f5f7fa;
+    color: #333;
+    line-height: 1.6;
+}
+
+#ee-detail-root > header,
+#ee-consignes > header {
+    background: var(--text-color);
+    color: white;
+    padding: 2rem 0;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    position: relative;
+}
+
+.header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+#ee-detail-root > header h1,
+#ee-consignes > header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+#ee-detail-root > header .subtitle,
+#ee-consignes > header .subtitle {
+    font-size: 1.2rem;
+    opacity: 0.9;
+}
+
+/* Safety: keep site brand readable in global navbar */
+.header .logo h1 {
+    color: #141622 !important;
+}
+
+.container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 0;
+}
+
+.publication-panel {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    padding: 1.2rem;
+    margin-bottom: 1.5rem;
+}
+
+.panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.panel-head h2 {
+    font-size: 1.1rem;
+    color: var(--text-color);
+}
+
+.publication-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+}
+
+.publication-options label {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--dark-color);
+}
+
+.publication-options select {
+    border: 1px solid #d9dce3;
+    border-radius: 9px;
+    padding: 0.55rem 0.7rem;
+    font-size: 0.95rem;
+}
+
+.pill-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.pill {
+    border: 1px solid #d7dbe7;
+    border-radius: 999px;
+    padding: 0.32rem 0.9rem;
+    font-size: 0.85rem;
+    color: #49556c;
+    background: #f8f9fd;
+}
+
+.pill.active {
+    color: #fff;
+    border-color: var(--primary-color);
+    background: var(--primary-color);
+}
+
+.simulator-open-btn,
+.simulate-btn,
+.simulator-close-btn {
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.simulator-open-btn,
+.simulate-btn {
+    background: var(--primary-color);
+    color: #fff;
+    padding: 0.55rem 1rem;
+}
+
+.simulator-close-btn {
+    background: #edf0f7;
+    color: #2f3950;
+    padding: 0.5rem 0.95rem;
+}
+
+.combinaison {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+}
+
+.combinaison:hover {
+    transform: translateY(-5px);
+}
+
+.combinaison-header {
+    background-color: var(--secondary-color);
+    color: white;
+    padding: 1rem 1.5rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.combinaison-header h2 {
+    font-size: 1.5rem;
+    margin: 0;
+}
+
+.combinaison-content {
+    padding: 1.5rem;
+    display: none;
+}
+
+.combinaison-content p,
+.combinaison-content li,
+.combinaison-content div,
+.combinaison-content span {
+    font-size: 1.22rem !important;
+    line-height: 1.9 !important;
+}
+
+.ee-consigne-body p,
+.ee-consigne-body li,
+.ee-consigne-body div,
+.ee-consigne-body span {
+    font-size: 1.12rem !important;
+    line-height: 1.8 !important;
+}
+
+.combinaison.active .combinaison-content {
+    display: block;
+}
+
+.tache {
+    margin-bottom: 2rem;
+    border-left: 4px solid var(--primary-color);
+    padding-left: 1rem;
+}
+
+/* Tâches d’une combinaison (expression écrite) : une carte sous l’autre */
+.ee-task-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    align-items: stretch;
+}
+
+.ee-task-grid .tache {
+    margin-bottom: 0;
+    border-left: none;
+    padding: 1rem;
+    border: 1px solid #e6e8ef;
+    border-top: 4px solid var(--primary-color);
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 6px 16px rgba(20, 22, 34, 0.06);
+}
+
+.tache h3 {
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+    font-size: 1.4rem !important;
+}
+
+.tache .enonce-label {
+    display: block;
+    color: var(--success-color);
+    margin: 0 0 0.5rem 0;
+    font-size: 1.3rem !important;
+    font-weight: 700 !important;
+    line-height: 1.3;
+    letter-spacing: 0;
+    text-transform: none;
+    font-style: normal;
+}
+
+.correction {
+    background-color: var(--light-color);
+    padding: 1rem;
+    border-radius: 4px;
+    margin-top: 0.5rem;
+    position: relative;
+}
+
+.correction h4 {
+    color: var(--success-color);
+    margin-bottom: 0.5rem;
+    font-size: 1.3rem !important;
+}
+
+.correction p,
+.correction li {
+    font-size: 1.22rem !important;
+}
+
+.simulator-section {
+    display: none;
+    margin-top: 0.5rem;
+}
+
+.simulator-section.open {
+    display: block;
+}
+
+.simulator-card {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 3px 14px rgba(0, 0, 0, 0.09);
+    padding: 1.2rem;
+}
+
+.simulator-chat-log {
+    border: 1px solid #d7ddeb;
+    border-radius: 10px;
+    background: #f8f9fd;
+    padding: 0.8rem;
+    min-height: 160px;
+    max-height: 320px;
+    overflow: auto;
+    margin-bottom: 0.8rem;
+}
+
+.sim-chat-msg {
+    padding: 0.65rem 0.75rem;
+    border-radius: 8px;
+    margin-bottom: 0.6rem;
+}
+
+.sim-chat-msg.assistant {
+    background: #eef2ff;
+    border: 1px solid #dbe4ff;
+}
+
+.sim-chat-msg.user {
+    background: #eaf8ee;
+    border: 1px solid #cfead8;
+}
+
+.sim-task-picker {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.8rem;
+}
+
+.sim-pro-config {
+    margin-bottom: 0.8rem;
+}
+
+.sim-pro-shell {
+    border: 1px solid #dbe3f7;
+}
+
+.sim-pro-topbar {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.9rem;
+}
+
+.sim-pro-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.65rem;
+    font-size: 0.82rem;
+    color: #2c3a56;
+    background: #f2f5ff;
+    border: 1px solid #dbe3ff;
+    border-radius: 999px;
+}
+
+.sim-pro-title {
+    color: var(--primary-color);
+    font-size: 1.08rem;
+    margin: 0 0 0.65rem 0;
+}
+
+.sim-pro-brief {
+    border: 1px solid #d7ddeb;
+    border-radius: 10px;
+    background: #f8f9fd;
+    padding: 0.9rem;
+    margin-bottom: 0.8rem;
+}
+
+.sim-pro-brief h4 {
+    color: var(--primary-color);
+    margin-bottom: 0.4rem;
+    font-size: 1.15rem;
+}
+
+.sim-pro-writing {
+    border-top: 1px dashed #d9dfed;
+    padding-top: 0.8rem;
+}
+
+.sim-progress {
+    position: relative;
+    width: 100%;
+    height: 8px;
+    background: #edf2ff;
+    border: 1px solid #dbe3ff;
+    border-radius: 999px;
+    margin: 0.55rem 0 0.8rem;
+    overflow: hidden;
+}
+
+.sim-progress__bar {
+    display: block;
+    height: 100%;
+    width: 0%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #22c55e 0%, #f59e0b 70%, #ef4444 100%);
+    transition: width 0.6s linear;
+}
+
+/* ---- Simulator V2 (professional redesign) ---- */
+.sim-pro-shell-v2 {
+    border: 1px solid #dbe2f3;
+    border-radius: 16px;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafe 100%);
+    box-shadow: 0 14px 34px rgba(20, 22, 34, 0.08);
+    padding: 1rem;
+}
+
+.sim-v2-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    border-bottom: 1px solid #e5eaf7;
+    padding-bottom: 0.8rem;
+    margin-bottom: 0.9rem;
+}
+
+.sim-v2-title {
+    margin: 0;
+    color: #1f2a44;
+    font-size: 1.15rem;
+    font-weight: 800;
+}
+
+.sim-v2-sub {
+    margin: 0.25rem 0 0;
+    color: #5c6782;
+    font-size: 0.92rem;
+}
+
+.sim-v2-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    align-items: flex-start;
+}
+
+.sim-v2-badges span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: #eef2ff;
+    border: 1px solid #d9e2ff;
+    color: #2d3b63;
+    border-radius: 999px;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.sim-v2-panel {
+    background: #fff;
+    border: 1px solid #e4e9f6;
+    border-radius: 12px;
+    padding: 0.9rem;
+    margin-bottom: 0.9rem;
+}
+
+.sim-v2-step {
+    margin: 0 0 0.6rem;
+    color: var(--primary-color);
+    font-size: 1rem;
+    font-weight: 800;
+}
+
+.sim-v2-grid {
+    display: grid;
+    grid-template-columns: minmax(180px, 240px);
+    gap: 0.75rem;
+    margin-bottom: 0.7rem;
+}
+
+.sim-v2-field label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: 700;
+    color: #34415e;
+}
+
+.sim-v2-task {
+    border: 1px solid #d6ddf2;
+    background: #fff;
+    color: #223154;
+    border-radius: 10px;
+    padding: 0.5rem 0.9rem;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.sim-v2-task:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.sim-v2-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+}
+
+.sim-v2-textarea {
+    min-height: 220px;
+    font-size: 1rem;
+    line-height: 1.6;
+    border: 1px solid #d8deee;
+    border-radius: 12px;
+}
+
+.sim-v2-actions {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    margin-top: 0.7rem;
+}
+
+
+#sim-mode {
+    border: 1px solid #d7ddeb;
+    border-radius: 10px;
+    padding: 0.45rem 0.6rem;
+}
+
+.simulator-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+#simulatorForm label {
+    display: block;
+    margin: 0.6rem 0 0.3rem;
+    font-weight: 600;
+    color: #2b3550;
+}
+
+#simulatorForm select,
+#simulatorForm textarea {
+    width: 100%;
+    border: 1px solid #d7ddeb;
+    border-radius: 10px;
+    padding: 0.7rem;
+    font-size: 0.95rem;
+    resize: vertical;
+}
+
+.simulator-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.word-counter {
+    color: #5d6474;
+    font-size: 0.88rem;
+}
+
+.simulator-result {
+    margin-top: 1rem;
+    border-radius: 10px;
+    background: #f8f9fd;
+    border: 1px solid #dce2f3;
+    padding: 0.9rem;
+    display: none;
+}
+
+.simulator-result.visible {
+    display: block;
+}
+
+.document {
+    background-color: #f9f9f9;
+    border-left: 3px solid var(--dark-color);
+    padding: 1rem;
+    margin: 1rem 0;
+    font-style: normal;
+}
+
+.document p {
+    font-size: 1.22rem !important;
+}
+
+.document h4 {
+    color: var(--success-color) !important;
+    margin-bottom: 0.5rem;
+    font-size: 1.3rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0;
+    text-transform: none;
+    font-style: normal;
+}
+
+.icon {
+    transition: transform 0.3s ease;
+}
+
+.combinaison.active .icon {
+    transform: rotate(180deg);
+}
+
+.search-container {
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: center;
+}
+
+.search-box {
+    width: 100%;
+    max-width: 500px;
+    padding: 0.8rem 1.2rem;
+    border: 2px solid var(--primary-color);
+    border-radius: 50px;
+    font-size: 1rem;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.search-box:focus {
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.3);
+}
+
+.filter-buttons {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 2rem;
+}
+
+.filter-btn {
+    padding: 0.5rem 1rem;
+    background-color: white;
+    border: 2px solid var(--primary-color);
+    border-radius: 50px;
+    color: var(--primary-color);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.filter-btn:hover, .filter-btn.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+footer {
+    background-color: var(--text-color);
+    color: white;
+    text-align: center;
+    padding: 1.5rem 0;
+    margin-top: 2rem;
+}
+
+@media (max-width: 768px) {
+    .container {
+        width: 95%;
+    }
+
+    h1 {
+        font-size: 2rem;
+    }
+
+    .combinaison-header h2 {
+        font-size: 1.2rem;
+    }
+
+    .filter-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .filter-btn {
+        width: 100%;
+        text-align: center;
+    }
+
+    .publication-options {
+        grid-template-columns: 1fr;
+    }
+
+    .simulator-header,
+    .simulator-meta,
+    .panel-head {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .sim-pro-topbar {
+        gap: 0.35rem;
+    }
+
+}
+
+.back-to-top {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: var(--primary-color);
+    color: white;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 1000;
+}
+
+.back-to-top.visible {
+    opacity: 1;
+}

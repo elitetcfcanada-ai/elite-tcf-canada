@@ -1,0 +1,25 @@
+/**
+ * Pages quiz (CE/CO) qui incluent le header/footer du site.
+ * Contre les conflits de base (ex. font-size html) sans écraser tout le thème.
+ */
+html.tcf-quiz-site-page {
+    font-size: 100% !important;
+}
+
+body.tcf-quiz-site-page {
+    font-size: 16px !important;
+    line-height: 1.55 !important;
+    font-family: "Source Sans Pro", "Montserrat", system-ui, sans-serif !important;
+}
+
+@media (max-width: 991px) {
+    body.tcf-quiz-site-page {
+        font-size: 16px !important;
+    }
+}
+
+.tcf-quiz-site-shell {
+    position: relative;
+    z-index: 1;
+    min-height: 50vh;
+}

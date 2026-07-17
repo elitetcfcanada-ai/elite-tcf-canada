@@ -1,0 +1,3 @@
+﻿has Masquer: True
+p before loop: 'Pensez-vous quÆil soit simple de travailler Ó lÆÚtranger ? Pourquoi ?\n'
+result prompt: 'Pensez-vous quÆil soit simple de travailler Ó lÆÚtranger ? Pourquoi ?'

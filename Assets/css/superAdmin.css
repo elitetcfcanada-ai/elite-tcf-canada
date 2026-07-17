@@ -1,0 +1,3099 @@
+/**
+ * Super Admin — TCF Canada
+ * Variables de thème : Assets/css/sa-theme.css (html[data-sa-theme])
+ */
+.tcf-superadmin-app {
+    --transition: all 0.3s ease;
+    --sa-radius: 12px;
+    --sa-sidebar-w: 268px;
+    --sa-font: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, sans-serif;
+    --sa-success: #15803d;
+    --sa-warning: #b45309;
+    --sa-danger: #d30d0d;
+    font-family: var(--sa-font);
+    background: var(--sa-bg);
+    color: var(--sa-text);
+    margin: 0;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+}
+
+.tcf-superadmin-app *,
+.tcf-superadmin-app *::before,
+.tcf-superadmin-app *::after {
+    box-sizing: border-box;
+}
+
+/* Layout grille */
+.tcf-superadmin-app .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: var(--sa-sidebar-w);
+    background: var(--sa-nav-bg);
+    border-right: 1px solid var(--sa-nav-border);
+    color: var(--sa-nav-fg);
+    padding: 1.25rem 0.85rem;
+    overflow-y: auto;
+    z-index: 100;
+}
+
+.tcf-superadmin-app .main-content {
+    margin-left: var(--sa-sidebar-w);
+    /* Hauteur suivant le contenu : évite la grande zone vide sous les cartes */
+    min-height: auto;
+    padding-bottom: 1.25rem;
+    background: var(--sa-bg);
+}
+
+.tcf-superadmin-app .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+    gap: 0.75rem;
+    min-height: 3.75rem;
+    padding: 0.75rem 1.75rem;
+    /* Barre haute toujours blanche, seule la sidebar reste sombre en dark mode */
+    background: var(--sa-header-bg, #ffffff);
+    color: var(--sa-header-text, #141622);
+    border-bottom: 1px solid var(--sa-header-border, #e1e4e8);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+}
+
+.tcf-superadmin-app .page-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--sa-header-text, #141622);
+    margin: 0;
+}
+
+.tcf-superadmin-app .admin-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-left: auto;
+    flex-shrink: 0;
+    flex-wrap: nowrap;
+}
+
+.tcf-superadmin-app .sa-header-start {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.tcf-superadmin-app .sa-nav-notification-icon {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--sa-header-muted, rgba(20, 22, 34, 0.58));
+    text-decoration: none;
+    padding: 0.35rem;
+    border-radius: 10px;
+}
+
+.tcf-superadmin-app .sa-nav-notification-icon:hover {
+    color: var(--sa-header-text, #141622);
+    background: rgba(20, 22, 34, 0.06);
+}
+
+.tcf-superadmin-app .sa-nav-notification-icon i {
+    font-size: 1.35rem;
+    line-height: 1;
+    vertical-align: middle;
+}
+
+.tcf-superadmin-app .sa-nav-notification-icon .notification-badge {
+    position: absolute;
+    top: -2px;
+    right: -6px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    font-size: 0.68rem;
+    font-weight: 800;
+    line-height: 18px;
+    background: var(--main-color);
+    color: #fff;
+    border-radius: 999px;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.tcf-superadmin-app .sa-nav-assistant-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    background: transparent;
+    padding: 0.35rem;
+    margin: 0;
+    cursor: pointer;
+    color: var(--sa-header-muted, rgba(20, 22, 34, 0.58));
+    border-radius: 10px;
+    line-height: 1;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.tcf-superadmin-app .sa-nav-assistant-trigger i {
+    font-size: 1.35rem;
+    line-height: 1;
+}
+
+@media (max-width: 900px) {
+    .tcf-superadmin-app .sa-nav-assistant-trigger,
+    .tcf-superadmin-app .sa-nav-notification-icon {
+        width: 2.35rem;
+        height: 2.35rem;
+        padding: 0;
+        border-radius: 10px;
+        background: rgba(20, 22, 34, 0.04);
+        border: 1px solid var(--sa-header-border, #e1e4e8);
+        box-sizing: border-box;
+        color: var(--sa-header-muted, rgba(20, 22, 34, 0.58));
+    }
+
+    .tcf-superadmin-app .sa-nav-assistant-trigger i,
+    .tcf-superadmin-app .sa-nav-notification-icon i {
+        font-size: 1.35rem;
+    }
+}
+
+.tcf-superadmin-app .sa-nav-assistant-trigger:hover,
+.tcf-superadmin-app .sa-nav-assistant-trigger:focus-visible {
+    color: var(--sa-header-text, #141622);
+    background: rgba(20, 22, 34, 0.06);
+    outline: none;
+}
+
+.tcf-superadmin-app .logo-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.65rem;
+    margin: 0 0.35rem 1rem;
+    border-bottom: none;
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+}
+
+.tcf-superadmin-app .logo {
+    width: auto;
+    height: auto;
+    min-width: 0;
+    border-radius: 0;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.tcf-superadmin-app .logo-text {
+    font-weight: 800;
+    font-size: 0.78rem;
+    color: #141622;
+    white-space: nowrap;
+    line-height: 1.15;
+    letter-spacing: 0.02em;
+}
+
+.tcf-superadmin-app .logo-text span {
+    color: var(--main-color);
+}
+
+/* Navigation */
+.tcf-superadmin-app .menu-item {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.65rem 0.85rem;
+    margin-bottom: 4px;
+    border-radius: 10px;
+    cursor: pointer;
+    color: var(--sa-nav-muted);
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: background var(--transition), color var(--transition);
+    user-select: none;
+}
+
+.tcf-superadmin-app .menu-item i {
+    font-size: 1.2rem;
+    opacity: 0.9;
+}
+
+.tcf-superadmin-app .menu-item:hover {
+    background: var(--sa-nav-hover-bg);
+    color: var(--sa-nav-fg);
+}
+
+.tcf-superadmin-app .menu-item.active {
+    background: var(--sa-nav-active-bg);
+    color: #ffffff;
+    border: 1px solid var(--sa-nav-active-border);
+}
+
+.tcf-superadmin-app .sub-menu {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease;
+    padding-left: 0.35rem;
+}
+
+.tcf-superadmin-app .sub-menu.is-open {
+    max-height: 220px;
+}
+
+.tcf-superadmin-app #videos-submenu.is-open {
+    max-height: 320px;
+}
+
+.tcf-superadmin-app .sub-item {
+    padding: 0.5rem 0.85rem 0.5rem 2.2rem;
+    font-size: 0.82rem;
+    color: var(--sa-nav-muted);
+    border-radius: 8px;
+    cursor: pointer;
+    margin-bottom: 2px;
+}
+
+.tcf-superadmin-app .sub-item:hover {
+    color: var(--sa-nav-fg);
+    background: var(--sa-nav-hover-bg);
+}
+
+.tcf-superadmin-app #topics-menu i.bx-chevron-down {
+    transition: transform 0.2s;
+}
+
+.tcf-superadmin-app #topics-menu.is-expanded i.bx-chevron-down {
+    transform: rotate(180deg);
+}
+
+.tcf-superadmin-app #videos-menu i.bx-chevron-down {
+    transition: transform 0.2s;
+}
+
+.tcf-superadmin-app #videos-menu.is-expanded i.bx-chevron-down {
+    transform: rotate(180deg);
+}
+
+.tcf-superadmin-app .sub-item.active {
+    color: #ffffff;
+    background: var(--sa-nav-active-bg);
+    border: 1px solid var(--sa-nav-active-border);
+}
+
+/* Content sections */
+.tcf-superadmin-app .content-section {
+    display: none;
+    padding: 1.25rem 1.5rem 1.5rem;
+    animation: sa-fade 0.25s ease;
+}
+
+.tcf-superadmin-app .content-section.active,
+.tcf-superadmin-app .content-section.is-active {
+    display: block;
+}
+
+@keyframes sa-fade {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.tcf-superadmin-app .dashboard-section {
+    background: var(--card-bg);
+    color: var(--text-color);
+    border: 1px solid var(--sa-border);
+    border-radius: var(--sa-radius);
+    padding: 1.25rem 1.35rem;
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow);
+}
+
+.tcf-superadmin-app .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.tcf-superadmin-app .section-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: inherit;
+    margin: 0;
+}
+
+.tcf-superadmin-app .section-help {
+    color: var(--sa-muted);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    margin: 0 0 1rem;
+}
+
+.tcf-superadmin-app .analytics-focus-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem 1rem;
+    padding: 0.85rem 1rem;
+    margin-bottom: 1.25rem;
+    border-radius: 10px;
+    border: 1px solid rgba(211, 13, 13, 0.35);
+    background: rgba(211, 13, 13, 0.08);
+    color: var(--text-color);
+    font-size: 0.9rem;
+}
+
+.tcf-superadmin-app .analytics-focus-banner__text {
+    flex: 1;
+    min-width: 0;
+}
+
+.tcf-superadmin-app .analytics-focus-banner__stats {
+    color: var(--sa-muted);
+    font-weight: 500;
+}
+
+/* Stats */
+.tcf-superadmin-app .stats-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.1rem;
+}
+
+.tcf-superadmin-app .stat-card {
+    background: var(--card-bg);
+    color: var(--text-color);
+    border: 1px solid var(--sa-border);
+    border-radius: var(--sa-radius);
+    padding: 1.15rem 1.25rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    box-shadow: var(--shadow);
+}
+
+.tcf-superadmin-app .stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    color: #fff;
+}
+
+.tcf-superadmin-app .stat-icon.users {
+    background: var(--main-color);
+}
+.tcf-superadmin-app .stat-icon.visitors {
+    background: var(--hover-color);
+}
+.tcf-superadmin-app .stat-icon.subs {
+    background: var(--main-color);
+    opacity: 0.92;
+}
+.tcf-superadmin-app .stat-icon.revenue {
+    background: var(--hover-color);
+    opacity: 0.92;
+}
+
+.tcf-superadmin-app .stat-info h3 {
+    margin: 0;
+    font-size: 1.65rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-color);
+}
+
+.tcf-superadmin-app .stat-info p {
+    margin: 0.25rem 0 0;
+    font-size: 0.8rem;
+    color: var(--sa-muted);
+}
+
+/* Traçabilité */
+.tcf-superadmin-app .trace-panel {
+    background: var(--card-bg);
+    color: var(--text-color);
+    border: 1px solid var(--sa-border);
+    border-radius: var(--sa-radius);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.1rem;
+    box-shadow: var(--shadow);
+}
+
+.tcf-superadmin-app .trace-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.tcf-superadmin-app .trace-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.tcf-superadmin-app .trace-label {
+    font-size: 0.8rem;
+    color: var(--sa-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.tcf-superadmin-app .charts-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.tcf-superadmin-app .trace-charts-row .chart-card.trace-chart-wide {
+    grid-column: 1 / -1;
+}
+
+.tcf-superadmin-app .trace-geo-row {
+    grid-template-columns: 1fr minmax(280px, 400px);
+}
+
+@media (max-width: 1024px) {
+    .tcf-superadmin-app .trace-geo-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+.tcf-superadmin-app .chart-card {
+    background: var(--card-bg);
+    color: var(--text-color);
+    border: 1px solid var(--sa-border);
+    border-radius: 10px;
+    padding: 1rem;
+    box-shadow: var(--shadow);
+}
+
+.tcf-superadmin-app .chart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.tcf-superadmin-app .chart-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.tcf-superadmin-app .chart-container {
+    position: relative;
+    height: 220px;
+}
+
+.tcf-superadmin-app .trace-chart-tall .chart-container {
+    height: 300px;
+}
+
+.tcf-superadmin-app .trace-map {
+    height: 320px;
+    border-radius: 8px;
+    background: var(--background-color);
+    border: 1px solid var(--sa-border);
+}
+
+/* Activity */
+.tcf-superadmin-app .activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.tcf-superadmin-app .activity-item {
+    display: flex;
+    gap: 0.85rem;
+    padding: 0.75rem 1rem;
+    background: var(--background-color);
+    border-radius: 10px;
+    border: 1px solid var(--sa-border);
+    font-size: 0.875rem;
+    color: var(--text-color);
+}
+
+.tcf-superadmin-app .activity-item-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: rgba(211, 13, 13, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--main-color);
+    flex-shrink: 0;
+}
+
+.tcf-superadmin-app .activity-item-body strong {
+    display: block;
+    color: var(--text-color);
+    margin-bottom: 0.2rem;
+}
+
+.tcf-superadmin-app .activity-item-meta {
+    font-size: 0.75rem;
+    color: var(--sa-muted);
+}
+
+/* Tables */
+.tcf-superadmin-app .table-container {
+    overflow-x: auto;
+    border-radius: 10px;
+    border: 1px solid var(--sa-border);
+}
+
+.tcf-superadmin-app table.table,
+.tcf-superadmin-app #users-table,
+.tcf-superadmin-app #topics-table,
+.tcf-superadmin-app #admins-table,
+.tcf-superadmin-app #popular-videos-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8125rem;
+}
+
+.tcf-superadmin-app #users-table th,
+.tcf-superadmin-app #users-table td,
+.tcf-superadmin-app #topics-table th,
+.tcf-superadmin-app #topics-table td,
+.tcf-superadmin-app #admins-table th,
+.tcf-superadmin-app #admins-table td,
+.tcf-superadmin-app #popular-videos-table th,
+.tcf-superadmin-app #popular-videos-table td,
+.tcf-superadmin-app table.table th,
+.tcf-superadmin-app table.table td {
+    padding: 0.65rem 0.85rem;
+    text-align: left;
+    border-bottom: 1px solid var(--sa-border);
+}
+
+.tcf-superadmin-app #users-table th,
+.tcf-superadmin-app #topics-table th,
+.tcf-superadmin-app #admins-table th,
+.tcf-superadmin-app #popular-videos-table th,
+.tcf-superadmin-app table.table th {
+    background: var(--background-color);
+    color: var(--sa-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+}
+
+.tcf-superadmin-app #users-table tbody tr:hover,
+.tcf-superadmin-app #topics-table tbody tr:hover,
+.tcf-superadmin-app #admins-table tbody tr:hover,
+.tcf-superadmin-app table.table tbody tr:hover {
+    background: var(--sa-row-hover);
+}
+
+.tcf-superadmin-app .sa-user-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.tcf-superadmin-app .sa-avatar-sm {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--sa-surface2);
+}
+
+.tcf-superadmin-app .sa-avatar-fallback {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--background-color);
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-weight: 700;
+}
+
+.tcf-superadmin-app .sa-badge {
+    display: inline-block;
+    padding: 0.15rem 0.45rem;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.tcf-superadmin-app .sa-badge--free {
+    background: rgba(148, 163, 184, 0.2);
+    color: #cbd5e1;
+}
+.tcf-superadmin-app .sa-badge--monthly {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+}
+.tcf-superadmin-app .sa-badge--annual {
+    background: rgba(168, 85, 247, 0.2);
+    color: #d8b4fe;
+}
+.tcf-superadmin-app .sa-badge--active {
+    background: rgba(34, 197, 94, 0.2);
+    color: #86efac;
+}
+.tcf-superadmin-app .sa-badge--inactive {
+    background: rgba(248, 113, 113, 0.15);
+    color: #fca5a5;
+}
+.tcf-superadmin-app .sa-badge--admin {
+    background: rgba(234, 179, 8, 0.2);
+    color: #fde047;
+}
+.tcf-superadmin-app .sa-badge--super {
+    background: rgba(220, 38, 38, 0.25);
+    color: #fecaca;
+}
+.tcf-superadmin-app .sa-badge--gratuit {
+    background: rgba(34, 197, 94, 0.15);
+    color: #86efac;
+}
+.tcf-superadmin-app .sa-badge--premium {
+    background: rgba(234, 179, 8, 0.2);
+    color: #fde047;
+}
+.tcf-superadmin-app .sa-badge--public {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+}
+.tcf-superadmin-app .sa-badge--private {
+    background: rgba(100, 116, 139, 0.25);
+    color: #cbd5e1;
+}
+.tcf-superadmin-app .sa-badge--video-public {
+    background: rgba(34, 197, 94, 0.15);
+    color: #86efac;
+}
+.tcf-superadmin-app .sa-badge--video-private {
+    background: rgba(248, 113, 113, 0.15);
+    color: #fca5a5;
+}
+.tcf-superadmin-app .sa-badge--video-premium {
+    background: rgba(234, 179, 8, 0.2);
+    color: #fde047;
+}
+
+.tcf-superadmin-app .presence-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-left: 4px;
+    vertical-align: middle;
+}
+.tcf-superadmin-app .presence-dot--on {
+    background: var(--main-color);
+    box-shadow: 0 0 0 2px rgba(211, 13, 13, 0.25);
+}
+.tcf-superadmin-app .presence-dot--off {
+    background: var(--border-color);
+}
+
+/* Forms */
+.tcf-superadmin-app .form-group {
+    margin-bottom: 1rem;
+}
+
+.tcf-superadmin-app .form-label {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--sa-muted);
+}
+
+.tcf-superadmin-app .form-control {
+    width: 100%;
+    padding: 0.55rem 0.75rem;
+    border-radius: 8px;
+    border: 1px solid var(--sa-border);
+    background: var(--card-bg);
+    color: var(--text-color);
+    font-size: 0.9rem;
+}
+
+.tcf-superadmin-app .form-control:focus {
+    outline: none;
+    border-color: var(--main-color);
+    box-shadow: 0 0 0 3px rgba(211, 13, 13, 0.2);
+}
+
+.tcf-superadmin-app .form-buttons {
+    display: flex;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+}
+
+.tcf-superadmin-app .sa-top-savebar {
+    position: static;
+    background: var(--card-bg);
+    border: 1px solid var(--sa-border);
+    border-radius: 10px;
+    padding: 0.35rem 0.45rem;
+    margin-top: 0;
+    margin-bottom: 0.65rem;
+    justify-content: flex-end;
+    box-shadow: none;
+}
+
+.tcf-superadmin-app .sa-top-savebar .btn {
+    flex: 0 0 auto;
+    min-height: 34px;
+    border-radius: 8px;
+    padding: 0.38rem 0.75rem;
+    font-size: 0.82rem;
+}
+
+.tcf-superadmin-app .sa-top-savebar .btn-outline {
+    background: var(--sa-surface2);
+    border-color: var(--sa-border);
+}
+
+.tcf-superadmin-app .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    padding: 0.55rem 1.1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+}
+
+.tcf-superadmin-app .btn-primary {
+    background: var(--main-color);
+    color: #fff;
+    border-color: var(--main-color);
+}
+
+.tcf-superadmin-app .btn-primary:hover {
+    background: var(--hover-color);
+    border-color: var(--hover-color);
+}
+
+.tcf-superadmin-app .btn-outline {
+    background: transparent;
+    border-color: var(--border-color);
+    color: var(--text-color);
+}
+
+.tcf-superadmin-app .btn-outline:hover {
+    background: var(--background-color);
+}
+
+.tcf-superadmin-app .btn-sm {
+    padding: 0.35rem 0.65rem;
+    font-size: 0.78rem;
+}
+
+.tcf-superadmin-app .btn-danger-outline {
+    border-color: rgba(211, 13, 13, 0.45);
+    color: var(--main-color);
+}
+
+.tcf-superadmin-app .btn-danger-outline:hover {
+    background: rgba(211, 13, 13, 0.08);
+}
+
+.tcf-superadmin-app .file-upload input[type="file"] {
+    display: none;
+}
+
+.tcf-superadmin-app .upload-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1rem;
+    background: var(--sa-surface2);
+    border: 1px dashed var(--sa-border);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--sa-muted);
+}
+
+.tcf-superadmin-app .upload-label:hover {
+    border-color: var(--main-color);
+    color: var(--text-color);
+}
+
+.tcf-superadmin-app #video-form,
+.tcf-superadmin-app #channel-playlist-form,
+.tcf-superadmin-app #channel-post-form {
+    background: var(--sa-surface2);
+    border: 1px solid var(--sa-border);
+    border-radius: var(--sa-radius);
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+}
+
+.tcf-superadmin-app .tcf-thumb-preview-wrap {
+    margin-top: 0.65rem;
+    display: none;
+}
+
+.tcf-superadmin-app .tcf-thumb-preview-wrap.is-visible {
+    display: block;
+}
+
+.tcf-superadmin-app .tcf-thumb-preview-img {
+    max-width: 200px;
+    max-height: 150px;
+    border-radius: 8px;
+    border: 1px solid var(--sa-border);
+}
+
+.tcf-superadmin-app .tcf-video-preview-wrap {
+    margin-top: 0.65rem;
+    display: none;
+}
+
+.tcf-superadmin-app .tcf-video-preview-wrap.is-visible {
+    display: block;
+}
+
+.tcf-superadmin-app .tcf-video-preview-player {
+    max-width: 300px;
+    max-height: 200px;
+    border-radius: 8px;
+    background: #000;
+}
+
+.tcf-superadmin-app .tcf-channel-pl-checkboxes,
+.tcf-superadmin-app #channel-playlist-video-checkboxes {
+    max-height: 180px;
+    overflow-y: auto;
+    border: 1px solid var(--sa-border);
+    border-radius: 8px;
+    padding: 0.65rem 0.85rem;
+    background: var(--background-color);
+}
+
+.tcf-superadmin-app .tcf-form-hint {
+    margin: 0 0 0.5rem;
+    font-size: 0.8125rem;
+    color: var(--sa-muted);
+}
+
+/* Modals */
+.tcf-superadmin-app .modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 301000;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(20, 22, 34, 0.55);
+}
+
+.tcf-superadmin-app .modal.is-open {
+    display: flex;
+}
+
+.tcf-superadmin-app .modal-content {
+    background: var(--card-bg);
+    color: var(--text-color);
+    border: 1px solid var(--sa-border);
+    border-radius: var(--sa-radius);
+    padding: 1.5rem;
+    max-width: 480px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: var(--shadow);
+}
+
+.tcf-superadmin-app .modal-close {
+    position: absolute;
+    top: 0.75rem;
+    right: 1rem;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--sa-muted);
+    line-height: 1;
+    border: none;
+    background: none;
+}
+
+.tcf-superadmin-app .modal-close:hover {
+    color: var(--main-color);
+}
+
+.tcf-superadmin-app .modal-title {
+    margin: 0 0 1.25rem;
+    font-size: 1.15rem;
+    color: var(--text-color);
+}
+
+/* Chat */
+.tcf-superadmin-app .chat-users-wrap {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    min-width: 0;
+    background: var(--sa-surface2);
+    border: 1px solid var(--sa-border);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.tcf-superadmin-app .sa-chat-search-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 0.65rem;
+    border-bottom: 1px solid var(--sa-border);
+    background: var(--card-bg);
+    flex-shrink: 0;
+}
+
+.tcf-superadmin-app .sa-chat-search-wrap .bx-search {
+    font-size: 1.1rem;
+    color: var(--sa-muted);
+    flex-shrink: 0;
+}
+
+.tcf-superadmin-app .sa-chat-search-input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    font-size: 0.9rem;
+    color: var(--text-color);
+    padding: 0.35rem 0.25rem;
+    outline: none;
+}
+
+.tcf-superadmin-app .sa-chat-search-input::placeholder {
+    color: var(--sa-muted);
+}
+
+.tcf-superadmin-app .sa-chat-list-empty {
+    padding: 1rem 0.85rem;
+    font-size: 0.88rem;
+    line-height: 1.45;
+    color: var(--sa-muted);
+}
+
+.tcf-superadmin-app .chat-container {
+    display: grid;
+    grid-template-columns: minmax(240px, 32%) 1fr;
+    gap: 1rem;
+    align-items: stretch;
+    min-height: min(560px, calc(100vh - 280px));
+    min-height: min(560px, calc(100dvh - 280px));
+}
+
+.tcf-superadmin-app .chat-container > .chat-messages {
+    min-height: 0;
+}
+
+.tcf-superadmin-app .chat-users {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    max-height: none;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    -webkit-overflow-scrolling: touch;
+}
+
+.tcf-superadmin-app .sa-chat-back-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    margin: 0;
+    padding: 0;
+    flex-shrink: 0;
+    border: 0;
+    border-radius: 10px;
+    background: rgba(20, 22, 34, 0.06);
+    color: var(--text-color);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.tcf-superadmin-app .message-header-main {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    min-width: 0;
+    flex: 1;
+}
+
+.tcf-superadmin-app .message-header-main #current-user-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+    .tcf-superadmin-app .chat-container {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: min(480px, calc(100dvh - 260px));
+        gap: 0;
+        grid-template-columns: unset;
+        grid-template-rows: unset;
+    }
+
+    .tcf-superadmin-app .chat-container .chat-users-wrap {
+        flex: 1;
+        min-height: 0;
+        max-height: none;
+    }
+
+    .tcf-superadmin-app .chat-container .chat-messages {
+        display: none;
+        flex: 1;
+        flex-direction: column;
+        min-height: 0;
+        min-width: 0;
+    }
+
+    .tcf-superadmin-app .chat-container.sa-chat-mobile-conversation .chat-users-wrap {
+        display: none;
+    }
+
+    .tcf-superadmin-app .chat-container.sa-chat-mobile-conversation .chat-messages {
+        display: flex;
+    }
+
+    .tcf-superadmin-app .chat-container.sa-chat-mobile-conversation .sa-chat-back-btn {
+        display: inline-flex;
+    }
+
+    .tcf-superadmin-app .message-body {
+        flex: 1 !important;
+        min-height: 0 !important;
+        max-height: none !important;
+    }
+
+    .tcf-superadmin-app .message-footer {
+        flex-wrap: nowrap;
+        flex-shrink: 0;
+    }
+
+    .tcf-superadmin-app .message-input {
+        flex: 1 1 auto;
+        min-width: 0;
+        width: auto;
+        order: unset;
+    }
+
+    .tcf-superadmin-app .sa-chat-emoji-btn,
+    .tcf-superadmin-app .send-btn {
+        order: unset;
+        flex-shrink: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .tcf-superadmin-app .send-btn {
+        min-width: 44px;
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+}
+
+.tcf-superadmin-app .chat-user-item {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    text-align: left;
+    padding: 0.72rem 0.85rem;
+    border-bottom: 1px solid var(--sa-border);
+    cursor: pointer;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+}
+
+.tcf-superadmin-app .chat-user-item:hover,
+.tcf-superadmin-app .chat-user-item.is-active {
+    background: rgba(211, 13, 13, 0.1);
+}
+
+.tcf-superadmin-app .chat-user-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 1px solid var(--sa-border);
+    background: var(--background-color);
+    color: var(--text-color);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 34px;
+}
+
+.tcf-superadmin-app .chat-user-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.tcf-superadmin-app .chat-user-avatar-fallback {
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.tcf-superadmin-app .chat-user-info {
+    min-width: 0;
+    flex: 1;
+}
+
+.tcf-superadmin-app .chat-user-name {
+    font-weight: 700;
+    color: var(--sa-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tcf-superadmin-app .chat-user-status {
+    font-size: 0.8rem;
+    opacity: 0.88;
+    color: var(--sa-muted);
+}
+
+.tcf-superadmin-app .chat-user-preview {
+    margin-top: 0.18rem;
+    font-size: 0.8rem;
+    opacity: 0.9;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tcf-superadmin-app .chat-messages {
+    display: flex;
+    flex-direction: column;
+    background: var(--sa-surface2);
+    border: 1px solid var(--sa-border);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.tcf-superadmin-app .message-header {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--sa-border);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--card-bg);
+    flex-shrink: 0;
+    min-width: 0;
+}
+
+.tcf-superadmin-app .user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--sa-border);
+    background: var(--background-color);
+    color: var(--text-color);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    font-weight: 700;
+    flex: 0 0 36px;
+}
+
+.tcf-superadmin-app .user-avatar .chat-header-group-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.tcf-superadmin-app .sa-chat-group-settings-btn {
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.tcf-superadmin-app #current-user-name {
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    color: var(--text-color);
+}
+
+.tcf-superadmin-app .message-body {
+    flex: 1;
+    padding: 1rem;
+    overflow-y: auto;
+    min-height: 240px;
+    max-height: 360px;
+    background: var(--background-color);
+}
+
+.tcf-superadmin-app .chat-day-sep {
+    display: flex;
+    justify-content: center;
+    margin: 0.65rem 0 0.5rem;
+}
+
+.tcf-superadmin-app .chat-day-sep span {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-color);
+    opacity: 0.55;
+    background: var(--card-bg);
+    padding: 4px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow);
+}
+
+.tcf-superadmin-app .chat-bubble {
+    max-width: min(75%, 680px);
+    padding: 0.5rem 0.75rem 0.35rem;
+    border-radius: 14px;
+    margin-bottom: 0;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    color: var(--text-color);
+}
+
+.tcf-superadmin-app .chat-bubble--admin {
+    margin-left: 0;
+    background: rgba(211, 13, 13, 0.12);
+    border: 1px solid rgba(211, 13, 13, 0.28);
+    border-bottom-right-radius: 6px;
+}
+
+.tcf-superadmin-app .chat-bubble--user {
+    margin-right: 0;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-bottom-left-radius: 6px;
+}
+
+.tcf-superadmin-app .chat-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.55rem;
+    margin-bottom: 0.7rem;
+}
+
+.tcf-superadmin-app .chat-row--me {
+    justify-content: flex-end;
+}
+
+.tcf-superadmin-app .chat-row--other {
+    justify-content: flex-start;
+}
+
+.tcf-superadmin-app .chat-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--background-color);
+    border: 1px solid var(--sa-border);
+    flex: 0 0 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tcf-superadmin-app .chat-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.tcf-superadmin-app .chat-avatar-fallback {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-color);
+}
+
+.tcf-superadmin-app .chat-bubble-author {
+    font-size: 0.72rem;
+    font-weight: 700;
+    opacity: 0.75;
+    margin-bottom: 0.2rem;
+}
+
+.tcf-superadmin-app .chat-bubble-msg {
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.tcf-superadmin-app .chat-bubble-foot {
+    text-align: right;
+    margin-top: 0.15rem;
+    font-size: 0.65rem;
+    opacity: 0.55;
+}
+
+.tcf-superadmin-app .message-footer {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border-top: 1px solid var(--sa-border);
+    background: var(--card-bg);
+}
+
+.tcf-superadmin-app .sa-chat-emoji-btn {
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--card-bg);
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+.tcf-superadmin-app .sa-chat-emoji-popover {
+    position: absolute;
+    bottom: 100%;
+    left: 0.75rem;
+    margin-bottom: 6px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    padding: 8px;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 4px;
+    z-index: 30;
+    max-width: 280px;
+}
+
+.tcf-superadmin-app .sa-chat-emoji-popover[hidden] {
+    display: none !important;
+}
+
+.tcf-superadmin-app .sa-chat-emoji-popover button {
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 4px;
+    border-radius: 6px;
+}
+
+.tcf-superadmin-app .sa-chat-emoji-popover button:hover {
+    background: var(--background-color);
+}
+
+.tcf-superadmin-app .message-input {
+    flex: 1;
+    padding: 0.55rem 0.75rem;
+    border-radius: 8px;
+    border: 1px solid var(--sa-border);
+    background: var(--card-bg);
+    color: var(--text-color);
+}
+
+.tcf-superadmin-app .message-input::placeholder {
+    color: var(--sa-muted);
+}
+
+.tcf-superadmin-app .send-btn {
+    width: 44px;
+    border-radius: 8px;
+    border: none;
+    background: var(--main-color);
+    color: #fff;
+    cursor: pointer;
+}
+
+.tcf-superadmin-app .send-btn:hover {
+    background: var(--hover-color);
+}
+
+.tcf-superadmin-app .no-chat-selected {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--sa-muted);
+}
+
+/* Messages communautaires cards */
+.tcf-superadmin-app #messages .dashboard-section {
+    min-width: 0;
+    max-width: 100%;
+}
+
+.tcf-superadmin-app #messages-container {
+    min-width: 0;
+    max-width: 100%;
+}
+
+.tcf-superadmin-app .sa-msg-card {
+    background: var(--background-color);
+    color: var(--text-color);
+    border: 1px solid var(--sa-border);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 0.85rem;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.tcf-superadmin-app .sa-msg-card .sa-msg-subject {
+    margin: 0 0 0.35rem;
+    font-size: 0.95rem;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.tcf-superadmin-app .sa-msg-card .sa-msg-body {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--sa-muted);
+    max-width: 100%;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    /* Sans espaces : couper quand même pour rester dans la carte */
+    word-break: break-all;
+}
+
+.tcf-superadmin-app .sa-msg-card .sa-msg-meta {
+    margin-top: 0.35rem;
+    font-size: 0.75rem;
+    color: var(--sa-muted);
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.tcf-superadmin-app .sa-msg-actions {
+    margin-top: 0.65rem;
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Notifications panel */
+.tcf-superadmin-app .notifications-panel {
+    position: fixed;
+    top: 72px;
+    right: 1.5rem;
+    width: min(380px, calc(100vw - 2rem));
+    max-height: 70vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: var(--card-bg);
+    color: var(--text-color);
+    border: 1px solid var(--sa-border);
+    border-radius: var(--sa-radius);
+    box-shadow: var(--shadow);
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-8px);
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+.tcf-superadmin-app .notifications-panel.is-open {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+.tcf-superadmin-app .notifications-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--sa-border);
+}
+
+.tcf-superadmin-app .mark-all-read {
+    background: none;
+    border: none;
+    color: var(--main-color);
+    font-size: 0.75rem;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.tcf-superadmin-app #notifications-list {
+    overflow-y: auto;
+    max-height: 50vh;
+    padding: 0.5rem;
+}
+
+.tcf-superadmin-app .sa-notif-item {
+    padding: 0.65rem 0.75rem;
+    border-radius: 8px;
+    margin-bottom: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    border: 1px solid transparent;
+}
+
+.tcf-superadmin-app .sa-notif-item:hover {
+    background: var(--sa-surface2);
+}
+
+.tcf-superadmin-app .sa-notif-item--unread {
+    background: rgba(211, 13, 13, 0.06);
+    border-color: rgba(211, 13, 13, 0.2);
+}
+
+.tcf-superadmin-app .notifications {
+    position: relative;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 10px;
+}
+
+.tcf-superadmin-app .notifications:hover {
+    background: var(--sa-surface2);
+}
+
+.tcf-superadmin-app .notification-count {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: var(--main-color);
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Toast profil */
+.tcf-toast {
+    position: fixed;
+    top: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100500;
+    padding: 0.65rem 1.25rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+.tcf-toast--success {
+    background: #14532d;
+    color: #ecfdf5;
+}
+.tcf-toast--error {
+    background: #7f1d1d;
+    color: #fecaca;
+}
+
+/* Admin nav avatar — plus grand que la cloche (2.35rem) */
+.tcf-superadmin-app .admin-nav-avatar-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.95rem;
+    height: 2.95rem;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid var(--sa-nav-border);
+    box-sizing: border-box;
+}
+
+.tcf-superadmin-app .admin-nav-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.tcf-superadmin-app .admin-nav-avatar-fallback {
+    color: var(--sa-nav-muted);
+    font-size: 1.65rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+@media (max-width: 600px) {
+    .tcf-superadmin-app .admin-nav-avatar-wrap {
+        width: 2.65rem;
+        height: 2.65rem;
+    }
+
+    .tcf-superadmin-app .admin-nav-avatar-fallback {
+        font-size: 1.4rem;
+    }
+}
+
+/* User profile view modal */
+.tcf-superadmin-app .user-profile-view-body {
+    font-size: 0.9rem;
+}
+.tcf-superadmin-app .user-profile-view-avatar-wrap {
+    position: relative;
+    width: 72px;
+    height: 72px;
+    margin-bottom: 1rem;
+}
+.tcf-superadmin-app .user-profile-view-initials {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: #334155;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.25rem;
+}
+
+/* Mobile sidebar */
+@media (max-width: 900px) {
+    .tcf-superadmin-app .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.25s ease;
+        padding-bottom: calc(var(--tcf-sa-mobile-nav-h, 4.5rem) + env(safe-area-inset-bottom, 0px) + 1rem);
+    }
+    .tcf-superadmin-app .sidebar.is-mobile-open {
+        transform: translateX(0);
+    }
+    .tcf-superadmin-app .main-content {
+        margin-left: 0;
+    }
+}
+
+/* Video grid (existing classes preserved) */
+.video-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+    justify-items: start;
+    align-items: start;
+}
+.tcf-admin-video-card {
+    background: var(--sa-surface2);
+    border: 1px solid var(--sa-border);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 320px;
+    justify-self: start;
+}
+.tcf-admin-video-thumb {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    background: #020617;
+    cursor: pointer;
+    border: none;
+    padding: 0;
+    width: 100%;
+    display: block;
+    text-align: left;
+}
+.tcf-admin-video-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.tcf-admin-video-thumb .tcf-duration {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: rgba(0, 0, 0, 0.78);
+    color: #fff;
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-variant-numeric: tabular-nums;
+}
+.tcf-admin-video-thumb .tcf-play-ic {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.28);
+    color: #fff;
+    font-size: 3rem;
+    pointer-events: none;
+}
+.tcf-admin-video-body {
+    padding: 10px 12px 12px;
+    font-size: 14px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+.tcf-admin-video-body h4 {
+    margin: 0 0 8px;
+    font-size: 15px;
+    line-height: 1.3;
+    color: var(--sa-text);
+}
+.tcf-admin-video-meta {
+    margin: 0 0 8px;
+    font-size: 12px;
+    color: var(--sa-muted);
+}
+.tcf-admin-video-desc {
+    margin: 0 0 10px;
+    font-size: 13px;
+    color: var(--sa-muted);
+    line-height: 1.4;
+}
+.tcf-admin-video-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    margin-top: auto;
+}
+
+/* Boutons liste : icônes uniquement (accessibilité via aria-label) */
+.tcf-superadmin-app .sa-btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.25rem;
+    min-height: 2.25rem;
+    padding: 0 0.4rem;
+    box-sizing: border-box;
+}
+.tcf-superadmin-app .sa-btn-icon i {
+    font-size: 1.125rem;
+    line-height: 1;
+}
+
+/* Colonne actions : icônes alignées à droite (tableaux + cartes) */
+.tcf-superadmin-app .sa-th-actions,
+.tcf-superadmin-app .sa-th-photo {
+    text-align: center;
+}
+.tcf-superadmin-app .sa-th-actions {
+    text-align: right;
+}
+.tcf-superadmin-app .sa-table-actions {
+    text-align: right;
+    vertical-align: middle;
+    white-space: nowrap;
+    width: 1%;
+}
+.tcf-superadmin-app .sa-actions-row {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.35rem;
+}
+.tcf-superadmin-app .sa-actions-placeholder {
+    color: var(--sa-muted);
+    font-size: 12px;
+}
+.tcf-superadmin-app .sa-user-photo-cell {
+    width: 52px;
+    vertical-align: middle;
+    text-align: center;
+}
+.tcf-superadmin-app .sa-user-avatar-wrap {
+    display: inline-flex;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    overflow: hidden;
+    align-items: center;
+    justify-content: center;
+    background: var(--sa-border);
+    flex-shrink: 0;
+}
+.tcf-superadmin-app .sa-user-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.tcf-superadmin-app .sa-user-avatar-ph {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--sa-muted);
+    letter-spacing: -0.02em;
+}
+
+.tcf-superadmin-app .sa-msg-actions--end {
+    justify-content: flex-end;
+}
+
+.tcf-admin-video-empty {
+    color: var(--sa-muted);
+    padding: 2rem;
+    text-align: center;
+}
+
+.tcf-admin-video-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 10050;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    box-sizing: border-box;
+}
+
+.tcf-superadmin-app .tcf-admin-video-modal:not(.is-open) {
+    display: none !important;
+}
+
+.tcf-superadmin-app .tcf-admin-video-modal.is-open {
+    display: flex !important;
+}
+.tcf-admin-video-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    cursor: pointer;
+}
+.tcf-admin-video-modal__dialog {
+    position: relative;
+    z-index: 1;
+    background: var(--sa-surface);
+    border: 1px solid var(--sa-border);
+    border-radius: 12px;
+    padding: 16px;
+    max-width: min(920px, 100%);
+    width: 100%;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+.tcf-admin-video-modal__close {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    border: none;
+    background: transparent;
+    color: var(--sa-muted);
+    font-size: 28px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 4px 8px;
+}
+.tcf-admin-video-modal__close:hover {
+    color: #f1f5f9;
+}
+.tcf-admin-video-modal__title {
+    margin: 0 36px 12px 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--sa-text);
+}
+#admin-video-play-player {
+    width: 100%;
+    max-height: min(70vh, 520px);
+    border-radius: 8px;
+    background: #000;
+}
+
+#admin-vcm-player {
+    width: 100%;
+    max-height: min(42vh, 360px);
+    border-radius: 8px;
+    background: #000;
+    margin-bottom: 12px;
+}
+
+.sa-vcmodal__dialog {
+    max-width: min(720px, 100%) !important;
+    max-height: min(92vh, 900px);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.sa-vcmodal__threads {
+    flex: 1 1 auto;
+    min-height: 120px;
+    max-height: min(40vh, 420px);
+    overflow-y: auto;
+    margin-top: 8px;
+    padding-right: 4px;
+    font-size: 0.92rem;
+    line-height: 1.45;
+}
+
+.sa-vc-thread {
+    border: 1px solid var(--sa-border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    background: rgba(15, 23, 42, 0.35);
+}
+
+.sa-vc-thread.sa-vc-thread--highlight {
+    outline: 2px solid var(--main-color, #d30d0d);
+    outline-offset: 2px;
+}
+
+.sa-vc-root-meta {
+    font-size: 0.82rem;
+    color: var(--sa-muted);
+    margin-bottom: 6px;
+}
+
+.sa-vc-root-meta strong {
+    color: var(--sa-text);
+    font-weight: 600;
+}
+
+.sa-vc-reply-line {
+    margin: 8px 0 0 12px;
+    padding-left: 10px;
+    border-left: 2px solid var(--sa-border);
+    font-size: 0.88rem;
+    color: var(--sa-muted);
+}
+
+.sa-vc-reply-line strong {
+    color: var(--sa-text);
+}
+
+.sa-vc-reply {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.sa-vc-reply .sa-vc-reply-ta {
+    font-size: 0.88rem;
+    min-height: 52px;
+}
+
+#testimonials-admin-table tr.sa-testimonial-highlight {
+    outline: 2px solid var(--main-color, #d30d0d);
+    outline-offset: 2px;
+    transition: outline 0.2s ease;
+}
+
+/* Toast admin uniquement — ne pas utiliser la classe générique .notification (collision avec d’autres pages) */
+#notification-toast.tcf-admin-toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 10060;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px;
+    background: #14532d;
+    color: #ecfdf5;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    opacity: 0;
+    transform: translateY(12px);
+    pointer-events: none;
+    transition: opacity 0.25s, transform 0.25s;
+}
+#notification-toast.tcf-admin-toast.show {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+/*
+ * Notifications admin : la page superAdmin ne charge pas style_tcf.css — il faut
+ * position: fixed + affichage explicite de l’overlay, sinon le panneau ne se voit pas.
+ */
+body.tcf-superadmin-app > .notification-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: rgba(20, 22, 34, 0.45) !important;
+    z-index: 199000 !important;
+}
+
+body.tcf-superadmin-app > .notification-overlay:not(.active) {
+    display: none !important;
+    pointer-events: none !important;
+}
+
+body.tcf-superadmin-app > .notification-overlay.active {
+    display: block !important;
+    pointer-events: auto !important;
+}
+
+body.tcf-superadmin-app > .notification-page {
+    position: fixed !important;
+    top: 0 !important;
+    right: -420px !important;
+    left: auto !important;
+    width: min(420px, 92vw) !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    background: var(--sa-surface) !important;
+    border-left: 1px solid var(--sa-border);
+    box-shadow: -10px 0 28px rgba(0, 0, 0, 0.18);
+    transition: right 0.3s ease !important;
+    z-index: 199100 !important;
+}
+
+body.tcf-superadmin-app > .notification-page.active {
+    right: 0 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+}
+
+body.tcf-superadmin-app .notification-page .notification-header {
+    background: var(--main-color, #d30d0d) !important;
+    color: #fff !important;
+    padding: 14px 16px 12px !important;
+}
+
+body.tcf-superadmin-app .notification-header__top h2 {
+    font-size: 1.55rem !important;
+    font-weight: 700 !important;
+}
+
+body.tcf-superadmin-app .notification-page .notification-header__mark-all {
+    margin-top: 8px !important;
+    text-align: center;
+}
+
+body.tcf-superadmin-app .notification-page .notification-header__mark-all .btn {
+    width: auto !important;
+    background: transparent !important;
+    border: 0 !important;
+    color: #fff !important;
+    font-size: 0.92rem !important;
+    font-weight: 500 !important;
+    text-decoration: none;
+    box-shadow: none !important;
+    padding: 2px 0 !important;
+}
+
+body.tcf-superadmin-app .notification-page .notification-content {
+    padding: 0 !important;
+    background: var(--sa-surface);
+}
+
+body.tcf-superadmin-app .notification-page .notification-item {
+    margin: 0 !important;
+    padding: 12px 14px !important;
+    border-bottom: 1px solid var(--sa-border) !important;
+    border-radius: 0 !important;
+    background: var(--sa-surface) !important;
+}
+
+body.tcf-superadmin-app .notification-page .notification-item.unread {
+    background: var(--sa-surface2) !important;
+}
+
+body.tcf-superadmin-app .notification-page .notification-item .notification-icon {
+    color: var(--main-color, #d30d0d) !important;
+    font-size: 1.15rem !important;
+    margin-top: 2px;
+}
+
+body.tcf-superadmin-app .notification-page .notification-title {
+    color: var(--sa-text);
+    font-size: 0.84rem;
+    font-weight: 700;
+}
+
+body.tcf-superadmin-app .notification-page .notification-desc {
+    color: var(--sa-muted);
+    font-size: 0.82rem;
+    line-height: 1.35;
+}
+
+body.tcf-superadmin-app .notification-page .notification-time {
+    color: var(--sa-muted);
+    font-size: 0.72rem;
+    opacity: 0.85;
+}
+
+/* Dans le panneau admin, on garde un rendu clean (pas de petit bouton par ligne). */
+body.tcf-superadmin-app .notification-page .notification-item form {
+    display: none !important;
+}
+
+/* --- Identité chaîne (admin) --- */
+.sa-branding-wrap .sa-branding-lead {
+    color: var(--sa-muted);
+    font-size: 0.95rem;
+    line-height: 1.55;
+    margin: 0 0 1.5rem;
+    max-width: 52rem;
+}
+
+.sa-branding-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 400px);
+    gap: 1.75rem;
+    align-items: start;
+}
+
+@media (max-width: 1100px) {
+    .sa-branding-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.sa-branding-form-card,
+.sa-branding-preview-card {
+    background: var(--sa-surface);
+    border: 1px solid var(--sa-border);
+    border-radius: 14px;
+    padding: 1.35rem 1.5rem;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+}
+
+.sa-branding-hint {
+    margin: 0.35rem 0 0;
+    font-size: 0.78rem;
+    color: var(--sa-muted);
+    line-height: 1.4;
+}
+
+.sa-branding-file-row {
+    margin-top: 0.5rem;
+}
+
+.sa-branding-preview-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--sa-muted);
+    margin-bottom: 0.75rem;
+}
+
+.sa-branding-preview-mock {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--sa-border);
+    background: var(--card-bg);
+}
+
+.sa-branding-preview-cover {
+    height: 120px;
+    background: linear-gradient(135deg, #141622 0%, #d30d0d 100%);
+    background-size: cover;
+    background-position: center;
+}
+
+.sa-branding-preview-body {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.85rem;
+    padding: 0 1rem 1rem;
+    margin-top: -40px;
+    position: relative;
+    flex-wrap: wrap;
+}
+
+.sa-branding-preview-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #fff;
+    box-shadow: var(--shadow);
+    background: var(--background-color);
+}
+
+.sa-branding-preview-text {
+    flex: 1;
+    min-width: 0;
+    padding-top: 42px;
+}
+
+.sa-branding-preview-text h3 {
+    margin: 0 0 0.35rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.sa-branding-preview-text h3 .bx {
+    color: var(--main-color);
+    font-size: 1.1rem;
+}
+
+.sa-branding-preview-text p {
+    margin: 0;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    color: var(--sa-muted);
+}
+
+html[data-sa-theme='light'] .tcf-superadmin-app .sa-branding-preview-mock {
+    background: var(--card-bg);
+}
+
+html[data-sa-theme='light'] .tcf-superadmin-app .sa-branding-preview-text h3 {
+    color: var(--text-color);
+}
+
+html[data-sa-theme='light'] .tcf-superadmin-app .sa-branding-preview-text p {
+    color: var(--sa-muted);
+}
+
+html[data-sa-theme='dark'] .tcf-superadmin-app .sa-branding-preview-mock {
+    background: var(--card-bg);
+    border-color: var(--sa-border);
+}
+
+html[data-sa-theme='dark'] .tcf-superadmin-app .sa-branding-preview-text h3 {
+    color: var(--sa-text);
+}
+
+html[data-sa-theme='dark'] .tcf-superadmin-app .sa-branding-preview-text p {
+    color: var(--sa-muted);
+}
+
+/* Recadrage identité chaîne (Cropper.js) */
+.sa-channel-crop-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 101200;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    box-sizing: border-box;
+}
+
+.sa-channel-crop-modal.is-open {
+    display: flex;
+}
+
+.sa-channel-crop-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.72);
+    cursor: pointer;
+}
+
+.sa-channel-crop-modal__dialog {
+    position: relative;
+    z-index: 1;
+    width: min(920px, 100%);
+    max-height: min(92vh, 880px);
+    background: var(--sa-surface);
+    border: 1px solid var(--sa-border);
+    border-radius: 14px;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
+    padding: 1.15rem 1.25rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    box-sizing: border-box;
+}
+
+.sa-channel-crop-modal__title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-color);
+}
+
+.sa-channel-crop-modal__hint {
+    margin: -0.25rem 0 0;
+    font-size: 0.8rem;
+    color: var(--sa-muted);
+    line-height: 1.4;
+}
+
+.sa-channel-crop-wrap {
+    flex: 1;
+    min-height: 0;
+    max-height: min(58vh, 520px);
+    background: #0f172a;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.sa-channel-crop-wrap img {
+    display: block;
+    max-width: 100%;
+}
+
+.sa-channel-crop-modal__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: flex-end;
+    padding-top: 0.25rem;
+}
+
+/* ——— Journal d’activité : timeline ——— */
+.sa-activity-page {
+    position: relative;
+}
+
+.sa-activity-day-head {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin: 1.75rem 0 0.85rem;
+}
+
+.sa-activity-day-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--main-color, #d30d0d), #f97316);
+    box-shadow: 0 0 0 4px rgba(211, 13, 13, 0.15);
+    flex-shrink: 0;
+}
+
+.sa-activity-timeline-rail {
+    display: grid;
+    grid-template-columns: 18px 1fr;
+    gap: 0 1rem;
+    align-items: stretch;
+    margin-left: 5px;
+}
+
+.sa-activity-timeline-line {
+    width: 3px;
+    margin: 0 auto;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(211, 13, 13, 0.35), rgba(148, 163, 184, 0.25));
+    min-height: 100%;
+}
+
+.sa-activity-day-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding-bottom: 0.5rem;
+}
+
+.sa-activity-card {
+    border-radius: 14px;
+    border: 1px solid var(--sa-border, #e2e8f0);
+    background: linear-gradient(145deg, var(--sa-surface, #fff) 0%, rgba(248, 250, 252, 0.92) 100%);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    display: grid;
+    grid-template-columns: 52px 1fr;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.sa-activity-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 32px rgba(15, 23, 42, 0.1);
+}
+
+.sa-activity-card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    background: rgba(211, 13, 13, 0.08);
+    color: var(--main-color, #d30d0d);
+}
+
+.sa-activity-stat-chip--subscription {
+    border-color: rgba(234, 179, 8, 0.45);
+    background: rgba(234, 179, 8, 0.1);
+}
+
+/* ——— Vidéos admin : vitrine 3D ——— */
+.sa-videos-showcase {
+    perspective: 1600px;
+}
+
+.sa-videos-orbit-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
+    gap: 2rem 1.5rem;
+    padding: 1.5rem 0 2.5rem;
+    transform-style: preserve-3d;
+}
+
+.sa-videos-3d-card {
+    position: relative;
+    transform-style: preserve-3d;
+    border-radius: 22px;
+    transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.45s ease;
+    will-change: transform;
+}
+
+.sa-videos-card-glow {
+    position: absolute;
+    inset: -20%;
+    border-radius: 28px;
+    background: radial-gradient(ellipse at 50% 30%, rgba(211, 13, 13, 0.22), transparent 62%);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 0;
+    transition: opacity 0.45s ease;
+}
+
+.sa-videos-3d-card:hover .sa-videos-card-glow {
+    opacity: 1;
+}
+
+.sa-videos-3d-card:hover {
+    transform: rotateX(7deg) rotateY(-10deg) translateZ(28px) scale(1.03);
+    box-shadow:
+        0 28px 56px -12px rgba(15, 23, 42, 0.45),
+        0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+        -12px 20px 40px rgba(211, 13, 13, 0.12);
+    z-index: 2;
+}
+
+.sa-videos-3d-card .tcf-admin-video-thumb {
+    position: relative;
+    z-index: 1;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+}
+
+.sa-videos-3d-card .tcf-admin-video-body {
+    position: relative;
+    z-index: 1;
+    margin-top: 0.65rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sa-videos-3d-card,
+    .sa-videos-3d-card:hover {
+        transition: none;
+        transform: none;
+    }
+}
+
+/* ——— Assistant création de groupe (messagerie admin) ——— */
+.sa-new-group-modal .modal-content.sa-new-group-modal__content {
+    max-width: min(920px, 96vw);
+    width: 100%;
+    max-height: min(92vh, 720px);
+    overflow: auto;
+}
+
+.sa-new-group-lead {
+    margin: 0 0 1rem;
+    font-size: 0.92rem;
+    color: var(--sa-muted, #64748b);
+    line-height: 1.5;
+}
+
+.sa-new-group-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.15fr;
+    gap: 1.25rem 1.5rem;
+    align-items: start;
+}
+
+@media (max-width: 880px) {
+    .sa-new-group-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.sa-new-group-col--settings .form-label,
+.sa-new-group-col--members .form-label {
+    margin-top: 0.65rem;
+}
+
+.sa-new-group-col--settings .form-label:first-child {
+    margin-top: 0;
+}
+
+.sa-new-group-email-row {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    align-items: stretch;
+}
+
+.sa-new-group-email-row .form-control {
+    flex: 1 1 200px;
+    min-width: 0;
+}
+
+.sa-new-group-check {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+    margin-top: 1rem;
+    font-size: 0.88rem;
+    line-height: 1.45;
+    cursor: pointer;
+}
+
+.sa-new-group-user-cards {
+    margin-top: 0.65rem;
+    max-height: 240px;
+    overflow: auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.5rem;
+    padding: 0.35rem;
+    border: 1px solid var(--sa-border, #e2e8f0);
+    border-radius: 12px;
+    background: var(--sa-surface-2, #f8fafc);
+}
+
+.sa-new-group-user-card {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    text-align: left;
+    padding: 0.55rem 0.6rem;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    background: var(--sa-surface, #fff);
+    cursor: pointer;
+    font: inherit;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.sa-new-group-user-card:hover {
+    border-color: rgba(211, 13, 13, 0.25);
+}
+
+.sa-new-group-user-card.is-on {
+    border-color: rgba(211, 13, 13, 0.55);
+    box-shadow: 0 4px 14px rgba(211, 13, 13, 0.12);
+}
+
+.sa-new-group-user-card-av {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(211, 13, 13, 0.12);
+    color: var(--main-color, #d30d0d);
+    font-weight: 800;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.sa-new-group-user-card-body {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.sa-new-group-user-card-body strong {
+    font-size: 0.82rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sa-new-group-user-card-body small {
+    font-size: 0.72rem;
+    color: var(--sa-muted, #64748b);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sa-new-group-user-card-tick {
+    margin-left: auto;
+    color: var(--main-color, #d30d0d);
+    opacity: 0;
+    font-size: 1.1rem;
+}
+
+.sa-new-group-user-card.is-on .sa-new-group-user-card-tick {
+    opacity: 1;
+}
+
+.sa-new-group-selected {
+    margin-top: 1rem;
+}
+
+.sa-new-group-selected-label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--sa-muted, #64748b);
+    margin-bottom: 0.45rem;
+}
+
+.sa-new-group-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    min-height: 2rem;
+}
+
+.sa-new-group-chips-empty {
+    font-size: 0.85rem;
+    color: var(--sa-muted, #94a3b8);
+}
+
+.sa-new-group-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.5rem 0.35rem 0.65rem;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.06);
+    border: 1px solid var(--sa-border, #e2e8f0);
+    font-size: 0.78rem;
+    max-width: 100%;
+}
+
+.sa-new-group-chip-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 280px;
+}
+
+.sa-new-group-chip-x {
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    padding: 0 0.15rem;
+    color: var(--sa-muted, #64748b);
+}
+
+.sa-new-group-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--sa-border, #e2e8f0);
+}
+
+.sa-new-group-cards-empty,
+.sa-new-group-cards-loading {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 1.25rem 0.5rem;
+    font-size: 0.88rem;
+    color: var(--sa-muted, #64748b);
+}
+
+/* ================================================================
+   Testimonials v2 — admin card grid + modal
+   ================================================================ */
+
+/* --- Stats bar --- */
+.sa-testi-stats {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+}
+.sa-testi-stat-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: var(--sa-surface, #fff);
+    border: 1px solid var(--sa-border, #e2e8f0);
+    border-radius: 12px;
+    padding: 0.9rem 1.2rem;
+    flex: 1;
+    min-width: 140px;
+}
+.sa-testi-stat-card > i {
+    font-size: 1.8rem;
+    color: var(--main-color, #d30d0d);
+    flex-shrink: 0;
+}
+.sa-testi-stat-card > div {
+    display: flex;
+    flex-direction: column;
+}
+.sa-testi-stat-val {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--sa-text, #1e293b);
+    line-height: 1;
+}
+.sa-testi-stat-lbl {
+    font-size: 0.78rem;
+    color: var(--sa-muted, #64748b);
+    margin-top: 0.2rem;
+}
+
+/* --- Toolbar --- */
+.sa-testi-toolbar {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+.sa-testi-search-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--sa-surface, #fff);
+    border: 1px solid var(--sa-border, #e2e8f0);
+    border-radius: 8px;
+    padding: 0.5rem 0.9rem;
+    flex: 1;
+    min-width: 220px;
+}
+.sa-testi-search-wrap i {
+    color: var(--sa-muted, #64748b);
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+.sa-testi-search-wrap input {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 0.92rem;
+    color: var(--sa-text, #1e293b);
+    width: 100%;
+}
+.sa-testi-select {
+    background: var(--sa-surface, #fff);
+    border: 1px solid var(--sa-border, #e2e8f0);
+    border-radius: 8px;
+    padding: 0.55rem 0.9rem;
+    font-size: 0.9rem;
+    color: var(--sa-text, #1e293b);
+    cursor: pointer;
+}
+
+/* --- Card grid --- */
+.sa-testi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+.sa-testi-loading,
+.sa-testi-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--sa-muted, #64748b);
+    font-size: 0.95rem;
+}
+.sa-testi-empty i {
+    font-size: 2.5rem;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+.sa-testi-empty--error { color: #b91c1c; }
+
+/* --- Individual card --- */
+.sa-testi-card {
+    background: var(--sa-surface, #fff);
+    border: 1px solid var(--sa-border, #e2e8f0);
+    border-radius: 14px;
+    padding: 1.1rem;
+    cursor: pointer;
+    transition: box-shadow 0.2s, transform 0.15s, border-color 0.2s;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    outline: none;
+}
+.sa-testi-card:hover,
+.sa-testi-card:focus {
+    box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+    border-color: var(--main-color, #d30d0d);
+}
+.sa-testi-card--highlight {
+    outline: 2px solid var(--main-color, #d30d0d);
+    outline-offset: 3px;
+    animation: sa-testi-pulse 1.2s ease 3;
+}
+@keyframes sa-testi-pulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(211,13,13,0); }
+    50%      { box-shadow: 0 0 0 6px rgba(211,13,13,0.22); }
+}
+
+.sa-testi-card__top {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+.sa-testi-card__avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+}
+.sa-testi-card__meta {
+    flex: 1;
+    min-width: 0;
+}
+.sa-testi-card__name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--sa-text, #1e293b);
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.sa-testi-card__stars {
+    margin-top: 0.2rem;
+    font-size: 0.85rem;
+}
+.sa-testi-star--full  { color: #f59e0b; }
+.sa-testi-star--empty { color: #d1d5db; }
+
+.sa-testi-card__del {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--sa-muted, #64748b);
+    font-size: 1rem;
+    padding: 4px;
+    border-radius: 6px;
+    line-height: 1;
+    transition: color 0.15s, background 0.15s;
+    flex-shrink: 0;
+}
+.sa-testi-card__del:hover { color: #b91c1c; background: #fef2f2; }
+
+.sa-testi-card__preview {
+    font-size: 0.88rem;
+    color: var(--sa-muted, #64748b);
+    line-height: 1.55;
+    margin: 0;
+    flex: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.sa-testi-card__footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.78rem;
+    color: var(--sa-muted, #64748b);
+    border-top: 1px solid var(--sa-border, #e2e8f0);
+    padding-top: 0.6rem;
+    margin-top: auto;
+}
+.sa-testi-card__date { display: flex; align-items: center; gap: 0.3rem; }
+.sa-testi-card__readmore {
+    color: var(--main-color, #d30d0d);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.1rem;
+}
+
+/* --- Result count --- */
+.sa-testi-result-count {
+    font-size: 0.82rem;
+    color: var(--sa-muted, #64748b);
+    margin: 0 0 0.5rem;
+}
+
+/* --- Modal overlay --- */
+.sa-testi-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10500;
+    background: rgba(0,0,0,0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    animation: sa-modal-fadein 0.18s ease;
+}
+.sa-testi-modal-overlay[hidden] { display: none; }
+@keyframes sa-modal-fadein {
+    from { opacity: 0; } to { opacity: 1; }
+}
+body.sa-testi-modal-open { overflow: hidden; }
+
+.sa-testi-modal-box {
+    background: var(--sa-surface, #fff);
+    border-radius: 18px;
+    width: 100%;
+    max-width: 520px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 2rem;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    animation: sa-modal-slidein 0.2s ease;
+}
+@keyframes sa-modal-slidein {
+    from { transform: translateY(20px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+}
+
+.sa-testi-modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: var(--sa-bg, #f8fafc);
+    border: 1px solid var(--sa-border, #e2e8f0);
+    border-radius: 50%;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.2rem;
+    color: var(--sa-muted, #64748b);
+    transition: background 0.15s, color 0.15s;
+}
+.sa-testi-modal-close:hover { background: #fef2f2; color: #b91c1c; }
+
+.sa-testi-modal-head {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+.sa-testi-modal-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+}
+.sa-testi-modal-author {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--sa-text, #1e293b);
+    margin: 0 0 0.2rem;
+}
+.sa-testi-modal-stars { font-size: 1rem; margin-bottom: 0.25rem; }
+.sa-testi-modal-date {
+    font-size: 0.8rem;
+    color: var(--sa-muted, #64748b);
+}
+
+.sa-testi-modal-body {
+    font-size: 0.97rem;
+    line-height: 1.75;
+    color: var(--sa-text, #1e293b);
+    background: var(--sa-bg, #f8fafc);
+    border-left: 4px solid var(--main-color, #d30d0d);
+    border-radius: 0 10px 10px 0;
+    padding: 1rem 1.2rem;
+    margin: 0 0 1.5rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.sa-testi-modal-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .sa-testi-stats { flex-direction: column; }
+    .sa-testi-grid  { grid-template-columns: 1fr; }
+    .sa-testi-modal-box { padding: 1.25rem; }
+}

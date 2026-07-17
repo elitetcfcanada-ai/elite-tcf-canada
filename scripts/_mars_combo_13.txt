@@ -1,0 +1,60 @@
+Combinaison 13
+Simulateur
+1
+Tâche 1
+Message court •
+60-120 mots •10 min
+
+Écrivez un message à votre ami(e) pour lui faire part de votre programme de déménagement vers votre nouveau logement, en demandant son aide ( date, lieu, programme)
+
+Masquer la correction
+Correction
+Objet : Mon déménagement samedi prochain
+
+Salut Karim,
+
+Je t’écris pour te parler de mon déménagement vers mon nouveau logement et pour te demander un petit coup de main. Je déménage le samedi 18 mai à Montréal, dans un appartement situé au 25, rue Beaubien, près du métro. Le programme est simple : à 8 h, je récupère le camion de location ; à 9 h, on commence à charger les cartons dans mon ancien studio ; vers 12 h, on fera une pause déjeuner ; puis, l’après-midi, on transportera les meubles et on les installera dans le nouvel appartement. Si tu es disponible, ton aide me serait vraiment très utile, surtout pour porter le canapé et les cartons lourds.
+
+À bientôt,
+
+AYOUB
+
+2
+Tâche 2
+Narration •
+120-150 mots •20 min
+
+Vous avez participé à un concours pour gagner un séjour de deux semaines dans votre ville préférée. Le thème de ce concours est “Mon artiste préféré“. Écrivez un article de blog pour parler de votre artiste préféré.
+
+Masquer la correction
+Correction
+[Mon artiste préféré]
+
+Bonjour à tous,
+
+L’an dernier, j’ai participé à un concours pour gagner deux semaines dans ma ville préférée, Montréal. Le thème était “Mon artiste préféré”, et j’ai tout de suite pensé à Stromae. Je l’ai découvert il y a quelques années avec ma sœur, un soir d’hiver, dans notre salon. À cette époque, j’écoutais souvent ses chansons, parce qu’elles étaient originales, profondes et pleines d’énergie.
+
+En 2023, j’ai eu la chance d’assister à son concert dans une grande salle au centre-ville, avec deux amis. L’ambiance était incroyable : les lumières étaient magnifiques, le public chantait fort, et tout le monde semblait heureux. Quand Stromae est arrivé sur scène, j’ai ressenti beaucoup d’émotion. Il a interprété mes chansons préférées, et j’ai été impressionné par sa voix et sa présence. Ce soir-là, j’ai vraiment compris pourquoi il était mon artiste préféré.
+
+À bientôt,
+
+AYOUB
+
+3
+Tâche 3
+Argumentation •
+120-180 mots •30 min
+
+Objets Connectés
+Les objets connectés facilitent notre vie quotidienne. Ce sont des objets ou des équipements pilotés à distance à l’aide d’un téléphone portable ou par Internet, comme le système de chauffage ou la fermeture des portes. De plus, avec une montre ou un bracelet connecté, toutes nos activités peuvent être analysées. Un logiciel va mesurer le nombre de nos pas pour nous inciter à faire davantage d’exercice. Un domaine où l’on comprend mieux leur utilité est celui de la surveillance de la santé. Certains objets agissent comme un carnet de santé, toujours prêts à vous rappeler un rendez-vous chez le médecin ou des médicaments à prendre.
+
+Il y aurait 50 milliards d’objets connectés dans le monde : l’alarme, le téléviseur, la caméra de surveillance, les volets, le détecteur de fumée, etc. Face à cette évolution, la question de la sécurité se pose. En effet, un pirate informatique peut prendre le contrôle d’un objet connecté en quelques minutes. Ou encore, un cambrioleur pourrait vérifier grâce aux caméras de surveillance connectées d’une habitation que les occupants sont absents. Il est aussi possible d’entrer dans le système connecté d’une voiture, et d’en prendre les commandes à distance.
+
+Masquer la correction
+Correction
+Les objets connectés dans la vie moderne
+
+Les objets connectés occupent une place croissante dans notre quotidien. Le premier document souligne leur utilité pour le confort, le suivi des activités et la santé. Cependant, le second met en garde contre des risques importants, notamment le piratage, la surveillance des habitants et la prise de contrôle de certains équipements. (49 mots)
+
+À mon avis, les objets connectés sont utiles, mais leur usage doit rester prudent. D'abord, ils offrent un vrai confort, car on peut gérer son logement plus facilement et suivre sa santé en temps réel. Ensuite, ils peuvent aider des personnes âgées ou malades à ne pas oublier un traitement. Par exemple, une montre connectée peut signaler une anomalie du rythme cardiaque et prévenir rapidement un proche. De plus, ces outils permettent parfois d'économiser de l'énergie grâce à un chauffage mieux réglé. Enfin, leurs avantages ne doivent pas faire oublier la sécurité. Si les utilisateurs choisissent des mots de passe solides et des systèmes fiables, les risques peuvent être limités. (119 mots)
+

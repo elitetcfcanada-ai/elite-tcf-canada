@@ -1,0 +1,488 @@
+{
+  "slug": "eo-expression-orale-octobre-2025",
+  "title": "Expression Orale Octobre 2025",
+  "subtitle": "Découvrez les nouveaux sujets de l'expression orale qui se répètent. Pratiquez sur ces thèmes afin d'obtenir de bonnes notes.",
+  "parts": [
+    {
+      "task_key": "tache2",
+      "part_number": 1,
+      "part_title": "Partie 1",
+      "subjects": [
+        {
+          "title": "Sujet 1",
+          "prompt": "Je suis votre collègue. Vous venez d’intégrer l’entreprise et vous voulez mieux la connaître. Vous souhaitez obtenir des détails sur l’organisation, l’ambiance, la cantine, etc.",
+          "correction": "1. Comment est organisée l’entreprise -\n2. Quels sont les horaires de travail habituels -\n3. Y a-t-il des réunions régulières -\n4. Comment décririez-vous l’ambiance entre collègues -\n5. L’entreprise est-elle plutôt formelle ou décontractée -\n6. Existe-t-il des activités ou événements pour les employés -\n7. La cantine est-elle bonne et abordable -\n8. Y a-t-il des options pour les personnes ayant des régimes spécifiques -\n9. Peut-on travailler à distance parfois -\n10. L’entreprise propose-t-elle des formations ou des cours internes -\n11. Comment se passent les pauses et le temps libre -\n12. Les managers sont-ils accessibles et ouverts aux questions -",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 2",
+          "prompt": "Je suis un(e) ami(e) et je vous propose de venir à une célébration. Vous êtes nouvellement arrivé(e) au Québec. Vous me demandez des précisions sur l’organisation (horaire, cadeau, habits, etc.).",
+          "correction": "1. À quelle heure commence la fête -\n2. Combien de temps dure la célébration -\n3. Où aura lieu la fête exactement -\n4. Y a-t-il un thème pour la fête -\n5. Que devrais-je apporter comme cadeau -\n6. Faut-il apporter quelque chose à manger ou à boire -\n7. Comment dois-je m’habiller pour la fête -\n8. Y aura-t-il des activités ou des jeux pendant la fête -\n9. Combien de personnes vont venir -\n10. Est-ce que je peux venir avec quelqu’un d’autre -\n11. Y aura-t-il de la musique ou des animations -\n12. Faut-il confirmer ma présence avant la fête -",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 3",
+          "prompt": "Je suis à la réception du club de sport près de chez vous. Vous souhaitez pratiquer une activité mais vous n’avez pas encore choisi. Vous me demandez des informations sur les sports disponibles (horaires, tarifs, équipement, etc.).",
+          "correction": "1. Quels sports proposez-vous -\n2. Quels sont les horaires pour chaque activité -\n3. Y a-t-il des cours pour débutants -\n4. Les cours sont-ils mixtes ou séparés -\n5. Quels sont les tarifs pour chaque sport -\n6. Faut-il réserver à l’avance -\n7. Quels équipements faut-il apporter soi-même -\n8. Fournissez-vous le matériel nécessaire -\n9. Y a-t-il des cours particuliers possibles -\n10. Les activités sont-elles adaptées à tous les âges -\n11. Comment s’inscrire pour une activité -\n12. Y a-t-il des réductions pour les étudiants ou familles -",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 4",
+          "prompt": "Je suis à la réception d’un musée. Vous voulez venir le découvrir avec vos amis. Vous me demandez des informations pour préparer la visite (horaires, tarifs, visites guidées, etc.).",
+          "correction": "1. Quelles sont les heures d’ouverture du musée -\n2. Quel est le prix d’entrée pour un adulte -\n3. Y a-t-il des tarifs réduits pour les étudiants ou enfants -\n4. Combien de temps dure en moyenne la visite -\n5. Peut-on réserver une visite guidée -\n6. Les visites guidées sont-elles en français seulement -\n7. Y a-t-il des expositions temporaires en ce moment -\n8. Peut-on prendre des photos dans le musée -\n9. Y a-t-il un café ou un restaurant à l’intérieur -\n10. Existe-t-il un vestiaire pour laisser ses affaires -\n11. Peut-on visiter le musée avec des animaux de compagnie -\n12. Y a-t-il un parking à proximité -",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 5",
+          "prompt": "Nous travaillons ensemble. Vous voulez organiser un week-end et je vous recommande une ville que je connais. Vous me demandez des informations (logement, restaurants, sites à découvrir, etc.).",
+          "correction": "1. Quelle ville me recommandez-vous -\n2. Quels sont les meilleurs hôtels ou hébergements -\n3. Y a-t-il des auberges ou logements économiques -\n4. Quels restaurants valent le détour -\n5. Quels plats typiques peut-on goûter là-bas -\n6. Quelles sont les attractions incontournables -\n7. Y a-t-il des musées ou monuments intéressants -\n8. Quels sont les bons endroits pour se promener -\n9. La ville est-elle facile à visiter à pied ou faut-il une voiture -\n10. Y a-t-il des événements ou festivals pendant le week-end -\n11. Quels sont les quartiers les plus agréables pour séjourner -\n12. Existe-t-il des activités adaptées pour les familles ou groupes d’amis -",
+          "icon_class": "bx bx-message-detail"
+        }
+      ]
+    },
+    {
+      "task_key": "tache2",
+      "part_number": 2,
+      "part_title": "Partie 2",
+      "subjects": [
+        {
+          "title": "Sujet 1",
+          "prompt": "Je suis un(e) ami(e) francophone. Vous devez préparer un article sur un film pour le journal de votre association culturelle. Vous cherchez des idées. Vous me posez des questions sur les films que j’ai aimés (endroit, genre, prix, etc.).",
+          "correction": "1. Quel film as-tu vu récemment et que tu as vraiment aimé -\n2. Où as-tu regardé ce film - Au cinéma ou à la maison -\n3. Quel était le genre du film -\n4. Combien as-tu payé pour aller le voir -\n5. Est-ce que tu me le recommandes - Pourquoi -\n6. Qui étaient les acteurs principaux -\n7. Qu’est-ce qui t’a le plus plu dans ce film -\n8. Le film était-il drôle, triste, ou plutôt émouvant -\n9. Est-ce qu’il y avait des effets spéciaux impressionnants -\n10. Quelle scène t’a le plus marqué -\n11. Est-ce que tu connais le réalisateur du film -\n12. Penses-tu que ce film serait intéressant pour notre journal culturel -",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 2",
+          "prompt": "Je travaille dans une agence de voyages. Vous voulez préparer des vacances. Vous venez me voir et vous me demandez des renseignements sur les lieux proposés (activités, visites, prix, etc.).",
+          "correction": "1. Quels sont les endroits que vous proposez pour les vacances -\n2. Quelles activités peut-on faire sur place -\n3. Y a-t-il des visites guidées incluses dans les séjours -\n4. Est-ce que vous proposez des formules tout compris -\n5. Quels sont les prix moyens pour une semaine -\n6. Avez-vous des réductions pour les familles ou les groupes -\n7. Est-ce que le transport est inclus dans le prix -\n8. Peut-on choisir l’hôtel soi-même -\n9. Proposez-vous des voyages culturels ou plutôt de détente -\n10. Y a-t-il des destinations adaptées aux enfants -\n11. Quels sont les documents nécessaires pour voyager -\n12. Est-ce qu’on peut réserver à l’avance et payer en plusieurs fois -",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 3",
+          "prompt": "Je suis votre voisin(e). Vous souhaitez organiser une rencontre conviviale entre habitants de l’immeuble. Vous me posez des questions pour avoir des idées (animations, invités, repas, etc.).",
+          "correction": "1. Que pensez-vous d’organiser une rencontre entre voisins -\n2. Préférez-vous que ce soit un déjeuner, un dîner ou juste un goûter -\n3. Faut-il prévoir un repas partagé où chacun apporte quelque chose -\n4. Quelles animations pourrions-nous proposer -\n5. Pensez-vous qu’il serait bien d’inviter un musicien ou un artiste -\n6. Préférez-vous une ambiance familiale ou plus festive -\n7. Aimeriez-vous qu’on organise des jeux pour les enfants -\n8. Selon vous, quel est le meilleur jour pour réunir les voisins -\n9. Faut-il louer une salle ou utiliser la cour de l’immeuble -\n10. Seriez-vous prêt(e) à aider pour l’organisation -\n11. Avez-vous déjà participé à ce genre de rencontre -\n12. Pensez-vous que ce type d’événement peut renforcer nos liens de voisinage -",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 4",
+          "prompt": "Je suis un(e) voisin(e). Vous vous êtes récemment installé(e) dans la ville et vous n’avez pas encore de relations. Vous me posez des questions pour savoir comment faire des connaissances.",
+          "correction": "1. Savez-vous où je peux rencontrer des personnes dans le quartier -\n2. Y a-t-il des associations culturelles ou sportives dans la ville -\n3. Est-ce que les habitants se retrouvent parfois dans un café ou un parc -\n4. Pensez-vous qu’il est utile de participer à des activités de bénévolat -\n5. Y a-t-il un marché local où l’on peut discuter avec des gens -\n6. Est-ce que la mairie organise des événements pour les nouveaux arrivants -\n7. Me conseillez-vous de m’inscrire à un club de sport -\n8. Comment font, en général, les nouveaux habitants pour s’intégrer ici -\n9. Est-ce facile de parler avec ses voisins dans l’immeuble -\n10. Y a-t-il des groupes sur les réseaux sociaux pour les habitants de la ville -\n11. Est-ce qu’il existe une bibliothèque ou un centre culturel actif -\n12. Selon vous, quelle est la meilleure façon de créer des liens dans cette ville -",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 5",
+          "prompt": "Vous souhaitez connaître le rythme professionnel au Canada. Vous me demandez des informations sur les heures de travail et les vacances. Puis, vous faites une comparaison avec votre pays.",
+          "correction": "1. Quelles sont les horaires de travail habituels au Canada -\n2. Combien d’heures travaille-t-on par semaine en moyenne -\n3. Y a-t-il des pauses pendant la journée de travail -\n4. Combien de jours de congés les employés ont-ils par an -\n5. Existe-t-il des jours fériés officiels en plus des vacances -\n6. Est-ce que les entreprises respectent toujours ces horaires -\n7. À quelle heure commence généralement la journée de travail -\n8. Y a-t-il une différence entre le secteur public et le secteur privé -\n9. Est-ce que les Canadiens travaillent souvent le week-end -\n10. Le rythme de travail est-il plus intense qu’en Europe -\n11. Est-ce que les congés sont mieux respectés qu’ailleurs -\n12. Par rapport à mon pays, pensez-vous que le Canada offre un meilleur équilibre entre travail et vie privée -",
+          "icon_class": "bx bx-message-detail"
+        }
+      ]
+    },
+    {
+      "task_key": "tache2",
+      "part_number": 3,
+      "part_title": "Partie 3",
+      "subjects": [
+        {
+          "title": "Sujet 1",
+          "prompt": "Je suis un(e) ami(e). J’ai regardé un film hier au cinéma. Vous souhaitez en connaître davantage et vous me demandez des informations (titre, genre, histoire, acteurs, etc.).",
+          "correction": "1. Quel est le titre du film que tu as vu -\n2. De quel genre est ce film -\n3. Peux-tu me résumer l’histoire -\n4. Qui sont les acteurs principaux -\n5. Le film était-il long -\n6. L’histoire était-elle facile à comprendre -\n7. As-tu aimé la fin du film -\n8. Le film était-il drôle ou triste -\n9. Le réalisateur est-il connu -\n10. Le film était-il adapté pour tous les âges -\n11. As-tu vu ce film en version originale ou doublée -\n12. Le recommanderais-tu à tes amis -",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 2",
+          "prompt": "Je suis un(e) ami(e). Je viens de rentrer d’un séjour de deux semaines au Canada. Vous partez bientôt et vous me demandez des renseignements pratiques (prix, habitants, repas, climat, transports, etc.).",
+          "correction": "1. Dans quelle ville as-tu passé ton séjour -\n2. Comment étaient les habitants -\n3. Quels étaient les prix là-bas pour les repas ou les transports -\n4. As-tu trouvé le logement facilement -\n5. Le climat était comment pendant ton séjour -\n6. As-tu visité des endroits touristiques -\n7. Quels plats as-tu goûtés -\n8. Le transport était-il pratique pour se déplacer -\n9. As-tu rencontré beaucoup de gens -\n10. Combien coûtent les sorties ou activités typiques là-bas -\n11. Quels conseils donnerais-tu pour un premier voyage au Canada -\n12. Y a-t-il quelque chose que tu aurais fait différemment -",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 3",
+          "prompt": "Je suis un(e) ami(e). Je viens de planifier un voyage à la montagne. Vous souhaitez en savoir plus et vous me demandez des informations (hébergement, coût, activités, saison, etc.).",
+          "correction": "1. Où se trouve exactement ce séjour à la montagne -\n2. Quel type de logement as-tu réservé -\n3. Combien coûte ce séjour environ -\n4. Quelles activités peut-on faire là-bas -\n5. Quelle est la meilleure saison pour y aller -\n6. Y a-t-il des randonnées ou des excursions à faire -\n7. Est-ce adapté pour les familles ou les enfants -\n8. Y a-t-il des restaurants ou repas inclus dans le séjour -\n9. Combien de temps dure le séjour idéal selon toi -\n10. Les chambres sont-elles confortables -\n11. Faut-il réserver longtemps à l’avance -\n12. Recommanderais-tu ce séjour à tes amis -",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 4",
+          "prompt": "Je suis un(e) collègue. J’ai eu un accident mineur. Vous venez me rendre visite et vous me demandez des détails sur l’événement (moment, endroit, circonstances, etc.).",
+          "correction": "1. Pouvez-vous me raconter ce qui s’est passé exactement -\n2. À quel moment l’accident est-il arrivé -\n3. Où cela s’est-il produit -\n4. Étiez-vous seul(e) à ce moment-là -\n5. Quelles circonstances ont provoqué l’accident -\n6. Avez-vous été blessé(e) -\n7. Avez-vous reçu des soins médicaux -\n8. Y avait-il quelqu’un pour vous aider sur le moment -\n9. L’accident a-t-il causé des dégâts matériels -\n10. Comment vous sentez-vous maintenant -\n11. Avez-vous signalé l’accident à votre responsable ou à la sécurité -\n12. Que feriez-vous différemment si cela se reproduisait -",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 5",
+          "prompt": "Vous venez d’arriver au Canada et vous souhaitez trouver un appartement. Vous me demandez des renseignements (type, procédures, quartier, etc.).",
+          "correction": "1. Quel type de logement recherchez-vous exactement -\n2. Dans quel quartier souhaitez-vous habiter -\n3. Quels sont vos critères principaux pour choisir un appartement -\n4. Quelles démarches avez-vous déjà effectuées -\n5. Savez-vous quelles pièces sont obligatoires dans le contrat de location -\n6. Avez-vous un budget précis pour le logement -\n7. Quels transports sont disponibles dans le quartier -\n8. Cherchez-vous un logement meublé ou vide -\n9. Combien de temps souhaitez-vous rester dans cet appartement -\n10. Avez-vous pensé aux charges et aux frais supplémentaires -\n11. Connaissez-vous les règles pour la location au Canada -\n12. Souhaitez-vous des conseils pour visiter les appartements -",
+          "icon_class": "bx bx-message-detail"
+        }
+      ]
+    },
+    {
+      "task_key": "tache2",
+      "part_number": 4,
+      "part_title": "Partie 4",
+      "subjects": [
+        {
+          "title": "Sujet 1",
+          "prompt": "Je suis votre collègue. Je participe à un club de jeux de société. Vous souhaitez en savoir plus et me demandez des renseignements (lieu, prix, heures, ambiance, etc.).",
+          "correction": "1. Où se situe exactement le club -\n2. À quelles heures se déroulent les rencontres -\n3. Y a-t-il une cotisation ou un tarif pour participer -\n4. Faut-il s’inscrire à l’avance pour chaque séance -\n5. Quel type de jeux proposez-vous -\n6. Les jeux sont-ils adaptés aux débutants -\n7. Combien de personnes participent généralement -\n8. L’ambiance est-elle plutôt calme ou conviviale -\n9. Est-ce que les repas ou boissons sont autorisés sur place -\n10. Y a-t-il un animateur ou c’est libre -\n11. Les membres peuvent-ils apporter leurs propres jeux -\n12. Peut-on venir seulement pour essayer avant de s’inscrire -",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 2",
+          "prompt": "Je suis votre collègue. Je prépare une soirée pour célébrer ma retraite et vous êtes invité(e). Vous voulez en savoir plus (date, lieu, invités, programme, etc.).",
+          "correction": "1. Quelle est la date exacte de la soirée -\n2. Où aura lieu la fête -\n3. À quelle heure devons-nous arriver -\n4. Combien de personnes seront présentes -\n5. Y aura-t-il un programme ou des animations prévues -\n6. Faut-il apporter quelque chose pour la soirée -\n7. Y aura-t-il un repas ou des boissons servies -\n8. L’événement est-il formel ou décontracté -\n9. Pouvons-nous venir avec un accompagnant -\n10. Faut-il confirmer notre présence à l’avance -\n11. La soirée sera-t-elle à l’intérieur ou en plein air -\n12. Y aura-t-il de la musique ou un DJ -",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 3",
+          "prompt": "Je suis un(e) voisin(e). J’organise des activités de jardinage dans le quartier. Vous êtes intéressé(e) et vous me demandez des informations (coût, organisation, activités proposées, etc.).",
+          "correction": "1. Quelles sont les activités proposées exactement -\n2. Où se déroulent les ateliers de jardinage -\n3. À quelle fréquence ont lieu ces activités -\n4. Y a-t-il un coût pour participer -\n5. Faut-il s’inscrire à l’avance -\n6. Les enfants peuvent-ils participer -\n7. Quels outils ou matériel faut-il apporter -\n8. Combien de personnes participent habituellement -\n9. L’activité est-elle encadrée par un spécialiste -\n10. Les ateliers sont-ils adaptés aux débutants -\n11. Y a-t-il un jardin spécifique pour chaque participant -\n12. Les plantes ou récoltes sont-elles offertes aux participants -",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 4",
+          "prompt": "Je suis employé(e) à la bibliothèque municipale. Vous voulez emprunter des documents et vous me posez des questions sur la procédure (durée, quantité autorisée, conditions, etc.).",
+          "correction": "1. Combien de documents peut-on emprunter à la fois -\n2. Quelle est la durée maximale de prêt -\n3. Faut-il avoir une carte de bibliothèque pour emprunter -\n4. Y a-t-il des frais de retard -\n5. Peut-on réserver des livres ou documents à l’avance -\n6. Les revues et magazines peuvent-ils être empruntés -\n7. Les documents numériques sont-ils disponibles pour prêt -\n8. Y a-t-il des sections pour enfants ou adolescents -\n9. La bibliothèque propose-t-elle des ateliers ou animations -\n10. Peut-on prolonger un prêt si nécessaire -\n11. Quels documents sont disponibles dans d’autres langues -\n12. Faut-il un justificatif de domicile pour s’inscrire -",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 5",
+          "prompt": "Je suis à la réception de la piscine municipale. Vous souhaitez prendre des leçons de natation et me demandez des renseignements (prix, horaires, accès, etc.).",
+          "correction": "1. Quels sont les horaires des cours de natation -\n2. Quel est le prix pour une séance ou un abonnement -\n3. Les cours sont-ils adaptés à tous les âges -\n4. Faut-il réserver sa place à l’avance -\n5. Combien de personnes participent à chaque cours -\n6. Y a-t-il différents niveaux pour débutants et avancés -\n7. Quels équipements faut-il apporter (maillot, bonnet, lunettes) -\n8. Les cours sont-ils encadrés par un maître-nageur qualifié -\n9. Peut-on prendre des cours particuliers -\n10. Y a-t-il des réductions pour les familles ou les étudiants -\n11. Quelle est la durée de chaque leçon -\n12. L’accès à la piscine est-il autorisé avant ou après le cours pour nager librement -",
+          "icon_class": "bx bx-message-detail"
+        }
+      ]
+    },
+    {
+      "task_key": "tache2",
+      "part_number": 5,
+      "part_title": "Partie 5",
+      "subjects": [
+        {
+          "title": "Sujet 1",
+          "prompt": "Je suis un(e) ami(e) et je m’en vais en vacances pour un moment. Je vous confie la surveillance de mon appartement durant ce temps. Vous me demandez des précisions (dates, choses à faire, instructions, etc.).",
+          "correction": "1. Tu pars à quelle date exactement -\n2. Et tu reviens quand -\n3. Quelles tâches aimerais-tu que je fasse pendant ton absence -\n4. Dois-je arroser les plantes et, si oui, combien de fois par semaine -\n5. Est-ce que tu veux que je récupère ton courrier ou tes colis -\n6. Y a-t-il des animaux à nourrir ou à surveiller -\n7. Dois-je vérifier les fenêtres et les portes chaque jour -\n8. Quelles sont les instructions en cas d’urgence, comme une fuite ou une panne -\n9. Dois-je utiliser certains appareils ou lumières pour donner l’impression que tu es là -\n10. Est-ce que tu veux que je nettoie un peu ou juste surveille -\n11. Y a-t-il des voisins ou amis que je devrais contacter en cas de problème -\n12. Où puis-je te joindre facilement si j’ai besoin de te parler -",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 2",
+          "prompt": "Je suis un(e) ami(e) et je me suis installé(e) au Québec il y a deux ans. Vous souhaitez vivre à l’étranger et vous me demandez des renseignements sur mon expérience (adaptation, obstacles, changements de mode de vie, etc.).",
+          "correction": "1. Comment s’est passée ton arrivée au Québec -\n2. As-tu eu des difficultés pour trouver un logement -\n3. Est-ce que la langue a été un obstacle pour toi -\n4. Comment as-tu trouvé l’adaptation à la culture locale -\n5. Quelles différences as-tu remarquées avec ton pays d’origine -\n6. Est-ce que la nourriture ou le climat t’ont posé des problèmes au début -\n7. Comment as-tu fait pour te faire des amis -\n8. Est-ce que le travail ou les études étaient faciles à trouver -\n9. Quels conseils donnerais-tu à quelqu’un qui veut s’installer là-bas -\n10. Est-ce que tu as changé certaines habitudes de vie depuis ton arrivée -\n11. Qu’est-ce que tu apprécies le plus au Québec -\n12. Y a-t-il quelque chose que tu regrettes ou que tu aurais aimé mieux préparer avant de partir -",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 3",
+          "prompt": "Je suis un(e) voisin(e) et j’enseigne le piano dans une école de musique du quartier. Vous souhaitez prendre des cours et vous me demandez des informations sur l’établissement (types de cours, prix, horaires, etc.).",
+          "correction": "1. Pourriez-vous me dire quels types de cours de piano vous proposez -\n2. Est-ce que les cours sont individuels ou en groupe -\n3. Quels sont les horaires disponibles pour les cours -\n4. Combien de temps dure chaque séance -\n5. Quel est le tarif pour un cours individuel par semaine -\n6. Est-ce que vous proposez des forfaits pour plusieurs séances -\n7. Les cours sont-ils adaptés aux débutants ou seulement aux élèves avancés -\n8. Quel âge minimum faut-il pour commencer les cours -\n9. Est-ce que vous fournissez le piano ou faut-il en avoir un à la maison -\n10. Y a-t-il des concerts ou des examens pour les élèves -\n11. Comment se déroule l’inscription aux cours -\n12. Acceptez-vous des élèves avec des horaires variables ou flexibles -",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 4",
+          "prompt": "Je suis un(e) voisin(e) et j’anime des activités sportives dans une association du quartier. Vous voulez rejoindre mes séances et vous me demandez des informations sur les entraînements (conditions, discipline, horaires, etc.).",
+          "correction": "1. Pourriez-vous m’expliquer quelles activités sportives vous proposez -\n2. Est-ce que les séances sont ouvertes à tous les niveaux -\n3. Quels sont les horaires et les jours des entraînements -\n4. Y a-t-il un âge minimum ou maximum pour participer -\n5. Est-ce qu’il faut s’inscrire à l’avance ou peut-on venir directement -\n6. Quel est le tarif pour participer aux séances -\n7. Est-ce que vous fournissez le matériel ou faut-il venir avec son propre équipement -\n8. Combien de personnes participent généralement à une séance -\n9. Y a-t-il un encadrement particulier pour les débutants -\n10. Est-ce que les activités se déroulent à l’intérieur ou en extérieur -\n11. Organisez-vous des événements ou compétitions pour les participants -\n12. Peut-on tester une séance avant de s’inscrire officiellement -",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 5",
+          "prompt": "Vous avez l’intention de découvrir une région du Québec. Vous venez à l’office du tourisme pour vous informer sur les options d’hébergement (catégories, localisation, tarifs, etc.). Je suis la personne qui vous renseigne.",
+          "correction": "1. Pourriez-vous me dire quelles catégories d’hébergement sont disponibles dans la région -\n2. Quels sont les tarifs moyens pour chaque type d’hébergement -\n3. Où sont situés les différents hébergements par rapport aux attractions principales -\n4. Est-ce que vous proposez des hôtels, des gîtes ou des auberges -\n5. Est-il possible de réserver directement depuis votre office du tourisme -\n6. Y a-t-il des options adaptées aux familles avec enfants -\n7. Quels hébergements offrent des services supplémentaires, comme le petit-déjeuner ou le wifi -\n8. Est-ce que certaines périodes de l’année sont plus chères que d’autres -\n9. Combien de temps à l’avance faut-il réserver pour être sûr d’avoir une place -\n10. Est-il possible de choisir des hébergements proches des transports en commun -\n11. Y a-t-il des hébergements recommandés pour les personnes à mobilité réduite -\n12. Pouvez-vous me fournir des brochures ou un guide avec toutes les options disponibles -",
+          "icon_class": "bx bx-message-detail"
+        }
+      ]
+    },
+    {
+      "task_key": "tache2",
+      "part_number": 6,
+      "part_title": "Partie 6",
+      "subjects": [
+        {
+          "title": "Sujet 1",
+          "prompt": "Je suis votre collègue de travail. J’aimerais trouver un partenaire pour faire du sport. Vous êtes curieux(se) et vous me demandez des précisions sur ce sport (genre d’activité, heures, niveau, etc.).",
+          "correction": "1. Quel type de sport faites-vous exactement -\n2. Depuis combien de temps pratiquez-vous ce sport -\n3. Est-ce un sport d’équipe ou individuel -\n4. Vous pratiquez ce sport en salle ou en plein air -\n5. À quelle fréquence faites-vous du sport chaque semaine -\n6. À quelles heures vous entraînez-vous d’habitude -\n7. Est-ce que le niveau est plutôt débutant ou avancé -\n8. Faut-il un équipement particulier pour participer -\n9. Où se déroulent généralement les séances -\n10. Y a-t-il des frais d’inscription ou c’est gratuit -\n11. Combien de personnes participent en général -\n12. Vous pensez que ce sport est accessible à tout le monde -",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 2",
+          "prompt": "Je suis un(e) voisin(e) et nos enfants sont copains. Je vous suggère que votre enfant nous accompagne pendant nos vacances. Vous me demandez des renseignements avant de dire oui (dates, destination, activités, etc.).",
+          "correction": "1. Où partez-vous exactement en vacances -\n2. Quelles sont les dates prévues pour le départ et le retour -\n3. Comment comptez-vous vous déplacer -\n4. Où allez-vous loger pendant les vacances -\n5. Combien de personnes partiront avec vous -\n6. Y aura-t-il d’autres enfants du même âge -\n7. Quelles activités prévoyez-vous pour les enfants -\n8. Est-ce qu’il y a une surveillance permanente -\n9. Quelle est la durée du séjour -\n10. Y a-t-il des frais à prévoir pour les parents -\n11. Mon enfant aura-t-il besoin d’apporter quelque chose de spécial -\n12. En cas de problème, comment puis-je vous joindre pendant le voyage -",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 3",
+          "prompt": "Je suis un(e) voisin(e) et je fais du bénévolat dans une association qui protège l’environnement. Vous êtes intéressé(e) par y participer et vous me demandez des précisions (activités, heures, membres, etc.).",
+          "correction": "1. Depuis quand existe votre association -\n2. Quel est exactement le but de votre association -\n3. Quelles sont les principales activités que vous organisez -\n4. À quelle fréquence les bénévoles se réunissent-ils -\n5. Les activités se déroulent plutôt en semaine ou le week-end -\n6. Faut-il avoir des compétences particulières pour participer -\n7. Combien de temps faut-il consacrer chaque semaine -\n8. Combien de membres font partie de l’association -\n9. Où se déroulent généralement les actions -\n10. Y a-t-il une cotisation à payer pour être membre -\n11. Est-ce qu’il y a des activités pour les familles ou les enfants -\n12. Comment puis-je m’inscrire ou vous rejoindre -",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 4",
+          "prompt": "Je suis employé(e) dans une agence de voyages spécialisée dans les excursions d’une journée. Vous souhaitez en savoir plus et vous me demandez des précisions (prix, programme, destinations, etc.).",
+          "correction": "1. Quelles sont les principales destinations que vous proposez -\n2. Les excursions durent combien d’heures environ -\n3. Le transport est-il inclus dans le prix -\n4. Combien coûte une excursion en moyenne -\n5. À quelle heure part-on généralement le matin -\n6. Quel type d’activités sont prévues pendant la journée -\n7. Le déjeuner est-il compris dans le tarif -\n8. Faut-il réserver à l’avance -\n9. Y a-t-il des réductions pour les familles ou les groupes -\n10. Combien de personnes participent habituellement -\n11. En cas de mauvais temps, l’excursion est-elle annulée -\n12. Est-ce qu’il y a un guide qui accompagne le groupe -",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 5",
+          "prompt": "Je suis employé(e) à la réception d’un musée. Vous voulez organiser une visite en famille et vous me demandez des précisions (horaires, expositions, tarifs, etc.).",
+          "correction": "1. Quels sont les horaires d’ouverture du musée -\n2. Quels jours êtes-vous ouverts -\n3. Quelles expositions sont présentées en ce moment -\n4. Y a-t-il une exposition spéciale pour les enfants -\n5. Combien coûte le billet d’entrée -\n6. Avez-vous des tarifs réduits pour les familles -\n7. Faut-il réserver à l’avance -\n8. Y a-t-il des visites guidées disponibles -\n9. Combien de temps dure en général la visite -\n10. Peut-on prendre des photos à l’intérieur -\n11. Y a-t-il une cafétéria ou un espace de repos dans le musée -\n12. Le musée est-il accessible pour les poussettes ou les personnes à mobilité réduite -",
+          "icon_class": "bx bx-message-detail"
+        }
+      ]
+    },
+    {
+      "task_key": "tache2",
+      "part_number": 7,
+      "part_title": "Partie 7",
+      "subjects": [
+        {
+          "title": "Sujet 1",
+          "prompt": "Je suis un(e) ami(e). Vous êtes récemment arrivé(e) dans ma ville. Vous cherchez à organiser une sortie économique et vous me demandez des renseignements (endroits, activités, transports, etc.).",
+          "correction": "1. Quels endroits intéressants puis-je visiter sans trop dépenser -\n2. Connais‑tu des parcs ou jardins gratuits à voir -\n3. Y a-t-il des musées ou expositions à tarif réduit -\n4. Quels cafés ou restaurants proposent des menus économiques -\n5. Peux‑tu me recommander des marchés ou foires sympas -\n6. Y a-t-il des activités gratuites ou peu coûteuses à faire en ville -\n7. Quels quartiers valent la peine d’être visités à pied -\n8. Quels sont les moyens de transport les moins chers pour se déplacer -\n9. Y a-t-il des événements ou festivals gratuits en ce moment -\n10. Connais‑tu des lieux où l’on peut faire du sport ou se détendre gratuitement -\n11. Quels endroits offrent de belles vues ou des points photo gratuits -\n12. Peux‑tu me donner des astuces pour profiter de la ville sans trop dépenser -",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 2",
+          "prompt": "Je suis un(e) voisin(e). Je dispose d’une maison de vacances en bord de mer que je propose à la location. Vous souhaitez en savoir plus et vous me demandez des précisions (aménagements, lieu, tarif, etc.).",
+          "correction": "1. Pourriez-vous me décrire la maison de vacances -\n2. Combien de chambres et de lits y a-t-il -\n3. Y a-t-il une cuisine équipée et des appareils électroménagers -\n4. Quels équipements extérieurs sont disponibles (terrasse, jardin, piscine, etc.) -\n5. La maison est-elle proche de la plage -\n6. Y a-t-il des commerces ou restaurants à proximité -\n7. Quelle est la capacité maximale d’accueil -\n8. Quel est le tarif par nuit ou par semaine -\n9. Faut-il prévoir un dépôt de garantie -\n10. Y a-t-il des frais supplémentaires (ménage, électricité, etc.) -\n11. Est-elle disponible à certaines périodes de l’année -\n12. Pouvez-vous me dire comment réserver la maison -",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 3",
+          "prompt": "Je suis employé(e) dans une boutique de mobilier. Vous désirez recevoir un meuble et vous me demandez des informations sur la livraison (coût, délai, moyen utilisé, etc.).",
+          "correction": "1. Pourriez-vous me préciser le coût de la livraison -\n2. Combien de temps faut-il pour recevoir le meuble -\n3. Quels moyens de transport utilisez-vous pour la livraison -\n4. Livrez-vous à domicile ou en point relais seulement -\n5. Y a-t-il un service de montage inclus ou en option -\n6. Quels sont les horaires de livraison possibles -\n7. Proposez-vous une assurance en cas de dommage pendant le transport -\n8. Faut-il payer à la commande ou à la livraison -\n9. Puis-je suivre la livraison en temps réel -\n10. Y a-t-il des restrictions selon la taille ou le poids du meuble -\n11. Que se passe-t-il si je ne suis pas chez moi lors de la livraison -\n12. Puis-je changer la date de livraison après la commande -",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 4",
+          "prompt": "Dans la salle d’attente, nous attendons le train qui a pris du retard et nous discutons un peu. Je vous parle de mon intérêt pour la montagne, et vous me demandez des détails (régions, randonnées, équipement, etc.).",
+          "correction": "1. Quelles régions de montagne préférez-vous visiter -\n2. Quelles randonnées recommandez-vous dans ces régions -\n3. Y a-t-il des sentiers adaptés aux débutants ou aux enfants -\n4. Quels équipements sont indispensables pour vos randonnées -\n5. Avez-vous déjà fait des randonnées plus difficiles ou techniques -\n6. Préférez-vous partir en été ou en hiver pour la montagne -\n7. Y a-t-il des refuges ou hébergements sur les sentiers -\n8. Quels paysages ou points de vue sont à ne pas manquer -\n9. Faut-il prévoir un guide pour certaines randonnées -\n10. Y a-t-il des activités autres que la randonnée à faire en montagne -\n11. Quels conseils donneriez-vous à quelqu’un qui débute en montagne -\n12. Y a-t-il des dangers particuliers à connaître avant de partir -",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 5",
+          "prompt": "Nous participons à une soirée et nous venons de faire connaissance. Je vous mentionne que je reviens tout juste d’un séjour, et vous me demandez des informations (période, endroits visités, avis, etc.).",
+          "correction": "1. Quand avez-vous effectué ce séjour -\n2. Dans quel pays ou quelle ville êtes-vous allé(e) -\n3. Quels endroits avez-vous visités pendant le séjour -\n4. Avez-vous essayé des activités particulières sur place -\n5. Quel moyen de transport avez-vous utilisé pour voyager -\n6. Avez-vous logé dans un hôtel, une location ou chez des amis -\n7. Quels plats ou spécialités locales avez-vous goûtés -\n8. Qu’est-ce que vous avez le plus apprécié pendant le séjour -\n9. Y a-t-il quelque chose que vous n’avez pas aimé ou que vous éviteriez -\n10. Recommanderiez-vous ce séjour à d’autres personnes -\n11. Combien de temps a duré votre séjour -\n12. Avez-vous pris beaucoup de photos ou de souvenirs à rapporter -",
+          "icon_class": "bx bx-message-detail"
+        }
+      ]
+    },
+    {
+      "task_key": "tache2",
+      "part_number": 8,
+      "part_title": "Partie 8",
+      "subjects": [
+        {
+          "title": "Sujet 1",
+          "prompt": "Je suis un(e) ami(e) francophone. Vous avez pour mission de préparer un article à propos d’un spectacle pour le bulletin de votre association culturelle francophone. Vous voulez trouver des idées et vous m’interrogez sur les spectacles que j’ai aimés (coût, type, lieu, etc.).",
+          "correction": "1. Dis-moi, quel a été le dernier spectacle que tu as vu -\n2. Tu te souviens où il avait lieu -\n3. Quel type de spectacle c’était (théâtre, concert, danse, etc.) -\n4. Est-ce que tu l’as aimé - Pourquoi -\n5. Combien coûtait le billet d’entrée -\n6. Est-ce que tu trouves que le prix en valait la peine -\n7. Le lieu du spectacle était-il grand ou plutôt intime -\n8. L’ambiance était comment, selon toi -\n9. Tu y es allé seul ou avec des amis -\n10. Est-ce que tu connais d’autres spectacles intéressants à venir -\n11. Quel genre de spectacle me conseillerais-tu d’aller voir -\n12. Si tu devais écrire un article sur ce spectacle, qu’est-ce que tu mettrais en avant -",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 2",
+          "prompt": "Je suis un(e) collègue et je connais bien la ville de Montréal. Vous allez y séjourner une semaine pour des raisons professionnelles. Vous me demandez des précisions sur les transports publics (heures, prix, organisation, etc.).",
+          "correction": "1. Pourriez-vous me dire quels sont les principaux moyens de transport à Montréal -\n2. Est-ce que les bus et le métro fonctionnent tard le soir -\n3. Savez-vous combien coûte un ticket de transport -\n4. Y a-t-il des abonnements pour une semaine -\n5. Où peut-on acheter les billets ou les cartes de transport -\n6. Est-ce que le métro dessert bien le centre-ville -\n7. Les transports sont-ils ponctuels en général -\n8. Faut-il valider le ticket à chaque trajet -\n9. Y a-t-il une application utile pour planifier les déplacements -\n10. Est-ce que les bus sont fréquents le week-end -\n11. Le métro est-il facile à utiliser pour quelqu’un qui ne connaît pas la ville -\n12. Auriez-vous des conseils pour se déplacer rapidement sans perdre de temps -",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 3",
+          "prompt": "Je suis votre enseignant de français. Notre école de langues met en place un jeu pour les étudiants. Vous me demandez des informations pour en savoir davantage sur son organisation (règles, prix, modalités, etc.).",
+          "correction": "1. Pourriez-vous m’expliquer en quoi consiste exactement le jeu -\n2. Quelles sont les règles principales à respecter -\n3. Est-ce que la participation est obligatoire ou facultative -\n4. Combien de temps dure le jeu -\n5. Faut-il former des équipes ou jouer individuellement -\n6. Y a-t-il des prix à gagner -\n7. Quels sont les critères pour être sélectionné ou gagner -\n8. Où se déroulera l’activité -\n9. Est-ce que le jeu aura lieu pendant les cours ou en dehors -\n10. Faut-il s’inscrire quelque part pour participer -\n11. Ce jeu a-t-il un objectif pédagogique particulier -\n12. Pourriez-vous me donner un exemple de défi ou d’épreuve du jeu -",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 4",
+          "prompt": "Je suis votre supérieur. Notre entreprise vous offre une opportunité de travail à l’étranger. Avant de prendre votre décision, vous désirez en savoir davantage. Vous m’interrogez sur les détails du poste (missions, salaire, bénéfices, etc.).",
+          "correction": "1. Pourriez-vous me préciser le pays où se trouve le poste -\n2. Quelles seront exactement mes missions sur place -\n3. Le poste est-il temporaire ou permanent -\n4. Quel serait le salaire proposé -\n5. Y a-t-il des avantages liés à ce poste (logement, transport, assurance, etc.) -\n6. Est-ce que je travaillerai avec une nouvelle équipe sur place -\n7. Quelle est la durée prévue pour cette mission -\n8. L’entreprise prend-elle en charge les frais de voyage -\n9. Y aura-t-il une formation avant le départ -\n10. Est-il possible de revenir au poste actuel après la mission -\n11. Quelles compétences particulières sont attendues pour ce poste -\n12. Quand devrais-je donner ma réponse définitive -",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 5",
+          "prompt": "Vous souhaitez faire une sortie ce soir, mais vous ne savez pas encore quoi faire. Nous en discutons entre amis et vous me posez des questions pour choisir une activité (endroit, transport, prix, etc.).",
+          "correction": "1. Avez-vous une idée d’endroit sympa où sortir ce soir -\n2. Préférez-vous un endroit calme ou plutôt animé -\n3. Est-ce que vous connaissez un bon restaurant ou café à proximité -\n4. Souhaitez-vous qu’on aille au cinéma -\n5. Avez-vous envie d’une activité en plein air -\n6. Quel budget souhaitez-vous mettre pour la soirée -\n7. Comment pourrions-nous nous y rendre, en bus ou en voiture -\n8. L’endroit est-il facile d’accès -\n9. À quelle heure voulez-vous sortir -\n10. Faut-il réserver à l’avance -\n11. Y a-t-il des événements particuliers ce soir en ville -\n12. Préférez-vous qu’on sorte en petit groupe ou avec plusieurs amis -",
+          "icon_class": "bx bx-message-detail"
+        }
+      ]
+    },
+    {
+      "task_key": "tache2",
+      "part_number": 9,
+      "part_title": "Partie 9",
+      "subjects": [
+        {
+          "title": "Sujet 1",
+          "prompt": "Je suis un(e) ami(e). Mon anniversaire arrive bientôt ; vous souhaitez organiser une fête et vous m’interrogez sur les détails (endroit, heures, invités, ambiance, etc.).",
+          "correction": "1. C’est quand exactement ton anniversaire -\n2. Où aimerais‑tu que la fête ait lieu -\n3. À quelle heure voudrais‑tu commencer et finir -\n4. Combien d’invités veux‑tu inviter -\n5. Préfères‑tu une fête à la maison ou dans un lieu spécial -\n6. Quel type d’ambiance veux‑tu (calme, festive, musicale) -\n7. Souhaites‑tu un thème pour la fête -\n8. Veux‑tu qu’on prépare des jeux ou des activités pendant la soirée -\n9. Quel style de musique aimerais‑tu avoir -\n10. Est-ce que tu veux un gâteau particulier ou des snacks spécifiques -\n11. Faut‑il prévoir un budget précis pour la fête -\n12. As‑tu besoin d’aide pour envoyer les invitations -",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 2",
+          "prompt": "Je suis un(e) ami(e). Je désire continuer mes études au Canada. Vous me demandez des informations pour en savoir plus sur mon projet (ville, spécialité, buts, etc.).",
+          "correction": "1. Dans quelle ville du Canada veux‑tu étudier -\n2. Quelle spécialité ou filière souhaites‑tu suivre -\n3. Pourquoi as‑tu choisi cette ville et cette spécialité -\n4. Combien de temps comptes‑tu rester là‑bas -\n5. As‑tu déjà trouvé une école ou une université -\n6. Quel est ton objectif principal avec ces études -\n7. Préfères‑tu étudier en anglais ou en français -\n8. As‑tu besoin d’aide pour les démarches administratives ou le visa -\n9. Connais‑tu déjà des gens qui vivent ou étudient au Canada -\n10. As‑tu réfléchi à ton logement sur place -\n11. Quel budget comptes‑tu prévoir pour ton séjour -\n12. Souhaites‑tu travailler en parallèle de tes études -",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 3",
+          "prompt": "Je suis un(e) ami(e). J’ai des objets lourds à transporter et aucun véhicule pour le faire. Vous me demandez des précisions pour m’aider à organiser cela (nature d'objets, distance, date, etc.).",
+          "correction": "1. Quels objets dois‑tu transporter exactement -\n2. Sont‑ils fragiles ou dangereux -\n3. Combien pèsent approximativement ces objets -\n4. Quelle distance faut‑il parcourir pour les transporter -\n5. As‑tu une date précise pour ce transport -\n6. Veux‑tu louer un véhicule ou trouver quelqu’un pour t’aider -\n7. As‑tu besoin de plusieurs personnes pour le déménagement -\n8. Est‑ce que les objets sont déjà emballés ou faut‑il les préparer -\n9. Le trajet est‑il en ville ou sur une route plus longue -\n10. Faut‑il faire plusieurs allers-retours ou tout transporter en une fois -\n11. As‑tu pensé à demander de l’aide à des amis ou à des professionnels -\n12. Veux‑tu que je t’aide à organiser le transport du début à la fin -",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 4",
+          "prompt": "Je suis un(e) voisin(e). Je peux vous recommander quelqu’un qui s’occupe des enfants à domicile. Vous souhaitez en savoir plus et me demandez des renseignements sur cette personne (prix, disponibilité, compétences, etc.).",
+          "correction": "1. Pourriez-vous me donner le nom de la personne -\n2. Depuis combien de temps travaille-t-elle dans ce domaine -\n3. Quelles sont ses compétences principales avec les enfants -\n4. Accepte-t-elle de s’occuper d’enfants de tous âges -\n5. Quels sont ses horaires de disponibilité -\n6. Est-elle disponible en soirée ou le week-end -\n7. Quel est le tarif pour ses services -\n8. Faut-il payer à l’heure ou à la journée -\n9. Dispose-t-elle de références ou de recommandations d’autres familles -\n10. Est-elle formée en premiers secours ou en sécurité des enfants -\n11. Fait-elle des activités éducatives ou récréatives avec les enfants -\n12. Pouvez-vous me dire si elle est flexible en cas de besoin exceptionnel -",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 5",
+          "prompt": "Je suis employé(e) à l’office de tourisme canadien. Vous voulez passer un week-end relaxant et vous me demandez des recommandations (sorties, endroits à découvrir, déplacements, etc.).",
+          "correction": "1. Pourriez-vous me conseiller des endroits incontournables à visiter -\n2. Quelles activités de détente me recommanderiez-vous pour un week-end -\n3. Quels sont les meilleurs restaurants ou cafés à découvrir -\n4. Y a-t-il des événements ou festivals ce week-end -\n5. Quels sont les moyens de transport les plus pratiques pour se déplacer -\n6. Pouvez-vous me recommander des endroits calmes pour se reposer -\n7. Y a-t-il des sites naturels ou parcs à ne pas manquer -\n8. Quels quartiers valent la peine d’être visités -\n9. Est-il préférable de réserver les activités à l’avance -\n10. Existe-t-il des visites guidées intéressantes pour découvrir la ville rapidement -\n11. Quelles précautions devrais-je prendre pour profiter pleinement de ce week-end -\n12. Pouvez-vous me suggérer un itinéraire idéal pour optimiser mon temps -",
+          "icon_class": "bx bx-message-detail"
+        }
+      ]
+    },
+    {
+      "task_key": "tache2",
+      "part_number": 10,
+      "part_title": "Partie 10",
+      "subjects": [
+        {
+          "title": "Sujet 1",
+          "prompt": "Je suis agent d’accueil dans un bureau d’information sur les associations de la ville. Vous voulez être bénévole dans une association de votre quartier. Vous me posez des questions (types, activités, publics, planning, etc.).",
+          "correction": "1. Pourriez-vous me dire quelles associations existent dans le quartier -\n2. Y a-t-il des associations qui recherchent actuellement des bénévoles -\n3. Quels types d’activités proposent ces associations -\n4. Est-ce qu’il y a des associations qui travaillent avec les enfants -\n5. Et d’autres plutôt orientées vers les personnes âgées -\n6. Faut-il avoir une expérience particulière pour être bénévole -\n7. Combien d’heures faut-il consacrer par semaine en général -\n8. Les bénévoles reçoivent-ils une formation avant de commencer -\n9. Est-ce possible de choisir ses horaires -\n10. Les activités se passent plutôt en semaine ou le week-end -\n11. Est-ce que je peux m’inscrire directement ici -\n12. Pourriez-vous me donner des contacts ou des brochures, s’il vous plaît -",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 2",
+          "prompt": "Je suis professeur de français. Vous venez d’arriver au Canada, vous voulez prendre des cours particuliers. Vous m’interrogez sur mon parcours professionnel (expérience, méthodes, tarifs, etc.).",
+          "correction": "1. Pourriez-vous me parler un peu de votre parcours professionnel -\n2. Depuis combien de temps enseignez-vous le français -\n3. Avez-vous déjà travaillé avec des apprenants étrangers -\n4. Quelles méthodes utilisez-vous pendant vos cours -\n5. Proposez-vous des cours individuels ou en petits groupes -\n6. Est-ce que vos cours se font en ligne ou en présentiel -\n7. Combien de temps dure une séance en général -\n8. Quels sont vos tarifs pour une heure de cours -\n9. Faut-il payer à l’avance ou après chaque séance -\n10. Fournissez-vous des supports de cours ou des exercices à la maison -\n11. Avez-vous des disponibilités en soirée ou le week-end -\n12. Est-ce possible de faire un premier cours d’essai -",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 3",
+          "prompt": "Je suis un(e) ami(e) canadien(ne). Je viens de passer des vacances formidables à la montagne. Vous voulez faire la même chose. Vous me posez des questions sur mon séjour (lieu, activités, hébergement, etc.).",
+          "correction": "1. Où est-ce que tu es parti en vacances à la montagne -\n2. C’était loin de chez toi -\n3. Tu y es resté combien de temps -\n4. Le paysage était comment -\n5. Quelles activités as-tu faites là-bas -\n6. Tu as fait du ski ou de la randonnée -\n7. Le temps était beau pendant ton séjour -\n8. Tu étais logé dans un hôtel ou un chalet -\n9. C’était cher comme séjour -\n10. Tu as goûté des plats typiques de la région -\n11. Est-ce que tu conseillerais ce lieu pour des vacances -\n12. Tu pourrais me donner le nom de l’endroit ou du logement -",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 4",
+          "prompt": "Je suis votre ami(e). Je prends des cours de théâtre toutes les semaines. Vous voulez vous inscrire à ces cours. Vous me posez des questions pour avoir des informations (tarifs, horaires, organisation, etc.).",
+          "correction": "1. Depuis combien de temps tu prends des cours de théâtre -\n2. Où est-ce que tu les suis -\n3. Les cours sont à quel moment de la semaine -\n4. Combien de temps dure chaque séance -\n5. Combien ça coûte par mois -\n6. Il faut s’inscrire pour l’année ou au mois -\n7. Le groupe est grand ou plutôt petit -\n8. Le professeur est sympa -\n9. On fait surtout des exercices ou des mises en scène -\n10. Faut-il avoir déjà de l’expérience en théâtre -\n11. Vous préparez parfois des spectacles -\n12. Tu penses que je pourrais m’y plaire aussi -",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 5",
+          "prompt": "Vous venez d’arriver au Québec. Je suis votre voisin(e). Je vous ai invité(e) à un apéritif de bienvenue. Pendant l’apéritif, vous me posez des questions pour avoir des informations sur la vie du quartier (voisins, services, activités, etc.).",
+          "correction": "1. Pour commencer, comment trouvez-vous le quartier -\n2. Est-ce un endroit plutôt calme ou animé -\n3. Les voisins sont-ils sympathiques -\n4. Est-ce que les gens se connaissent entre eux -\n5. Y a-t-il des commerces ou des services à proximité -\n6. Où se trouve le supermarché le plus proche -\n7. Est-ce qu’il y a une école ou une garderie dans le quartier -\n8. Les transports en commun sont-ils faciles d’accès -\n9. Connaissez-vous un bon médecin ou une pharmacie dans le coin -\n10. Y a-t-il des parcs ou des espaces verts pour se promener -\n11. Le quartier organise-t-il parfois des activités ou des fêtes -\n12. Auriez-vous un conseil pour bien s’intégrer ici -",
+          "icon_class": "bx bx-message-detail"
+        }
+      ]
+    },
+    {
+      "task_key": "tache3",
+      "part_number": 1,
+      "part_title": "Partie 1",
+      "subjects": [
+        {
+          "title": "Sujet 1",
+          "prompt": "La gentillesse permet toujours d’être entendu et respecté. Êtes-vous d’accord avec cette affirmation-",
+          "correction": "Introduction\nDans nos relations sociales, la manière dont nous communiquons joue un rôle essentiel. Certaines personnes estiment que la gentillesse est la clé pour être écouté et respecté, alors que d’autres considèrent qu’elle peut être perçue comme une faiblesse. Cette question mérite d’être analysée, car le respect et l’écoute ne dépendent pas uniquement de la politesse, mais aussi d’autres facteurs comme la fermeté, la clarté du discours et la position sociale. Pour ma part, je pense que la gentillesse est un atout important, mais qu’elle n’est pas toujours suffisante pour garantir le respect.\n⸻\nDéveloppement : arguments en faveur de la gentillesse\nTout d’abord, il est indéniable que la gentillesse facilite les relations humaines. Une personne bienveillante, polie et respectueuse inspire confiance. Dans un contexte professionnel par exemple, un manager qui s’exprime avec douceur et diplomatie favorise la coopération de son équipe et obtient de meilleurs résultats. La gentillesse contribue donc à créer une atmosphère sereine où chacun se sent valorisé, ce qui encourage l’écoute.\nEnsuite, la gentillesse reflète souvent une forme de maturité et d’intelligence émotionnelle. Savoir rester calme, même face à un désaccord, démontre une maîtrise de soi qui impressionne positivement les autres. De plus, une personne aimable attire naturellement le respect, car elle montre qu’elle ne cherche pas à dominer par la force, mais par la persuasion et la compréhension. Dans les relations amicales ou familiales, cette attitude consolide les liens et favorise une meilleure communication.",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 2",
+          "prompt": "On peut vivre heureux en étant célibataire. Êtes-vous d’accord -",
+          "correction": "Introduction\nLe bonheur est une notion universelle mais profondément subjective. Pour certains, il ne peut être pleinement atteint qu’à travers la vie de couple, en partageant son quotidien avec une personne aimée. Pour d’autres, le bonheur dépend avant tout de l’épanouissement personnel, et il est donc possible d’être heureux même en restant célibataire. Cette question mérite réflexion, car notre société valorise beaucoup la vie de couple, tout en laissant de plus en plus de place aux choix individuels. Pour ma part, je pense qu’il est tout à fait possible de trouver le bonheur dans le célibat, à condition de savoir s’épanouir autrement.\n⸻\nDéveloppement : les avantages du célibat\nTout d’abord, le célibat permet de jouir d’une grande liberté. Une personne célibataire peut organiser sa vie selon ses propres envies : choisir son lieu de résidence, consacrer son temps à ses passions, voyager quand elle le souhaite ou encore développer sa carrière professionnelle. Cette indépendance est une source de satisfaction, car elle évite les compromis et les conflits que l’on rencontre parfois dans la vie de couple.\nEnsuite, le célibat peut être une période de développement personnel. En vivant seul, on apprend à mieux se connaître, à gérer ses émotions et à devenir plus autonome. Cela peut renforcer l’estime de soi et offrir un sentiment de bonheur durable. Par exemple, beaucoup de personnes célibataires s’investissent dans des activités associatives, sportives ou culturelles, qui leur apportent un grand épanouissement.\n⸻\nNuance : les limites du célibat\nCependant, il est vrai que certaines personnes ressentent la solitude comme un fardeau. Les moments de joie partagée, la complicité et le soutien affectif qu’apporte un partenaire peuvent difficilement être remplacés. À long terme, le célibat peut être vécu comme un isolement, surtout si la personne ne dispose pas d’un cercle social solide. Cela montre que le bonheur ne dépend pas uniquement du fait d’être en couple ou célibataire, mais de la manière dont chacun remplit sa vie de sens et de relations sociales.\n⸻\nConclusion\nEn conclusion, je pense qu’il est tout à fait possible d’être heureux en restant célibataire, à condition d’apprendre à apprécier sa liberté et à s’épanouir par soi-même. Le bonheur ne se limite pas à la vie de couple, mais il résulte d’un équilibre entre épanouissement personnel, relations sociales et projets de vie. En somme, ce n’est pas le statut matrimonial qui détermine le bonheur, mais la capacité de chacun à construire sa propre vision d’une vie épanouie.",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 3",
+          "prompt": "Pensez-vous qu’il soit important de consacrer une journée aux droits des femmes- Pourquoi-",
+          "correction": "Introduction\nDans toutes les sociétés, la question des droits des femmes reste un sujet essentiel. Malgré les progrès réalisés au cours des dernières décennies, de nombreuses inégalités persistent encore aujourd’hui, que ce soit dans le domaine professionnel, politique ou social. C’est pourquoi une journée internationale dédiée aux droits des femmes existe. Certains considèrent qu’il s’agit d’une simple formalité symbolique, tandis que d’autres y voient une réelle nécessité pour sensibiliser et faire évoluer les mentalités. Pour ma part, je pense qu’il est fondamental de consacrer une telle journée, car elle joue un rôle majeur dans la défense de l’égalité.\n⸻\nDéveloppement : arguments en faveur de cette journée\nTout d’abord, une journée internationale permet de rappeler l’importance de l’égalité entre les sexes. Même si des lois protègent déjà les femmes, la réalité montre que beaucoup subissent encore des discriminations, comme l’écart salarial, le manque de représentation dans les postes de pouvoir ou encore les violences domestiques. En consacrant une journée à cette cause, les institutions, les associations et les médias mettent en lumière ces injustices et sensibilisent l’opinion publique.\nEnsuite, cette journée a une valeur éducative et symbolique. Elle permet aux jeunes générations de comprendre que les droits dont elles bénéficient aujourd’hui ont été obtenus grâce à des luttes passées. C’est aussi un moment de reconnaissance pour les femmes qui se battent quotidiennement pour faire progresser l’égalité. Par exemple, dans plusieurs pays, des conférences, débats et actions de solidarité sont organisés, ce qui encourage la réflexion et l’engagement citoyen.\n⸻\nNuance : ses limites\nCependant, il ne faut pas croire qu’une seule journée suffit à résoudre les problèmes. Les droits des femmes doivent être défendus et respectés tout au long de l’année. Le risque est que cette célébration devienne un simple rituel sans réel impact. C’est pourquoi il est nécessaire que cette journée soit accompagnée de mesures concrètes et durables, comme des lois plus strictes contre les violences ou des programmes de soutien à l’égalité professionnelle.\n⸻\nConclusion\nEn conclusion, dédier une journée aux droits des femmes est non seulement important, mais indispensable. Elle permet de sensibiliser la société, de rappeler les combats menés et de mobiliser les citoyens pour poursuivre les avancées. Toutefois, cette journée ne doit pas être perçue comme une fin en soi, mais comme un rappel constant que l’égalité entre les femmes et les hommes reste un objectif à atteindre. En somme, cette célébration a une valeur symbolique forte, mais elle doit s’accompagner d’actions réelles et continues pour construire une société plus juste.",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 4",
+          "prompt": "Regarder la télévision permet de s’instruire. Qu’en pensez-vous-",
+          "correction": "Introduction\nDe nos jours, la télévision occupe une place importante dans la vie quotidienne de millions de personnes. Longtemps considérée comme un simple outil de divertissement, elle est aussi perçue comme une source d’information et de culture. Mais peut-on vraiment apprendre de nouvelles choses en regardant la télévision - Certains pensent qu’elle constitue un excellent moyen d’éducation, tandis que d’autres la considèrent plutôt comme une distraction superficielle. Pour ma part, je suis convaincu que la télévision peut être un bon outil d’apprentissage, à condition de l’utiliser de manière sélective et réfléchie.\n⸻\nDéveloppement : les avantages éducatifs de la télévision\nTout d’abord, la télévision offre un accès facile et rapide à une grande variété de connaissances. Grâce aux documentaires, aux reportages et aux émissions culturelles, chacun peut découvrir de nouveaux sujets : l’histoire, les sciences, la nature, les arts ou encore les cultures étrangères. Par exemple, une émission scientifique vulgarisée permet de comprendre des notions complexes de façon simple et visuelle, ce qui rend l’apprentissage plus accessible.\nEnsuite, la télévision est un outil d’ouverture sur le monde. En suivant les informations internationales, les débats ou les reportages, le téléspectateur développe sa culture générale et sa compréhension des enjeux mondiaux. Cela constitue une forme d’éducation citoyenne, qui permet de mieux comprendre la société dans laquelle nous vivons et de s’y impliquer plus activement.\n⸻\nNuance : les limites de la télévision\nCependant, il faut reconnaître que la télévision ne garantit pas toujours un apprentissage de qualité. Certaines émissions privilégient le divertissement au détriment de l’information et véhiculent parfois des contenus simplistes, voire trompeurs. De plus, une consommation excessive de télévision peut réduire l’esprit critique et conduire à une passivité intellectuelle. C’est pourquoi il est nécessaire de choisir avec discernement les programmes que l’on regarde.\n⸻\nConclusion\nEn conclusion, la télévision peut effectivement être un excellent moyen d’apprendre de nouvelles choses, à condition de sélectionner soigneusement les programmes et de garder une attitude critique face aux informations reçues. Utilisée intelligemment, elle devient un outil éducatif précieux qui complète l’école, les livres et les nouvelles technologies. En somme, la télévision n’est pas seulement une source de distraction : elle peut aussi être un vecteur de savoir et de culture, si l’on en fait un usage modéré et réfléchi.",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 5",
+          "prompt": "Selon vous, aimer son métier est-il nécessaire pour réussir sa carrière professionnelle - Pourquoi-",
+          "correction": "Introduction\nLe travail occupe une grande partie de la vie d’un individu et joue un rôle déterminant dans son épanouissement personnel et social. Pour certains, réussir sa carrière professionnelle dépend avant tout de la passion et du plaisir que l’on éprouve dans son métier. Pour d’autres, l’amour du travail n’est pas une condition essentielle : la réussite peut aussi être liée à l’effort, à la discipline et aux opportunités. Cette question mérite réflexion, car chacun conçoit différemment le rapport entre bonheur au travail et succès professionnel. Pour ma part, je pense qu’aimer son travail constitue un atout majeur, mais qu’il n’est pas absolument indispensable pour réussir une carrière.\n⸻\nDéveloppement : les avantages d’aimer son travail\nTout d’abord, lorsqu’une personne aime son métier, elle s’y investit davantage. La motivation et la passion favorisent la créativité, la persévérance et la volonté d’aller plus loin. Par exemple, un enseignant passionné par sa matière transmettra mieux ses connaissances et aura plus de chances de progresser dans sa carrière. Ainsi, aimer son travail augmente non seulement la satisfaction personnelle, mais aussi la performance professionnelle.\nEnsuite, l’amour du travail aide à surmonter les difficultés. Les obstacles, les longues heures et les échecs sont inévitables dans toute carrière. Mais une personne qui apprécie vraiment son métier trouvera la force de continuer, car elle ne perçoit pas ses efforts comme des sacrifices, mais comme un investissement. Cet état d’esprit facilite la réussite à long terme.\n⸻\nNuance : réussir sans aimer son travail\nCependant, il serait exagéré d’affirmer qu’aimer son travail est indispensable. Beaucoup de personnes réussissent leur carrière sans éprouver de réelle passion, mais grâce à leur discipline, leur ambition ou leur recherche de sécurité financière. Parfois, les conditions matérielles, comme un bon salaire ou la stabilité d’emploi, suffisent à motiver une personne et à lui permettre d’atteindre ses objectifs professionnels. Ainsi, l’amour du travail n’est pas la seule clé du succès.\n⸻\nConclusion\nEn conclusion, aimer son travail est un facteur très important pour réussir sa carrière, car cela favorise la motivation, la persévérance et l’épanouissement. Toutefois, ce n’est pas une condition absolument indispensable, car d’autres éléments, comme la rigueur, les opportunités ou les avantages matériels, jouent également un rôle essentiel. Finalement, le véritable succès réside dans l’équilibre entre compétence, engagement et satisfaction personnelle, qu’elle provienne ou non d’une passion pour son métier.",
+          "icon_class": "bx bx-message-detail"
+        }
+      ]
+    },
+    {
+      "task_key": "tache3",
+      "part_number": 2,
+      "part_title": "Partie 2",
+      "subjects": [
+        {
+          "title": "Sujet 1",
+          "prompt": "De nos jours, on ne peut plus vivre sans Internet. Qu’en pensez-vous -",
+          "correction": "De nos jours, on ne peut plus vivre sans Internet. Qu’en pensez-vous -\nFranchement, je pense que cette affirmation est presque vraie. Aujourd’hui, Internet fait partie intégrante de notre quotidien. On l’utilise pour tout : communiquer, s’informer, travailler, faire des achats, étudier, ou même se divertir. Il suffit de regarder autour de nous : tout le monde a un téléphone connecté, une tablette, ou un ordinateur portable.\nD’un côté, Internet nous facilite énormément la vie. Par exemple, grâce aux applications de messagerie, on peut rester en contact avec sa famille même à des milliers de kilomètres. Pour les étudiants, c’est une source inépuisable d’informations et de ressources éducatives. Dans le monde professionnel aussi, c’est devenu indispensable : les entreprises recrutent, vendent, et communiquent en ligne. Sans Internet, beaucoup d’activités économiques seraient paralysées.\nMais d’un autre côté, il faut reconnaître que cette dépendance a aussi des effets négatifs. Beaucoup de gens passent des heures sur les réseaux sociaux, parfois sans réel objectif, ce qui peut entraîner une perte de temps et même une certaine forme d’isolement. En plus, l’exposition constante à Internet nous rend vulnérables : il y a les fausses informations, le piratage, ou encore les problèmes de confidentialité.\nPersonnellement, je pense qu’il est presque impossible de vivre totalement sans Internet aujourd’hui, surtout dans les grandes villes. Mais il est essentiel d’apprendre à l’utiliser de manière intelligente et équilibrée. Ce n’est pas Internet le problème, mais la façon dont on s’en sert.\nEn conclusion, Internet est un outil extraordinaire, à condition qu’il reste un moyen et non une dépendance. Il nous relie, nous instruit, et nous ouvre sur le monde, mais il faut savoir se déconnecter parfois pour garder un vrai contact avec la réalité.",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 2",
+          "prompt": "Est-ce que vous pensez que l’autorité est nécessaire dans l’éducation d’un enfant - Pourquoi -",
+          "correction": "Est-ce que vous pensez que l’autorité est nécessaire dans l’éducation d’un enfant - Pourquoi -\nÀ mon avis, oui, l’autorité est nécessaire dans l’éducation d’un enfant, mais pas n’importe quelle autorité. Il faut une autorité juste, bienveillante et cohérente. Sans repères, un enfant ne peut pas apprendre à distinguer le bien du mal, ni à comprendre les règles de la vie en société.\nTout d’abord, il faut dire que l’enfant a besoin de limites. C’est ce qui lui permet de se sentir en sécurité. Quand les parents imposent des règles claires, l’enfant comprend qu’il y a un cadre et des conséquences à ses actes. Cela l’aide à se responsabiliser. Par exemple, s’il comprend que s’il ne fait pas ses devoirs, il en subira les conséquences, il apprend la discipline.\nEnsuite, l’autorité ne signifie pas la violence ni la rigidité. Il ne s’agit pas de crier ou de punir constamment, mais de montrer l’exemple et d’expliquer le pourquoi des règles. Un parent autoritaire mais juste inspire le respect, tandis qu’un parent trop permissif risque d’élever un enfant sans repères.\nPar ailleurs, dans notre société moderne, certains parents ont peur d’imposer des limites, pensant qu’ils doivent être amis avec leurs enfants. Je ne suis pas d’accord. Être parent, c’est justement assumer un rôle d’accompagnateur, pas de copain. Sans autorité, les enfants risquent de devenir capricieux ou irrespectueux, ce qui leur posera des problèmes à l’école et plus tard dans la vie professionnelle.\nPour conclure, l’autorité est une forme d’amour. Elle n’est pas faite pour brimer, mais pour protéger et construire. Un enfant bien éduqué, c’est un futur adulte équilibré, respectueux et autonome.",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 3",
+          "prompt": "Les transports en commun devraient être gratuits pour tous dans les grandes villes, qu’en pensez-vous -",
+          "correction": "Les transports en commun devraient être gratuits pour tous dans les grandes villes, qu’en pensez-vous -\nC’est une idée très intéressante et de plus en plus discutée. Personnellement, je pense que rendre les transports en commun gratuits serait une mesure positive, mais elle doit être bien encadrée.\nTout d’abord, la gratuité encouragerait les gens à laisser leur voiture à la maison. Cela réduirait la pollution, les embouteillages et le stress quotidien. Par exemple, dans certaines villes européennes comme Tallinn ou Dunkerque, cette politique a permis de diminuer le trafic automobile et d’améliorer la qualité de l’air. C’est donc bénéfique pour l’environnement et pour la santé publique.\nEnsuite, ce serait aussi un avantage pour les personnes à faibles revenus. Beaucoup de gens dépensent une part importante de leur salaire dans les transports. Avec la gratuité, ils auraient plus de pouvoir d’achat, ce qui serait une forme de justice sociale.\nCependant, il faut aussi être réaliste : rien n’est jamais totalement gratuit. Quelqu’un doit payer. Si les transports deviennent gratuits, ce sont souvent les impôts locaux qui augmentent pour financer le service. Et si le système est mal géré, la qualité risque de baisser : moins de personnel, moins d’entretien, plus de retards.\nSelon moi, la meilleure solution serait une gratuité partielle : gratuite pour les étudiants, les retraités et les chômeurs, mais payante pour les autres, à un tarif raisonnable. Cela permettrait de garder un bon équilibre entre accessibilité et qualité du service.\nEn conclusion, oui, la gratuité des transports est une belle idée, mais elle demande une bonne organisation et un financement solide. L’objectif principal doit rester la réduction de la pollution et la facilitation de la mobilité urbaine.",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 4",
+          "prompt": "Pour rester en bonne santé, tout le monde devrait consommer des produits biologiques. Êtes-vous d’accord avec cette affirmation -",
+          "correction": "Pour rester en bonne santé, tout le monde devrait consommer des produits biologiques. Êtes-vous d’accord -\nJe suis plutôt d’accord, mais avec quelques réserves. Les produits biologiques sont sans aucun doute meilleurs pour la santé et pour l’environnement, mais ils ne sont pas toujours accessibles à tout le monde.\nCommençons par les avantages. Les produits bio sont cultivés sans pesticides ni engrais chimiques. Cela réduit les risques de maladies liées à la consommation de substances toxiques. En plus, leur production respecte mieux la nature : moins de pollution des sols et de l’eau, et une meilleure qualité nutritionnelle.\nCependant, tout le monde ne peut pas se permettre d’acheter bio. Les prix sont souvent plus élevés, parfois deux ou trois fois plus que les produits conventionnels. Pour une famille moyenne, c’est un vrai problème économique. De plus, certains produits affichés “bio” ne le sont pas toujours totalement : certaines grandes marques utilisent le label comme argument marketing.\nÀ mon avis, il faut encourager une alimentation plus saine, mais sans culpabiliser ceux qui ne peuvent pas acheter bio. L’essentiel, c’est de consommer des produits frais, locaux et de saison. Manger moins de produits industriels, cuisiner à la maison, et privilégier les marchés de producteurs, c’est déjà un grand pas vers une meilleure santé.\nEn conclusion, oui, le bio est une bonne chose, mais il doit devenir plus abordable et transparent. Ce n’est pas seulement une question d’alimentation, c’est un choix de société et de respect envers la nature.",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 5",
+          "prompt": "Pour réussir sa vie, faut-il avoir fait de longues études -",
+          "correction": "Pour réussir sa vie, faut-il avoir fait de longues études -\nJe ne pense pas que la réussite dans la vie dépende uniquement des études. Bien sûr, les diplômes peuvent ouvrir des portes, mais ils ne garantissent pas le succès ni le bonheur.\nD’un côté, il est vrai qu’une bonne formation donne plus de chances sur le marché du travail. Les longues études permettent d’obtenir des compétences solides et d’accéder à des postes mieux rémunérés. Dans certains domaines comme la médecine ou l’ingénierie, elles sont même indispensables.\nMais d’un autre côté, on connaît tous des exemples de personnes qui ont très bien réussi sans diplôme. Des entrepreneurs, des artistes ou des artisans talentueux ont construit leur réussite grâce à leur passion, leur créativité et leur persévérance.\nÀ mon avis, la réussite dépend davantage de la motivation, du travail et de la capacité à s’adapter. Dans le monde actuel, où tout évolue très vite, les compétences pratiques, le sens de l’innovation et la curiosité valent parfois plus qu’un long parcours universitaire.\nEnfin, il faut aussi redéfinir ce qu’on appelle “réussir sa vie”. Est-ce avoir beaucoup d’argent - Un poste prestigieux - Ou simplement être heureux et épanoui dans ce qu’on fait - Pour moi, réussir sa vie, c’est trouver un équilibre entre travail, famille et bien-être personnel.\nEn conclusion, les études sont utiles, mais elles ne sont qu’un moyen parmi d’autres. La vraie réussite, c’est de faire ce qu’on aime, avec passion et détermination.",
+          "icon_class": "bx bx-message-detail"
+        }
+      ]
+    },
+    {
+      "task_key": "tache3",
+      "part_number": 3,
+      "part_title": "Partie 3",
+      "subjects": [
+        {
+          "title": "Sujet 1",
+          "prompt": "C’est le rôle de l’État de financer les dépenses de santé des citoyens. Êtes-vous d’accord avec cette affirmation - Pourquoi -",
+          "correction": "C’est le rôle de l’État de financer les dépenses de santé des citoyens. Êtes-vous d’accord avec cette affirmation - Pourquoi -\nHonnêtement, je suis tout à fait d’accord avec cette affirmation. Selon moi, la santé est un droit fondamental, pas un privilège réservé à ceux qui ont les moyens. Dans une société moderne et solidaire, il est normal que l’État prenne en charge au moins une partie des dépenses de santé des citoyens.\nTout d’abord, la santé publique concerne tout le monde. Lorsqu’une personne est malade, elle ne met pas seulement sa propre santé en danger, mais aussi celle des autres. Par exemple, si quelqu’un ne peut pas se soigner faute d’argent, il risque de propager une maladie ou d’aggraver son état, ce qui finit par coûter encore plus cher à la société. C’est donc dans l’intérêt collectif que l’État intervienne pour garantir l’accès aux soins à tous.\nEnsuite, il faut comprendre que la santé est étroitement liée à la justice sociale. Dans de nombreux pays, les inégalités de revenus créent de vraies injustices dans l’accès aux soins. Les plus riches peuvent consulter les meilleurs médecins, alors que les plus pauvres repoussent leurs soins, faute de moyens. Si l’État ne finance pas les dépenses de santé, la société devient inégalitaire et injuste. Or, un État a pour mission de protéger les citoyens les plus vulnérables, surtout dans un domaine aussi essentiel que la santé.\nPar ailleurs, la prévention et le financement public ont des effets positifs sur l’économie. Quand les gens peuvent se soigner gratuitement ou à faible coût, ils restent en meilleure santé, donc plus productifs au travail. Un système de santé bien financé réduit aussi les arrêts maladie prolongés, les incapacités de travail et les hospitalisations évitables. Cela profite non seulement aux individus, mais aussi à l’économie nationale.\nPrenons l’exemple du Canada ou de la France. Ces pays ont un système de santé partiellement ou totalement financé par l’État. Résultat : les citoyens ont accès à des soins de qualité, et personne n’est exclu pour des raisons financières. Certes, ce système coûte cher à entretenir, mais il repose sur la solidarité nationale : chacun contribue selon ses moyens, et chacun reçoit selon ses besoins. C’est un modèle d’équité.\nCependant, certains pensent que ce n’est pas à l’État de payer pour tout. Ils estiment que la responsabilité individuelle doit aussi jouer un rôle, car si tout est gratuit, certaines personnes risquent d’abuser du système, en consultant pour des raisons mineures. Je comprends cet argument, mais je pense qu’il ne faut pas exagérer. La grande majorité des citoyens utilisent les soins de manière raisonnable, et l’État peut mettre en place des mécanismes de contrôle pour éviter les abus, comme le ticket modérateur ou la participation symbolique.\nEnfin, il ne faut pas oublier que la santé publique est un investissement à long terme. Un État en bonne santé, c’est un État plus fort, plus stable et plus prospère. Le financement des hôpitaux, des campagnes de vaccination, de la recherche médicale ou de la prévention des maladies est essentiel pour le développement durable d’un pays.\nEn conclusion, oui, c’est bien le rôle de l’État de financer les dépenses de santé. Ce n’est pas une charge, c’est une responsabilité morale et sociale. Une nation qui prend soin de ses citoyens protège son avenir.",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 2",
+          "prompt": "De nos jours, on ne peut plus vivre sans téléphone portable. Qu’en pensez-vous -",
+          "correction": "De nos jours, on ne peut plus vivre sans téléphone portable. Qu’en pensez-vous -\nFranchement, je pense que cette phrase reflète bien la réalité d’aujourd’hui. Le téléphone portable est devenu un outil indispensable dans notre vie quotidienne. On s’en sert pour tout : communiquer, travailler, s’informer, se divertir et même pour se repérer dans l’espace.\nD’un côté, il faut reconnaître les immenses avantages du téléphone portable. Il a révolutionné notre manière de communiquer. Avant, on devait attendre des jours pour recevoir une lettre, ou chercher une cabine téléphonique pour passer un appel. Aujourd’hui, on peut parler à quelqu’un à l’autre bout du monde en quelques secondes, envoyer des photos, des messages, ou même faire des visioconférences. Grâce à cette technologie, les distances n’existent plus.\nEn plus, le téléphone n’est plus un simple moyen de communication : c’est un véritable outil multifonction. On peut y consulter ses mails, suivre les actualités, écouter de la musique, regarder des films, faire des achats en ligne, ou encore gérer ses comptes bancaires. Il nous accompagne partout, du matin au soir. Pour beaucoup, c’est presque une extension de soi-même.\nDans le monde professionnel, le téléphone portable est devenu indispensable. Les entreprises utilisent les applications mobiles pour organiser des réunions, envoyer des documents ou gérer des équipes à distance. Sans téléphone, il serait aujourd’hui très difficile de travailler efficacement, surtout dans un monde globalisé et connecté.\nMais d’un autre côté, cette dépendance pose de vrais problèmes. Beaucoup de gens ne peuvent plus passer une heure sans consulter leur téléphone. Certains deviennent anxieux dès qu’ils ne reçoivent pas de message ou de notification. Cela crée une forme d’addiction numérique, qui nuit à la concentration, aux relations sociales et même à la santé mentale.\nPar exemple, il n’est pas rare de voir des familles entières réunies autour d’une table, mais chacun plongé dans son écran. Le téléphone, censé rapprocher les gens, peut parfois les isoler. De plus, l’exposition permanente aux écrans peut entraîner des troubles du sommeil, des douleurs cervicales et même une perte d’attention.\nÀ mon avis, le téléphone portable est un outil formidable, à condition d’en faire un usage raisonnable. Il ne faut pas le diaboliser, mais apprendre à poser des limites. Par exemple, éviter de l’utiliser à table, dans le lit ou pendant les moments de détente.\nEn conclusion, il est vrai qu’on ne peut plus vivre sans téléphone portable, mais cela ne veut pas dire qu’on doit en être esclave. C’est un outil qui doit nous servir, pas nous contrôler. Le vrai défi du monde moderne, c’est d’apprendre à se déconnecter pour mieux vivre connecté.",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 3",
+          "prompt": "Découvrir un nouveau pays, c’est aussi découvrir ses artistes. Êtes-vous d’accord avec cette affirmation -",
+          "correction": "Découvrir un nouveau pays, c’est aussi découvrir ses artistes. Êtes-vous d’accord avec cette affirmation -\nOui, je suis tout à fait d’accord avec cette affirmation. Découvrir un nouveau pays, ce n’est pas seulement visiter ses monuments, goûter sa cuisine ou admirer ses paysages. C’est aussi, et surtout, comprendre sa culture à travers ses artistes. L’art reflète l’âme d’un peuple, ses valeurs, ses émotions et son histoire.\nQuand on découvre les artistes d’un pays, on entre dans sa culture de manière beaucoup plus profonde. Par exemple, la musique traditionnelle raconte souvent les racines d’une nation. Écouter le flamenco en Espagne, le reggae en Jamaïque ou le gnawa au Maroc, c’est comprendre une partie de l’identité de ces peuples. Les artistes traduisent ce que les mots ne peuvent pas toujours exprimer : la joie, la douleur, la révolte ou l’amour d’un pays pour sa terre.\nLes peintres, les écrivains et les cinéastes jouent aussi un rôle essentiel dans cette découverte. Prenons le cinéma français : en regardant les films de Truffaut ou de Luc Besson, on découvre une certaine vision de la société, du romantisme et même de la politique française. De même, lire un roman québécois, c’est plonger dans la culture, le langage et l’humour propres au Québec.\nL’art permet aussi de dépasser les clichés. Quand on visite un pays sans connaître sa culture artistique, on risque de se limiter aux apparences : les lieux touristiques, les photos et les souvenirs. Mais les artistes nous montrent une autre facette du pays, parfois plus intime et plus authentique.\nEn outre, les artistes sont souvent le reflet des changements sociaux. Ils expriment les espoirs, les luttes et les rêves de leur génération. En découvrant leurs œuvres, on comprend mieux les défis auxquels la société fait face. Par exemple, la peinture mexicaine de Frida Kahlo ou les chansons de Miriam Makeba en Afrique du Sud nous racontent des histoires de résistance, de souffrance et de liberté.\nPour moi, voyager sans s’intéresser à la culture artistique, c’est un peu comme lire un livre en sautant la moitié des pages. On passe à côté de l’essentiel : l’émotion, la créativité, la sensibilité humaine.\nEn conclusion, découvrir les artistes d’un pays, c’est découvrir son âme. C’est une manière de voyager autrement, plus profondément, avec le cœur et l’esprit.",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 4",
+          "prompt": "D’après vous, est-ce une bonne idée de commencer la pratique d’un sport après 50 ans -",
+          "correction": "D’après vous, est-ce une bonne idée de commencer la pratique d’un sport après 50 ans -\nÀ mon avis, oui, c’est non seulement une bonne idée, mais c’est aussi une excellente décision de commencer un sport après 50 ans. Beaucoup de gens pensent qu’à cet âge, il est trop tard pour se mettre à l’activité physique, mais c’est une idée complètement fausse. Le sport, à tout âge, apporte des bienfaits physiques, mentaux et sociaux. Il suffit de choisir la bonne activité, adaptée à sa condition.\nD’abord, parlons de la santé physique. Après 50 ans, le corps commence naturellement à perdre de la masse musculaire, les os deviennent plus fragiles, et le métabolisme ralentit. En pratiquant un sport, même modéré, on peut ralentir ces effets du vieillissement. Par exemple, la marche rapide, le vélo, la natation ou le yoga sont excellents pour entretenir la mobilité, renforcer le cœur et améliorer la respiration. Ces activités permettent aussi de maintenir un poids équilibré, ce qui réduit le risque de maladies cardiovasculaires, de diabète ou d’hypertension.\nEn plus, le sport aide à renforcer le système immunitaire. Il améliore la circulation sanguine, favorise un meilleur sommeil et contribue à une bonne digestion. Bref, c’est une manière naturelle de rester en forme sans forcément prendre de médicaments. Et contrairement à ce qu’on croit, il n’est pas nécessaire de faire des efforts extrêmes : la régularité compte plus que l’intensité.\nMais les bienfaits ne sont pas seulement physiques. Le sport joue un rôle fondamental sur le moral et la santé mentale. À cet âge, beaucoup de personnes ressentent parfois un sentiment de solitude ou d’inutilité, surtout à la retraite. Pratiquer un sport permet de rompre l’isolement, de rencontrer d’autres personnes et de renforcer la confiance en soi. Les endorphines libérées pendant l’effort procurent une sensation de bien-être et aident à lutter contre le stress, l’anxiété et même la dépression.\nDe plus, le sport améliore la mémoire et la concentration. De nombreuses études montrent qu’une activité physique régulière stimule la circulation cérébrale, ce qui aide à préserver les fonctions cognitives. C’est une vraie prévention contre les maladies comme Alzheimer.\nCependant, il faut être réaliste : commencer un sport après 50 ans demande certaines précautions. Le corps n’a plus la même capacité de récupération qu’à 20 ou 30 ans. Il faut donc consulter un médecin avant de commencer, pour évaluer son état de santé et choisir une activité adaptée. Il est aussi important de progresser doucement, sans chercher à battre des records. Par exemple, commencer par 15 à 20 minutes de marche par jour, puis augmenter progressivement la durée et la fréquence.\nCertaines personnes craignent les blessures, mais ces risques sont minimes si l’on pratique correctement. Avec un bon échauffement, une hydratation suffisante et un suivi médical régulier, les avantages surpassent largement les inconvénients.\nD’un autre côté, il faut aussi souligner l’aspect social du sport. Participer à un club ou à un groupe d’activité physique permet de garder une vie sociale active. Cela donne un sentiment d’appartenance, de motivation et d’amitié. Par exemple, de nombreuses villes proposent aujourd’hui des programmes de remise en forme spécialement destinés aux seniors : gymnastique douce, aquagym, tai-chi, randonnée, danse ou pétanque. Ces activités ne demandent pas de performances, mais elles renforcent le lien social et la joie de vivre.\nLe sport après 50 ans, c’est aussi une manière de changer d’habitudes. Beaucoup de gens passent de longues années à travailler, souvent stressés ou fatigués. Une fois à la retraite, le sport devient une belle opportunité de prendre soin de soi, de redécouvrir son corps et d’adopter un mode de vie plus sain. On mange mieux, on dort mieux et on retrouve de l’énergie pour les activités quotidiennes.\nBien sûr, certaines personnes n’ont jamais été sportives et hésitent à commencer, par peur du ridicule ou de la douleur. Mais il n’y a pas d’âge pour apprendre. On peut toujours commencer doucement, à son rythme. Le plus important, c’est la régularité et le plaisir. Même une marche de 30 minutes par jour suffit à faire une grande différence.\nEn conclusion, je dirais que oui, il est non seulement bon mais essentiel de commencer un sport après 50 ans. C’est une décision qui prolonge la vie, améliore la santé et renforce le moral. Comme dit le proverbe, “il vaut mieux tard que jamais”. Le sport n’est pas réservé aux jeunes, il est pour tous ceux qui veulent vivre mieux, plus longtemps, et avec le sourire.",
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "title": "Sujet 5",
+          "prompt": "L’école offre-t-elle les mêmes chances à tous les élèves - Qu’en pensez-vous -",
+          "correction": "L’école offre-t-elle les mêmes chances à tous les élèves - Qu’en pensez-vous -\nC’est une question très importante, et je pense que la réponse est malheureusement non : l’école n’offre pas les mêmes chances à tous les élèves, même si elle essaie de le faire. En théorie, l’école devrait être un lieu d’égalité, où chacun peut réussir grâce à son travail et à ses efforts. Mais dans la réalité, beaucoup de facteurs extérieurs influencent les résultats scolaires : l’environnement familial, les conditions sociales, la qualité de l’enseignement et même la localisation de l’école.\nD’abord, parlons du milieu familial. Un enfant qui grandit dans une famille cultivée, où les parents lisent, discutent et encouragent l’apprentissage, part avec un grand avantage. Il a souvent un vocabulaire plus riche, une meilleure confiance en lui et un accès plus facile aux ressources éducatives comme les livres ou Internet. En revanche, un enfant issu d’un milieu défavorisé doit souvent faire face à des difficultés supplémentaires : manque de soutien à la maison, absence d’espace pour étudier, ou encore parents peu disponibles. Ces inégalités se répercutent naturellement sur les résultats scolaires.\nEnsuite, il y a la question des ressources matérielles et humaines. Toutes les écoles ne disposent pas des mêmes moyens. Certaines écoles, situées dans des quartiers aisés, ont des salles informatiques modernes, des laboratoires bien équipés, des activités culturelles variées et des enseignants expérimentés. D’autres, situées dans des zones rurales ou défavorisées, manquent de matériel, d’encadrement et parfois même de professeurs. Comment parler d’égalité des chances dans ces conditions -\nPar ailleurs, il faut aussi évoquer les différences individuelles. Tous les enfants n’apprennent pas au même rythme. Certains ont besoin de plus de temps ou d’une méthode différente. Malheureusement, le système scolaire est souvent trop rigide et ne tient pas assez compte des particularités de chaque élève. Ceux qui ont des difficultés se sentent vite découragés, tandis que ceux qui réussissent facilement prennent de l’avance.\nEn plus, la pression sociale et la peur de l’échec jouent un rôle important. Dans certaines familles, l’école est perçue comme le seul moyen de réussir sa vie, alors que dans d’autres, on accorde peu d’importance aux études. Ce décalage influence la motivation et la confiance des enfants.\nMalgré tout cela, il faut reconnaître que l’école fait des efforts pour réduire les inégalités. De nombreux pays mettent en place des programmes de soutien scolaire, des bourses, et des politiques d’intégration pour aider les élèves en difficulté. Les enseignants, dans la plupart des cas, font de leur mieux pour donner à chacun une chance de réussir. Mais le problème est structurel : tant que les inégalités sociales existeront, l’école ne pourra pas les corriger entièrement.\nUn autre point important est le rôle de la technologie. Aujourd’hui, Internet et les outils numériques peuvent aider à réduire les écarts. Grâce aux cours en ligne, aux tutoriels et aux plateformes éducatives, un élève motivé peut apprendre presque tout, même sans moyens. Mais encore faut-il avoir un ordinateur, une connexion stable et un environnement propice à l’étude. Là encore, les différences sociales créent une barrière.\nPour moi, l’école devrait avant tout être un lieu où chaque enfant découvre son potentiel, pas seulement un endroit où l’on apprend des matières. Elle devrait encourager la curiosité, la créativité et l’esprit critique. Or, trop souvent, le système évalue uniquement la mémoire et les notes. Les élèves qui ne rentrent pas dans ce cadre se sentent exclus, alors qu’ils peuvent avoir d’autres talents : artistiques, manuels ou relationnels.\nEn conclusion, l’école a pour mission de donner à tous les mêmes chances de réussir, mais elle n’y parvient pas complètement. Les inégalités sociales, économiques et culturelles restent trop fortes. Pour améliorer la situation, il faut investir davantage dans l’éducation, soutenir les enseignants et adapter les méthodes pédagogiques aux besoins de chaque élève. L’école doit rester un lieu d’espoir, où chacun, quel que soit son milieu, peut croire en son avenir.",
+          "icon_class": "bx bx-message-detail"
+        }
+      ]
+    }
+  ]
+}
