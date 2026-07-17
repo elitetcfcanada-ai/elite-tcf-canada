@@ -78,49 +78,29 @@ if (isset($_POST['register_start'])) {
     $password_hash = password_hash($password, PASSWORD_DEFAULT);
 
     try {
-        try {
-            $stmt = $pdo->prepare(
-                'INSERT INTO users (name, email, password, role, subscription_type, subscription_expires_at, status, avatar) VALUES (?, ?, ?, ?, ?, NULL, ?, NULL)'
-            );
-            $stmt->execute([$name, $email, $password_hash, 'user', 'free', 'active']);
-        } catch (Throwable $e) {
-            try {
-                $stmt = $pdo->prepare(
-                    "INSERT INTO users (name, email, password, role, subscription_type, status, created_at, avatar) VALUES (?, ?, ?, 'user', 'free', 'active', NOW(), NULL)"
-                );
-                $stmt->execute([$name, $email, $password_hash]);
-            } catch (Throwable $e2) {
-                $stmt = $pdo->prepare("INSERT INTO users (name, email, password, role, created_at, avatar) VALUES (?, ?, ?, 'user', NOW(), NULL)");
-                $stmt->execute([$name, $email, $password_hash]);
-            }
-        }
+        // Insertion simple et robuste compatible avec Hostinger
+        $stmt = $pdo->prepare(
+            "INSERT INTO users (name, email, password, role, subscription_type, status, created_at) VALUES (?, ?, ?, 'user', 'free', 'active', NOW())"
+        );
+        $stmt->execute([$name, $email, $password_hash]);
+        
         $user_id = (int) $pdo->lastInsertId();
         if ($user_id <= 0) {
-            throw new RuntimeException('lastInsertId invalide après inscription.');
+            throw new RuntimeException('Erreur lors de la création du compte.');
         }
-        try {
-            // Durcissement: même si le schéma impose une valeur par défaut, on force avatar à NULL.
-            $pdo->prepare('UPDATE users SET avatar = NULL WHERE id = ?')->execute([$user_id]);
-        } catch (Throwable $e) {
-        }
+        
+        // Récupérer l'utilisateur créé
         $stmt = $pdo->prepare('SELECT * FROM users WHERE id = ?');
         $stmt->execute([$user_id]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        if (!$user || (int) ($user['id'] ?? 0) !== $user_id) {
+        
+        if (!$user) {
             throw new RuntimeException('Impossible de charger le compte créé.');
         }
 
-        if (function_exists('tcf_registration_context')) {
-            $ctx = tcf_registration_context();
-            try {
-                $pdo->prepare('UPDATE users SET reg_country_code = ?, reg_country_name = ?, reg_traffic_source = ? WHERE id = ?')
-                    ->execute([$ctx['country_code'], $ctx['country_name'], $ctx['traffic'], $user_id]);
-            } catch (Throwable $e) {
-            }
-        }
-
         tcf_login_apply_session($user, $pdo);
-        $_SESSION['success'] = 'Bienvenue ! Votre compte a été créé.';
+        $_SESSION['success'] = 'Bienvenue ! Votre compte a été créé avec succès.';
+        
         $regNext = tcf_login_safe_next(isset($_POST['register_next']) ? (string) $_POST['register_next'] : null);
         if ($regNext !== null && ($user['role'] ?? '') === 'user') {
             header('Location: ' . site_href($regNext));
@@ -128,19 +108,20 @@ if (isset($_POST['register_start'])) {
         }
         header('Location: index.php');
         exit;
-    } catch (Throwable $e) {
-        if ($e instanceof PDOException) {
-            $code = isset($e->errorInfo[1]) ? (int) $e->errorInfo[1] : 0;
-            if ($code === 1062) {
-                $_SESSION['error'] = 'Cet email est déjà utilisé.';
-            } else {
-                error_log('TCF inscription: ' . $e->getMessage());
-                $_SESSION['error'] = "Impossible de finaliser l'inscription. Vérifiez vos informations ou réessayez plus tard.";
-            }
+        
+    } catch (PDOException $e) {
+        $code = isset($e->errorInfo[1]) ? (int) $e->errorInfo[1] : 0;
+        if ($code === 1062) {
+            $_SESSION['error'] = 'Cet email est déjà utilisé.';
         } else {
-            error_log('TCF inscription: ' . $e->getMessage());
-            $_SESSION['error'] = "Impossible de finaliser l'inscription.";
+            error_log('TCF inscription PDO: ' . $e->getMessage());
+            $_SESSION['error'] = "Erreur technique lors de l'inscription. Code: $code";
         }
+        header('Location: login.php');
+        exit;
+    } catch (Throwable $e) {
+        error_log('TCF inscription: ' . $e->getMessage());
+        $_SESSION['error'] = "Impossible de finaliser l'inscription: " . $e->getMessage();
         header('Location: login.php');
         exit;
     }
@@ -150,22 +131,46 @@ if (isset($_POST['register_start'])) {
 if (isset($_POST['login_start'])) {
     $email = trim((string) ($_POST['email'] ?? ''));
     $password = (string) ($_POST['password'] ?? '');
+    
     if ($email === '' || $password === '') {
         $_SESSION['error'] = 'Tous les champs sont obligatoires.';
         header('Location: login.php');
         exit;
     }
-    $stmt = $pdo->prepare('SELECT * FROM users WHERE email = ?');
-    $stmt->execute([$email]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
-    if (!$user || !password_verify($password, $user['password'])) {
-        $_SESSION['error'] = 'Email ou mot de passe incorrect.';
+    
+    try {
+        $stmt = $pdo->prepare('SELECT * FROM users WHERE email = ? LIMIT 1');
+        $stmt->execute([$email]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$user) {
+            $_SESSION['error'] = 'Email ou mot de passe incorrect.';
+            header('Location: login.php');
+            exit;
+        }
+        
+        if (!password_verify($password, $user['password'])) {
+            $_SESSION['error'] = 'Email ou mot de passe incorrect.';
+            header('Location: login.php');
+            exit;
+        }
+        
+        // Vérifier le statut du compte si la colonne existe
+        if (isset($user['status']) && $user['status'] === 'inactive') {
+            $_SESSION['error'] = 'Ce compte est désactivé. Contactez l\'administrateur.';
+            header('Location: login.php');
+            exit;
+        }
+
+        tcf_login_apply_session($user, $pdo);
+        tcf_login_redirect_logged_user($user, isset($_POST['login_next']) ? (string) $_POST['login_next'] : null);
+        
+    } catch (PDOException $e) {
+        error_log('TCF connexion PDO: ' . $e->getMessage());
+        $_SESSION['error'] = 'Erreur technique lors de la connexion. Veuillez réessayer.';
         header('Location: login.php');
         exit;
     }
-
-    tcf_login_apply_session($user, $pdo);
-    tcf_login_redirect_logged_user($user, isset($_POST['login_next']) ? (string) $_POST['login_next'] : null);
 }
 
 $tcf_flash_error = $_SESSION['error'] ?? null;
