@@ -110,6 +110,11 @@ function site_url(string $path = ''): string
     if ($host === '') {
         $host = 'localhost';
     }
+    
+    // Force HTTPS en production (Hostinger etc.) pour éviter les bugs de paiement Notch Pay
+    if ($host !== 'localhost' && strpos($host, '127.0.0.1') === false) {
+        $scheme = 'https';
+    }
 
     $href = $path !== '' ? site_href($path) : (tcf_base_uri() !== '' ? tcf_base_uri() : '/');
 
@@ -125,6 +130,12 @@ function tcf_uploads_relative_path(?string $stored): string
         return '';
     }
     $p = str_replace('\\', '/', trim($stored));
+    
+    // Fix pour les chemins locaux hardcodés en base de données (Hostinger)
+    if (preg_match('#^https?://(?:localhost|127\.0\.0\.1)(?::\d+)?(?:/[^/]+)*/?(uploads/.*)$#i', $p, $m)) {
+        $p = $m[1];
+    }
+    
     if (preg_match('#^https?://#i', $p)) {
         return $p;
     }
