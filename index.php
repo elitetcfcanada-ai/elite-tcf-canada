@@ -34,10 +34,10 @@ unset($_SESSION['contact_flash']);
     $tcf_brand_title = 'ELITE TCF CANADA — Préparation à l\'examen TCF Canada';
     include __DIR__ . '/includes/tcf_brand_head.php';
     ?>
-    <link rel="stylesheet" href="Assets/css/theme-vars.css">
-    <link rel="stylesheet" href="Assets/css/header_footer.css">
-    <link rel="stylesheet" href="Assets/css/tcf-brand-logo.css">
-    <link rel="stylesheet" href="Assets/css/style_tcf.css">
+    <link rel="stylesheet" href="<?php echo site_href('Assets/css/theme-vars.css'); ?>">
+    <link rel="stylesheet" href="<?php echo site_href('Assets/css/header_footer.css'); ?>">
+    <link rel="stylesheet" href="<?php echo site_href('Assets/css/tcf-brand-logo.css'); ?>">
+    <link rel="stylesheet" href="<?php echo site_href('Assets/css/style_tcf.css'); ?>">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/subscription_section.css')); ?>">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/services-section.css')); ?>">
     <link rel="stylesheet" href="https://unpkg.com/boxicons@latest/css/boxicons.min.css">
@@ -56,7 +56,7 @@ unset($_SESSION['contact_flash']);
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Montserrat:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="Assets/css/index-home-mobile.css">
+    <link rel="stylesheet" href="<?php echo site_href('Assets/css/index-home-mobile.css'); ?>">
     <title>ELITE TCF CANADA — Préparation à l'examen TCF Canada</title>
 </head>
 
@@ -76,7 +76,7 @@ unset($_SESSION['contact_flash']);
         <a href="support.php" class="info-button"><span></span>Plus d'Info</a>
         </div>
         <div class="image-gallery">
-            <img src="Assets/IMAGE/home/canada1.jpg" alt="TCF Canada" class="canada-image" width="280" height="280" fetchpriority="high" decoding="async">
+            <img src="<?php echo site_href('Assets/IMAGE/home/canada1.jpg'); ?>" alt="TCF Canada" class="canada-image" width="280" height="280" fetchpriority="high" decoding="async">
         </div>
     </div>
 </section>
@@ -92,7 +92,7 @@ unset($_SESSION['contact_flash']);
         <div class="tcf-card">
             <!-- Image en arrière-plan -->
             <div class="tcf-bg-image">
-                <img src="Assets/IMAGE/home/canada.jpg" alt="TCF Canada Formation" loading="lazy">
+                <img src="<?php echo site_href('Assets/IMAGE/home/canada.jpg'); ?>" alt="TCF Canada Formation" loading="lazy">
                 <div class="tcf-image-overlay"></div>
             </div>
             
@@ -142,7 +142,7 @@ unset($_SESSION['contact_flash']);
 
         <div class="tcf-services__layout">
             <figure class="tcf-services__visual">
-                <img src="Assets/IMAGE/services/5 (2).jpg" alt="Accompagnement et préparation TCF Canada" loading="lazy">
+                <img src="<?php echo site_href('Assets/IMAGE/services/5 (2).jpg'); ?>" alt="Accompagnement et préparation TCF Canada" loading="lazy">
                 <figcaption class="tcf-services__badge">
                     <i class='bx bx-check-shield' aria-hidden="true"></i>
                     4 piliers pour progresser efficacement
@@ -594,7 +594,7 @@ unset($_SESSION['contact_flash']);
  <?php include __DIR__ . '/includes/cookie_banner.php'; ?>
 
  <!--SWIPER JS LINK-->
- <script src="Assets/javascript/script_tcf.js"></script>
+ <script src="<?php echo site_href('Assets/javascript/script_tcf.js'); ?>"></script>
     <script>
         window.TCF_SUBSCRIBE_ENDPOINT = <?php echo json_encode(site_href('subscribe_api.php')); ?>;
         window.TCF_PAYMENT_ENDPOINT = <?php echo json_encode(site_href('payment_api.php')); ?>;
