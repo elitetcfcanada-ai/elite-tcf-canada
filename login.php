@@ -78,7 +78,7 @@ if (isset($_POST['register_start'])) {
     $password_hash = password_hash($password, PASSWORD_DEFAULT);
 
     try {
-        // Insertion simple et robuste compatible avec Hostinger
+        // Insertion sans id manuel → AUTO_INCREMENT obligatoire sur users.id
         $stmt = $pdo->prepare(
             "INSERT INTO users (name, email, password, role, subscription_type, status, created_at) VALUES (?, ?, ?, 'user', 'free', 'active', NOW())"
         );
@@ -86,7 +86,13 @@ if (isset($_POST['register_start'])) {
         
         $user_id = (int) $pdo->lastInsertId();
         if ($user_id <= 0) {
-            throw new RuntimeException('Erreur lors de la création du compte.');
+            try {
+                $pdo->exec('DELETE FROM users WHERE id = 0 AND email = ' . $pdo->quote($email));
+            } catch (Throwable $e) {
+            }
+            throw new RuntimeException(
+                'Erreur ID utilisateur (AUTO_INCREMENT). Demandez à l\'admin d\'exécuter scripts/repair_database.php?key=REPAIR_TCF_2026'
+            );
         }
         
         // Récupérer l'utilisateur créé

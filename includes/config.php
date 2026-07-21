@@ -1,31 +1,50 @@
 <?php
-$host = getenv('DB_HOST') ?: ($_ENV['DB_HOST'] ?? 'localhost');
-$dbname = getenv('DB_NAME') ?: ($_ENV['DB_NAME'] ?? 'u648716817_tcf_canada');
-$username = getenv('DB_USER') ?: ($_ENV['DB_USER'] ?? 'u648716817_tcf_canada');
-$password = getenv('DB_PASS') ?: ($_ENV['DB_PASS'] ?? 'Audrey300%');
-$port = getenv('DB_PORT') ?: ($_ENV['DB_PORT'] ?? '');
+/**
+ * Ordre de priorité DB :
+ * 1. Variables d'environnement (DB_HOST, DB_NAME, …)
+ * 2. includes/config.local.php (dev local XAMPP — prioritaire, non versionné)
+ * 3. includes/config.hostinger.php (production Hostinger)
+ * 4. Défauts locaux (XAMPP) si aucun fichier / env
+ *
+ * Important : config.local.php DOIT gagner sur config.hostinger.php
+ * pour pouvoir développer en local sans toucher la prod.
+ */
+$envHost = getenv('DB_HOST') ?: ($_ENV['DB_HOST'] ?? null);
+$envName = getenv('DB_NAME') ?: ($_ENV['DB_NAME'] ?? null);
+$envUser = getenv('DB_USER') ?: ($_ENV['DB_USER'] ?? null);
+$envPass = getenv('DB_PASS') ?: ($_ENV['DB_PASS'] ?? null);
+$envPort = getenv('DB_PORT') ?: ($_ENV['DB_PORT'] ?? null);
+
+$host = ($envHost !== null && $envHost !== '') ? $envHost : null;
+$dbname = ($envName !== null && $envName !== '') ? $envName : null;
+$username = ($envUser !== null && $envUser !== '') ? $envUser : null;
+$password = $envPass; // peut être ''
+$port = ($envPort !== null) ? $envPort : '';
 
 $localConfig = __DIR__ . '/config.local.php';
-if (is_file($localConfig)) {
-    require_once $localConfig;
-}
-
 $hostingerConfig = __DIR__ . '/config.hostinger.php';
-if (is_file($hostingerConfig)) {
-    require_once $hostingerConfig;
+$hasLocalConfig = is_file($localConfig);
+
+if ($hasLocalConfig) {
+    require $localConfig;
+} elseif (is_file($hostingerConfig)) {
+    require $hostingerConfig;
 }
 
-if (!isset($host) || $host === '') {
+if (!isset($host) || $host === null || $host === '') {
     $host = 'localhost';
 }
-if (!isset($dbname) || $dbname === '') {
+if (!isset($dbname) || $dbname === null || $dbname === '') {
     $dbname = 'TCF';
 }
-if (!isset($username) || $username === '') {
+if (!isset($username) || $username === null || $username === '') {
     $username = 'root';
 }
-if (!isset($password)) {
+if (!isset($password) || $password === null) {
     $password = '';
+}
+if (!isset($port)) {
+    $port = '';
 }
 
 if (session_status() === PHP_SESSION_NONE) {

@@ -258,8 +258,20 @@ function addUser()
         $success = $stmt->execute([$name, $email, $hashedPassword, $subscription_type, $subExpires, $status]);
 
         if ($success) {
+            $newUid = (int) $pdo->lastInsertId();
+            if ($newUid <= 0) {
+                try {
+                    $pdo->exec('DELETE FROM users WHERE id = 0 AND email = ' . $pdo->quote($email));
+                } catch (Throwable $e) {
+                }
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'AUTO_INCREMENT users cassé. Exécutez scripts/repair_database.php?key=REPAIR_TCF_2026',
+                ]);
+                exit();
+            }
             addActivity($_SESSION['user_id'], 'user', 'Nouvel utilisateur ajouté', "L'utilisateur $name a été ajouté");
-            echo json_encode(['success' => true, 'message' => 'Utilisateur ajouté avec succès.']);
+            echo json_encode(['success' => true, 'message' => 'Utilisateur ajouté avec succès.', 'id' => $newUid]);
         } else {
             echo json_encode(['success' => false, 'message' => 'Erreur lors de l\'ajout de l\'utilisateur.']);
         }
@@ -432,9 +444,16 @@ function addVideo()
 {
     global $pdo;
     try {
-        $title = $_POST['title'];
-        $description = $_POST['description'];
-        $visibility = $_POST['visibility'];
+        $title = trim((string) ($_POST['title'] ?? ''));
+        $description = (string) ($_POST['description'] ?? '');
+        $visibility = strtolower(trim((string) ($_POST['visibility'] ?? 'public')));
+        if (!in_array($visibility, ['public', 'private', 'premium'], true)) {
+            $visibility = 'public';
+        }
+        if ($title === '') {
+            echo json_encode(['success' => false, 'message' => 'Le titre de la vidéo est obligatoire.']);
+            exit();
+        }
 
         // Gérer l'upload de la miniature
         $thumbnail_url = '';
@@ -479,15 +498,29 @@ function addVideo()
 
         if ($success) {
             $newVid = (int) $pdo->lastInsertId();
+            if ($newVid <= 0) {
+                // Table videos sans AUTO_INCREMENT → id=0 (vidéo invisible pour les utilisateurs)
+                tcf_admin_unlink_upload($thumbnail_url);
+                tcf_admin_unlink_upload($video_url);
+                try {
+                    $pdo->exec('DELETE FROM videos WHERE id = 0');
+                } catch (Throwable $e) {
+                }
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Erreur ID vidéo (AUTO_INCREMENT cassé). Exécutez scripts/repair_database.php?key=REPAIR_TCF_2026 puis réessayez.',
+                ]);
+                exit();
+            }
             try {
                 tcf_sync_video_playlists($pdo, $newVid, tcf_parse_playlist_ids_from_post());
             } catch (Throwable $e) {
             }
             addActivity($_SESSION['user_id'], 'video', 'Nouvelle vidéo publiée', "La vidéo '$title' a été publiée");
             
-            // Envoyer notification à tous les utilisateurs connectés
+            // Envoyer notification à tous les utilisateurs (role user)
             try {
-                $stmt = $pdo->prepare("SELECT id FROM users WHERE role = 'user'");
+                $stmt = $pdo->prepare("SELECT id FROM users WHERE role = 'user' AND id > 0");
                 $stmt->execute();
                 $users = $stmt->fetchAll(PDO::FETCH_COLUMN);
                 foreach ($users as $userId) {
@@ -497,7 +530,7 @@ function addVideo()
                 error_log('Erreur lors de l\'envoi des notifications vidéo: ' . $e->getMessage());
             }
             
-            echo json_encode(['success' => true, 'message' => 'Vidéo publiée avec succès.']);
+            echo json_encode(['success' => true, 'message' => 'Vidéo publiée avec succès.', 'id' => $newVid]);
         } else {
             tcf_admin_unlink_upload($thumbnail_url);
             tcf_admin_unlink_upload($video_url);
@@ -514,15 +547,26 @@ function updateVideo()
 {
     global $pdo;
     try {
-        $id = $_POST['id'];
-        $title = $_POST['title'];
-        $description = $_POST['description'];
-        $visibility = $_POST['visibility'];
+        $id = (int) ($_POST['id'] ?? 0);
+        $title = trim((string) ($_POST['title'] ?? ''));
+        $description = (string) ($_POST['description'] ?? '');
+        $visibility = strtolower(trim((string) ($_POST['visibility'] ?? 'public')));
+        if (!in_array($visibility, ['public', 'private', 'premium'], true)) {
+            $visibility = 'public';
+        }
+        if ($id <= 0 || $title === '') {
+            echo json_encode(['success' => false, 'message' => 'Vidéo invalide (id/titre).']);
+            exit();
+        }
 
         // Récupérer les anciennes URLs
         $stmt = $pdo->prepare("SELECT thumbnail_url, video_url, duration FROM videos WHERE id = ?");
         $stmt->execute([$id]);
         $video = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$video) {
+            echo json_encode(['success' => false, 'message' => 'Vidéo introuvable.']);
+            exit();
+        }
 
         $thumbnail_url = $video['thumbnail_url'];
         $video_url = $video['video_url'];

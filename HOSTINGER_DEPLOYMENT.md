@@ -1,22 +1,45 @@
-# Déploiement sur Hostinger
+# Déploiement Hostinger & travail en local
 
-## 1. Préparer les fichiers
-- Uploader tout le contenu du projet à la racine du site Hostinger (public_html) ou dans un sous-dossier si nécessaire.
-- Ne pas uploader le dossier .git.
+## Travail en local (XAMPP) sans casser la prod
 
-## 2. Base de données
-- Créer une base MySQL sur Hostinger.
-- Importer le fichier [database/tcf.sql](database/tcf.sql).
-- Copier [includes/config.local.php.example](includes/config.local.php.example) vers [includes/config.local.php](includes/config.local.php) et renseigner les identifiants.
+1. Démarrez **Apache** et **MySQL** dans le panneau XAMPP.
+2. Créez la base `TCF` dans phpMyAdmin (`http://localhost/phpmyadmin`).
+3. Importez `database/tcf.sql`.
+4. Vérifiez que `includes/config.local.php` existe (non versionné) avec :
 
-## 3. Configuration PHP
-- Utiliser PHP 8.1 ou plus récent.
-- Vérifier que les dossiers d’upload sont accessibles en écriture.
+```php
+$host = 'localhost';
+$dbname = 'TCF';
+$username = 'root';
+$password = '';
+$port = '';
+```
 
-## 4. Paiement / callbacks
-- Définir l’URL publique de votre site dans la configuration de paiement si nécessaire.
-- Si votre site est en HTTPS, l’URL de callback doit être HTTPS.
+5. Ouvrez `http://localhost/elite-TCFCanada/` (ou le dossier du projet).
+6. Développez et testez **en local**. Ne poussez (`git push`) que lorsque c’est validé.
 
-## 5. Vérification rapide
-- Ouvrir votre domaine pour vérifier l’accueil.
-- Tester l’admin et la connexion.
+> `config.local.php` a priorité sur `config.hostinger.php`. Ainsi le local ne pointe plus vers la prod.
+
+## Déploiement / mise à jour production
+
+- Un `git push` met à jour le code en ligne si le dépôt est relié à Hostinger.
+- Les fichiers uploadés (`uploads/`) ne sont en général **pas** dans Git : republiez les vidéos depuis l’admin si besoin.
+- Ne committez jamais `includes/config.local.php` (déjà dans `.gitignore`).
+
+## Réparer les IDs / doublons (production)
+
+Si les inscriptions créent des comptes avec le même id, ou si les vidéos n’apparaissent pas :
+
+1. **Sauvegardez** la base (Export phpMyAdmin).
+2. Ouvrez une fois :
+   `https://VOTRE-DOMAINE/scripts/repair_database.php?key=REPAIR_TCF_2026`
+3. Ou exécutez `database/fix_ids_and_duplicates.sql` dans phpMyAdmin.
+4. **Supprimez** `scripts/repair_database.php` après usage.
+5. Testez inscription + page Vidéos (visibilité `public` ou `premium`).
+
+## Checklist Hostinger
+
+- PHP 8.1+
+- Dossiers `uploads/` en écriture
+- Callbacks paiement en HTTPS
+- Importer / réparer le schéma si la base est ancienne

@@ -1,11 +1,24 @@
 <?php
 /*
 Copiez ce fichier vers includes/config.local.php
-et renseignez vos identifiants Hostinger.
+
+--- XAMPP (développement local) ---
+$host = 'localhost';
+$dbname = 'TCF';
+$username = 'root';
+$password = '';
+$port = '';
+
+--- Hostinger (si besoin d'override sans config.hostinger.php) ---
+$host = 'localhost';
+$dbname = 'u648716817_tcf_canada';
+$username = 'u648716817_tcf_canada';
+$password = 'votre_mot_de_passe';
+$port = '';
 */
 
 $host = 'localhost';
-$dbname = 'nom_de_la_base';
-$username = 'nom_utilisateur';
-$password = 'mot_de_passe';
+$dbname = 'TCF';
+$username = 'root';
+$password = '';
 $port = '';
