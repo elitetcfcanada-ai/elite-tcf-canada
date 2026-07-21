@@ -1,0 +1,12 @@
+<?php
+/*
+Copiez vers includes/payment_config.local.php (non versionné).
+
+$tcf_notchpay_public_key = 'pk....';
+$tcf_notchpay_secret_key = 'sk....';
+$tcf_payment_public_base_url = ''; // laisser vide en local
+*/
+
+$tcf_notchpay_public_key = '';
+$tcf_notchpay_secret_key = '';
+$tcf_payment_public_base_url = '';

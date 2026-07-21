@@ -130,8 +130,10 @@ function site_url(string $path = ''): string
         $host = 'localhost';
     }
     
-    // Force HTTPS en production (Hostinger etc.) pour éviter les bugs de paiement Notch Pay
-    if ($host !== 'localhost' && strpos($host, '127.0.0.1') === false) {
+    // Force HTTPS en production uniquement (pas en local XAMPP)
+    $isLocal = ($host === 'localhost' || str_starts_with($host, 'localhost:')
+        || $host === '127.0.0.1' || str_starts_with($host, '127.0.0.1:'));
+    if (!$isLocal) {
         $scheme = 'https';
     }
 

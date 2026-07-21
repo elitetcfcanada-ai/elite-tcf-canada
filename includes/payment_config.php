@@ -4,18 +4,26 @@ declare(strict_types=1);
 
 /**
  * Configuration paiement Notch Pay (Mobile Money).
- * Clé secrète : includes/payment_config.local.php (non versionné).
+ *
+ * Priorité :
+ * 1. includes/payment_config.local.php (dev local, non versionné)
+ * 2. includes/payment_config.hostinger.php (production)
+ * 3. Variables d'environnement NOTCHPAY_PUBLIC_KEY / NOTCHPAY_SECRET_KEY
  */
 
 $tcf_notchpay_public_key = '';
 $tcf_notchpay_secret_key = '';
 $tcf_notchpay_api_base = 'https://api.notchpay.co';
-/** URL publique de base (ex. https://monsite.com ou tunnel ngrok) — optionnel, pour le callback Notch Pay. */
+/** URL publique de base (ex. https://elitetcfcanada.online) — pour le callback Notch Pay. */
 $tcf_payment_public_base_url = '';
 
 $local = __DIR__ . '/payment_config.local.php';
+$hostinger = __DIR__ . '/payment_config.hostinger.php';
+
 if (is_file($local)) {
     require $local;
+} elseif (is_file($hostinger)) {
+    require $hostinger;
 }
 
 if ($tcf_notchpay_public_key === '' && getenv('NOTCHPAY_PUBLIC_KEY')) {
@@ -24,6 +32,14 @@ if ($tcf_notchpay_public_key === '' && getenv('NOTCHPAY_PUBLIC_KEY')) {
 
 if ($tcf_notchpay_secret_key === '' && getenv('NOTCHPAY_SECRET_KEY')) {
     $tcf_notchpay_secret_key = (string) getenv('NOTCHPAY_SECRET_KEY');
+}
+
+// Callback HTTPS forcé sur le domaine de production si non défini
+if ($tcf_payment_public_base_url === '') {
+    $reqHost = strtolower(trim((string) ($_SERVER['HTTP_HOST'] ?? '')));
+    if ($reqHost !== '' && strpos($reqHost, 'elitetcfcanada.online') !== false) {
+        $tcf_payment_public_base_url = 'https://elitetcfcanada.online';
+    }
 }
 
 function tcf_notchpay_public_key(): string
@@ -57,7 +73,18 @@ function tcf_subscription_display_usd_amount(): float
     return 0.16;
 }
 
-/** URL absolue du callback après paiement (Notch Pay exige https://…). */
+/** True si on est sur un hôte local (XAMPP). */
+function tcf_is_local_host(): bool
+{
+    $host = strtolower(trim((string) ($_SERVER['HTTP_HOST'] ?? '')));
+    if ($host === '' || $host === 'localhost' || str_starts_with($host, 'localhost:')
+        || $host === '127.0.0.1' || str_starts_with($host, '127.0.0.1:')) {
+        return true;
+    }
+    return false;
+}
+
+/** URL absolue du callback après paiement (Notch Pay exige https:// en production). */
 function tcf_payment_callback_url(): string
 {
     global $tcf_payment_public_base_url;
@@ -66,9 +93,18 @@ function tcf_payment_callback_url(): string
     if ($base !== '') {
         return $base . $path;
     }
-    $url = site_url('payment_callback.php');
-    if (strpos($url, 'localhost') !== false || strpos($url, '127.0.0.1') !== false) {
-        return 'https://elite-tcf.local/payment_callback.php';
+
+    // Production : toujours HTTPS sur le host courant
+    if (!tcf_is_local_host()) {
+        $host = trim((string) ($_SERVER['HTTP_HOST'] ?? 'elitetcfcanada.online'));
+        return 'https://' . $host . $path;
     }
-    return $url;
+
+    // Local : HTTP (évite certificat invalide)
+    return 'http://localhost' . $path;
+}
+
+function tcf_notchpay_is_configured(): bool
+{
+    return tcf_notchpay_public_key() !== '';
 }

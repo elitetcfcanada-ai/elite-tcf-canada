@@ -138,8 +138,8 @@ if ($action === 'init') {
         exit;
     }
 
-    if (tcf_notchpay_secret_key() === '' && tcf_notchpay_public_key() === '') {
-        echo json_encode(['success' => false, 'message' => 'Paiement non configuré (clés Notch Pay manquantes).']);
+    if (!tcf_notchpay_is_configured()) {
+        echo json_encode(['success' => false, 'message' => 'Paiement non configuré (clés Notch Pay manquantes sur le serveur).']);
         exit;
     }
 
