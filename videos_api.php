@@ -204,21 +204,7 @@ try {
             if (!tcf_videos_api_video_exists($pdo, $vid)) {
                 tcf_videos_api_json(['ok' => false, 'message' => 'Vidéo introuvable.'], 404);
             }
-            $vst = $pdo->prepare('SELECT visibility FROM videos WHERE id = ?');
-            $vst->execute([$vid]);
-            $vrow = $vst->fetch(PDO::FETCH_ASSOC);
-            if (($vrow['visibility'] ?? '') === 'premium') {
-                $uidV = (int) ($_SESSION['user_id'] ?? 0);
-                if ($uidV <= 0) {
-                    tcf_videos_api_json(['ok' => false, 'message' => 'Connexion requise pour cette vidéo.', 'premium_required' => true], 403);
-                }
-                $ust = $pdo->prepare('SELECT * FROM users WHERE id = ?');
-                $ust->execute([$uidV]);
-                $urow = $ust->fetch(PDO::FETCH_ASSOC);
-                if (!tcf_user_has_premium_access($urow ?: null)) {
-                    tcf_videos_api_json(['ok' => false, 'message' => 'Abonnement requis pour visionner cette vidéo.', 'premium_required' => true], 403);
-                }
-            }
+            // Compteur de vues : aligné sur watch.php (public + premium lisibles pour tous)
             if (!isset($_SESSION['tcf_video_view_once']) || !is_array($_SESSION['tcf_video_view_once'])) {
                 $_SESSION['tcf_video_view_once'] = [];
             }

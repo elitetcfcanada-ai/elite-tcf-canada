@@ -5776,8 +5776,8 @@
                 var title = escHtml(v.title || '');
                 var vis = escHtml(normalizeVis(v.visibility));
                 var visSlug = normalizeVis(v.visibility).toLowerCase().replace(/\s+/g, '-');
-                var th = v.thumbnail_href || v.thumbnail_url || '';
-                var vurl = v.video_href || v.video_url || '';
+                var th = resolveUploadHref(v.thumbnail_href || v.thumbnail_url || '');
+                var vurl = resolveUploadHref(v.video_href || v.video_url || '');
                 var durRaw = (v.duration || '').toString().trim();
                 var durShow = tcfAdminDurationMeaningful(durRaw) ? durRaw : '';
                 var img = th
@@ -5848,11 +5848,33 @@
             });
     }
 
+    /** Transforme uploads/... ou URL localhost en URL absolue site (évite /admin/uploads/...). */
+    function resolveUploadHref(hrefOrPath) {
+        if (!hrefOrPath) return '';
+        var s = String(hrefOrPath).trim();
+        if (!s) return '';
+        if (s.charAt(0) === '/') return s;
+        var base = (typeof window.TCF_SITE_PUBLIC === 'string' ? window.TCF_SITE_PUBLIC : '').replace(/\/$/, '');
+        var local = s.match(/^https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?(?:\/[^\/]+)*\/?(uploads\/.+)$/i);
+        if (local) {
+            return base ? base + '/' + local[1] : '/' + local[1];
+        }
+        if (/^https?:\/\//i.test(s)) {
+            var up = s.match(/\/(uploads\/.+)$/i);
+            if (up) return base ? base + '/' + up[1] : '/' + up[1];
+            return s;
+        }
+        s = s.replace(/^(?:\.\.\/)+/, '').replace(/^\/+/, '');
+        if (/^uploads\//i.test(s)) {
+            return base ? base + '/' + s : '/' + s;
+        }
+        return base ? base + '/' + s : s;
+    }
     function thumbHref(v) {
-        return v.thumbnail_href || v.thumbnail_url || '';
+        return resolveUploadHref(v.thumbnail_href || v.thumbnail_url || '');
     }
     function videoHref(v) {
-        return v.video_href || v.video_url || '';
+        return resolveUploadHref(v.video_href || v.video_url || '');
     }
 
     function resetVideoForm() {
@@ -6370,11 +6392,18 @@
         var t = document.getElementById('admin-video-play-title');
         if (!modal || !player) return;
         if (t) t.textContent = title || '';
-        player.src = src || '';
-        modal.classList.add('is-open');
+        var resolved = resolveUploadHref(src || '');
+        player.removeAttribute('src');
         try {
-            player.play();
-        } catch (e) {}
+            player.load();
+        } catch (e0) {}
+        player.src = resolved;
+        modal.classList.add('is-open');
+        // Ne pas forcer play() : souvent bloqué sur desktop ; l’utilisateur utilise les contrôles.
+        var p = player.play && player.play();
+        if (p && typeof p.catch === 'function') {
+            p.catch(function () {});
+        }
     }
 
     function closeVideoModal() {

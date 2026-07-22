@@ -44,13 +44,14 @@ function tcf_render_video_player(string $videoUrl, array $opts = []): void
 
     $pathOnly = (string) (parse_url($url, PHP_URL_PATH) ?: $url);
     $ext = strtolower(pathinfo($pathOnly, PATHINFO_EXTENSION));
+    // Ne forcer le type que pour les formats universels HTML5.
+    // Omettre type pour .mov/.avi/etc. : Chrome desktop refuse souvent video/quicktime.
     $mimeMap = [
         'mp4' => 'video/mp4',
         'm4v' => 'video/mp4',
         'webm' => 'video/webm',
         'ogg' => 'video/ogg',
         'ogv' => 'video/ogg',
-        'mov' => 'video/quicktime',
     ];
     $mime = $mimeMap[$ext] ?? '';
 
@@ -59,7 +60,9 @@ function tcf_render_video_player(string $videoUrl, array $opts = []): void
     if ($controls) {
         echo ' controls';
     }
+    // src direct + source : meilleure compat desktop (Chrome) / mobile
     echo ' playsinline webkit-playsinline preload="metadata" controlslist="nodownload"';
+    echo ' src="' . htmlspecialchars($url) . '"';
     if ($poster !== '') {
         echo ' poster="' . htmlspecialchars($poster) . '"';
     }
@@ -73,6 +76,6 @@ function tcf_render_video_player(string $videoUrl, array $opts = []): void
     echo '</video>';
     echo '<div class="tcf-video-error-msg" id="' . htmlspecialchars($id) . '-error" hidden role="alert">';
     echo '<i class="bx bx-error-circle"></i>';
-    echo '<p>Impossible de lire cette vidéo. Le fichier est peut‑être absent du serveur (uploads non synchronisés) ou dans un format non supporté.</p>';
+    echo '<p>Impossible de lire cette vidéo. Vérifiez que le fichier est bien sur le serveur (dossier uploads/videos) et de préférence en MP4 (H.264).</p>';
     echo '</div>';
 }

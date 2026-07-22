@@ -110,11 +110,24 @@
     }
 
     if (player && videoId > 0 && player.tagName === 'VIDEO') {
-        player.addEventListener('error', function () {
+        var watchErrShown = false;
+        function showWatchPlayerError() {
+            if (watchErrShown) return;
+            var mediaErr = player.error;
+            // 1 = MEDIA_ERR_ABORTED (ignorer)
+            if (mediaErr && mediaErr.code === 1) return;
+            watchErrShown = true;
             player.style.display = 'none';
-            var err = document.getElementById('tcf-watch-player-error');
+            var err = document.getElementById('tcf-watch-player-error')
+                || document.getElementById(player.id + '-error');
             if (err) err.hidden = false;
-        });
+        }
+        player.addEventListener('error', showWatchPlayerError);
+        // Si <source> échoue, l’événement peut être sur le source ; remonter aussi
+        var srcEl = player.querySelector('source');
+        if (srcEl) {
+            srcEl.addEventListener('error', showWatchPlayerError);
+        }
         fetch(api, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

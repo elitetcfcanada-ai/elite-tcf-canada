@@ -169,6 +169,7 @@ function site_url(string $path = ''): string
 
 /**
  * Normalise une valeur stockée en BDD (uploads/..., ../uploads/..., URL absolue) vers un chemin relatif site : uploads/...
+ * Les URL externes (YouTube, CDN hors /uploads/) restent absolues.
  */
 function tcf_uploads_relative_path(?string $stored): string
 {
@@ -176,21 +177,31 @@ function tcf_uploads_relative_path(?string $stored): string
         return '';
     }
     $p = str_replace('\\', '/', trim($stored));
-    
-    // Fix pour les chemins locaux hardcodés en base de données (Hostinger)
-    if (preg_match('#^https?://(?:localhost|127\.0\.0\.1)(?::\d+)?(?:/[^/]+)*/?(uploads/.*)$#i', $p, $m)) {
+
+    // localhost / 127.0.0.1 → chemin relatif uploads/...
+    if (preg_match('#^https?://(?:localhost|127\.0\.0\.1)(?::\d+)?(?:/[^/]+)*/?(uploads/.+)$#i', $p, $m)) {
         $p = $m[1];
     }
-    
+
+    // Toute URL absolue contenant /uploads/ → chemin relatif (évite host local en prod)
     if (preg_match('#^https?://#i', $p)) {
-        return $p;
+        if (preg_match('#/(uploads/.+)$#i', $p, $m2)) {
+            $p = $m2[1];
+        } else {
+            return $p;
+        }
     }
+
     while (str_starts_with($p, '../')) {
         $p = substr($p, 3);
     }
     $p = ltrim($p, '/');
+
+    // uploads/uploads/... → uploads/...
+    $p = preg_replace('#^(?:uploads/)+#i', 'uploads/', $p) ?? $p;
+
     if ($p !== '' && !str_starts_with($p, 'uploads/')) {
-        $pos = strpos($p, 'uploads/');
+        $pos = stripos($p, 'uploads/');
         if ($pos !== false) {
             $p = substr($p, $pos);
         }
@@ -218,12 +229,15 @@ function tcf_uploads_public_href(?string $stored): string
     if ($stored === null || $stored === '') {
         return '';
     }
-    $p = str_replace('\\', '/', trim($stored));
-    if (preg_match('#^https?://#i', $p)) {
-        return $p;
-    }
     $rel = tcf_uploads_relative_path($stored);
-    return $rel !== '' ? site_href($rel) : '';
+    if ($rel === '') {
+        return '';
+    }
+    // YouTube / Vimeo / CDN externe
+    if (preg_match('#^https?://#i', $rel)) {
+        return $rel;
+    }
+    return site_href($rel);
 }
 
 require_once __DIR__ . '/avatar_helper.php';

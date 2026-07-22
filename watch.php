@@ -152,6 +152,6 @@ window.TCF_VIDEOS_API = <?php echo json_encode(site_href('videos_api.php')); ?>;
 window.TCF_LOGIN_HREF = <?php echo json_encode(site_href('login.php')); ?>;
 window.TCF_WATCH_VIDEO_ID = <?php echo (int) $videoId; ?>;
 </script>
-<script src="<?php echo htmlspecialchars(site_href('Assets/javascript/tcf-watch.js')); ?>"></script>
+<script src="<?php echo htmlspecialchars(site_href('Assets/javascript/tcf-watch.js')); ?>?v=video-play-3"></script>
 </body>
 </html>

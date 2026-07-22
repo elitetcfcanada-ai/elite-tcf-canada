@@ -3834,7 +3834,7 @@ $notifications_json = json_encode($notifications);
         window.TCF_PARTNERS_API = <?php echo json_encode(site_href('partners_api.php')); ?>;
     </script>
     <script src="../Assets/javascript/tcf-tts.js?v=6"></script>
-    <script src="../Assets/javascript/superAdmin.ui.js?v=admin-dash-2"></script>
+    <script src="../Assets/javascript/superAdmin.ui.js?v=video-url-fix-3"></script>
     <script src="../Assets/javascript/admin-mobile-nav.js"></script>
 
     <div class="tcf-ai-assistant" id="tcf-ai-assistant" data-greeting="Bonjour, je suis votre assistant administration. Comment puis-je vous aider sur la plateforme ?">
