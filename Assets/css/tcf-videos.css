@@ -1136,9 +1136,8 @@
     padding: 0.65rem 1rem;
     background: #fff;
     border-bottom: 1px solid #e5e5e5;
-    position: sticky;
-    top: var(--tcf-header-h, 4.5rem);
-    z-index: 15;
+    position: relative; /* défile avec la page (pas sticky / pas fixed) */
+    z-index: 1;
 }
 
 .tcf-watch-back-bar a {

@@ -97,24 +97,26 @@ body.tcf-posts-page {
     white-space: nowrap;
 }
 
+/* Affichage type Facebook : image pleine largeur de la carte, sans marges latérales */
 .tcp-card__media-wrap {
     width: 100%;
-    background: #f1f3f7;
+    margin: 0;
+    padding: 0;
+    background: #000;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0.65rem 0.65rem 0;
-    box-sizing: border-box;
+    overflow: hidden;
 }
 
 .tcp-card__media {
     display: block;
-    width: auto;
+    width: 100%;
     height: auto;
     max-width: 100%;
-    max-height: 280px;
-    object-fit: contain; /* garde tout le format, sans couper l’image */
-    background: transparent;
+    max-height: min(70vh, 640px);
+    object-fit: contain;
+    background: #000;
 }
 
 .tcp-card__actions {
@@ -163,13 +165,18 @@ body.tcf-posts-page {
     }
 
     .tcp-card__media {
-        max-height: 220px;
+        max-height: min(65vh, 560px);
     }
 }
 
 @media (max-width: 600px) {
     .tcp-feed-page {
-        padding: 0.9rem 0.6rem 2.4rem;
+        padding: 0.75rem 0 2.4rem;
+        max-width: none;
+    }
+
+    .tcp-feed-hero {
+        padding: 0 0.75rem;
     }
 
     .tcp-feed-hero h1 {
@@ -177,11 +184,13 @@ body.tcf-posts-page {
     }
 
     .tcp-feed {
-        gap: 0.8rem;
+        gap: 0.65rem;
     }
 
     .tcp-card {
-        border-radius: 12px;
+        border-radius: 0;
+        border-left: 0;
+        border-right: 0;
     }
 
     .tcp-card__body {
@@ -195,12 +204,9 @@ body.tcf-posts-page {
         font-size: 0.84rem;
     }
 
-    .tcp-card__media-wrap {
-        padding: 0.5rem 0.5rem 0;
-    }
-
     .tcp-card__media {
-        max-height: 180px;
+        max-height: min(70vh, 520px);
+        width: 100%;
     }
 
     .tcp-card__actions {

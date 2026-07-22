@@ -60,6 +60,20 @@ function tcf_login_apply_session(array $user, PDO $pdo): void
     $pdo->prepare('UPDATE users SET last_login = NOW() WHERE id = ?')->execute([(int) $user['id']]);
 }
 
+// Déjà connecté → espace personnel (pas le formulaire login)
+if (!empty($_SESSION['user_id']) && empty($_POST['login_start']) && empty($_POST['register_start'])) {
+    try {
+        $st = $pdo->prepare('SELECT * FROM users WHERE id = ? LIMIT 1');
+        $st->execute([(int) $_SESSION['user_id']]);
+        $already = $st->fetch(PDO::FETCH_ASSOC);
+        if ($already) {
+            tcf_login_redirect_logged_user($already, isset($_GET['next']) ? (string) $_GET['next'] : null);
+        }
+    } catch (Throwable $e) {
+        // laisser afficher le formulaire
+    }
+}
+
 // Ancien flux OTP : nettoyer pour ne pas laisser d’écran bloqué
 unset($_SESSION['tcf_reg_pending'], $_SESSION['tcf_login_pending_uid']);
 
@@ -195,13 +209,8 @@ if (isset($_POST['login_start'])) {
         }
 
         tcf_login_apply_session($user, $pdo);
-        // Rester connecté par défaut (case cochée), sauf refus explicite
-        $wantRemember = !isset($_POST['remember_me']) || (string) $_POST['remember_me'] === '1';
-        if ($wantRemember) {
-            tcf_remember_issue($pdo, (int) $user['id']);
-        } else {
-            tcf_remember_revoke_current($pdo);
-        }
+        // Session longue jusqu’à déconnexion explicite
+        tcf_remember_issue($pdo, (int) $user['id']);
         tcf_login_redirect_logged_user($user, isset($_POST['login_next']) ? (string) $_POST['login_next'] : null);
         
     } catch (PDOException $e) {
@@ -264,10 +273,6 @@ unset($_SESSION['error'], $_SESSION['success']);
                     <i class='bx bxs-lock-alt'></i>
                     <span class="error-message" aria-live="polite"></span>
                 </div>
-                <label class="tcf-remember-row">
-                    <input type="checkbox" name="remember_me" value="1" checked>
-                    <span>Rester connecté</span>
-                </label>
                 <div class="forgot-link">
                     <a href="<?php echo htmlspecialchars(site_href('resetPassword.php')); ?>">Mot de passe oublié ?</a>
                 </div>
