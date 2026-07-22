@@ -1,6 +1,6 @@
-﻿-- Sujets Expression Écrite + Expression Orale (design mois, sans Part/Data)
+-- Sujets Expression Ecrite + Expression Orale (design mois, sans Part/Data)
 -- Source : database/epreuve.sql (ancienne base)
--- Importer APRÈS database/tcf.sql
+-- Importer APRES database/tcf.sql
 
 SET FOREIGN_KEY_CHECKS=0;
 SET NAMES utf8mb4;
