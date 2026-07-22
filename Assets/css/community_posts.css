@@ -115,7 +115,7 @@ body.tcf-posts-page {
     width: 100%;
     height: auto;
     max-width: 100%;
-    max-height: min(48vh, 420px);
+    max-height: min(58vh, 520px);
     object-fit: contain;
     background: #0f1115;
 }
@@ -171,7 +171,7 @@ body.tcf-posts-page {
     }
 
     .tcp-card__media {
-        max-height: min(42vh, 360px);
+        max-height: min(52vh, 460px);
     }
 }
 
@@ -215,7 +215,7 @@ body.tcf-posts-page {
     }
 
     .tcp-card__media {
-        max-height: min(38vh, 300px);
+        max-height: min(48vh, 400px);
         width: 100%;
     }
 
