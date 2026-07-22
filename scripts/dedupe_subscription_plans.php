@@ -35,25 +35,78 @@ if ($port !== '') {
 }
 $pdo = new PDO($dsn, $username, $password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
 
-require_once $root . '/includes/subscription_plans_data.php';
+$pdo->exec('SET NAMES utf8mb4');
 
-$before = $pdo->query(
-    'SELECT id, plan_key, tier, badge, price, is_active FROM subscription_plan_catalog ORDER BY plan_key, id'
+$total = (int) $pdo->query('SELECT COUNT(*) FROM subscription_plan_catalog')->fetchColumn();
+$distinctKeys = (int) $pdo->query('SELECT COUNT(DISTINCT plan_key) FROM subscription_plan_catalog')->fetchColumn();
+echo "COUNT(*)={$total} DISTINCT plan_key={$distinctKeys}\n\n";
+
+$rows = $pdo->query(
+    'SELECT id, plan_key, tier, badge, price, is_active, sort_order
+     FROM subscription_plan_catalog
+     ORDER BY plan_key ASC, id ASC'
 )->fetchAll(PDO::FETCH_ASSOC);
-echo "Avant (" . count($before) . "):\n";
-foreach ($before as $r) {
-    echo "  #{$r['id']} {$r['plan_key']} | {$r['tier']} {$r['badge']} \${$r['price']} active={$r['is_active']}\n";
+
+echo "Lignes brutes:\n";
+foreach ($rows as $r) {
+    echo '  id=' . $r['id']
+        . ' key=' . $r['plan_key']
+        . ' | ' . $r['tier'] . ' / ' . $r['badge']
+        . ' $' . $r['price']
+        . ' active=' . $r['is_active']
+        . ' sort=' . $r['sort_order']
+        . "\n";
 }
 
-$result = tcf_subscription_plans_dedupe_db($pdo);
-echo "\nSupprimés={$result['removed']} restants={$result['remaining']}\n\n";
+$removed = 0;
+$keepByKey = [];
+foreach ($rows as $r) {
+    $key = (string) $r['plan_key'];
+    $id = (int) $r['id'];
+    if (!isset($keepByKey[$key])) {
+        $keepByKey[$key] = $id;
+        continue;
+    }
+    // Doublon → supprimer cette ligne
+    $pdo->prepare('DELETE FROM subscription_plan_catalog WHERE id = ?')->execute([$id]);
+    $removed++;
+    echo "DELETE id={$id} key={$key}\n";
+}
 
-$after = $pdo->query(
-    'SELECT id, plan_key, tier, badge, price, is_active FROM subscription_plan_catalog ORDER BY sort_order, id'
+// Aussi supprimer les lignes actives en double même si clé différente mais même badge+tier+price
+$again = $pdo->query(
+    'SELECT id, plan_key, tier, badge, price, is_active
+     FROM subscription_plan_catalog
+     ORDER BY tier, badge, price, id'
 )->fetchAll(PDO::FETCH_ASSOC);
-echo "Après (" . count($after) . "):\n";
-foreach ($after as $r) {
-    echo "  #{$r['id']} {$r['plan_key']} | {$r['tier']} {$r['badge']} \${$r['price']} active={$r['is_active']}\n";
+$seenSig = [];
+foreach ($again as $r) {
+    $sig = strtolower(trim($r['tier'] . '|' . $r['badge'] . '|' . $r['price']));
+    if (isset($seenSig[$sig])) {
+        $pdo->prepare('DELETE FROM subscription_plan_catalog WHERE id = ?')->execute([(int) $r['id']]);
+        $removed++;
+        echo 'DELETE duplicate signature id=' . $r['id'] . ' sig=' . $sig . "\n";
+        continue;
+    }
+    $seenSig[$sig] = (int) $r['id'];
+}
+
+try {
+    $pdo->exec('ALTER TABLE subscription_plan_catalog ADD UNIQUE KEY uq_subscription_plan_key (plan_key)');
+    echo "UNIQUE KEY plan_key ajouté\n";
+} catch (Throwable $e) {
+    echo "UNIQUE KEY: " . $e->getMessage() . "\n";
+}
+
+$final = $pdo->query(
+    'SELECT id, plan_key, tier, badge, price, is_active
+     FROM subscription_plan_catalog
+     ORDER BY sort_order ASC, id ASC'
+)->fetchAll(PDO::FETCH_ASSOC);
+
+echo "\nSupprimés={$removed}\nAprès (" . count($final) . "):\n";
+foreach ($final as $r) {
+    echo '  id=' . $r['id'] . ' ' . $r['plan_key'] . ' | ' . $r['tier'] . ' ' . $r['badge'] . ' $' . $r['price'] . "\n";
 }
 echo "DONE\n";
 
