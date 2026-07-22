@@ -1,6 +1,6 @@
 <?php
 /**
- * Réinsère les forfaits abonnement (sans doublons) — prix vitrine.
+ * Répare subscription_plan_catalog puis réinsère 3 forfaits uniques.
  *
  * CLI : php scripts/seed_subscription_plans_prod.php
  * Web : scripts/seed_subscription_plans_prod.php?key=REPAIR_TCF_2026
@@ -49,13 +49,29 @@ $plans = [
     ['plan_2m', 'PREMIUM', 'DEUX MOIS', 75.0, '$', 60, 3],
 ];
 
-// Recréer proprement
-$pdo->exec('DELETE FROM subscription_plan_catalog');
-try {
-    $pdo->exec('ALTER TABLE subscription_plan_catalog ADD UNIQUE KEY uq_subscription_plan_key (plan_key)');
-} catch (Throwable $e) {
-    // ok
-}
+echo "Réparation table…\n";
+$pdo->exec('SET FOREIGN_KEY_CHECKS=0');
+$pdo->exec('DROP TABLE IF EXISTS subscription_plan_catalog');
+$pdo->exec(
+    "CREATE TABLE subscription_plan_catalog (
+        id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        plan_key VARCHAR(64) NOT NULL,
+        tier VARCHAR(80) NOT NULL DEFAULT '',
+        badge VARCHAR(120) NOT NULL DEFAULT '',
+        price DECIMAL(10,2) NOT NULL DEFAULT 0,
+        currency VARCHAR(8) NOT NULL DEFAULT '\$',
+        duration_days INT UNSIGNED NOT NULL DEFAULT 7,
+        features_json TEXT NULL,
+        sort_order INT NOT NULL DEFAULT 0,
+        is_active TINYINT(1) NOT NULL DEFAULT 1,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        UNIQUE KEY uq_subscription_plan_key (plan_key)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+);
+$pdo->exec('SET FOREIGN_KEY_CHECKS=1');
+echo "Table recréée OK\n";
 
 $st = $pdo->prepare(
     'INSERT INTO subscription_plan_catalog
@@ -64,13 +80,16 @@ $st = $pdo->prepare(
 );
 foreach ($plans as $p) {
     $st->execute([$p[0], $p[1], $p[2], $p[3], $p[4], $p[5], $features, $p[6]]);
-    echo "OK {$p[0]} {$p[1]} {$p[2]} \${$p[3]}\n";
+    $id = (int) $pdo->lastInsertId();
+    echo "OK id={$id} {$p[0]} {$p[1]} {$p[2]} \${$p[3]}\n";
 }
 
 $rows = $pdo->query(
     'SELECT id, plan_key, tier, badge, price FROM subscription_plan_catalog ORDER BY sort_order, id'
 )->fetchAll(PDO::FETCH_ASSOC);
-echo "\nCatalogue (" . count($rows) . "):\n";
+$count = (int) $pdo->query('SELECT COUNT(*) FROM subscription_plan_catalog')->fetchColumn();
+$distinct = (int) $pdo->query('SELECT COUNT(DISTINCT plan_key) FROM subscription_plan_catalog')->fetchColumn();
+echo "\nCOUNT={$count} DISTINCT_KEYS={$distinct}\n";
 foreach ($rows as $r) {
     echo "  #{$r['id']} {$r['plan_key']} | {$r['tier']} {$r['badge']} \${$r['price']}\n";
 }
