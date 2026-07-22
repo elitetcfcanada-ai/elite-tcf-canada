@@ -5,10 +5,13 @@
 1. Démarrez **Apache** et **MySQL** dans le panneau XAMPP.
 2. Créez la base `TCF` dans phpMyAdmin (`http://localhost/phpmyadmin`).
 3. Importez `database/tcf.sql` (**structure seule** — pas les sujets EE/EO).
-4. Importez les sujets Expression écrite / orale (au choix) :
-   - **phpMyAdmin** : importer aussi `database/seeds_ee_eo_data.sql`
-   - **ou CLI** : `php scripts/seed_all_ee_eo.php`
-   - **ou navigateur** : `…/scripts/seed_all_ee_eo.php?key=REPAIR_TCF_2026`
+4. Importez les sujets Expression écrite / orale (design mois, comme avant) :
+   - **Recommandé** : `php scripts/restore_epreuve_ee_eo.php`  
+     (lit `database/epreuve.sql` s’il est présent, sinon `database/seeds_ee_eo_data.sql`)
+   - **phpMyAdmin** : importer `database/seeds_ee_eo_data.sql` après `tcf.sql`
+   - **Navigateur** : `…/scripts/restore_epreuve_ee_eo.php?key=REPAIR_TCF_2026`
+
+> Ne pas réutiliser `import_exp_ecrite_to_db.php` seul : il crée des cartes « Part1 / Data ».
 
 5. Vérifiez que `includes/config.local.php` existe (non versionné) avec :
 

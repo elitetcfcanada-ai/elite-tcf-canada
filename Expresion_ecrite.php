@@ -44,7 +44,15 @@ function ee_title_rank_local(string $title): int
 
 $exams = [];
 try {
-    $exams = $pdo->query("SELECT id, slug, title, subtitle, visibility, published_at FROM tcf_ee_exams WHERE is_published = 1")->fetchAll(PDO::FETCH_ASSOC);
+    // Exclure les fragments d'import (Part1/Data) — une carte = un mois
+    $exams = $pdo->query(
+        "SELECT id, slug, title, subtitle, visibility, published_at
+         FROM tcf_ee_exams
+         WHERE is_published = 1
+           AND title NOT REGEXP 'Part[0-9]+|[[:space:]]Data$'
+           AND slug NOT REGEXP 'part[0-9]+|_data'
+         ORDER BY id DESC"
+    )->fetchAll(PDO::FETCH_ASSOC);
     usort($exams, static function (array $a, array $b): int {
         $ra = ee_title_rank_local((string) ($a['title'] ?? ''));
         $rb = ee_title_rank_local((string) ($b['title'] ?? ''));
