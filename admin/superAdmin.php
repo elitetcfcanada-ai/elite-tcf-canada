@@ -155,6 +155,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         case 'get_stats':
             getStats();
             break;
+        case 'get_admin_dashboard':
+            getAdminDashboardStats();
+            break;
         case 'get_activities':
             getActivities();
             break;
@@ -547,7 +550,6 @@ function addVideo()
 function updateVideo()
 {
     global $pdo;
-    saRequireSuperAdminJson();
     try {
         $id = (int) ($_POST['id'] ?? 0);
         $title = trim((string) ($_POST['title'] ?? ''));
@@ -637,6 +639,7 @@ function deleteVideo()
         $success = $stmt->execute([$id]);
 
         if ($success) {
+            tcf_delete_notifications_matching($pdo, 'watch.php?v=' . (int) $id);
             addActivity($_SESSION['user_id'], 'video', 'Vidéo supprimée', "La vidéo '{$video['title']}' a été supprimée");
             echo json_encode(['success' => true, 'message' => 'Vidéo supprimée avec succès.']);
         } else {
@@ -768,7 +771,26 @@ function addTopic()
 
         if ($success) {
             addActivity($_SESSION['user_id'], 'topic', 'Nouveau sujet ajouté', "Le sujet '$title' a été ajouté");
-            addNotification(null, 'topic', 'Nouveau sujet ajouté', "Le sujet '$title' a été ajouté");
+            $topicId = (int) $pdo->lastInsertId();
+            $deep = $topicId > 0 ? site_href('Expresion_ecrite.php') : site_href('index.php');
+            if ($type === 'eo' || stripos((string) $type, 'oral') !== false) {
+                $deep = site_href('Expresion_orale.php');
+            } elseif ($type === 'ce' || stripos((string) $type, 'ecrite') !== false) {
+                $deep = site_href('comprehesion_ecrite.php');
+            } elseif ($type === 'co' || stripos((string) $type, 'orale') !== false) {
+                $deep = site_href('comprehension_orale.php');
+            }
+            try {
+                tcf_notify_users_registered_before(
+                    $pdo,
+                    'topic',
+                    'Nouveau sujet ajouté',
+                    "Le sujet « $title » est maintenant disponible.",
+                    $deep
+                );
+            } catch (Throwable $e) {
+                error_log('Erreur notifications sujet: ' . $e->getMessage());
+            }
             echo json_encode(['success' => true, 'message' => 'Sujet ajouté avec succès.']);
         } else {
             tcf_admin_unlink_upload($json_file);
@@ -823,6 +845,7 @@ function updateTopic()
 function deleteTopic()
 {
     global $pdo;
+    saRequireSuperAdminJson();
     try {
         $id = $_POST['id'];
         $stmt = $pdo->prepare("SELECT json_file, title FROM topics WHERE id = ?");
@@ -837,6 +860,15 @@ function deleteTopic()
         $success = $stmt->execute([$id]);
 
         if ($success) {
+            // Anciennes notifs topic (lien générique) : nettoyage par titre si connu
+            if (!empty($topic['title'])) {
+                tcf_delete_notifications_by_type_payload(
+                    $pdo,
+                    'topic',
+                    'Nouveau sujet ajouté',
+                    "Le sujet « {$topic['title']} » est maintenant disponible."
+                );
+            }
             addActivity($_SESSION['user_id'], 'topic', 'Sujet supprimé', "Le sujet '{$topic['title']}' a été supprimé");
             echo json_encode(['success' => true, 'message' => 'Sujet supprimé avec succès.']);
         } else {
@@ -952,12 +984,45 @@ function updateMessage()
 function deleteMessage()
 {
     global $pdo;
+    saRequireSuperAdminJson();
     try {
         $id = $_POST['id'];
+        $notifTitle = null;
+        $notifContent = null;
+        try {
+            $st = $pdo->prepare('SELECT subject, content FROM community_messages WHERE id = ?');
+            $st->execute([$id]);
+            $row = $st->fetch(PDO::FETCH_ASSOC);
+            if ($row) {
+                $subject = trim((string) ($row['subject'] ?? ''));
+                $content = trim((string) ($row['content'] ?? ''));
+                $defaultTitle = 'Nouvelle annonce';
+                if ($subject !== '' && $content !== '') {
+                    if ($subject === $content) {
+                        $notifTitle = $defaultTitle;
+                        $notifContent = $subject;
+                    } else {
+                        $notifTitle = $subject;
+                        $notifContent = $content;
+                    }
+                } elseif ($subject !== '') {
+                    $notifTitle = $defaultTitle;
+                    $notifContent = $subject;
+                } else {
+                    $notifTitle = $defaultTitle;
+                    $notifContent = $content !== '' ? $content : '—';
+                }
+            }
+        } catch (Throwable $e) {
+        }
+
         $stmt = $pdo->prepare("DELETE FROM community_messages WHERE id = ?");
         $success = $stmt->execute([$id]);
 
         if ($success) {
+            if ($notifTitle !== null) {
+                tcf_delete_notifications_by_type_payload($pdo, 'message', $notifTitle, $notifContent);
+            }
             addActivity($_SESSION['user_id'], 'message', 'Message supprimé', "Un message communautaire a été supprimé");
             echo json_encode(['success' => true, 'message' => 'Message supprimé avec succès.']);
         } else {
@@ -1174,6 +1239,7 @@ function tcf_trace_sql_where(string $range, string $dateCol = 'created_at'): str
 
 function getTraceability()
 {
+    saRequireSuperAdminJson();
     global $pdo;
     $range = preg_replace('/[^a-z0-9]/', '', strtolower($_POST['range'] ?? '30d'));
     if (!in_array($range, ['7d', '30d', '90d', 'year', 'all'], true)) {
@@ -1321,8 +1387,188 @@ function getTraceability()
     exit();
 }
 
+function sa_safe_count(PDO $pdo, string $sql): int
+{
+    try {
+        return (int) $pdo->query($sql)->fetchColumn();
+    } catch (Throwable $e) {
+        return 0;
+    }
+}
+
+/**
+ * @return array{labels: list<string>, values: list<int>}
+ */
+function sa_admin_exam_views_series(PDO $pdo, int $days = 14): array
+{
+    $days = max(7, min(60, $days));
+    $labels = [];
+    $map = [];
+    for ($i = $days - 1; $i >= 0; $i--) {
+        $d = date('Y-m-d', strtotime('-' . $i . ' days'));
+        $labels[] = $d;
+        $map[$d] = 0;
+    }
+    $tables = [
+        'tcf_ce_exam_views',
+        'tcf_co_exam_views',
+        'tcf_ee_exam_views',
+        'tcf_eo_exam_views',
+    ];
+    $since = $labels[0] ?? date('Y-m-d', strtotime('-' . ($days - 1) . ' days'));
+    foreach ($tables as $table) {
+        try {
+            $st = $pdo->prepare(
+                "SELECT DATE(viewed_at) AS d, COUNT(*) AS c
+                 FROM {$table}
+                 WHERE viewed_at >= ? AND viewed_at < DATE_ADD(CURDATE(), INTERVAL 1 DAY)
+                 GROUP BY DATE(viewed_at)"
+            );
+            $st->execute([$since . ' 00:00:00']);
+            foreach ($st->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                $d = (string) ($row['d'] ?? '');
+                if (isset($map[$d])) {
+                    $map[$d] += (int) ($row['c'] ?? 0);
+                }
+            }
+        } catch (Throwable $e) {
+            // table may be absent
+        }
+    }
+    $values = [];
+    foreach ($labels as $d) {
+        $values[] = (int) ($map[$d] ?? 0);
+    }
+    $shortLabels = array_map(static function (string $d): string {
+        $ts = strtotime($d);
+        return $ts ? date('d/m', $ts) : $d;
+    }, $labels);
+
+    return ['labels' => $shortLabels, 'values' => $values];
+}
+
+function getAdminDashboardStats(): void
+{
+    global $pdo;
+    if (!in_array(($_SESSION['role'] ?? ''), ['admin', 'super_admin'], true)) {
+        echo json_encode(['success' => false, 'message' => 'Accès refusé.']);
+        exit();
+    }
+
+    $videosTotal = sa_safe_count($pdo, 'SELECT COUNT(*) FROM videos');
+    $videosPublic = sa_safe_count($pdo, "SELECT COUNT(*) FROM videos WHERE visibility IN ('public','premium') OR visibility IS NULL OR visibility=''");
+    $videoViews = sa_safe_count($pdo, 'SELECT COALESCE(SUM(views), 0) FROM videos');
+    $videoComments = sa_safe_count($pdo, 'SELECT COUNT(*) FROM video_comments');
+
+    $ceTotal = sa_safe_count($pdo, 'SELECT COUNT(*) FROM tcf_ce_exams');
+    $cePub = sa_safe_count($pdo, 'SELECT COUNT(*) FROM tcf_ce_exams WHERE is_published=1');
+    $coTotal = sa_safe_count($pdo, 'SELECT COUNT(*) FROM tcf_co_exams');
+    $coPub = sa_safe_count($pdo, 'SELECT COUNT(*) FROM tcf_co_exams WHERE is_published=1');
+    $eeTotal = sa_safe_count($pdo, 'SELECT COUNT(*) FROM tcf_ee_exams');
+    $eePub = sa_safe_count($pdo, 'SELECT COUNT(*) FROM tcf_ee_exams WHERE is_published=1');
+    $eoTotal = sa_safe_count($pdo, 'SELECT COUNT(*) FROM tcf_eo_exams');
+    $eoPub = sa_safe_count($pdo, 'SELECT COUNT(*) FROM tcf_eo_exams WHERE is_published=1');
+
+    $ceViews = sa_safe_count($pdo, 'SELECT COUNT(*) FROM tcf_ce_exam_views');
+    $coViews = sa_safe_count($pdo, 'SELECT COUNT(*) FROM tcf_co_exam_views');
+    $eeViews = sa_safe_count($pdo, 'SELECT COUNT(*) FROM tcf_ee_exam_views');
+    $eoViews = sa_safe_count($pdo, 'SELECT COUNT(*) FROM tcf_eo_exam_views');
+
+    $annTotal = sa_safe_count($pdo, 'SELECT COUNT(*) FROM community_posts');
+    $annPub = sa_safe_count($pdo, 'SELECT COUNT(*) FROM community_posts WHERE is_published=1');
+    $annViews = sa_safe_count($pdo, 'SELECT COUNT(*) FROM community_post_views');
+
+    $visitorsToday = 0;
+    if (tcf_admin_has_visit_logs()) {
+        $visitorsToday = sa_safe_count(
+            $pdo,
+            'SELECT COUNT(DISTINCT session_id) FROM site_visit_logs WHERE DATE(created_at) = CURDATE()'
+        );
+    } else {
+        $visitorsToday = sa_safe_count(
+            $pdo,
+            'SELECT COUNT(DISTINCT ip_address) FROM analytics WHERE DATE(created_at) = CURDATE()'
+        );
+    }
+
+    $examsTotal = $ceTotal + $coTotal + $eeTotal + $eoTotal;
+    $examsPublished = $cePub + $coPub + $eePub + $eoPub;
+    $examViewsTotal = $ceViews + $coViews + $eeViews + $eoViews;
+
+    $topVideos = [];
+    try {
+        $st = $pdo->query(
+            'SELECT id, title, COALESCE(views, 0) AS views, visibility
+             FROM videos
+             ORDER BY COALESCE(views, 0) DESC, id DESC
+             LIMIT 8'
+        );
+        $topVideos = $st->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    } catch (Throwable $e) {
+        $topVideos = [];
+    }
+
+    $series = sa_admin_exam_views_series($pdo, 14);
+
+    echo json_encode([
+        'success' => true,
+        'data' => [
+            'visitors_today' => $visitorsToday,
+            'videos' => [
+                'total' => $videosTotal,
+                'listed' => $videosPublic,
+                'views' => $videoViews,
+                'comments' => $videoComments,
+            ],
+            'exams' => [
+                'total' => $examsTotal,
+                'published' => $examsPublished,
+                'views' => $examViewsTotal,
+                'by_skill' => [
+                    'ce' => ['total' => $ceTotal, 'published' => $cePub, 'views' => $ceViews],
+                    'co' => ['total' => $coTotal, 'published' => $coPub, 'views' => $coViews],
+                    'ee' => ['total' => $eeTotal, 'published' => $eePub, 'views' => $eeViews],
+                    'eo' => ['total' => $eoTotal, 'published' => $eoPub, 'views' => $eoViews],
+                ],
+            ],
+            'announcements' => [
+                'total' => $annTotal,
+                'published' => $annPub,
+                'views' => $annViews,
+            ],
+            'charts' => [
+                'content_mix' => [
+                    'labels' => ['Vidéos', 'CE', 'CO', 'EE', 'EO', 'Annonces'],
+                    'values' => [$videosTotal, $ceTotal, $coTotal, $eeTotal, $eoTotal, $annTotal],
+                ],
+                'exam_views_by_skill' => [
+                    'labels' => ['CE', 'CO', 'EE', 'EO'],
+                    'values' => [$ceViews, $coViews, $eeViews, $eoViews],
+                ],
+                'exam_views_trend' => $series,
+                'top_videos' => [
+                    'labels' => array_map(static function ($r) {
+                        $t = trim((string) ($r['title'] ?? 'Sans titre'));
+                        if (function_exists('mb_strlen') && mb_strlen($t) > 28) {
+                            return mb_substr($t, 0, 28) . '…';
+                        }
+                        if (strlen($t) > 28) {
+                            return substr($t, 0, 28) . '…';
+                        }
+                        return $t;
+                    }, $topVideos),
+                    'values' => array_map(static fn ($r) => (int) ($r['views'] ?? 0), $topVideos),
+                ],
+            ],
+            'top_videos' => $topVideos,
+        ],
+    ]);
+    exit();
+}
+
 function getStats()
 {
+    saRequireSuperAdminJson();
     global $pdo;
     try {
         $stmt = $pdo->query("SELECT COUNT(*) as count FROM users WHERE role = 'user'");
@@ -1699,7 +1945,7 @@ function getNotifications()
         $uid = (int) ($_SESSION['user_id'] ?? 0);
         if ($uid > 0) {
             $stU = $pdo->prepare(
-                "SELECT COUNT(*) FROM notifications WHERE (user_id = ? OR user_id IS NULL) AND is_read = 0 AND type IN ('video', 'topic', 'message', 'user', 'update', 'video_comment', 'testimonial', 'subscription', 'subscription_staff')"
+                "SELECT COUNT(*) FROM notifications WHERE (user_id = ? OR user_id IS NULL) AND is_read = 0 AND type IN ('video', 'topic', 'message', 'user', 'update', 'video_comment', 'testimonial', 'subscription', 'subscription_staff', 'exam')"
             );
             $stU->execute([$uid]);
             $unread = (int) $stU->fetchColumn();
@@ -1872,11 +2118,7 @@ try {
 $tcf_sa_nav_unread = 0;
 if ($tcf_profile_panel_user) {
     try {
-        if ($isSuperAdmin) {
-            $navQuery = "SELECT COUNT(*) FROM notifications WHERE (user_id = ? OR user_id IS NULL) AND is_read = 0 AND type IN ('video', 'topic', 'message', 'user', 'update', 'video_comment', 'testimonial', 'subscription', 'subscription_staff')";
-        } else {
-            $navQuery = "SELECT COUNT(*) FROM notifications WHERE (user_id = ? OR user_id IS NULL) AND is_read = 0 AND type IN ('video', 'topic', 'video_comment')";
-        }
+        $navQuery = "SELECT COUNT(*) FROM notifications WHERE (user_id = ? OR user_id IS NULL) AND is_read = 0 AND type IN ('video', 'topic', 'message', 'user', 'update', 'video_comment', 'testimonial', 'subscription', 'subscription_staff', 'exam')";
         $stNavU = $pdo->prepare($navQuery);
         $stNavU->execute([(int) $tcf_profile_panel_user['id']]);
         $tcf_sa_nav_unread = (int) $stNavU->fetchColumn();
@@ -1927,7 +2169,11 @@ try {
     if ($isSuperAdmin) {
         $notifications = $pdo->query("SELECT * FROM notifications ORDER BY created_at DESC LIMIT 20")->fetchAll(PDO::FETCH_ASSOC);
     } else {
-        $notifications = $pdo->query("SELECT * FROM notifications WHERE type IN ('video', 'topic', 'video_comment') ORDER BY created_at DESC LIMIT 20")->fetchAll(PDO::FETCH_ASSOC);
+        $notifications = $pdo->query(
+            "SELECT * FROM notifications
+             WHERE type IN ('video', 'topic', 'message', 'user', 'update', 'video_comment', 'testimonial', 'subscription', 'subscription_staff', 'exam')
+             ORDER BY created_at DESC LIMIT 20"
+        )->fetchAll(PDO::FETCH_ASSOC);
     }
 } catch (PDOException $e) {
     $users = $videos = $topics = $admins = $messages = $activities = $notifications = [];
@@ -1974,10 +2220,11 @@ $notifications_json = json_encode($notifications);
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="../Assets/css/sa-theme.css">
     <script src="../Assets/javascript/sa-theme.js"></script>
-    <link rel="stylesheet" href="../Assets/css/superAdmin.css?v=admin-inline-1">
+    <link rel="stylesheet" href="../Assets/css/superAdmin.css?v=admin-dash-2">
     <link rel="stylesheet" href="../Assets/css/tcf-brand-logo.css">
     <link rel="stylesheet" href="../Assets/css/sa_subscription_plans.css?v=userlike-2">
-    <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/profile_panel.css')); ?>">
+    <link rel="stylesheet" href="../Assets/css/sa-partners.css?v=partners-3">
+    <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/profile_panel.css')); ?>?v=profile-cal-month-11">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/tcf-responsive-pills.css')); ?>">
     <link rel="stylesheet" href="../Assets/css/admin-mobile-nav.css">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/tcf-ui-layers.css')); ?>">
@@ -2062,14 +2309,14 @@ $notifications_json = json_encode($notifications);
             <i class='bx bxs-megaphone'></i>
             <span>Annonces communautaires</span>
         </div>
+        <div class="menu-item" data-target="partners">
+            <i class='bx bxs-handshake'></i>
+            <span>Partenaires</span>
+        </div>
         <?php else: ?>
         <div class="menu-item" data-target="messages">
             <i class='bx bxs-megaphone'></i>
             <span>Annonces communautaires</span>
-        </div>
-        <div class="menu-item" data-target="subscription-revenue">
-            <i class='bx bx-wallet'></i>
-            <span>Revenus</span>
         </div>
         <?php endif; ?>
 
@@ -2126,11 +2373,11 @@ $notifications_json = json_encode($notifications);
                     <span class="notification-badge" id="notification-count"<?php echo $tcf_sa_nav_unread > 0 ? '' : ' style="display:none;"'; ?>><?php echo (int) $tcf_sa_nav_unread; ?></span>
                 </a>
                 <span class="admin-profile-trigger nav-profile-trigger" id="showProfile" title="Mon profil" aria-label="Mon profil" role="button" tabindex="0">
-                    <span class="admin-nav-avatar-wrap">
+                    <span class="admin-nav-avatar-wrap nav-avatar-wrap">
                         <?php if (!empty($tcf_profile_panel_user['avatar_display_url'])): ?>
-                            <img src="<?php echo htmlspecialchars($tcf_profile_panel_user['avatar_display_url']); ?>" alt="" class="admin-nav-avatar-img" width="40" height="40" loading="lazy" decoding="async">
+                            <img src="<?php echo htmlspecialchars($tcf_profile_panel_user['avatar_display_url']); ?>" alt="" class="admin-nav-avatar-img nav-avatar-img" width="40" height="40" loading="lazy" decoding="async">
                         <?php else: ?>
-                            <span class="admin-nav-avatar-fallback"><i class="bx bx-user" aria-hidden="true"></i></span>
+                            <span class="admin-nav-avatar-fallback nav-avatar-fallback"><i class="bx bx-user" aria-hidden="true"></i></span>
                         <?php endif; ?>
                     </span>
                 </span>
@@ -2139,7 +2386,8 @@ $notifications_json = json_encode($notifications);
 
         <!-- Dashboard Section -->
         <div id="dashboard" class="content-section active">
-            <!-- Stats Cards -->
+            <?php if ($isSuperAdmin): ?>
+            <!-- Stats Cards (super admin) -->
             <div class="stats-container">
                 <div class="stat-card">
                     <div class="stat-icon users"><i class='bx bxs-user'></i></div>
@@ -2240,6 +2488,129 @@ $notifications_json = json_encode($notifications);
                     </div>
                 </div>
             </div>
+            <?php else: ?>
+            <!-- Dashboard contenu (admin) -->
+            <div class="sa-admin-dash" id="sa-admin-dash">
+                <header class="sa-admin-dash__hero">
+                    <div>
+                        <p class="sa-admin-dash__kicker">Espace administrateur</p>
+                        <h2 class="sa-admin-dash__title">Tableau de bord contenu</h2>
+                    </div>
+                </header>
+
+                <div class="stats-container sa-admin-dash__stats">
+                    <div class="stat-card">
+                        <div class="stat-icon sa-admin-ico--video"><i class='bx bxs-video'></i></div>
+                        <div class="stat-info">
+                            <h3 id="adm-dash-videos">0</h3>
+                            <p>Vidéos publiées</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon sa-admin-ico--exam"><i class='bx bxs-book-open'></i></div>
+                        <div class="stat-info">
+                            <h3 id="adm-dash-exams">0</h3>
+                            <p>Épreuves (toutes compétences)</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon sa-admin-ico--views"><i class='bx bx-show'></i></div>
+                        <div class="stat-info">
+                            <h3 id="adm-dash-exam-views">0</h3>
+                            <p>Consultations d’épreuves</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon sa-admin-ico--msg"><i class='bx bxs-megaphone'></i></div>
+                        <div class="stat-info">
+                            <h3 id="adm-dash-announcements">0</h3>
+                            <p>Annonces communautaires</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon sa-admin-ico--visit"><i class='bx bxs-group'></i></div>
+                        <div class="stat-info">
+                            <h3 id="adm-dash-visitors">0</h3>
+                            <p>Visiteurs aujourd’hui</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon sa-admin-ico--comment"><i class='bx bxs-comment-detail'></i></div>
+                        <div class="stat-info">
+                            <h3 id="adm-dash-comments">0</h3>
+                            <p>Commentaires vidéos</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sa-admin-dash__skills" aria-label="Répartition des épreuves">
+                    <article class="sa-admin-skill" data-goto="topics-written">
+                        <span class="sa-admin-skill__label">Compréhension écrite</span>
+                        <strong id="adm-dash-ce">0</strong>
+                        <span class="sa-admin-skill__meta" id="adm-dash-ce-meta">0 publiées · 0 vues</span>
+                    </article>
+                    <article class="sa-admin-skill" data-goto="topics-oral">
+                        <span class="sa-admin-skill__label">Compréhension orale</span>
+                        <strong id="adm-dash-co">0</strong>
+                        <span class="sa-admin-skill__meta" id="adm-dash-co-meta">0 publiées · 0 vues</span>
+                    </article>
+                    <article class="sa-admin-skill" data-goto="topics-expression">
+                        <span class="sa-admin-skill__label">Expression écrite</span>
+                        <strong id="adm-dash-ee">0</strong>
+                        <span class="sa-admin-skill__meta" id="adm-dash-ee-meta">0 publiées · 0 vues</span>
+                    </article>
+                    <article class="sa-admin-skill" data-goto="topics-speaking">
+                        <span class="sa-admin-skill__label">Expression orale</span>
+                        <strong id="adm-dash-eo">0</strong>
+                        <span class="sa-admin-skill__meta" id="adm-dash-eo-meta">0 publiées · 0 vues</span>
+                    </article>
+                </div>
+
+                <div class="charts-section sa-admin-dash__charts">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <div class="chart-title">Répartition du contenu</div>
+                        </div>
+                        <div class="chart-container sa-admin-chart">
+                            <canvas id="admDashMixChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <div class="chart-title">Consultations par compétence</div>
+                        </div>
+                        <div class="chart-container sa-admin-chart">
+                            <canvas id="admDashSkillViewsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="charts-section sa-admin-dash__charts">
+                    <div class="chart-card trace-chart-wide">
+                        <div class="chart-header">
+                            <div class="chart-title">Consultations d’épreuves — 14 jours</div>
+                        </div>
+                        <div class="chart-container sa-admin-chart sa-admin-chart--tall">
+                            <canvas id="admDashTrendChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <div class="chart-title">Vidéos les plus vues</div>
+                        </div>
+                        <div class="chart-container sa-admin-chart sa-admin-chart--tall">
+                            <canvas id="admDashTopVideosChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sa-admin-dash__actions">
+                    <button type="button" class="sa-admin-action" data-goto="videos"><i class='bx bxs-video'></i> Gérer les vidéos</button>
+                    <button type="button" class="sa-admin-action" data-goto="topics-written"><i class='bx bxs-book'></i> Gérer les épreuves</button>
+                    <button type="button" class="sa-admin-action" data-goto="messages"><i class='bx bxs-megaphone'></i> Annonces</button>
+                    <button type="button" class="sa-admin-action" data-goto="analytics"><i class='bx bx-bar-chart-alt-2'></i> Analyse vidéo</button>
+                </div>
+            </div>
+            <?php endif; ?>
         </div>
 
         <!-- Journal d'activité admin (déplacé depuis le tableau de bord) -->
@@ -2722,14 +3093,20 @@ $notifications_json = json_encode($notifications);
                     </button>
                 </div>
                 <p style="color:#64748b;font-size:14px;margin-bottom:16px;">
-                    Publiez une image et un texte. Les membres inscrits sont notifiés. Visibilité : visiteurs, membres, ou abonnés payants.
+                    Publiez une image, un texte (avec retours à la ligne) et éventuellement un lien. Les membres inscrits sont notifiés.
                 </p>
 
                 <form id="message-form" style="display:none;" enctype="multipart/form-data">
                     <input type="hidden" id="message-edit-id" value="">
                     <div class="form-group">
                         <label class="form-label" for="message-content">Texte / description</label>
-                        <textarea class="form-control" id="message-content" rows="5" maxlength="8000" required placeholder="Écrivez votre annonce…"></textarea>
+                        <textarea class="form-control" id="message-content" rows="6" maxlength="8000" required placeholder="Écrivez votre annonce…&#10;Entrée = nouvelle ligne"></textarea>
+                        <small style="color:#64748b;display:block;margin-top:6px;">Astuce : appuyez sur Entrée pour passer à la ligne suivante.</small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="message-link">Lien (optionnel)</label>
+                        <input type="url" class="form-control" id="message-link" maxlength="1000" placeholder="https://exemple.com/page" inputmode="url" autocomplete="url">
+                        <small style="color:#64748b;display:block;margin-top:6px;">Affiché sous le texte, cliquable pour les lecteurs.</small>
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="message-image">Image (optionnel — JPG, PNG, WebP, GIF)</label>
@@ -2768,6 +3145,60 @@ $notifications_json = json_encode($notifications);
             </div>
         </div>
 
+        <!-- Partenaires (logos page d'accueil) -->
+        <div id="partners" class="content-section" style="display:none;">
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <div class="section-title">Partenaires</div>
+                    <button type="button" class="btn btn-primary" id="add-partner-btn">
+                        <i class="bx bx-plus"></i> Ajouter un partenaire
+                    </button>
+                </div>
+                <p style="color:#64748b;font-size:14px;margin-bottom:16px;">
+                    Publiez le logo des entreprises partenaires. Ils s’affichent sur la page d’accueil, juste après la section abonnement.
+                </p>
+
+                <form id="partner-form" style="display:none;" enctype="multipart/form-data">
+                    <input type="hidden" id="partner-edit-id" value="">
+                    <div class="form-group">
+                        <label class="form-label" for="partner-name">Nom de l’entreprise</label>
+                        <input type="text" class="form-control" id="partner-name" maxlength="160" required placeholder="Ex. Nom de l’entreprise">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="partner-logo">Logo (JPG, PNG, WebP, GIF — max. 4 Mo)</label>
+                        <input type="file" class="form-control" id="partner-logo" accept="image/jpeg,image/png,image/webp,image/gif">
+                        <img id="partner-logo-preview" alt="Aperçu du logo">
+                        <small style="color:#64748b;display:block;margin-top:6px;" id="partner-logo-hint">Obligatoire à la création. En modification, laissez vide pour conserver le logo actuel.</small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="partner-website">Site web (optionnel)</label>
+                        <input type="url" class="form-control" id="partner-website" maxlength="1000" placeholder="https://entreprise.com" inputmode="url" autocomplete="url">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="partner-sort">Ordre d’affichage</label>
+                        <input type="number" class="form-control" id="partner-sort" value="0" step="1">
+                        <small style="color:#64748b;display:block;margin-top:6px;">Plus le chiffre est petit, plus le logo apparaît tôt.</small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="partner-published">Statut</label>
+                        <select class="form-control" id="partner-published">
+                            <option value="1">Publié sur l’accueil</option>
+                            <option value="0">Brouillon (masqué)</option>
+                        </select>
+                    </div>
+                    <div class="form-buttons">
+                        <button type="button" class="btn btn-outline" id="cancel-partner-btn">Annuler</button>
+                        <button type="submit" class="btn btn-primary">Enregistrer</button>
+                    </div>
+                </form>
+
+                <div class="section-header" style="margin-top: 28px;">
+                    <div class="section-title">Logos publiés</div>
+                </div>
+                <div class="sa-partners-grid" id="partners-container"></div>
+            </div>
+        </div>
+
         <!-- Topics Section -->
         <div id="topics-section" class="content-section" style="display:none;">
             <div class="dashboard-section">
@@ -2789,9 +3220,6 @@ $notifications_json = json_encode($notifications);
                 <!-- Ancien module table `topics` (saisie manuelle titre / visibilité — fichier optionnel) -->
                 <form id="topic-form" enctype="multipart/form-data" style="display: none;">
                     <input type="hidden" id="topic-edit-id">
-                    <p style="color:#64748b;font-size:0.9rem;margin-bottom:12px;">
-                        Réservé à d’anciens enregistrements. Pour les épreuves TCF, utilisez les blocs <strong>Compréhension / Expression</strong> ci-dessous : tout se saisit à la main, question par question.
-                    </p>
                     <div class="form-group">
                         <label class="form-label">Titre du sujet</label>
                         <input type="text" class="form-control" id="topic-title" required>
@@ -2824,10 +3252,8 @@ $notifications_json = json_encode($notifications);
                     </div>
                 </form>
 
-                <!-- Expression écrite (BDD) — saisie manuelle des combinaisons / tâches -->
+                <!-- Expression écrite (BDD) -->
                 <div id="ee-admin-manager" style="display:none; margin-top: 12px;">
-                    <div class="section-title" style="margin-bottom:8px;font-size:1.05rem;">Expression écrite — publication manuelle</div>
-                    <p style="color:#64748b;font-size:0.9rem;margin:0 0 12px;">Ajoutez des combinaisons et les consignes de chaque tâche directement dans le formulaire (sans fichier JSON).</p>
                     <form id="ee-exam-form" style="display:none;">
                         <input type="hidden" id="ee-exam-id">
                         <div class="form-group">
@@ -2867,7 +3293,6 @@ $notifications_json = json_encode($notifications);
                             <div class="section-title">Consignes Expression Écrite</div>
                             <button type="button" class="btn btn-primary" id="ee-open-consignes-btn"><i class='bx bx-edit'></i> Modifier les consignes</button>
                         </div>
-                        <p style="margin:0 0 10px;color:#64748b;font-size:.92rem;">Chaque tâche a sa propre consigne. HTML autorisé (titres <code>&lt;h4&gt;</code>, listes, gras).</p>
                         <form id="ee-consignes-bundle-form" style="display:none;">
                             <div class="form-group">
                                 <label class="form-label">Consigne Tâche 1 — Message court (60-120 mots)</label>
@@ -2898,7 +3323,6 @@ $notifications_json = json_encode($notifications);
 
                 <!-- Compréhension écrite — quiz BDD -->
                 <div id="ce-admin-manager" style="display:none; margin-top: 12px;">
-                    <div class="section-title" style="margin-bottom:8px;font-size:1.05rem;">Compréhension écrite</div>
                     <form id="ce-exam-form" style="display:none;">
                         <input type="hidden" id="ce-exam-id">
                         <div class="form-group">
@@ -3005,7 +3429,6 @@ $notifications_json = json_encode($notifications);
 
                 <!-- Compréhension orale — quiz BDD -->
                 <div id="co-admin-manager" style="display:none; margin-top: 12px;">
-                    <div class="section-title" style="margin-bottom:8px;font-size:1.05rem;">Compréhension orale</div>
                     <form id="co-exam-form" style="display:none;">
                         <input type="hidden" id="co-exam-id">
                         <div class="form-group">
@@ -3027,7 +3450,7 @@ $notifications_json = json_encode($notifications);
                         </div>
                         <div class="form-group">
                             <label class="form-label">Durée du test (minutes)</label>
-                            <input type="number" class="form-control" id="co-duration-minutes" value="30" min="1" max="180">
+                            <input type="number" class="form-control" id="co-duration-minutes" value="35" min="1" max="180">
                         </div>
                         <div id="co-questions-wrap"></div>
                         <div class="form-buttons" style="justify-content:flex-start;gap:8px;">
@@ -3060,16 +3483,16 @@ $notifications_json = json_encode($notifications);
                         </div>
                         <div class="form-group">
                             <label class="form-label">Durée du test (minutes)</label>
-                            <input type="number" class="form-control" id="co-json-duration-minutes" value="30" min="1" max="180">
+                            <input type="number" class="form-control" id="co-json-duration-minutes" value="35" min="1" max="180">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Fichier JSON des questions</label>
                             <input type="file" class="form-control" id="co-json-file" accept=".json,application/json">
-                            <small style="color:#64748b;display:block;margin-top:6px;">Champs : question_text, points, image_src, audio_src, correct_index (0–3), answers[{text}]. Chemins médias relatifs au site ou URLs.</small>
+                            <small style="color:#64748b;display:block;margin-top:6px;">Champs : question_text, points, image_src, audio_text (script audio), correct_index (0–3), answers[{text}].</small>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Ou coller le JSON</label>
-                            <textarea class="form-control" id="co-json-paste" rows="8" placeholder='[{"question_text":"...","audio_src":"uploads/co_media/...","correct_index":0,"answers":[{"text":"A"}]}]'></textarea>
+                            <textarea class="form-control" id="co-json-paste" rows="8" placeholder='[{"question_text":"...","audio_text":"Bonjour…","correct_index":0,"answers":[{"text":"A"}]}]'></textarea>
                         </div>
                         <div class="form-buttons">
                             <button type="button" class="btn btn-outline" id="co-json-cancel-btn">Annuler</button>
@@ -3110,10 +3533,8 @@ $notifications_json = json_encode($notifications);
                     </div>
                 </div>
 
-                <!-- Expression orale (BDD) — saisie manuelle des parties / sujets -->
+                <!-- Expression orale (BDD) -->
                 <div id="eo-admin-manager" style="display:none; margin-top: 12px;">
-                    <div class="section-title" style="margin-bottom:8px;font-size:1.05rem;">Expression orale — publication manuelle</div>
-                    <p style="color:#64748b;font-size:0.9rem;margin:0 0 12px;">Construisez l’épreuve par partie (onglets Tâche 1, 2 et 3), avec 5 sujets et une correction par sujet.</p>
                     <form id="eo-exam-form" style="display:none;">
                         <input type="hidden" id="eo-exam-id">
                         <div class="form-group">
@@ -3153,7 +3574,6 @@ $notifications_json = json_encode($notifications);
                             <div class="section-title">Consignes Expression Orale</div>
                             <button type="button" class="btn btn-primary" id="eo-open-consignes-btn"><i class='bx bx-edit'></i> Modifier les consignes</button>
                         </div>
-                        <p style="margin:0 0 10px;color:#64748b;font-size:.92rem;">Chaque tâche a sa propre consigne. HTML autorisé (titres <code>&lt;h4&gt;</code>, listes, gras).</p>
                         <form id="eo-consignes-bundle-form" style="display:none;">
                             <div class="form-group">
                                 <label class="form-label">Consigne Tâche 1 — Présentation / entretien dirigé (2 min • 3/20)</label>
@@ -3411,8 +3831,10 @@ $notifications_json = json_encode($notifications);
     <script>
         window.TCF_SITE_PUBLIC = <?php echo json_encode(rtrim(site_href(''), '/')); ?>;
         window.TCF_COMMUNITY_API = <?php echo json_encode(site_href('community_api.php')); ?>;
+        window.TCF_PARTNERS_API = <?php echo json_encode(site_href('partners_api.php')); ?>;
     </script>
-    <script src="../Assets/javascript/superAdmin.ui.js?v=no-chat-2"></script>
+    <script src="../Assets/javascript/tcf-tts.js?v=6"></script>
+    <script src="../Assets/javascript/superAdmin.ui.js?v=admin-dash-2"></script>
     <script src="../Assets/javascript/admin-mobile-nav.js"></script>
 
     <div class="tcf-ai-assistant" id="tcf-ai-assistant" data-greeting="Bonjour, je suis votre assistant administration. Comment puis-je vous aider sur la plateforme ?">

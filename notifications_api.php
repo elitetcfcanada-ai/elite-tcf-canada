@@ -106,7 +106,7 @@ if ($action === 'mark_all_read') {
                 "UPDATE notifications n
                  INNER JOIN users u ON u.id = ?
                  SET n.is_read = 1
-                 WHERE n.type IN ('video','topic','message','user','update','subscription','exam')
+                 WHERE n.type IN ('video','topic','message','update','subscription','exam','welcome')
                    AND (
                      n.user_id = ?
                      OR (

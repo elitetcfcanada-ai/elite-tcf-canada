@@ -91,7 +91,7 @@ Je travaille maintenant comme assistant administratif dans une entreprise situé
 J\'espère te voir bientôt pour en discuter.
 
 À très bientôt,
-Ayoub',
+elite tcf canada',
       ),
       1 => 
       array (
@@ -169,7 +169,7 @@ De plus, l\'intervenant était dynamique et à l\'écoute, ce qui a rendu les s�
 En résumé, c\'était une expérience positive et utile. J\'espère que nous aurons d\'autres formations de ce type à l\'avenir.
 
 Bien cordialement,
-Ayoub',
+elite tcf canada',
       ),
       2 => 
       array (
@@ -403,7 +403,7 @@ J\'espère que vous allez bien. Je vous invite à ma fête de fin d\'année le s
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
       ),
       1 => 
       array (
@@ -421,7 +421,7 @@ Dans l\'ensemble, j\'ai vécu une expérience inoubliable. L\'agence a bien pré
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
       ),
       2 => 
       array (

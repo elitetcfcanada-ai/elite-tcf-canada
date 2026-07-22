@@ -17,7 +17,7 @@ Merci pour ton message ! Oui, j’ai commencé mon nouveau travail il y a une se
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -30,7 +30,7 @@ L’année dernière, j’ai vécu pendant six mois avec ma grand-mère dans son
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -67,7 +67,7 @@ Je t’écris pour te raconter mon week-end à la campagne. Samedi matin, je sui
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -82,7 +82,7 @@ Franchement, j’ai trouvé ce local idéal, pratique et élégant. À mon avis,
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -121,7 +121,7 @@ Je suis très déçu, car j’avais besoin de cet article rapidement. Je vous de
 
 Cordialement,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -138,7 +138,7 @@ J’ai ressenti beaucoup d’émotion pendant la visite, surtout devant les tabl
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -171,11 +171,11 @@ Les devoirs à la maison divisent les familles et le monde éducatif. Selon le p
 
 Bonjour,
 
-Je m’appelle Ayoub et je pratique le sport amateur depuis plusieurs années. Je fais surtout du football dans un club de quartier à Lyon, trois soirs par semaine, de 19 h à 21 h. Le dimanche matin, nous avons souvent des matchs dans différents stades de la ville. J’aime ce sport parce qu’il me permet de rester en forme, mais aussi de partager des moments forts avec mon équipe. L’ambiance est conviviale, même si les entraînements sont parfois difficiles. Pour moi, le sport amateur est essentiel : il développe la discipline, le respect et l’esprit d’équipe. C’est une vraie passion dans ma vie.
+Je m’appelle elite tcf canada et je pratique le sport amateur depuis plusieurs années. Je fais surtout du football dans un club de quartier à Lyon, trois soirs par semaine, de 19 h à 21 h. Le dimanche matin, nous avons souvent des matchs dans différents stades de la ville. J’aime ce sport parce qu’il me permet de rester en forme, mais aussi de partager des moments forts avec mon équipe. L’ambiance est conviviale, même si les entraînements sont parfois difficiles. Pour moi, le sport amateur est essentiel : il développe la discipline, le respect et l’esprit d’équipe. C’est une vraie passion dans ma vie.
 
 Cordialement,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -190,7 +190,7 @@ J’ai beaucoup aimé ce séjour parce que j’ai pu me détendre, découvrir un
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -227,7 +227,7 @@ J’espère que tu vas bien. Je t’écris pour t’annoncer une très bonne nou
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -244,7 +244,7 @@ Cette expérience m’a rendu plus autonome et plus ouvert d’esprit. Ce n’é
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -281,7 +281,7 @@ Bienvenue dans ma ville ! Pour te déplacer, tu as plusieurs moyens de transport
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -298,7 +298,7 @@ J’ai aimé sa patience, son énergie et surtout sa générosité. Elle ne fais
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,

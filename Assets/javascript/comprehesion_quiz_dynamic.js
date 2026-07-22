@@ -22,6 +22,13 @@ function convertNewlinesToBr(text) {
   return t.replace(/\n/g, "<br>");
 }
 
+/** Retire A)/B. éventuels — les lettres peuvent être gérées par l’UI. */
+function stripAnswerLetterPrefix(htmlOrText) {
+  return String(htmlOrText == null ? "" : htmlOrText)
+    .replace(/^\s*(?:<[a-z][^>]*>\s*)*([A-Da-d])\s*[\)\]\.\-–—:]\s*/i, "")
+    .trim();
+}
+
 function answerIdKey(id) {
   return String(id == null ? "" : id);
 }
@@ -207,7 +214,7 @@ function appendReviewChoice(container, answer, opts) {
   answerElement.appendChild(icon);
 
   var textSpan = document.createElement("span");
-  textSpan.innerHTML = convertNewlinesToBr(answer.text);
+  textSpan.innerHTML = convertNewlinesToBr(stripAnswerLetterPrefix(answer.text));
   answerElement.appendChild(textSpan);
 
   /* Badge uniquement pour la bonne réponse — pas de « Votre choix » */
@@ -373,7 +380,7 @@ function updateQuestion() {
 
     const label = document.createElement("label");
     label.htmlFor = inputId;
-    label.innerHTML = convertNewlinesToBr(answer.text);
+    label.innerHTML = convertNewlinesToBr(stripAnswerLetterPrefix(answer.text));
 
     input.addEventListener("change", () => {
       setUserAnswer(question.id, aid, answerIndex);

@@ -91,41 +91,58 @@
 
 .tcf-superadmin-app .sa-nav-notification-icon {
     position: relative;
-    display: inline-flex;
+    display: inline-flex !important;
     align-items: center;
     justify-content: center;
-    color: var(--sa-header-muted, rgba(20, 22, 34, 0.58));
-    text-decoration: none;
-    padding: 0.35rem;
-    border-radius: 10px;
+    width: 2.35rem !important;
+    height: 2.35rem !important;
+    min-width: 2.35rem;
+    min-height: 2.35rem;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 10px !important;
+    background: #ffffff !important;
+    border: 1px solid #e5e7eb !important;
+    box-sizing: border-box;
+    color: #141622 !important;
+    text-decoration: none !important;
+    flex-shrink: 0;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
 .tcf-superadmin-app .sa-nav-notification-icon:hover {
-    color: var(--sa-header-text, #141622);
-    background: rgba(20, 22, 34, 0.06);
+    background: rgba(211, 13, 13, 0.06) !important;
+    border-color: rgba(211, 13, 13, 0.3) !important;
+    color: var(--main-color, #d30d0d) !important;
 }
 
 .tcf-superadmin-app .sa-nav-notification-icon i {
-    font-size: 1.35rem;
-    line-height: 1;
+    font-size: 1.25rem !important;
+    line-height: 1 !important;
+    color: inherit !important;
     vertical-align: middle;
 }
 
 .tcf-superadmin-app .sa-nav-notification-icon .notification-badge {
     position: absolute;
-    top: -2px;
-    right: -6px;
-    min-width: 18px;
-    height: 18px;
-    padding: 0 5px;
-    font-size: 0.68rem;
-    font-weight: 800;
-    line-height: 18px;
-    background: var(--main-color);
+    top: -4px;
+    right: -4px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+    background: var(--main-color, #d30d0d);
     color: #fff;
     border-radius: 999px;
     text-align: center;
     box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #fff;
+    z-index: 2;
 }
 
 .tcf-superadmin-app .sa-nav-assistant-trigger {
@@ -149,8 +166,7 @@
 }
 
 @media (max-width: 900px) {
-    .tcf-superadmin-app .sa-nav-assistant-trigger,
-    .tcf-superadmin-app .sa-nav-notification-icon {
+    .tcf-superadmin-app .sa-nav-assistant-trigger {
         width: 2.35rem;
         height: 2.35rem;
         padding: 0;
@@ -161,9 +177,22 @@
         color: var(--sa-header-muted, rgba(20, 22, 34, 0.58));
     }
 
-    .tcf-superadmin-app .sa-nav-assistant-trigger i,
-    .tcf-superadmin-app .sa-nav-notification-icon i {
+    .tcf-superadmin-app .sa-nav-assistant-trigger i {
         font-size: 1.35rem;
+    }
+
+    .tcf-superadmin-app .sa-nav-notification-icon {
+        width: 2.35rem !important;
+        height: 2.35rem !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        border: 1px solid #e5e7eb !important;
+        color: #141622 !important;
+    }
+
+    .tcf-superadmin-app .sa-nav-notification-icon i {
+        font-size: 1.25rem !important;
+        color: inherit !important;
     }
 }
 
@@ -1155,43 +1184,61 @@
     color: #fecaca;
 }
 
-/* Admin nav avatar — plus grand que la cloche (2.35rem) */
-.tcf-superadmin-app .admin-nav-avatar-wrap {
-    display: flex;
+/* Admin nav avatar — même cercle rouge que côté utilisateur (sans photo) */
+.tcf-superadmin-app .admin-nav-avatar-wrap,
+.tcf-admin-app .admin-nav-avatar-wrap {
+    display: flex !important;
     align-items: center;
     justify-content: center;
-    width: 2.95rem;
-    height: 2.95rem;
-    border-radius: 50%;
+    width: 2.95rem !important;
+    height: 2.95rem !important;
+    border-radius: 50% !important;
     overflow: hidden;
-    border: 2px solid var(--sa-nav-border);
+    border: 2px solid var(--main-color, #d30d0d) !important;
+    background: var(--main-color, #d30d0d) !important;
     box-sizing: border-box;
+    flex-shrink: 0;
 }
 
-.tcf-superadmin-app .admin-nav-avatar-img {
+.tcf-superadmin-app .admin-nav-avatar-img,
+.tcf-admin-app .admin-nav-avatar-img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    display: block;
 }
 
-.tcf-superadmin-app .admin-nav-avatar-fallback {
-    color: var(--sa-nav-muted);
-    font-size: 1.65rem;
-    display: flex;
+.tcf-superadmin-app .admin-nav-avatar-fallback,
+.tcf-admin-app .admin-nav-avatar-fallback {
+    color: #ffffff !important;
+    font-size: 1.65rem !important;
+    display: flex !important;
     align-items: center;
     justify-content: center;
     width: 100%;
     height: 100%;
+    background: transparent !important;
+}
+
+.tcf-superadmin-app .admin-nav-avatar-fallback i,
+.tcf-admin-app .admin-nav-avatar-fallback i,
+.tcf-superadmin-app .admin-nav-avatar-fallback .bx,
+.tcf-admin-app .admin-nav-avatar-fallback .bx {
+    color: #ffffff !important;
+    font-size: inherit !important;
+    line-height: 1 !important;
 }
 
 @media (max-width: 600px) {
-    .tcf-superadmin-app .admin-nav-avatar-wrap {
-        width: 2.65rem;
-        height: 2.65rem;
+    .tcf-superadmin-app .admin-nav-avatar-wrap,
+    .tcf-admin-app .admin-nav-avatar-wrap {
+        width: 2.65rem !important;
+        height: 2.65rem !important;
     }
 
-    .tcf-superadmin-app .admin-nav-avatar-fallback {
-        font-size: 1.4rem;
+    .tcf-superadmin-app .admin-nav-avatar-fallback,
+    .tcf-admin-app .admin-nav-avatar-fallback {
+        font-size: 1.4rem !important;
     }
 }
 
@@ -1572,8 +1619,8 @@
 }
 
 /*
- * Notifications admin : la page superAdmin ne charge pas style_tcf.css — il faut
- * position: fixed + affichage explicite de l’overlay, sinon le panneau ne se voit pas.
+ * Notifications admin : même tiroir clair que côté utilisateur
+ * (évite que le thème sombre admin déforme les cards).
  */
 body.tcf-superadmin-app > .notification-overlay {
     position: fixed !important;
@@ -1595,7 +1642,8 @@ body.tcf-superadmin-app > .notification-overlay.active {
     pointer-events: auto !important;
 }
 
-body.tcf-superadmin-app > .notification-page.notification-drawer-v2 {
+body.tcf-superadmin-app > .notification-page.notification-drawer-v2,
+body.tcf-superadmin-app .notification-page.notification-drawer-v2.profile-drawer-v2 {
     position: fixed !important;
     top: 0 !important;
     right: -440px !important;
@@ -1604,34 +1652,81 @@ body.tcf-superadmin-app > .notification-page.notification-drawer-v2 {
     height: 100vh !important;
     max-height: 100vh !important;
     background: #f1f5f9 !important;
+    color: #0f172a !important;
     border-left: 0 !important;
     box-shadow: -12px 0 40px rgba(15, 23, 42, 0.12) !important;
     transition: right 0.28s ease !important;
     z-index: 199100 !important;
+    color-scheme: light !important;
 }
 
-body.tcf-superadmin-app > .notification-page.notification-drawer-v2.active {
+body.tcf-superadmin-app > .notification-page.notification-drawer-v2.active,
+body.tcf-superadmin-app .notification-page.notification-drawer-v2.profile-drawer-v2.active {
     right: 0 !important;
     visibility: visible !important;
     pointer-events: auto !important;
 }
 
-/* Laisser le design profil/cards gérer le contenu */
-body.tcf-superadmin-app .notification-drawer-v2 .notification-feed-card,
-body.tcf-superadmin-app .notification-drawer-v2 .notification-summary-card,
-body.tcf-superadmin-app .notification-drawer-v2 .notification-empty-card {
-    margin: 0 !important;
-    border-radius: 16px !important;
-    border: 1px solid #e2e8f0 !important;
+body.tcf-superadmin-app .notification-drawer-v2 .profile-drawer-v2__top,
+body.tcf-superadmin-app .notification-drawer-v2 .profile-drawer-v2__footer {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border-color: #e2e8f0 !important;
+}
+
+body.tcf-superadmin-app .notification-drawer-v2 .profile-drawer-v2__eyebrow {
+    color: #94a3b8 !important;
+}
+
+body.tcf-superadmin-app .notification-drawer-v2 .profile-drawer-v2__title {
+    color: #0f172a !important;
 }
 
 body.tcf-superadmin-app .notification-drawer-v2 .profile-drawer-v2__scroll {
     padding: 1rem 1rem 1.25rem !important;
-    background: transparent !important;
+    background: #f1f5f9 !important;
+    color: #0f172a !important;
 }
 
+body.tcf-superadmin-app .notification-drawer-v2 .notif-card,
+body.tcf-superadmin-app .notification-drawer-v2 .profile-card-v2.notif-card,
+body.tcf-superadmin-app .notification-drawer-v2 .notif-empty-card,
+body.tcf-superadmin-app .notification-drawer-v2 .notification-feed-card,
+body.tcf-superadmin-app .notification-drawer-v2 .notification-summary-card,
+body.tcf-superadmin-app .notification-drawer-v2 .notification-empty-card {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 16px !important;
+    margin: 0 !important;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04) !important;
+}
+
+body.tcf-superadmin-app .notification-drawer-v2 .notif-card.is-unread,
 body.tcf-superadmin-app .notification-drawer-v2 .notification-feed-card.is-unread {
     background: linear-gradient(180deg, #fff9f9 0%, #ffffff 48%) !important;
+    border-color: rgba(211, 13, 13, 0.22) !important;
+}
+
+body.tcf-superadmin-app .notification-drawer-v2 .notif-card__title,
+body.tcf-superadmin-app .notification-drawer-v2 .notification-title,
+body.tcf-superadmin-app .notification-drawer-v2 .notif-card__type,
+body.tcf-superadmin-app .notification-drawer-v2 .tcf-notif-text,
+body.tcf-superadmin-app .notification-drawer-v2 .notification-desc {
+    color: #0f172a !important;
+}
+
+body.tcf-superadmin-app .notification-drawer-v2 .notif-card__meta time {
+    color: #64748b !important;
+}
+
+/* Masquer l’ancien dropdown admin */
+body.tcf-superadmin-app .notifications-panel,
+.tcf-admin-app .notifications-panel {
+    display: none !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
 }
 
 /* --- Identité chaîne (admin) --- */
@@ -2355,5 +2450,196 @@ body.sa-testi-modal-open { overflow: hidden; }
 @media (max-width: 720px) {
     .sa-admin-form-grid {
         grid-template-columns: 1fr;
+    }
+}
+
+/* —— Dashboard admin (contenu) —— */
+.tcf-superadmin-app .sa-admin-dash {
+    display: flex;
+    flex-direction: column;
+    gap: 1.15rem;
+}
+
+.tcf-superadmin-app .sa-admin-dash__hero {
+    display: block;
+    padding: 1.15rem 1.35rem;
+    border-radius: var(--sa-radius);
+    border: 1px solid var(--sa-border);
+    background: var(--card-bg);
+    box-shadow: var(--shadow);
+}
+
+.tcf-superadmin-app .sa-admin-dash__kicker {
+    margin: 0 0 0.35rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #d30d0d;
+}
+
+.tcf-superadmin-app .sa-admin-dash__title {
+    margin: 0;
+    font-size: clamp(1.35rem, 2.2vw, 1.75rem);
+    font-weight: 800;
+    color: var(--text-color);
+    letter-spacing: -0.02em;
+}
+
+.tcf-superadmin-app .sa-admin-dash__stats {
+    margin-bottom: 0;
+}
+
+.tcf-superadmin-app .sa-admin-ico--video {
+    background: #d30d0d;
+}
+.tcf-superadmin-app .sa-admin-ico--exam {
+    background: #b91c1c;
+}
+.tcf-superadmin-app .sa-admin-ico--views {
+    background: #7f1d1d;
+}
+.tcf-superadmin-app .sa-admin-ico--msg {
+    background: #dc2626;
+}
+.tcf-superadmin-app .sa-admin-ico--visit {
+    background: #991b1b;
+}
+.tcf-superadmin-app .sa-admin-ico--comment {
+    background: #ef4444;
+}
+
+.tcf-superadmin-app .sa-admin-dash__skills {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.85rem;
+}
+
+.tcf-superadmin-app .sa-admin-skill {
+    cursor: pointer;
+    padding: 1rem 1.1rem;
+    border-radius: var(--sa-radius);
+    border: 1px solid var(--sa-border);
+    background: var(--card-bg);
+    box-shadow: var(--shadow);
+    transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.tcf-superadmin-app .sa-admin-skill:hover {
+    transform: translateY(-2px);
+    border-color: rgba(211, 13, 13, 0.45);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.tcf-superadmin-app .sa-admin-skill__label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--sa-muted);
+}
+
+.tcf-superadmin-app .sa-admin-skill strong {
+    display: block;
+    margin-top: 0.35rem;
+    font-size: 1.55rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-color);
+}
+
+.tcf-superadmin-app .sa-admin-skill__meta {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.78rem;
+    color: var(--sa-muted);
+}
+
+.tcf-superadmin-app .sa-admin-dash__charts {
+    margin-bottom: 0;
+}
+
+.tcf-superadmin-app .sa-admin-chart {
+    height: 260px;
+}
+
+.tcf-superadmin-app .sa-admin-chart--tall {
+    height: 300px;
+}
+
+.tcf-superadmin-app .sa-admin-dash__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+}
+
+.tcf-superadmin-app .sa-admin-action {
+    appearance: none;
+    border: 1px solid var(--sa-border);
+    background: var(--card-bg);
+    color: var(--text-color);
+    border-radius: 999px;
+    padding: 0.65rem 1rem;
+    font-size: 0.86rem;
+    font-weight: 650;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.tcf-superadmin-app .sa-admin-action i {
+    color: #d30d0d;
+    font-size: 1.05rem;
+}
+
+.tcf-superadmin-app .sa-admin-action:hover {
+    border-color: rgba(211, 13, 13, 0.5);
+    background: rgba(211, 13, 13, 0.06);
+}
+
+@media (max-width: 980px) {
+    .tcf-superadmin-app .sa-admin-dash__skills {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 720px) {
+    .tcf-superadmin-app .sa-admin-dash__stats.stats-container {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.75rem;
+    }
+
+    .tcf-superadmin-app .sa-admin-dash__skills {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .tcf-superadmin-app .sa-admin-dash__charts.charts-section {
+        grid-template-columns: 1fr;
+    }
+
+    .tcf-superadmin-app .sa-admin-dash__actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .tcf-superadmin-app .sa-admin-action {
+        justify-content: center;
+        border-radius: 12px;
+        text-align: center;
+    }
+}
+
+@media (max-width: 420px) {
+    .tcf-superadmin-app .sa-admin-dash__stats .stat-info h3 {
+        font-size: 1.25rem;
+    }
+
+    .tcf-superadmin-app .sa-admin-dash__stats .stat-info p {
+        font-size: 0.7rem;
+    }
+
+    .tcf-superadmin-app .sa-admin-skill strong {
+        font-size: 1.25rem;
     }
 }

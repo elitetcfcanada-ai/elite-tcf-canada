@@ -32,19 +32,20 @@ if ($is_logged_in) {
         $user['avatar_resolved'] = $syncedAvatar;
         $user['avatar_display_url'] = tcf_avatar_public_url($syncedAvatar);
         tcf_maybe_notify_subscription_reminders($pdo, $user);
+        tcf_ensure_welcome_notification($pdo, $user);
     }
 
     // Fonction pour récupérer les notifications non lues
     function getUnreadNotifications($pdo, $user_id, $user_role) {
         if (in_array($user_role, ['admin', 'super_admin'], true)) {
-            $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM notifications WHERE (user_id = ? OR user_id IS NULL) AND is_read = 0 AND type IN ('video', 'topic', 'message', 'user', 'update', 'video_comment', 'testimonial', 'subscription', 'subscription_staff', 'exam')");
+            $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM notifications WHERE (user_id = ? OR user_id IS NULL) AND is_read = 0 AND type IN ('video', 'topic', 'message', 'user', 'update', 'video_comment', 'testimonial', 'subscription', 'subscription_staff', 'exam', 'welcome')");
             $stmt->execute([$user_id]);
         } else {
             $stmt = $pdo->prepare(
                 "SELECT COUNT(*) AS count FROM notifications n
                  INNER JOIN users u ON u.id = ?
                  WHERE n.is_read = 0
-                   AND n.type IN ('video','topic','message','user','update','subscription','exam')
+                   AND n.type IN ('video','topic','message','update','subscription','exam','welcome')
                    AND (
                      n.user_id = ?
                      OR (
@@ -186,6 +187,9 @@ $tcf_nav_aria = static function (array $files) use ($tcf_nav_is): string {
         <div class="others<?php echo $is_logged_in ? ' nav-others--user' : ''; ?>">
             <?php if ($is_logged_in): ?>
                 <!-- Interface utilisateur connecté -->
+                <a href="<?php echo htmlspecialchars(site_href('posts.php')); ?>" class="notification-icon nav-annonces-link" title="Annonces" aria-label="Annonces">
+                    <i class='bx bx-news'></i>
+                </a>
                 <a href="#" class="notification-icon" id="showNotifications">
                     <i class='bx bx-bell'></i>
                     <?php if ($unread_count > 0): ?>
@@ -206,6 +210,9 @@ $tcf_nav_aria = static function (array $files) use ($tcf_nav_is): string {
                 </span>
             <?php else: ?>
                 <!-- Interface utilisateur non connecté -->
+                <a href="<?php echo htmlspecialchars(site_href('posts.php')); ?>" class="notification-icon nav-annonces-link" title="Annonces" aria-label="Annonces">
+                    <i class='bx bx-news'></i>
+                </a>
                 <a href="<?php echo htmlspecialchars(site_href('login.php')); ?>" class="notification-icon">
                     <i class='bx bx-bell'></i>
                 </a>
@@ -287,8 +294,7 @@ header.header #menuBTN.bx-x { transform: rotate(90deg); color: var(--main-color,
 header.header nav .others {
     gap: 0.45rem !important;
 }
-header.header nav .others > i,
-header.header nav .others > a.notification-icon i {
+header.header nav .others > i {
     font-size: 1.05rem !important;
 }
 header.header nav .navbar .navLinks {
@@ -341,8 +347,7 @@ header.header nav .navbar .navLinks li a[aria-current="page"] {
     header.header nav .navbar .navLinks { gap: 0.45rem; }
     header.header nav .navbar .navLinks li a { font-size: 0.68rem; }
     header.header nav .others { gap: 0.35rem !important; }
-    header.header nav .others > i,
-    header.header nav .others > a.notification-icon i { font-size: 0.95rem !important; }
+    header.header nav .others > i { font-size: 0.95rem !important; }
     header.header nav .others .login-btn {
         padding: 0.36rem 0.75rem !important;
         font-size: 0.8rem !important;
@@ -515,8 +520,7 @@ header.header nav .navbar .navLinks li a[aria-current="page"] {
     header.header .logo h1 { font-size: 0.85rem; }
     header.header .logo h1 .tcf-brand-logo--header { --tcf-brand-logo-size: 26px; }
     header.header nav .others { gap: 0.4rem !important; }
-    header.header nav .others > i,
-    header.header nav .others > a.notification-icon i { font-size: 1.35rem; }
+    header.header nav .others > i { font-size: 1.35rem; }
     header.header #menuBTN { font-size: 1.7rem; }
 }
 
@@ -533,65 +537,76 @@ header.header nav .navbar .navLinks li a[aria-current="page"] {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Icône de notification réduite */
-.notification-icon {
+/* Icônes header (annonces + notifications) — visibles comme sur mobile */
+.notification-icon,
+header.header nav .others > a.notification-icon,
+nav .others > a.notification-icon,
+nav .others.nav-others--user > a.notification-icon,
+a.nav-annonces-link {
+    position: relative;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 2.35rem !important;
+    height: 2.35rem !important;
+    min-width: 2.35rem;
+    min-height: 2.35rem;
+    padding: 0 !important;
+    margin: 0 0.35rem 0 0 !important;
+    border-radius: 10px !important;
+    background: #ffffff !important;
+    border: 1px solid #e5e7eb !important;
+    box-sizing: border-box;
+    color: var(--text-color, #141622) !important;
+    flex-shrink: 0;
+    text-decoration: none !important;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.notification-icon:hover,
+a.nav-annonces-link:hover {
+    background: rgba(211, 13, 13, 0.06) !important;
+    border-color: rgba(211, 13, 13, 0.3) !important;
+    color: var(--main-color, #d30d0d) !important;
+}
+
+.notification-icon i,
+header.header nav .others > a.notification-icon i,
+a.nav-annonces-link i {
+    font-size: 1.25rem !important;
+    line-height: 1 !important;
+    color: var(--text-color, #141622) !important;
+    display: inline-block !important;
+    visibility: visible !important;
+}
+
+.notification-icon:hover i,
+a.nav-annonces-link:hover i {
+    color: var(--main-color, #d30d0d) !important;
+}
+
+/* Badge de notification */
+.notification-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    background: var(--main-color, #d30d0d);
+    color: #ffffff;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 22px;
-    height: 22px;
-    padding: 0;
-    margin: 0 0.4rem 0 0;
-    border-radius: 6px;
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
-    box-sizing: border-box;
-    color: var(--main-color, #d30d0d);
-    flex-shrink: 0;
-    text-decoration: none;
-    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
-}
-
-.notification-icon:hover {
-    background: rgba(211, 13, 13, 0.06);
-    color: var(--main-color, #d30d0d);
-    border-color: rgba(211, 13, 13, 0.25);
-}
-
-.notification-icon i {
-    font-size: 12px;
     line-height: 1;
-    color: var(--main-color, #d30d0d);
-}
-
-.notification-icon:hover i {
-    color: var(--main-color, #d30d0d);
-}
-
-/* Badge de notification réduit */
-.notification-badge {
-    position: absolute;
-    top: -3px;
-    right: -3px;
-    min-width: 12px;
-    height: 12px;
-    padding: 0 3px;
-    background: var(--main-color, #d30d0d);
-    color: #ffffff;
-    border-radius: 6px;
-    font-size: 8px;
-    font-weight: 700;
-    line-height: 12px;
-    text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1.5px solid #ffffff;
+    border: 2px solid #fff;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
-}
-
-.notification-icon {
-    position: relative;
+    z-index: 2;
 }
 
 </style>

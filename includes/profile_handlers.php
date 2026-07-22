@@ -27,14 +27,14 @@ if (isset($_POST['mark_all_read'])) {
     $role = (string) ($_SESSION['role'] ?? 'user');
     if (in_array($role, ['admin', 'super_admin'], true)) {
         $pdo->prepare(
-            "UPDATE notifications SET is_read = 1 WHERE type IN ('video','topic','message','user','update','video_comment','testimonial','subscription','subscription_staff','exam') AND (user_id IS NULL OR user_id = ?)"
+            "UPDATE notifications SET is_read = 1 WHERE type IN ('video','topic','message','user','update','video_comment','testimonial','subscription','subscription_staff','exam','welcome') AND (user_id IS NULL OR user_id = ?)"
         )->execute([$userId]);
     } else {
         $pdo->prepare(
             "UPDATE notifications n
              INNER JOIN users u ON u.id = ?
              SET n.is_read = 1
-             WHERE n.type IN ('video','topic','message','user','update','subscription','exam')
+             WHERE n.type IN ('video','topic','message','update','subscription','exam','welcome')
                AND (
                  n.user_id = ?
                  OR (

@@ -17,7 +17,7 @@ Tu m’as demandé des informations sur les cours de langue dans mon école, alo
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -34,7 +34,7 @@ Cette expérience m’a appris que donner un peu de temps peut vraiment changer 
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -71,7 +71,7 @@ J’espère que vous allez bien. Je vous invite chez moi pour fêter la fin d’
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -88,7 +88,7 @@ J’ai vécu un voyage inoubliable, même si le temps était parfois un peu froi
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -125,7 +125,7 @@ Comme tu veux commencer le sport, je te conseille la salle FitCenter, dans mon q
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -138,7 +138,7 @@ L’an dernier, j’ai participé à la fête des 60 ans de ma mère dans une sa
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -175,7 +175,7 @@ Tu m’as demandé des informations sur les cours de langue dans mon école. Ell
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -192,7 +192,7 @@ Cette expérience m’a beaucoup touché. J’ai compris que donner un peu de te
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -229,7 +229,7 @@ Merci pour ton message. Je suis content de te donner des nouvelles de nos nouvea
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -244,7 +244,7 @@ Le mercredi, il y avait aussi un marché local, des animations pour les enfants 
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -281,7 +281,7 @@ J’espère que vous allez bien. Je vous propose de passer le week-end prochain 
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -298,7 +298,7 @@ Ensuite, j’ai commencé à cuisiner davantage chez moi et à acheter des produ
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,

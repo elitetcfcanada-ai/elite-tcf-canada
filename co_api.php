@@ -5,6 +5,7 @@ require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/subscription_access.php';
 require_once __DIR__ . '/includes/tcf_notifications_helper.php';
 require_once __DIR__ . '/includes/rich_text.php';
+require_once __DIR__ . '/includes/admin_roles.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -17,7 +18,7 @@ function co_json(array $data, int $status = 200): void
 
 function co_is_admin(): bool
 {
-    return isset($_SESSION['role']) && in_array($_SESSION['role'], ['admin', 'super_admin'], true);
+    return tcf_is_staff_admin();
 }
 
 function co_slug(string $title): string
@@ -47,7 +48,7 @@ function co_ensure_tables(PDO $pdo): void
             intro_html TEXT DEFAULT NULL,
             visibility VARCHAR(20) NOT NULL DEFAULT 'gratuit',
             is_published TINYINT(1) NOT NULL DEFAULT 1,
-            duration_seconds INT UNSIGNED NOT NULL DEFAULT 1800,
+            duration_seconds INT UNSIGNED NOT NULL DEFAULT 2100,
             published_at DATETIME DEFAULT NULL,
             created_by INT DEFAULT NULL,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -97,6 +98,15 @@ function co_ensure_tables(PDO $pdo): void
         $pdo->exec("ALTER TABLE tcf_co_exam_views ADD COLUMN IF NOT EXISTS visitor_id VARCHAR(64) NOT NULL DEFAULT '' AFTER user_id");
         $pdo->exec("ALTER TABLE tcf_co_exam_views DROP INDEX IF EXISTS uq_co_exam_user");
         $pdo->exec("ALTER TABLE tcf_co_exam_views ADD UNIQUE KEY IF NOT EXISTS uq_co_exam_viewer (exam_id, user_id, visitor_id)");
+    } catch (Throwable $e) {
+    }
+    try {
+        $pdo->exec('ALTER TABLE tcf_co_questions ADD COLUMN audio_text TEXT DEFAULT NULL AFTER audio_src');
+    } catch (Throwable $e) {
+    }
+    try {
+        // Épreuve CO = 35 min (2100 s) — aligner anciennes valeurs par défaut 30 min
+        $pdo->exec('UPDATE tcf_co_exams SET duration_seconds = 2100 WHERE duration_seconds IN (1800, 0) OR duration_seconds IS NULL');
     } catch (Throwable $e) {
     }
     co_ensure_co_consignes_table($pdo);
@@ -247,6 +257,14 @@ function co_fetch_exam_full(PDO $pdo, int $examId): ?array
 }
 
 /** Format attendu par le JS du quiz (comme l’ancien quiz statique). */
+function co_strip_answer_letter_prefix(string $text): string
+{
+    $t = trim($text);
+    // Uniquement A)/B./C-… — ne pas toucher « Aujourd'hui », « À Paris », etc.
+    $t = preg_replace('/^\s*[A-Da-d]\s*[).:\-–—]\s*/u', '', $t) ?? $t;
+    return trim($t);
+}
+
 function co_exam_to_quiz_payload(array $exam): array
 {
     $out = [];
@@ -264,15 +282,20 @@ function co_exam_to_quiz_payload(array $exam): array
             $answers[] = [
                 'id' => $aid,
                 'key' => $key,
-                'text' => tcf_normalize_rich((string) ($a['answer_text'] ?? '')),
+                'text' => tcf_normalize_rich(co_strip_answer_letter_prefix((string) ($a['answer_text'] ?? ''))),
                 'correct' => !empty($a['is_correct']),
             ];
+        }
+        // Toujours au plus 4 propositions ; ne pas inventer de cases vides
+        if (count($answers) > 4) {
+            $answers = array_slice($answers, 0, 4);
         }
         $out[] = [
             'id' => $n++,
             'question' => tcf_normalize_rich((string) ($q['question_text'] ?? '')),
             'image' => co_resolve_media_url((string) ($q['image_src'] ?? '')),
             'audio' => co_resolve_media_url((string) ($q['audio_src'] ?? '')),
+            'audio_text' => trim((string) ($q['audio_text'] ?? '')),
             'points' => (int) ($q['points'] ?? 1),
             'answers' => $answers,
         ];
@@ -338,6 +361,7 @@ function co_normalize_questions_input($questions): array
         $pts = (int) ($q['points'] ?? 1);
         $img = trim((string) ($q['image_src'] ?? $q['image'] ?? ''));
         $aud = trim((string) ($q['audio_src'] ?? $q['audio'] ?? ''));
+        $audText = trim((string) ($q['audio_text'] ?? $q['tts'] ?? $q['script'] ?? ''));
 
         $answersIn = $q['answers'] ?? [];
         if (!is_array($answersIn)) {
@@ -359,23 +383,23 @@ function co_normalize_questions_input($questions): array
             $ci = 0;
             foreach ($answersIn as $idx => $a) {
                 if (is_array($a)) {
-                    $txt = trim((string) ($a['text'] ?? ''));
+                    $txt = co_strip_answer_letter_prefix((string) ($a['text'] ?? ''));
                     $isCorrect = !empty($a['correct']);
                     if ($isCorrect) {
                         $ci = $idx;
                     }
                     $normAnswers[] = ['text' => $txt];
                 } else {
-                    $normAnswers[] = ['text' => trim((string) $a)];
+                    $normAnswers[] = ['text' => co_strip_answer_letter_prefix((string) $a)];
                 }
             }
         } else {
             // Format avec correct_index ou correct (lettre)
             foreach ($answersIn as $a) {
                 if (is_array($a)) {
-                    $normAnswers[] = ['text' => trim((string) ($a['text'] ?? ''))];
+                    $normAnswers[] = ['text' => co_strip_answer_letter_prefix((string) ($a['text'] ?? ''))];
                 } else {
-                    $normAnswers[] = ['text' => trim((string) $a)];
+                    $normAnswers[] = ['text' => co_strip_answer_letter_prefix((string) $a)];
                 }
             }
         }
@@ -402,6 +426,7 @@ function co_normalize_questions_input($questions): array
             'points' => max(1, $pts),
             'image_src' => $img,
             'audio_src' => $aud,
+            'audio_text' => $audText,
             'correct_index' => $ci,
             'answers' => $normAnswers,
         ];
@@ -562,7 +587,7 @@ try {
                         'title' => $full['title'],
                         'subtitle' => $full['subtitle'],
                         'intro_html' => $full['intro_html'],
-                        'duration_seconds' => (int) ($full['duration_seconds'] ?? 1800),
+                        'duration_seconds' => (int) ($full['duration_seconds'] ?? 2100),
                         'question_count' => count($quiz),
                         'total_points' => $totalPoints,
                     ],
@@ -619,6 +644,7 @@ try {
                     'points' => (int) ($q['points'] ?? 1),
                     'image_src' => (string) ($q['image_src'] ?? ''),
                     'audio_src' => (string) ($q['audio_src'] ?? ''),
+                    'audio_text' => (string) ($q['audio_text'] ?? ''),
                     'correct_index' => $correctIndex,
                     'answers' => $ansOut,
                 ];
@@ -641,7 +667,7 @@ try {
                 $visibility = 'gratuit';
             }
             $isPublished = ((string) ($_POST['is_published'] ?? '1')) === '1' ? 1 : 0;
-            $durationSeconds = max(60, min(86400, (int) ($_POST['duration_seconds'] ?? 1800)));
+            $durationSeconds = max(60, min(86400, (int) ($_POST['duration_seconds'] ?? 2100)));
 
             if ($title === '') {
                 co_json(['success' => false, 'message' => 'Titre obligatoire.'], 422);
@@ -718,7 +744,7 @@ try {
                 }
 
                 $insQ = $pdo->prepare(
-                    'INSERT INTO tcf_co_questions (exam_id,sort_order,question_text,points,image_src,audio_src) VALUES (?,?,?,?,?,?)'
+                    'INSERT INTO tcf_co_questions (exam_id,sort_order,question_text,points,image_src,audio_src,audio_text) VALUES (?,?,?,?,?,?,?)'
                 );
                 $insA = $pdo->prepare(
                     'INSERT INTO tcf_co_answers (question_id,answer_key,answer_text,is_correct,sort_order) VALUES (?,?,?,?,?)'
@@ -729,9 +755,15 @@ try {
                     $pts = (int) ($q['points'] ?? 1);
                     $img = trim((string) ($q['image_src'] ?? ''));
                     $aud = trim((string) ($q['audio_src'] ?? ''));
+                    $audText = trim((string) ($q['audio_text'] ?? ''));
                     $correctIdx = (int) ($q['correct_index'] ?? 0);
                     if ($qtxt === '') {
                         throw new RuntimeException('Texte de question vide.');
+                    }
+                    if ($audText === '' && $aud === '') {
+                        throw new RuntimeException(
+                            'Question ' . ($ord + 1) . ' : indiquez le texte audio.'
+                        );
                     }
                     $insQ->execute([
                         $examId,
@@ -740,25 +772,47 @@ try {
                         max(1, $pts),
                         $img !== '' ? $img : null,
                         $aud !== '' ? $aud : null,
+                        $audText !== '' ? $audText : null,
                     ]);
                     $qid = (int) $pdo->lastInsertId();
                     $answersIn = $q['answers'] ?? [];
-                    $sk = 0;
-                    foreach ($answersIn as $a) {
-                        if (!is_array($a)) {
-                            continue;
+                    if (!is_array($answersIn)) {
+                        $answersIn = [];
+                    }
+                    // 4 slots A–D : conserver l’index d’origine (même si une case est vide)
+                    $filled = 0;
+                    for ($ai = 0; $ai < 4; $ai++) {
+                        $a = $answersIn[$ai] ?? null;
+                        $atxt = '';
+                        if (is_array($a)) {
+                            $atxt = co_strip_answer_letter_prefix((string) ($a['text'] ?? ''));
+                        } elseif (is_string($a)) {
+                            $atxt = co_strip_answer_letter_prefix($a);
                         }
-                        $atxt = trim((string) ($a['text'] ?? ''));
                         if ($atxt === '') {
                             continue;
                         }
-                        $key = ['a', 'b', 'c', 'd'][$sk % 4];
-                        $ok = ($sk === $correctIdx) ? 1 : 0;
-                        $insA->execute([$qid, $key, $atxt, $ok, $sk]);
-                        $sk++;
+                        $key = ['a', 'b', 'c', 'd'][$ai];
+                        $ok = ($ai === $correctIdx) ? 1 : 0;
+                        $insA->execute([$qid, $key, $atxt, $ok, $ai]);
+                        $filled++;
                     }
-                    if ($sk < 2) {
-                        throw new RuntimeException('Réponses insuffisantes après filtrage.');
+                    if ($filled < 2) {
+                        throw new RuntimeException(
+                            'Question ' . ($ord + 1) . ' : indiquez au moins 2 propositions de réponse.'
+                        );
+                    }
+                    $correctRaw = $answersIn[$correctIdx] ?? null;
+                    $correctText = '';
+                    if (is_array($correctRaw)) {
+                        $correctText = co_strip_answer_letter_prefix((string) ($correctRaw['text'] ?? ''));
+                    } elseif (is_string($correctRaw)) {
+                        $correctText = co_strip_answer_letter_prefix($correctRaw);
+                    }
+                    if ($correctText === '') {
+                        throw new RuntimeException(
+                            'Question ' . ($ord + 1) . ' : la bonne réponse doit avoir un texte.'
+                        );
                     }
                 }
 
@@ -785,11 +839,15 @@ try {
             if (!co_is_admin()) {
                 co_json(['success' => false, 'message' => 'Accès refusé.'], 403);
             }
+            if (!tcf_is_super_admin()) {
+                co_json(['success' => false, 'message' => 'Seul le super administrateur peut supprimer une épreuve.'], 403);
+            }
             $examId = (int) ($_POST['exam_id'] ?? 0);
             if ($examId <= 0) {
                 co_json(['success' => false, 'message' => 'ID invalide.'], 422);
             }
             $pdo->prepare('DELETE FROM tcf_co_exams WHERE id=?')->execute([$examId]);
+            tcf_delete_notifications_matching($pdo, 'comprehension_orale_quiz.php?exam_id=' . $examId);
             co_json(['success' => true, 'message' => 'Supprimé.']);
         }
 

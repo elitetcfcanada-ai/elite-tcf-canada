@@ -60,6 +60,33 @@ body.tcf-posts-page {
     padding-top: 0.85rem;
 }
 
+.tcp-card__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0 1rem 0.45rem;
+    max-width: calc(100% - 2rem);
+    padding: 0.35rem 0.55rem;
+    border-radius: 8px;
+    background: #fef2f2;
+    color: #d30d0d;
+    font-size: 0.86rem;
+    font-weight: 650;
+    text-decoration: none;
+    word-break: break-all;
+    line-height: 1.35;
+}
+
+.tcp-card__link:hover {
+    text-decoration: underline;
+    background: #fee2e2;
+}
+
+.tcp-card__link i {
+    flex-shrink: 0;
+    font-size: 1rem;
+}
+
 .tcp-card__media-wrap {
     width: 100%;
     background: #f3f4f6;

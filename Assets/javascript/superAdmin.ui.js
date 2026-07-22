@@ -149,7 +149,6 @@
         videos: true,
         analytics: true,
         messages: true,
-        'subscription-revenue': true,
         'topics-section': true,
         'topics-written': true,
         'topics-oral': true,
@@ -165,6 +164,17 @@
             return true;
         }
         return !!SA_ADMIN_SECTIONS[sectionId];
+    }
+
+    /** Boutons actions épreuve : admin peut modifier, seul super peut supprimer */
+    function saExamEditDeleteButtons() {
+        var html =
+            '<button type="button" class="btn btn-outline btn-sm sa-btn-icon sa-topic-edit" aria-label="Modifier"><i class="bx bx-edit-alt" aria-hidden="true"></i></button>';
+        if (SA_IS_SUPER) {
+            html +=
+                '<button type="button" class="btn btn-outline btn-sm sa-btn-icon btn-danger-outline sa-topic-del" aria-label="Supprimer"><i class="bx bx-trash" aria-hidden="true"></i></button>';
+        }
+        return saActionsRow(html);
     }
 
     // ---------------- Router ----------------
@@ -396,8 +406,12 @@
     // ---------------- Sections: enter hooks ----------------
     function onEnterSection(sectionId) {
         if (sectionId === 'dashboard') {
-            refreshStats();
-            loadTraceability();
+            if (SA_IS_SUPER) {
+                refreshStats();
+                loadTraceability();
+            } else {
+                loadAdminDashboard();
+            }
         }
         if (sectionId === 'recent-activity') {
             loadActivityFeed();
@@ -405,6 +419,7 @@
         if (sectionId === 'users') reloadUsers();
         if (sectionId === 'admins') reloadAdmins();
         if (sectionId === 'messages') reloadMessages();
+        if (sectionId === 'partners') reloadPartners();
         if (sectionId === 'analytics') initAnalytics();
         if (sectionId === 'topics-section') {
             setTopicContext(state.topicsTarget || 'topics-written');
@@ -635,9 +650,7 @@
                     '</td><td>' +
                     escHtml(String(t.uses != null ? t.uses : 0)) +
                     '</td>' +
-                    saActionsRow(
-                        '<button type="button" class="btn btn-outline btn-sm sa-btn-icon sa-topic-edit" aria-label="Modifier"><i class="bx bx-edit-alt" aria-hidden="true"></i></button><button type="button" class="btn btn-outline btn-sm sa-btn-icon btn-danger-outline sa-topic-del" aria-label="Supprimer"><i class="bx bx-trash" aria-hidden="true"></i></button>'
-                    ) +
+                    saExamEditDeleteButtons() +
                     '</tr>'
                 );
             })
@@ -717,6 +730,10 @@
                     if (eeId) openEeExamForm(eeId);
                 }
                 if (e.target.closest('.sa-topic-del')) {
+                    if (!SA_IS_SUPER) {
+                        toast('Seul le super administrateur peut supprimer une épreuve.', true);
+                        return;
+                    }
                     var eeId2 = tr.getAttribute('data-id');
                     if (!eeId2 || !window.confirm("Supprimer cette épreuve d'expression écrite ?")) return;
                     var fd = new FormData();
@@ -742,6 +759,10 @@
                     if (eoId) openEoExamForm(eoId);
                 }
                 if (e.target.closest('.sa-topic-del')) {
+                    if (!SA_IS_SUPER) {
+                        toast('Seul le super administrateur peut supprimer une épreuve.', true);
+                        return;
+                    }
                     var eoId2 = tr.getAttribute('data-id');
                     if (!eoId2 || !window.confirm("Supprimer cette épreuve d'expression orale ?")) return;
                     var fde = new FormData();
@@ -767,6 +788,10 @@
                     if (ceId) openCeExamForm(ceId);
                 }
                 if (e.target.closest('.sa-topic-del')) {
+                    if (!SA_IS_SUPER) {
+                        toast('Seul le super administrateur peut supprimer une épreuve.', true);
+                        return;
+                    }
                     var ceId2 = tr.getAttribute('data-id');
                     if (!ceId2 || !window.confirm("Supprimer cette épreuve de compréhension écrite ?")) return;
                     var fdc = new FormData();
@@ -792,6 +817,10 @@
                     if (coid) openCoExamForm(coid);
                 }
                 if (e.target.closest('.sa-topic-del')) {
+                    if (!SA_IS_SUPER) {
+                        toast('Seul le super administrateur peut supprimer une épreuve.', true);
+                        return;
+                    }
                     var coid2 = tr.getAttribute('data-id');
                     if (!coid2 || !window.confirm("Supprimer cette épreuve de compréhension orale ?")) return;
                     var fdco = new FormData();
@@ -823,6 +852,10 @@
                 if (form) form.style.display = 'block';
             }
             if (e.target.closest('.sa-topic-del')) {
+                if (!SA_IS_SUPER) {
+                    toast('Seul le super administrateur peut supprimer un sujet.', true);
+                    return;
+                }
                 var id2 = tr.getAttribute('data-id');
                 if (!id2 || !window.confirm('Supprimer ce sujet ?')) return;
                 postForm('delete_topic', { id: id2 })
@@ -886,7 +919,7 @@
                 '<td><span class="sa-badge sa-badge--' + (Number(e.is_published || 0) === 1 ? (effectiveVis === 'premium' ? 'premium' : 'gratuit') : 'premium') + '">' + escHtml(vis) + '</span></td>' +
                 '<td>' + escHtml(e.published_at || e.created_at || '') + '</td>' +
                 '<td>' + escHtml(String(uses)) + '</td>' +
-                saActionsRow('<button type="button" class="btn btn-outline btn-sm sa-btn-icon sa-topic-edit" aria-label="Modifier"><i class="bx bx-edit-alt" aria-hidden="true"></i></button><button type="button" class="btn btn-outline btn-sm sa-btn-icon btn-danger-outline sa-topic-del" aria-label="Supprimer"><i class="bx bx-trash" aria-hidden="true"></i></button>') +
+                saExamEditDeleteButtons() +
                 '</tr>';
         }).join('');
     }
@@ -1228,7 +1261,7 @@
                 '<td><span class="sa-badge sa-badge--' + (Number(e.is_published || 0) === 1 ? (effectiveVis === 'premium' ? 'premium' : 'gratuit') : 'premium') + '">' + escHtml(vis) + '</span></td>' +
                 '<td>' + escHtml(e.published_at || e.created_at || '') + '</td>' +
                 '<td>' + escHtml(String(uses)) + '</td>' +
-                saActionsRow('<button type="button" class="btn btn-outline btn-sm sa-btn-icon sa-topic-edit" aria-label="Modifier"><i class="bx bx-edit-alt" aria-hidden="true"></i></button><button type="button" class="btn btn-outline btn-sm sa-btn-icon btn-danger-outline sa-topic-del" aria-label="Supprimer"><i class="bx bx-trash" aria-hidden="true"></i></button>') +
+                saExamEditDeleteButtons() +
                 '</tr>';
         }).join('');
     }
@@ -1508,7 +1541,7 @@
                 '<td><span class="sa-badge sa-badge--' + (Number(e.is_published || 0) === 1 ? (effectiveVis === 'premium' ? 'premium' : 'gratuit') : 'premium') + '">' + escHtml(vis) + '</span></td>' +
                 '<td>' + escHtml(e.published_at || e.created_at || '') + '</td>' +
                 '<td>' + escHtml(String(uses)) + '</td>' +
-                saActionsRow('<button type="button" class="btn btn-outline btn-sm sa-btn-icon sa-topic-edit" aria-label="Modifier"><i class="bx bx-edit-alt" aria-hidden="true"></i></button><button type="button" class="btn btn-outline btn-sm sa-btn-icon btn-danger-outline sa-topic-del" aria-label="Supprimer"><i class="bx bx-trash" aria-hidden="true"></i></button>') +
+                saExamEditDeleteButtons() +
                 '</tr>';
         }).join('');
     }
@@ -1810,7 +1843,7 @@
             var fileInput = document.getElementById('co-json-file');
 
             function submitJsonPayload(jsonStr) {
-                var mins = parseInt(document.getElementById('co-json-duration-minutes').value, 10) || 30;
+                var mins = parseInt(document.getElementById('co-json-duration-minutes').value, 10) || 35;
                 var durSec = Math.min(86400, Math.max(60, mins * 60));
                 var fd = new FormData();
                 fd.append('action', 'save_exam');
@@ -1868,11 +1901,12 @@
             '<textarea class="form-control" rows="2" data-ce-q-text required></textarea></div>' +
             '<div class="form-group"><label class="form-label">Nombre de points (cette question)</label>' +
             '<input type="number" class="form-control" data-ce-q-points value="3" min="1" max="99"></div>' +
-            '<div class="form-group"><label class="form-label">Réponses (au moins 2 renseignées)</label>' +
-            '<textarea class="form-control" rows="2" style="margin-bottom:6px;" data-ce-ans="0" placeholder="Réponse A (HTML autorisé : &lt;br&gt;, &lt;strong&gt;, &lt;em&gt;)"></textarea>' +
-            '<textarea class="form-control" rows="2" style="margin-bottom:6px;" data-ce-ans="1" placeholder="Réponse B (HTML autorisé : &lt;br&gt;, &lt;strong&gt;, &lt;em&gt;)"></textarea>' +
-            '<textarea class="form-control" rows="2" style="margin-bottom:6px;" data-ce-ans="2" placeholder="Réponse C (HTML autorisé : &lt;br&gt;, &lt;strong&gt;, &lt;em&gt;)"></textarea>' +
-            '<textarea class="form-control" rows="2" data-ce-ans="3" placeholder="Réponse D (HTML autorisé : &lt;br&gt;, &lt;strong&gt;, &lt;em&gt;)"></textarea></div>' +
+            '<div class="form-group"><label class="form-label">Réponses (texte seul — les lettres A/B/C/D s’affichent automatiquement côté candidat)</label>' +
+            '<textarea class="form-control" rows="2" style="margin-bottom:6px;" data-ce-ans="0" placeholder="Proposition A — sans écrire « A) » (HTML : &lt;br&gt;, &lt;strong&gt;, &lt;em&gt;)"></textarea>' +
+            '<textarea class="form-control" rows="2" style="margin-bottom:6px;" data-ce-ans="1" placeholder="Proposition B — sans écrire « B) »"></textarea>' +
+            '<textarea class="form-control" rows="2" style="margin-bottom:6px;" data-ce-ans="2" placeholder="Proposition C — sans écrire « C) »"></textarea>' +
+            '<textarea class="form-control" rows="2" data-ce-ans="3" placeholder="Proposition D — sans écrire « D) »"></textarea>' +
+            '<small style="color:#64748b;display:block;margin-top:6px;">Remplissez au moins 2 propositions. N’ajoutez pas A/B/C/D dans le texte.</small></div>' +
             '<div class="form-group"><label class="form-label">Bonne réponse</label>' +
             '<select class="form-control" data-ce-correct>' +
             '<option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option>' +
@@ -2131,11 +2165,8 @@
     function refreshCoQuestionMediaPreviews(blk) {
         if (!blk) return;
         var imgPath = (blk.querySelector('[data-co-q-image]') && blk.querySelector('[data-co-q-image]').value) || '';
-        var audPath = (blk.querySelector('[data-co-q-audio]') && blk.querySelector('[data-co-q-audio]').value) || '';
         var imgWrap = blk.querySelector('[data-co-img-preview-wrap]');
         var imgEl = blk.querySelector('[data-co-img-preview]');
-        var audWrap = blk.querySelector('[data-co-aud-preview-wrap]');
-        var audEl = blk.querySelector('[data-co-aud-preview]');
         if (imgEl && imgWrap) {
             if (imgPath.trim()) {
                 imgEl.src = tcfCoPublicUrl(imgPath.trim());
@@ -2144,15 +2175,6 @@
             } else {
                 imgEl.removeAttribute('src');
                 imgWrap.style.display = 'none';
-            }
-        }
-        if (audEl && audWrap) {
-            if (audPath.trim()) {
-                audEl.src = tcfCoPublicUrl(audPath.trim());
-                audWrap.style.display = 'block';
-            } else {
-                audEl.removeAttribute('src');
-                audWrap.style.display = 'none';
             }
         }
     }
@@ -2193,22 +2215,23 @@
             '</div></div>' +
             '<div class="form-group"><label class="form-label">Image (facultatif) — chemin ou URL</label>' +
             '<input type="text" class="form-control" data-co-q-image placeholder="ex. uploads/co_media/… ou URL https://…"></div>' +
-            '<div class="form-group"><label class="form-label">Audio — importer un fichier</label>' +
-            '<input type="file" class="form-control" data-co-aud-file accept="audio/*,.mp3,.wav,.m4a,.ogg,.aac">' +
-            '<div data-co-aud-preview-wrap style="display:none;margin-top:10px;">' +
-            '<div style="font-size:0.85rem;color:#64748b;margin-bottom:6px;">Écoute</div>' +
-            '<audio data-co-aud-preview controls preload="metadata" style="width:100%;max-width:480px;"></audio>' +
-            '</div></div>' +
-            '<div class="form-group"><label class="form-label">Audio — chemin ou URL</label>' +
-            '<input type="text" class="form-control" data-co-q-audio placeholder="ex. uploads/co_media/… ou URL https://…"></div>' +
-            '<div class="form-group"><label class="form-label">Réponses (remplissez au moins 2)</label>' +
-            '<textarea class="form-control" rows="2" style="margin-bottom:6px;" data-co-ans="0" placeholder="Réponse A (HTML autorisé : &lt;br&gt;, &lt;strong&gt;, &lt;em&gt;)"></textarea>' +
-            '<textarea class="form-control" rows="2" style="margin-bottom:6px;" data-co-ans="1" placeholder="Réponse B (HTML autorisé : &lt;br&gt;, &lt;strong&gt;, &lt;em&gt;)"></textarea>' +
-            '<textarea class="form-control" rows="2" style="margin-bottom:6px;" data-co-ans="2" placeholder="Réponse C (HTML autorisé : &lt;br&gt;, &lt;strong&gt;, &lt;em&gt;)"></textarea>' +
-            '<textarea class="form-control" rows="2" data-co-ans="3" placeholder="Réponse D (HTML autorisé : &lt;br&gt;, &lt;strong&gt;, &lt;em&gt;)"></textarea></div>' +
+            '<div class="form-group"><label class="form-label">Texte audio — obligatoire</label>' +
+            '<textarea class="form-control" rows="4" data-co-q-audio-text required placeholder="Saisissez le script audio (français recommandé). La plateforme le lira automatiquement côté candidat."></textarea>' +
+            '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px;">' +
+            '<button type="button" class="btn btn-outline btn-sm" data-co-tts-listen><i class="bx bx-play"></i> Écouter / Pause</button>' +
+            '<button type="button" class="btn btn-outline btn-sm" data-co-tts-stop><i class="bx bx-stop"></i> Stop</button>' +
+            '<small data-co-tts-status style="color:#64748b;"></small>' +
+            '</div>' +
+            '<small style="color:#64748b;display:block;margin-top:6px;">Plus besoin d’importer un fichier : l’extrait audio est généré à partir de ce texte.</small></div>' +
+            '<div class="form-group"><label class="form-label">Propositions de réponses (4 champs — lettres A–D automatiques côté candidat)</label>' +
+            '<small style="color:#64748b;display:block;margin-bottom:8px;">N’écrivez pas « A », « B », « C » ou « D » : le design utilisateur les affiche déjà. Saisissez uniquement le texte de chaque proposition.</small>' +
+            '<textarea class="form-control" rows="2" style="margin-bottom:6px;" data-co-ans="0" placeholder="Proposition 1 — texte seul (sans A)"></textarea>' +
+            '<textarea class="form-control" rows="2" style="margin-bottom:6px;" data-co-ans="1" placeholder="Proposition 2 — texte seul (sans B)"></textarea>' +
+            '<textarea class="form-control" rows="2" style="margin-bottom:6px;" data-co-ans="2" placeholder="Proposition 3 — texte seul (sans C)"></textarea>' +
+            '<textarea class="form-control" rows="2" data-co-ans="3" placeholder="Proposition 4 — texte seul (sans D)"></textarea></div>' +
             '<div class="form-group"><label class="form-label">Bonne réponse</label>' +
             '<select class="form-control" data-co-correct>' +
-            '<option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option>' +
+            '<option value="0">Proposition 1 (A)</option><option value="1">Proposition 2 (B)</option><option value="2">Proposition 3 (C)</option><option value="3">Proposition 4 (D)</option>' +
             '</select></div>' +
             '</div>'
         );
@@ -2235,24 +2258,34 @@
         });
     }
 
+    function stripCoAnswerLetterPrefix(text) {
+        return String(text || '')
+            .replace(/^\s*[A-Da-d]\s*[).:\-–—]\s*/u, '')
+            .replace(/^\s*[A-Da-d]\s+/u, '')
+            .trim();
+    }
+
     function collectCoQuestionsPayload() {
         var list = [];
         $all('[data-co-q]').forEach(function (blk) {
             var text = (blk.querySelector('[data-co-q-text]') && blk.querySelector('[data-co-q-text]').value) || '';
             var pts = parseInt(blk.querySelector('[data-co-q-points]').value, 10) || 1;
             var img = (blk.querySelector('[data-co-q-image]') && blk.querySelector('[data-co-q-image]').value) || '';
-            var aud = (blk.querySelector('[data-co-q-audio]') && blk.querySelector('[data-co-q-audio]').value) || '';
+            var audText =
+                (blk.querySelector('[data-co-q-audio-text]') && blk.querySelector('[data-co-q-audio-text]').value) ||
+                '';
             var correctIdx = parseInt(blk.querySelector('[data-co-correct]').value, 10) || 0;
             var answers = [];
             for (var ai = 0; ai < 4; ai++) {
                 var inp = blk.querySelector('[data-co-ans="' + ai + '"]');
-                answers.push({ text: inp ? inp.value.trim() : '' });
+                answers.push({ text: stripCoAnswerLetterPrefix(inp ? inp.value : '') });
             }
             list.push({
                 question_text: text.trim(),
                 points: Math.max(1, pts),
                 image_src: img.trim(),
-                audio_src: aud.trim(),
+                audio_src: '',
+                audio_text: audText.trim(),
                 correct_index: Math.min(3, Math.max(0, correctIdx)),
                 answers: answers
             });
@@ -2265,7 +2298,8 @@
             fd.append('questions[' + i + '][question_text]', q.question_text);
             fd.append('questions[' + i + '][points]', String(q.points));
             fd.append('questions[' + i + '][image_src]', q.image_src);
-            fd.append('questions[' + i + '][audio_src]', q.audio_src);
+            fd.append('questions[' + i + '][audio_src]', q.audio_src || '');
+            fd.append('questions[' + i + '][audio_text]', q.audio_text || '');
             fd.append('questions[' + i + '][correct_index]', String(q.correct_index));
             q.answers.forEach(function (a, j) {
                 fd.append('questions[' + i + '][answers][' + j + '][text]', a.text);
@@ -2305,7 +2339,7 @@
                 '<td><span class="sa-badge sa-badge--' + (Number(e.is_published || 0) === 1 ? (effectiveVis === 'premium' ? 'premium' : 'gratuit') : 'premium') + '">' + escHtml(vis) + '</span></td>' +
                 '<td>' + escHtml(e.published_at || e.created_at || '') + '</td>' +
                 '<td>' + escHtml(String(uses)) + '</td>' +
-                saActionsRow('<button type="button" class="btn btn-outline btn-sm sa-btn-icon sa-topic-edit" aria-label="Modifier"><i class="bx bx-edit-alt" aria-hidden="true"></i></button><button type="button" class="btn btn-outline btn-sm sa-btn-icon btn-danger-outline sa-topic-del" aria-label="Supprimer"><i class="bx bx-trash" aria-hidden="true"></i></button>') +
+                saExamEditDeleteButtons() +
                 '</tr>';
         }).join('');
     }
@@ -2331,7 +2365,7 @@
             titleEl.value = '';
             if (visEl) visEl.value = 'gratuit';
             if (pubEl) pubEl.checked = true;
-            if (durEl) durEl.value = '30';
+            if (durEl) durEl.value = '35';
             resetCoQuestions(1);
             return;
         }
@@ -2350,7 +2384,7 @@
                 titleEl.value = d.title || '';
                 if (visEl) visEl.value = (d.visibility === 'premium' ? 'premium' : 'gratuit');
                 if (pubEl) pubEl.checked = Number(d.is_published || 0) === 1;
-                var sec = Number(d.duration_seconds || 1800);
+                var sec = Number(d.duration_seconds || 2100);
                 if (durEl) durEl.value = String(Math.max(1, Math.round(sec / 60)));
                 var qs = d.quiz_questions || [];
                 var wrap = document.getElementById('co-questions-wrap');
@@ -2370,14 +2404,14 @@
                     if (pt) pt.value = String(q.points != null ? q.points : 1);
                     var im = blk.querySelector('[data-co-q-image]');
                     if (im) im.value = q.image_src || '';
-                    var au = blk.querySelector('[data-co-q-audio]');
-                    if (au) au.value = q.audio_src || '';
+                    var at = blk.querySelector('[data-co-q-audio-text]');
+                    if (at) at.value = q.audio_text || '';
                     var sel = blk.querySelector('[data-co-correct]');
                     if (sel) sel.value = String(Math.min(3, Math.max(0, Number(q.correct_index || 0))));
                     var ans = q.answers || [];
                     for (var ai = 0; ai < 4; ai++) {
                         var inp = blk.querySelector('[data-co-ans="' + ai + '"]');
-                        if (inp && ans[ai]) inp.value = ans[ai].text || '';
+                        if (inp && ans[ai]) inp.value = stripCoAnswerLetterPrefix(ans[ai].text || '');
                     }
                 });
                 refreshCoQuestionLabels();
@@ -2405,6 +2439,70 @@
             });
         }
         wrap.addEventListener('click', function (e) {
+            var listenBtn = e.target.closest && e.target.closest('[data-co-tts-listen]');
+            if (listenBtn) {
+                e.preventDefault();
+                var blkL = listenBtn.closest('[data-co-q]');
+                var ta = blkL && blkL.querySelector('[data-co-q-audio-text]');
+                var st = blkL && blkL.querySelector('[data-co-tts-status]');
+                var txt = ta ? String(ta.value || '').trim() : '';
+                if (!txt) {
+                    toast('Saisissez d’abord le texte à lire.', true);
+                    return;
+                }
+                if (!window.TCF_TTS) {
+                    toast('Lecture audio indisponible.', true);
+                    return;
+                }
+                if (window.TCF_TTS.isPaused && window.TCF_TTS.isPaused()) {
+                    window.TCF_TTS.resume();
+                    if (st) st.textContent = 'Lecture…';
+                    return;
+                }
+                if (
+                    (window.TCF_TTS.isPlaying && window.TCF_TTS.isPlaying()) ||
+                    (window.TCF_TTS.isSpeaking && window.TCF_TTS.isSpeaking())
+                ) {
+                    window.TCF_TTS.pause();
+                    if (st) st.textContent = 'En pause';
+                    return;
+                }
+                if (st) st.textContent = 'Lecture…';
+                window.TCF_TTS.speak(txt, {
+                    lang: 'fr-FR',
+                    rate: window.TCF_TTS.DEFAULT_RATE != null ? window.TCF_TTS.DEFAULT_RATE : 0.95,
+                    pitch: window.TCF_TTS.DEFAULT_PITCH != null ? window.TCF_TTS.DEFAULT_PITCH : 0.95,
+                    onStart: function () {
+                        if (st) st.textContent = 'Lecture en cours…';
+                    },
+                    onPause: function () {
+                        if (st) st.textContent = 'En pause';
+                    },
+                    onResume: function () {
+                        if (st) st.textContent = 'Lecture en cours…';
+                    },
+                    onSpeechEnd: function () {
+                        if (st) st.textContent = 'Fin…';
+                    },
+                    onEnd: function () {
+                        if (st) st.textContent = 'Terminé';
+                    },
+                    onError: function () {
+                        if (st) st.textContent = 'Erreur de lecture';
+                        toast('Impossible de lire l’audio (navigateur).', true);
+                    }
+                });
+                return;
+            }
+            var stopBtn = e.target.closest && e.target.closest('[data-co-tts-stop]');
+            if (stopBtn) {
+                e.preventDefault();
+                if (window.TCF_TTS) window.TCF_TTS.stop();
+                var blkS = stopBtn.closest('[data-co-q]');
+                var st2 = blkS && blkS.querySelector('[data-co-tts-status]');
+                if (st2) st2.textContent = 'Pause';
+                return;
+            }
             var rm = e.target.closest && e.target.closest('[data-co-remove-q]');
             if (!rm) return;
             var blk = rm.closest('[data-co-q]');
@@ -2433,29 +2531,11 @@
                     toast('Image importée — aperçu ci-dessus');
                     imgIn.value = '';
                 });
-                return;
-            }
-            var audIn = e.target.closest && e.target.closest('[data-co-aud-file]');
-            if (audIn && audIn.files && audIn.files[0]) {
-                var blk2 = audIn.closest('[data-co-q]');
-                var f2 = audIn.files[0];
-                uploadCoMediaFile(f2, 'audio', function (j) {
-                    if (!j || !j.success) {
-                        toast((j && j.message) || "Échec de l'import audio", true);
-                        audIn.value = '';
-                        return;
-                    }
-                    var t2 = blk2 && blk2.querySelector('[data-co-q-audio]');
-                    if (t2) t2.value = j.path || '';
-                    refreshCoQuestionMediaPreviews(blk2);
-                    toast('Audio importé — lecteur ci-dessous');
-                    audIn.value = '';
-                });
             }
         });
         wrap.addEventListener('input', function (e) {
             var t = e.target;
-            if (t && t.matches && (t.matches('[data-co-q-image]') || t.matches('[data-co-q-audio]'))) {
+            if (t && t.matches && t.matches('[data-co-q-image]')) {
                 refreshCoQuestionMediaPreviews(t.closest('[data-co-q]'));
             }
         });
@@ -2503,9 +2583,14 @@
                     ok = false;
                     return;
                 }
+                if (!q.audio_text) {
+                    toast('Question ' + (qi + 1) + ' : texte audio obligatoire.', true);
+                    ok = false;
+                    return;
+                }
                 var filled = q.answers.filter(function (a) { return a.text.length > 0; }).length;
-                if (filled < 2) {
-                    toast('Question ' + (qi + 1) + ' : au moins deux réponses renseignées.', true);
+                if (filled < 4) {
+                    toast('Question ' + (qi + 1) + ' : renseignez les 4 propositions (A–D s’affichent automatiquement côté candidat).', true);
                     ok = false;
                     return;
                 }
@@ -2517,7 +2602,7 @@
             });
             if (!ok) return;
             var mins = parseInt(document.getElementById('co-duration-minutes').value, 10);
-            if (!mins || mins < 1) mins = 30;
+            if (!mins || mins < 1) mins = 35;
             var durSec = Math.min(86400, Math.max(60, mins * 60));
             var fd = new FormData();
             fd.append('action', 'save_exam');
@@ -2906,6 +2991,7 @@
     }
 
     function refreshStats() {
+        if (!SA_IS_SUPER) return;
         postForm('get_stats')
             .then(function (j) {
                 if (!j || !j.success || !j.data) return;
@@ -2920,6 +3006,218 @@
                 if (rev) rev.textContent = '$' + (Number(d.revenue || 0).toFixed(2));
             })
             .catch(function () {});
+    }
+
+    var adminDashCharts = {};
+    var adminDashBooted = false;
+
+    function destroyAdminDashChart(key) {
+        if (adminDashCharts[key]) {
+            try {
+                adminDashCharts[key].destroy();
+            } catch (e) {}
+            delete adminDashCharts[key];
+        }
+    }
+
+    function admDashSetText(id, val) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = String(val != null ? val : 0);
+    }
+
+    function renderAdminDashboard(d) {
+        if (!d) return;
+        var videos = d.videos || {};
+        var exams = d.exams || {};
+        var ann = d.announcements || {};
+        var by = (exams.by_skill) || {};
+
+        admDashSetText('adm-dash-videos', videos.total || 0);
+        admDashSetText('adm-dash-exams', exams.total || 0);
+        admDashSetText('adm-dash-exam-views', exams.views || 0);
+        admDashSetText('adm-dash-announcements', ann.total || 0);
+        admDashSetText('adm-dash-visitors', d.visitors_today || 0);
+        admDashSetText('adm-dash-comments', videos.comments || 0);
+
+        function fillSkill(key, prefix) {
+            var s = by[key] || {};
+            admDashSetText(prefix, s.total || 0);
+            admDashSetText(prefix + '-meta', (s.published || 0) + ' publiées · ' + (s.views || 0) + ' vues');
+        }
+        fillSkill('ce', 'adm-dash-ce');
+        fillSkill('co', 'adm-dash-co');
+        fillSkill('ee', 'adm-dash-ee');
+        fillSkill('eo', 'adm-dash-eo');
+
+        if (typeof Chart === 'undefined') return;
+        var tc = chartTextColor();
+        var charts = d.charts || {};
+        var palette = [
+            'rgba(211,13,13,0.85)',
+            'rgba(185,28,28,0.75)',
+            'rgba(239,68,68,0.7)',
+            'rgba(248,113,113,0.65)',
+            'rgba(252,165,165,0.7)',
+            'rgba(127,29,29,0.75)'
+        ];
+
+        var mix = charts.content_mix || { labels: [], values: [] };
+        destroyAdminDashChart('mix');
+        var mixCanvas = document.getElementById('admDashMixChart');
+        if (mixCanvas) {
+            adminDashCharts.mix = new Chart(mixCanvas, {
+                type: 'doughnut',
+                data: {
+                    labels: mix.labels || [],
+                    datasets: [
+                        {
+                            data: mix.values || [],
+                            backgroundColor: palette,
+                            borderWidth: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: tc, boxWidth: 12, padding: 14 }
+                        }
+                    }
+                }
+            });
+        }
+
+        var skillViews = charts.exam_views_by_skill || { labels: [], values: [] };
+        destroyAdminDashChart('skillViews');
+        var skillCanvas = document.getElementById('admDashSkillViewsChart');
+        if (skillCanvas) {
+            adminDashCharts.skillViews = new Chart(skillCanvas, {
+                type: 'bar',
+                data: {
+                    labels: skillViews.labels || [],
+                    datasets: [
+                        {
+                            label: 'Consultations',
+                            data: skillViews.values || [],
+                            backgroundColor: 'rgba(211,13,13,0.75)',
+                            borderRadius: 8
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: tc }, grid: { display: false } },
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: tc, precision: 0 },
+                            grid: { color: 'rgba(148,163,184,0.15)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        var trend = charts.exam_views_trend || { labels: [], values: [] };
+        destroyAdminDashChart('trend');
+        var trendCanvas = document.getElementById('admDashTrendChart');
+        if (trendCanvas) {
+            adminDashCharts.trend = new Chart(trendCanvas, {
+                type: 'line',
+                data: {
+                    labels: trend.labels || [],
+                    datasets: [
+                        {
+                            label: 'Consultations',
+                            data: trend.values || [],
+                            borderColor: 'rgba(211,13,13,1)',
+                            backgroundColor: 'rgba(211,13,13,0.12)',
+                            fill: true,
+                            tension: 0.35,
+                            pointRadius: 3,
+                            pointBackgroundColor: '#d30d0d'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: tc, maxRotation: 0 }, grid: { display: false } },
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: tc, precision: 0 },
+                            grid: { color: 'rgba(148,163,184,0.15)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        var top = charts.top_videos || { labels: [], values: [] };
+        destroyAdminDashChart('topVideos');
+        var topCanvas = document.getElementById('admDashTopVideosChart');
+        if (topCanvas) {
+            var topLabels = (top.labels && top.labels.length) ? top.labels : ['Aucune vidéo'];
+            var topValues = (top.values && top.values.length) ? top.values : [0];
+            adminDashCharts.topVideos = new Chart(topCanvas, {
+                type: 'bar',
+                data: {
+                    labels: topLabels,
+                    datasets: [
+                        {
+                            label: 'Vues',
+                            data: topValues,
+                            backgroundColor: 'rgba(176,11,11,0.7)',
+                            borderRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: { color: tc, precision: 0 },
+                            grid: { color: 'rgba(148,163,184,0.15)' }
+                        },
+                        y: { ticks: { color: tc }, grid: { display: false } }
+                    }
+                }
+            });
+        }
+    }
+
+    function loadAdminDashboard() {
+        var root = document.getElementById('sa-admin-dash');
+        if (!root || SA_IS_SUPER) return;
+        postForm('get_admin_dashboard')
+            .then(function (j) {
+                if (j && j.success && j.data) renderAdminDashboard(j.data);
+            })
+            .catch(function () {});
+    }
+
+    function initAdminDashboardUi() {
+        if (adminDashBooted || SA_IS_SUPER) return;
+        adminDashBooted = true;
+        var root = document.getElementById('sa-admin-dash');
+        if (!root) return;
+        root.addEventListener('click', function (e) {
+            var gotoEl = e.target.closest && e.target.closest('[data-goto]');
+            if (!gotoEl) return;
+            var target = gotoEl.getAttribute('data-goto');
+            if (target) setActiveSection(target);
+        });
     }
 
     function renderSaPlanCatalogCard(p) {
@@ -3976,6 +4274,8 @@
         if (!form) return;
         document.getElementById('message-edit-id').value = '';
         document.getElementById('message-content').value = '';
+        var linkEl = document.getElementById('message-link');
+        if (linkEl) linkEl.value = '';
         document.getElementById('message-visibility').value = 'registered';
         document.getElementById('message-published').value = '1';
         var img = document.getElementById('message-image');
@@ -4002,6 +4302,14 @@
             .map(function (m) {
                 var body = String(m.body || '');
                 var excerpt = body.length > 220 ? body.substring(0, 220) + '…' : body;
+                var link = String(m.link_url || '').trim();
+                var linkHtml = link
+                    ? '<p class="sa-msg-link" style="margin:0 0 8px;font-size:0.85rem;"><a href="' +
+                      escAttr(link) +
+                      '" target="_blank" rel="noopener noreferrer">' +
+                      escHtml(link) +
+                      '</a></p>'
+                    : '';
                 var thumb = m.image_href
                     ? '<img class="sa-msg-thumb" src="' +
                       escAttr(m.image_href) +
@@ -4016,6 +4324,7 @@
                     '<p class="sa-msg-body" style="margin:0 0 8px;white-space:pre-wrap;">' +
                     escHtml(excerpt) +
                     '</p>' +
+                    linkHtml +
                     '<div class="sa-msg-stats" style="display:flex;flex-wrap:wrap;gap:0.55rem;margin-bottom:8px;">' +
                     '<span class="sa-badge" style="background:#f1f5f9;color:#334155;"><i class="bx bx-show"></i> ' +
                     escHtml(String(m.views_count || 0)) +
@@ -4033,7 +4342,9 @@
                     '</div>' +
                     '<div class="sa-msg-actions sa-msg-actions--end">' +
                     '<button type="button" class="btn btn-outline btn-sm sa-btn-icon sa-msg-edit" aria-label="Modifier"><i class="bx bx-edit-alt" aria-hidden="true"></i></button>' +
-                    '<button type="button" class="btn btn-outline btn-sm sa-btn-icon btn-danger-outline sa-msg-del" aria-label="Supprimer"><i class="bx bx-trash" aria-hidden="true"></i></button>' +
+                    (SA_IS_SUPER
+                        ? '<button type="button" class="btn btn-outline btn-sm sa-btn-icon btn-danger-outline sa-msg-del" aria-label="Supprimer"><i class="bx bx-trash" aria-hidden="true"></i></button>'
+                        : '') +
                     '</div></div></div>'
                 );
             })
@@ -4087,6 +4398,8 @@
                 fd.append('action', 'admin_save');
                 if (editId) fd.append('id', editId);
                 fd.append('body', document.getElementById('message-content').value);
+                var linkField = document.getElementById('message-link');
+                fd.append('link_url', linkField ? linkField.value : '');
                 fd.append('visibility', document.getElementById('message-visibility').value);
                 fd.append('is_published', document.getElementById('message-published').value);
                 if (imgInput && imgInput.files && imgInput.files[0]) {
@@ -4123,6 +4436,8 @@
                     var m = JSON.parse(raw);
                     document.getElementById('message-edit-id').value = String(m.id);
                     document.getElementById('message-content').value = m.body || '';
+                    var linkEdit = document.getElementById('message-link');
+                    if (linkEdit) linkEdit.value = m.link_url || '';
                     document.getElementById('message-visibility').value = m.visibility || 'registered';
                     document.getElementById('message-published').value =
                         m.is_published == 1 || m.is_published === true ? '1' : '0';
@@ -4148,6 +4463,10 @@
             }
             var del = e.target.closest && e.target.closest('.sa-msg-del');
             if (del) {
+                if (!SA_IS_SUPER) {
+                    toast('Seul le super administrateur peut supprimer une annonce.', true);
+                    return;
+                }
                 var card2 = del.closest('.sa-msg-card');
                 var raw2 = card2 && card2.getAttribute('data-msg');
                 if (!raw2 || !window.confirm('Supprimer cette annonce ?')) return;
@@ -4166,6 +4485,216 @@
                             toast((j && j.message) || 'Erreur', true);
                         }
                     });
+                } catch (e2) {}
+            }
+        });
+    }
+
+    // Partenaires (logos page d'accueil)
+    var PARTNERS_API =
+        typeof window.TCF_PARTNERS_API === 'string' && window.TCF_PARTNERS_API
+            ? window.TCF_PARTNERS_API
+            : '../partners_api.php';
+
+    function resetPartnerForm() {
+        var form = document.getElementById('partner-form');
+        if (!form) return;
+        document.getElementById('partner-edit-id').value = '';
+        document.getElementById('partner-name').value = '';
+        document.getElementById('partner-website').value = '';
+        document.getElementById('partner-sort').value = '0';
+        document.getElementById('partner-published').value = '1';
+        var logo = document.getElementById('partner-logo');
+        if (logo) logo.value = '';
+        var prev = document.getElementById('partner-logo-preview');
+        if (prev) {
+            prev.style.display = 'none';
+            prev.removeAttribute('src');
+        }
+        var hint = document.getElementById('partner-logo-hint');
+        if (hint) {
+            hint.textContent = 'Obligatoire à la création. En modification, laissez vide pour conserver le logo actuel.';
+        }
+    }
+
+    function renderPartners(list) {
+        var box = document.getElementById('partners-container');
+        if (!box) return;
+        if (!list || !list.length) {
+            box.innerHTML =
+                '<div class="sa-partners-empty"><i class="bx bxs-handshake" aria-hidden="true"></i>Aucun partenaire pour le moment.<br><span style="font-size:0.85rem;">Ajoutez un logo pour l’afficher sur l’accueil.</span></div>';
+            return;
+        }
+        box.innerHTML = list
+            .map(function (p) {
+                var logo = p.logo_href || '';
+                var web = String(p.website_url || '').trim();
+                var pub = p.is_published == 1 || p.is_published === true;
+                return (
+                    '<article class="sa-partner-card" data-partner=\'' +
+                    escAttr(JSON.stringify(p)) +
+                    '\'>' +
+                    '<div class="sa-partner-card__logo">' +
+                    (logo
+                        ? '<img src="' + escAttr(logo) + '" alt="' + escAttr(p.name || '') + '">'
+                        : '<span class="sa-partner-card__logo-empty">Sans logo</span>') +
+                    '</div>' +
+                    '<div class="sa-partner-card__body">' +
+                    '<div class="sa-partner-card__meta">' +
+                    '<h4 class="sa-partner-card__name">' +
+                    escHtml(p.name || 'Partenaire') +
+                    '</h4>' +
+                    (web
+                        ? '<a class="sa-partner-card__web" href="' +
+                          escAttr(web) +
+                          '" target="_blank" rel="noopener noreferrer"><i class="bx bx-link-external" aria-hidden="true"></i> ' +
+                          escHtml(web) +
+                          '</a>'
+                        : '') +
+                    '</div>' +
+                    '<div class="sa-partner-card__badges">' +
+                    '<span class="sa-partner-card__badge ' +
+                    (pub ? 'sa-partner-card__badge--pub' : 'sa-partner-card__badge--draft') +
+                    '">' +
+                    (pub ? 'Publié' : 'Brouillon') +
+                    '</span>' +
+                    '<span class="sa-partner-card__badge sa-partner-card__badge--order">Ordre ' +
+                    escHtml(String(p.sort_order != null ? p.sort_order : 0)) +
+                    '</span>' +
+                    '</div>' +
+                    '<div class="sa-partner-card__actions">' +
+                    '<button type="button" class="btn btn-outline btn-sm sa-partner-edit"><i class="bx bx-edit-alt" aria-hidden="true"></i> Modifier</button>' +
+                    '<button type="button" class="btn btn-outline btn-sm btn-danger-outline sa-partner-del"><i class="bx bx-trash" aria-hidden="true"></i></button>' +
+                    '</div></div></article>'
+                );
+            })
+            .join('');
+    }
+
+    function reloadPartners() {
+        fetch(PARTNERS_API + '?action=admin_list', { credentials: 'same-origin' })
+            .then(function (r) {
+                return r.json();
+            })
+            .then(function (j) {
+                if (j && j.success && j.data) renderPartners(j.data);
+            })
+            .catch(function () {});
+    }
+
+    function initPartnersSection() {
+        var form = document.getElementById('partner-form');
+        var addBtn = document.getElementById('add-partner-btn');
+        var cancelBtn = document.getElementById('cancel-partner-btn');
+        var logoInput = document.getElementById('partner-logo');
+        if (logoInput) {
+            logoInput.addEventListener('change', function () {
+                var prev = document.getElementById('partner-logo-preview');
+                if (!prev || !logoInput.files || !logoInput.files[0]) return;
+                var url = URL.createObjectURL(logoInput.files[0]);
+                prev.src = url;
+                prev.style.display = 'block';
+            });
+        }
+        if (addBtn && form) {
+            addBtn.addEventListener('click', function () {
+                resetPartnerForm();
+                form.style.display = 'block';
+            });
+        }
+        if (cancelBtn && form) {
+            cancelBtn.addEventListener('click', function () {
+                form.style.display = 'none';
+                resetPartnerForm();
+            });
+        }
+        if (form) {
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                var editId = document.getElementById('partner-edit-id').value;
+                var fd = new FormData();
+                fd.append('action', 'admin_save');
+                if (editId) fd.append('id', editId);
+                fd.append('name', document.getElementById('partner-name').value);
+                fd.append('website_url', document.getElementById('partner-website').value);
+                fd.append('sort_order', document.getElementById('partner-sort').value || '0');
+                fd.append('is_published', document.getElementById('partner-published').value);
+                if (logoInput && logoInput.files && logoInput.files[0]) {
+                    fd.append('logo', logoInput.files[0]);
+                }
+                fetch(PARTNERS_API, { method: 'POST', body: fd, credentials: 'same-origin' })
+                    .then(function (r) {
+                        return r.json();
+                    })
+                    .then(function (j) {
+                        if (j && j.success) {
+                            toast(j.message || 'OK');
+                            form.style.display = 'none';
+                            resetPartnerForm();
+                            reloadPartners();
+                        } else {
+                            toast((j && j.message) || 'Erreur', true);
+                        }
+                    })
+                    .catch(function () {
+                        toast('Erreur réseau', true);
+                    });
+            });
+        }
+        document.body.addEventListener('click', function (e) {
+            var ed = e.target.closest && e.target.closest('.sa-partner-edit');
+            if (ed) {
+                var card = ed.closest('.sa-partner-card');
+                var raw = card && card.getAttribute('data-partner');
+                if (!raw || !form) return;
+                try {
+                    var p = JSON.parse(raw);
+                    document.getElementById('partner-edit-id').value = String(p.id);
+                    document.getElementById('partner-name').value = p.name || '';
+                    document.getElementById('partner-website').value = p.website_url || '';
+                    document.getElementById('partner-sort').value = String(
+                        p.sort_order != null ? p.sort_order : 0
+                    );
+                    document.getElementById('partner-published').value =
+                        p.is_published == 1 || p.is_published === true ? '1' : '0';
+                    if (logoInput) logoInput.value = '';
+                    var prev = document.getElementById('partner-logo-preview');
+                    if (prev) {
+                        if (p.logo_href) {
+                            prev.src = p.logo_href;
+                            prev.style.display = 'block';
+                        } else {
+                            prev.style.display = 'none';
+                            prev.removeAttribute('src');
+                        }
+                    }
+                    form.style.display = 'block';
+                    form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } catch (err) {}
+                return;
+            }
+            var del = e.target.closest && e.target.closest('.sa-partner-del');
+            if (del) {
+                var card2 = del.closest('.sa-partner-card');
+                var raw2 = card2 && card2.getAttribute('data-partner');
+                if (!raw2 || !window.confirm('Supprimer ce partenaire ?')) return;
+                try {
+                    var p2 = JSON.parse(raw2);
+                    var fd2 = new FormData();
+                    fd2.append('action', 'admin_delete');
+                    fd2.append('id', String(p2.id));
+                    fetch(PARTNERS_API, { method: 'POST', body: fd2, credentials: 'same-origin' })
+                        .then(function (r) {
+                            return r.json();
+                        })
+                        .then(function (j) {
+                            if (j && j.success) {
+                                toast(j.message || 'OK');
+                                reloadPartners();
+                            } else {
+                                toast((j && j.message) || 'Erreur', true);
+                            }
+                        });
                 } catch (e2) {}
             }
         });
@@ -5198,10 +5727,6 @@
             }
             var edit = e.target.closest && e.target.closest('.js-edit-video');
             if (edit) {
-                if (!SA_IS_SUPER) {
-                    toast('Seul le super-administrateur peut modifier une vidéo.', true);
-                    return;
-                }
                 var card2 = edit.closest('.tcf-admin-video-card');
                 var id2 = card2 ? card2.getAttribute('data-id') : '';
                 if (!id2) return;
@@ -5285,9 +5810,9 @@
                     '<div class="tcf-admin-video-actions">' +
                     '<button type="button" class="btn btn-outline btn-sm sa-btn-icon js-admin-video-comments" aria-label="Commentaires" title="Commentaires"><i class="bx bx-message-dots" aria-hidden="true"></i></button>' +
                     '<button type="button" class="btn btn-outline btn-sm sa-btn-icon js-admin-video-analytics" aria-label="Analyse" title="Analyse de la vidéo"><i class="bx bx-bar-chart-alt-2" aria-hidden="true"></i></button>' +
+                    '<button type="button" class="btn btn-outline btn-sm sa-btn-icon js-edit-video" aria-label="Modifier"><i class="bx bx-edit-alt" aria-hidden="true"></i></button>' +
                     (SA_IS_SUPER
-                        ? '<button type="button" class="btn btn-outline btn-sm sa-btn-icon js-edit-video" aria-label="Modifier"><i class="bx bx-edit-alt" aria-hidden="true"></i></button>' +
-                          '<button type="button" class="btn btn-outline btn-sm sa-btn-icon btn-danger-outline js-delete-video" aria-label="Supprimer"><i class="bx bx-trash" aria-hidden="true"></i></button>'
+                        ? '<button type="button" class="btn btn-outline btn-sm sa-btn-icon btn-danger-outline js-delete-video" aria-label="Supprimer"><i class="bx bx-trash" aria-hidden="true"></i></button>'
                         : '') +
                     '</div></div></article>'
                 );
@@ -6395,9 +6920,11 @@
         initUsersSection();
         initAdminsSection();
         initMessagesSection();
+        initPartnersSection();
         initNotifications();
         initModalsClose();
         initTraceListeners();
+        initAdminDashboardUi();
         initActivityFeedControls();
         initAnalyticsPeriodListener();
 

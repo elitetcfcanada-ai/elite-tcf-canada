@@ -12,6 +12,21 @@
     display: none;
 }
 
+/* Sécurité desktop : barre app jamais visible ≥992px */
+@media (min-width: 992px) {
+    .tcf-mobile-nav,
+    .tcf-mobile-sheet,
+    .tcf-mobile-sheet-overlay {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+    }
+
+    body.tcf-has-mobile-nav {
+        padding-bottom: 0 !important;
+    }
+}
+
 @media (max-width: 991px) {
     body.tcf-has-mobile-nav {
         padding-bottom: calc(var(--tcf-mobile-nav-h) + env(safe-area-inset-bottom, 0px));

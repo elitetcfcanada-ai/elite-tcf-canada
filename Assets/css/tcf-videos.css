@@ -559,11 +559,16 @@
     font: inherit;
     font-size: 0.8125rem;
     font-weight: 600;
-    color: var(--main-color, #d30d0d);
+    color: #d30d0d !important;
     background: transparent;
     border: 0;
     cursor: pointer;
     padding: 0.4rem 0.5rem;
+}
+
+.tcf-tv-post__comments-toggle:hover,
+.tcf-tv-post__comments-toggle:focus-visible {
+    color: #a50a0a !important;
 }
 
 .tcf-tv-sub-btn--compact {
@@ -845,9 +850,9 @@
 }
 
 .tcf-watch-like-btn.is-on {
-    color: #065fd4;
-    background: #def1ff;
-    border-color: #c8e6ff;
+    color: var(--main-color, #d30d0d);
+    background: rgba(211, 13, 13, 0.08);
+    border-color: rgba(211, 13, 13, 0.28);
 }
 
 .tcf-watch-like-btn:disabled {
@@ -962,8 +967,16 @@
 }
 
 .tcf-watch-composer__submit {
-    background: #065fd4;
-    color: #fff;
+    background: #d30d0d !important;
+    background-color: #d30d0d !important;
+    color: #fff !important;
+    border: none !important;
+}
+
+.tcf-watch-composer__submit:hover:not(:disabled) {
+    background: #a50a0a !important;
+    background-color: #a50a0a !important;
+    color: #fff !important;
 }
 
 .tcf-watch-composer__submit:disabled {
@@ -1301,9 +1314,9 @@
 }
 
 .tcf-watch-like-btn.is-on {
-    border-color: #2563eb;
-    background: #eff6ff;
-    color: #1d4ed8;
+    border-color: var(--main-color, #d30d0d);
+    background: rgba(211, 13, 13, 0.08);
+    color: var(--main-color, #d30d0d);
 }
 
 .tcf-watch-interact-hint {

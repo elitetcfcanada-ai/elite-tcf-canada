@@ -16,16 +16,16 @@ $c = tcf_site_contact();
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/theme-vars.css')); ?>">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/header_footer.css')); ?>">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/style_tcf.css')); ?>">
-    <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/style_support.css')); ?>?v=clean-2">
+    <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/style_support.css')); ?>?v=alt-3">
     <link rel="stylesheet" href="https://unpkg.com/boxicons@latest/css/boxicons.min.css">
 </head>
-<body>
+<body class="tcf-support-page">
 <?php include __DIR__ . '/includes/header.php'; ?>
 
 <main class="support-main">
-    <section class="support-hero-block">
+    <section class="support-hero-block support-block--dark">
         <div class="support-hero-kicker"><i class="bx bx-book-open"></i> Guide TCF Canada</div>
-        <h1>Comprendre le <span>TCF Canada</span></h1>
+        <h1 class="support-hero-title">Comprendre le <span>TCF Canada</span></h1>
         <p>Le Test de Connaissance du Français pour le Canada est l’examen reconnu par IRCC pour évaluer votre niveau de français dans le cadre d’une demande d’immigration.</p>
         <div class="support-hero-stats" aria-label="Résumé du TCF Canada">
             <div>
@@ -47,12 +47,12 @@ $c = tcf_site_contact();
         </div>
     </section>
 
-    <section class="support-section">
+    <section class="support-section support-block--light">
         <h2><i class="bx bx-info-circle"></i> Qu’est-ce que le TCF Canada&nbsp;?</h2>
         <p>Conçu par France Éducation international, le TCF Canada mesure votre niveau selon le CECRL. Chaque compétence reçoit une note indépendante. Un entraînement régulier reste indispensable pour atteindre le niveau visé.</p>
     </section>
 
-    <section class="support-section">
+    <section class="support-section support-block--dark">
         <h2><i class="bx bx-grid-alt"></i> Les 4 épreuves</h2>
         <div class="tcf-skills-grid">
             <article class="tcf-skill-card">
@@ -86,7 +86,7 @@ $c = tcf_site_contact();
         </div>
     </section>
 
-    <section class="support-section">
+    <section class="support-section support-block--light">
         <h2><i class="bx bx-bar-chart-alt-2"></i> Niveaux CECRL</h2>
         <p class="support-section-intro">Chaque compétence est évaluée séparément. Voici les seuils de conversion en niveaux CECRL.</p>
         <div class="tcf-levels-grid">
@@ -141,7 +141,7 @@ $c = tcf_site_contact();
         </div>
     </section>
 
-    <section class="support-section">
+    <section class="support-section support-block--dark">
         <h2><i class="bx bx-flag"></i> Équivalences NCLC</h2>
         <p class="support-section-intro">Pour Entrée express et la plupart des programmes IRCC, les scores sont convertis en NCLC. Le seuil le plus fréquent est <strong>NCLC 7</strong>.</p>
         <div class="tcf-nclc-table-wrap">
@@ -169,7 +169,7 @@ $c = tcf_site_contact();
         <p class="tcf-nclc-note"><i class="bx bx-info-circle"></i> La ligne NCLC 7 est mise en avant car c’est le seuil le plus souvent demandé.</p>
     </section>
 
-    <section class="support-section">
+    <section class="support-section support-block--light">
         <h2><i class="bx bx-bulb"></i> Conseils pour réussir</h2>
         <ul class="support-tips">
             <li><strong>Travaillez les 4 compétences</strong> : chaque épreuve a son propre score.</li>
@@ -180,7 +180,7 @@ $c = tcf_site_contact();
         </ul>
     </section>
 
-    <section class="support-section support-contact-block">
+    <section class="support-section support-contact-block support-block--dark">
         <h2><i class="bx bx-help-circle"></i> Besoin d’aide&nbsp;?</h2>
         <p>Une question sur votre compte, un abonnement ou une épreuve&nbsp;? Contactez <?php echo htmlspecialchars($c['brand']); ?> :</p>
         <div class="support-grid">

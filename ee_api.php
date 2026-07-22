@@ -5,6 +5,7 @@ require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/subscription_access.php';
 require_once __DIR__ . '/includes/tcf_notifications_helper.php';
 require_once __DIR__ . '/includes/rich_text.php';
+require_once __DIR__ . '/includes/admin_roles.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -17,7 +18,7 @@ function ee_json(array $data, int $status = 200): void
 
 function ee_is_admin(): bool
 {
-    return isset($_SESSION['role']) && in_array($_SESSION['role'], ['admin', 'super_admin'], true);
+    return tcf_is_staff_admin();
 }
 
 function ee_is_logged(): bool
@@ -956,6 +957,9 @@ switch ($action) {
         if (!ee_is_admin()) {
             ee_json(['success' => false, 'message' => 'Accès refusé.'], 403);
         }
+        if (!tcf_is_super_admin()) {
+            ee_json(['success' => false, 'message' => 'Seul le super administrateur peut supprimer une épreuve.'], 403);
+        }
         $examId = (int) ($_POST['exam_id'] ?? 0);
         if ($examId <= 0) {
             ee_json(['success' => false, 'message' => 'ID invalide.']);
@@ -968,6 +972,7 @@ switch ($action) {
                 ee_json(['success' => false, 'message' => 'Épreuve introuvable.']);
             }
             $pdo->prepare('DELETE FROM tcf_ee_exams WHERE id=?')->execute([$examId]);
+            tcf_delete_notifications_matching($pdo, 'epreuve_ee.php?id=' . $examId);
             try {
                 $pdo->prepare('INSERT INTO activities (user_id,type,title,description,icon) VALUES (?,?,?,?,?)')
                     ->execute([(int) $_SESSION['user_id'], 'topic', 'Épreuve EE supprimée', "L'épreuve '{$row['title']}' supprimée", 'bx bxs-book']);

@@ -40,6 +40,7 @@ unset($_SESSION['contact_flash']);
     <link rel="stylesheet" href="<?php echo site_href('Assets/css/style_tcf.css'); ?>?v=tc-card-2">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/subscription_section.css')); ?>">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/services-section.css')); ?>">
+    <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/partners-section.css')); ?>?v=partners-3">
     <link rel="stylesheet" href="https://unpkg.com/boxicons@latest/css/boxicons.min.css">
     <style>
         @media (max-width: 1100px) {
@@ -195,6 +196,8 @@ unset($_SESSION['contact_flash']);
 </section>
 
     <?php include __DIR__ . '/includes/subscription_plans_section.php'; ?>
+
+    <?php include __DIR__ . '/includes/partners_section.php'; ?>
 
   <!-- DEBUT configuration play button -->
   <section class="play">

@@ -51,7 +51,7 @@ $aboUrl = site_href('abonnement.php');
     <link rel="stylesheet" href="Assets/css/comprehesion_Ecrite.css?v=7">
     <link rel="stylesheet" href="Assets/css/header_footer.css">
     <link rel="stylesheet" href="Assets/css/tcf-responsive-pills.css">
-    <link rel="stylesheet" href="Assets/css/quiz-site-chrome.css?v=6">
+    <link rel="stylesheet" href="Assets/css/quiz-site-chrome.css?v=16">
     <link rel="stylesheet" href="Assets/css/tcf-quiz-pro.css?v=5">
 </head>
 
@@ -66,8 +66,7 @@ $aboUrl = site_href('abonnement.php');
             <i class='bx bx-arrow-back'></i> Retour aux épreuves
         </a>
         <div class="tcf-qpro-start-card">
-            <div class="tcf-qpro-kicker"><i class='bx bx-book-reader'></i> Compréhension écrite</div>
-            <h2 id="quiz-title">Compréhension Écrite</h2>
+            <h2 id="quiz-title">Épreuve</h2>
             <p id="quiz-description" class="tcf-qpro-desc">Chargement de l’épreuve…</p>
             <ul class="tcf-qpro-meta" aria-label="Informations de l’épreuve">
                 <li>

@@ -5,6 +5,7 @@ require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/subscription_access.php';
 require_once __DIR__ . '/includes/tcf_notifications_helper.php';
 require_once __DIR__ . '/includes/rich_text.php';
+require_once __DIR__ . '/includes/admin_roles.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -17,7 +18,7 @@ function eo_json(array $data, int $status = 200): void
 
 function eo_is_admin(): bool
 {
-    return isset($_SESSION['role']) && in_array($_SESSION['role'], ['admin', 'super_admin'], true);
+    return tcf_is_staff_admin();
 }
 
 function eo_slug(string $title): string
@@ -505,9 +506,13 @@ try {
         }
         case 'delete_exam': {
             if (!eo_is_admin()) eo_json(['success' => false, 'message' => 'Accès refusé.'], 403);
+            if (!tcf_is_super_admin()) {
+                eo_json(['success' => false, 'message' => 'Seul le super administrateur peut supprimer une épreuve.'], 403);
+            }
             $examId = (int) ($_POST['exam_id'] ?? 0);
             if ($examId <= 0) eo_json(['success' => false, 'message' => 'Épreuve invalide.'], 422);
             $pdo->prepare("DELETE FROM tcf_eo_exams WHERE id=?")->execute([$examId]);
+            tcf_delete_notifications_matching($pdo, 'epreuve_eo.php?id=' . $examId);
             eo_json(['success' => true, 'message' => 'Épreuve supprimée.']);
         }
         case 'get_consignes': {

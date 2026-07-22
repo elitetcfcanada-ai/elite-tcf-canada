@@ -388,7 +388,17 @@
 
     .tcf-superadmin-app .admin-nav-avatar-wrap,
     .tcf-superadmin-app .admin-nav-avatar-img {
-        width: 34px !important;
-        height: 34px !important;
+        width: 2.65rem !important;
+        height: 2.65rem !important;
+    }
+
+    .tcf-superadmin-app .admin-nav-avatar-wrap {
+        background: var(--main-color, #d30d0d) !important;
+        border-color: var(--main-color, #d30d0d) !important;
+    }
+
+    .tcf-superadmin-app .admin-nav-avatar-fallback {
+        color: #ffffff !important;
+        font-size: 1.4rem !important;
     }
 }

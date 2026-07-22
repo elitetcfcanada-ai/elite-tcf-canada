@@ -533,6 +533,31 @@
             z-index: 1;
         }
 
+        .situation-text p {
+            margin: 0 0 0.55rem;
+        }
+
+        .situation-text p:last-child {
+            margin-bottom: 0;
+        }
+
+        .situation-text ul {
+            margin: 0.35rem 0 0.55rem;
+            padding-left: 1.25rem;
+        }
+
+        .situation-text li {
+            margin: 0.2rem 0;
+        }
+
+        .situation-text strong {
+            font-weight: 700;
+        }
+
+        .situation-text em {
+            font-style: italic;
+        }
+
         .answers-grid {
             display: grid;
             grid-template-columns: 1fr;

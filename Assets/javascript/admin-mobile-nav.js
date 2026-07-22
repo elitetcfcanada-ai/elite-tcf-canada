@@ -36,6 +36,7 @@
         'subscription-payments': 'Historique paiements',
         'subscription-revenue': 'Revenus & budget',
         messages: 'Annonces communautaires',
+        partners: 'Partenaires',
         'topics-section': 'Gestion des sujets',
         'topics-written': 'Compréhension écrite',
         'topics-oral': 'Compréhension orale',

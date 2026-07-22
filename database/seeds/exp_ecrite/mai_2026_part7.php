@@ -17,7 +17,7 @@ J’ai déménagé il y a un mois à Nantes et je m’y plais beaucoup. Mon appa
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -34,7 +34,7 @@ J’ai vraiment apprécié cette fête parce qu’elle était à la fois joyeuse
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -71,7 +71,7 @@ Je vous écris pour vous proposer un week-end ensemble le mois prochain. J’aim
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -88,7 +88,7 @@ Ce voyage m’a appris à être plus indépendant et plus ouvert. Bien sûr, il 
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -125,7 +125,7 @@ J’aimerais te proposer de venir avec moi au festival de cinéma de notre ville
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -142,7 +142,7 @@ J’ai vraiment aimé cette expérience, parce qu’elle m’a permis de découv
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -179,7 +179,7 @@ Comme vous le savez, Sarah va fêter son anniversaire samedi prochain, le 18 mai
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -194,7 +194,7 @@ J’ai beaucoup aimé l’ambiance chaleureuse et l’espace réservé pour la m
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -231,7 +231,7 @@ Je cherche un colocataire pour partager mon appartement, devenu trop grand pour 
 
 Cordialement,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -244,7 +244,7 @@ La semaine dernière, j’ai commencé un nouveau loisir : la salsa. J’ai suiv
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -281,7 +281,7 @@ Oui, je connais un marché très agréable dans mon quartier : le marché Saint-
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -296,7 +296,7 @@ L’après-midi, nous avons proposé des jeux collectifs et un atelier de dessin
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,

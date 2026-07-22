@@ -470,6 +470,30 @@ body.tcf-quiz-with-site-nav .tcf-quiz-standalone-wrap .app-container {
     color: var(--qpro-muted);
 }
 
+.tcf-qpro-results .review-situation__title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    font-weight: 700;
+    color: var(--qpro-accent);
+    margin-bottom: 0.5rem;
+    font-size: 0.88rem;
+}
+
+.tcf-qpro-results .review-situation__img,
+.tcf-qpro-results .review-situation img {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    max-height: min(48vh, 380px);
+    margin: 0 auto;
+    border-radius: 10px;
+    object-fit: contain;
+    background: #fff;
+}
+
 .tcf-qpro-review-choices {
     display: flex;
     flex-direction: column;

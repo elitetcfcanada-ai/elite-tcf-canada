@@ -29,7 +29,7 @@ La semaine dernière, j’ai participé à un événement appelé “Une semaine
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -194,7 +194,7 @@ Je publie ce message dans le journal de l’université pour trouver un partenai
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -211,7 +211,7 @@ Ce premier soir, je me sentais un peu perdu, mais surtout heureux de commencer u
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -248,7 +248,7 @@ Un nouveau restaurant vient d’ouvrir près de chez moi, dans le centre-ville, 
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -263,7 +263,7 @@ Nous avons goûté des spécialités locales dans un petit restaurant, et c’é
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,

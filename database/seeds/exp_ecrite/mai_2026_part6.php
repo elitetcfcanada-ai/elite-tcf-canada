@@ -17,7 +17,7 @@ J’espère que tu vas bien. Je voulais t’informer que j’envisage de démén
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -34,7 +34,7 @@ J’ai beaucoup aimé cette soirée parce qu’elle était simple, festive et bi
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -71,7 +71,7 @@ J’espère que tu vas bien. Je t’écris parce que je vais bientôt m’instal
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -84,7 +84,7 @@ L’après-midi, nous avons organisé des jeux en équipe et un atelier de conve
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -123,7 +123,7 @@ L’appartement est très spacieux : il comprend trois chambres, un grand salon 
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -140,7 +140,7 @@ Après le spectacle, nous sommes restés quelques minutes pour discuter avec les
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -177,7 +177,7 @@ J’espère que vous allez bien. Je vous écris pour vous inviter à l’anniver
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -192,7 +192,7 @@ Ce que j’ai le plus apprécié, c’est le temps passé avec toute la famille.
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -229,7 +229,7 @@ Merci de me demander ce qui me ferait plaisir pour mon anniversaire ! J’aimera
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -244,7 +244,7 @@ J’ai beaucoup aimé ce moment de partage, parce que les repas étaient convivi
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -281,7 +281,7 @@ Je viens de m’installer à Québec, dans le quartier de Limoilou, et je m’y 
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -298,7 +298,7 @@ Cette expérience m’a vraiment marqué. Je pense qu’il est important de part
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,

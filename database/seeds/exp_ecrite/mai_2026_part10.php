@@ -17,7 +17,7 @@ J’espère que tu vas bien. Comme tu le sais, j’ai récemment déménagé à 
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -34,7 +34,7 @@ Depuis cette expérience, je préfère garder la chambre calme, sans télévisio
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -71,7 +71,7 @@ Hier soir, je suis allé dans le nouveau restaurant près de chez moi, à Lyon, 
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -86,7 +86,7 @@ Pendant le cours, j’ai surtout aimé les exercices pratiques, parce qu’ils m
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -123,7 +123,7 @@ Oui, j’ai pris des cours au centre de langues Cultures pour Tous l’année de
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -140,7 +140,7 @@ Ce pique-nique s’est très bien passé et nous a laissé de très bons souveni
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -177,7 +177,7 @@ J’espère que tu vas bien. J’ai très envie de passer une journée avec toi 
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -194,7 +194,7 @@ J’ai trouvé cette journée vraiment enrichissante. J’ai appris des méthode
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -229,7 +229,7 @@ Je veux te raconter mon week-end à la campagne, près de Blois, chez mon oncle.
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -244,7 +244,7 @@ Franchement, j’ai eu une très bonne impression et je pense que ce local est u
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -283,7 +283,7 @@ Je suis déçu, car j’avais besoin de cette lampe rapidement pour mon travail 
 
 Cordialement,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -300,7 +300,7 @@ Pendant la visite, je me suis senti ému, admiratif et même un peu surpris. Je 
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,

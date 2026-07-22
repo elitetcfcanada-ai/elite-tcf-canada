@@ -17,7 +17,7 @@ Merci pour ta réponse. Le Château de Chombony est un très beau lieu de récep
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -32,7 +32,7 @@ Après quelques mois, j’ai voyagé en Espagne avec un ami. Là-bas, j’ai vra
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -69,7 +69,7 @@ Je suis très content que tu viennes passer un week-end dans ma ville. Pour te d
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -82,7 +82,7 @@ La semaine dernière, j’ai participé à l’événement « Une semaine sans v
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -117,7 +117,7 @@ Merci pour ta réponse ! Le Château de Chombony est un très beau lieu de réce
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -132,7 +132,7 @@ Après quelques mois, j’ai regardé des séries espagnoles, j’ai écouté de
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -169,7 +169,7 @@ Bienvenue dans ma ville ! Pour te déplacer, tu as plusieurs options. Il y a le 
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -184,7 +184,7 @@ J’ai aimé sa façon d’agir : elle parlait doucement, elle écoutait vraimen
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -221,7 +221,7 @@ Je vous écris pour vous proposer un week-end ensemble le mois prochain. J’aim
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -238,7 +238,7 @@ Ce voyage m’a vraiment changé. J’ai appris à vivre plus simplement et à a
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -275,7 +275,7 @@ J’ai trouvé un hôtel pour toi à Montréal, près du centre-ville. Il s’ap
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -288,7 +288,7 @@ Samedi dernier, je suis allé au théâtre avec trois amis, dans une petite sall
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,

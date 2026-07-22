@@ -182,14 +182,14 @@ nav .others.nav-others--user .nav-avatar-fallback {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    padding: 1.1rem 1.25rem;
+    padding: 0.7rem 0.9rem;
     background: linear-gradient(135deg, var(--main-color, #d30d0d) 0%, var(--secondary-color, #a50a0a) 100%);
     color: #fff;
 }
 
 .profile-drawer-v2__eyebrow {
     margin: 0;
-    font-size: 0.65rem;
+    font-size: 0.58rem;
     text-transform: uppercase;
     letter-spacing: 0.12em;
     opacity: 0.85;
@@ -197,24 +197,24 @@ nav .others.nav-others--user .nav-avatar-fallback {
 }
 
 .profile-drawer-v2__title {
-    margin: 0.15rem 0 0;
-    font-size: 1.35rem;
-    font-weight: 800;
-    letter-spacing: -0.02em;
+    margin: 0.1rem 0 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
 }
 
 .profile-drawer-v2__close {
     background: rgba(255, 255, 255, 0.15);
     border: none;
     color: #fff;
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     transition: background 0.2s ease;
 }
 
@@ -225,17 +225,17 @@ nav .others.nav-others--user .nav-avatar-fallback {
 .profile-drawer-v2__scroll {
     flex: 1;
     overflow-y: auto;
-    padding: 1rem 1rem 1.25rem;
+    padding: 0.6rem 0.7rem 0.8rem;
     display: flex;
     flex-direction: column;
-    gap: 0.85rem;
+    gap: 0.45rem;
 }
 
 .profile-drawer-v2__footer {
     flex-shrink: 0;
     display: flex;
-    gap: 10px;
-    padding: 1rem 1.25rem;
+    gap: 8px;
+    padding: 0.6rem 0.85rem;
     background: #fff;
     border-top: 1px solid #e2e8f0;
     box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.04);
@@ -244,32 +244,92 @@ nav .others.nav-others--user .nav-avatar-fallback {
 /* ---------- Cards ---------- */
 .profile-card-v2 {
     background: #fff;
-    border-radius: 16px;
-    padding: 1rem 1.1rem;
+    border-radius: 12px;
+    padding: 0.65rem 0.75rem;
     border: 1px solid #e2e8f0;
-    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04);
+    box-shadow: 0 1px 6px rgba(15, 23, 42, 0.04);
 }
 
 .profile-card-v2--hero {
     text-align: center;
-    padding-top: 1.35rem;
+    padding-top: 0.8rem;
+    padding-bottom: 0.65rem;
     background: linear-gradient(180deg, #fff 0%, #f8fafc 100%);
 }
 
+.profile-card-v2--hero .profile-card-v2__avatar-wrap {
+    margin-bottom: 0.2rem;
+}
+
+.profile-card-v2--hero .profile-name,
+.profile-card-v2--hero #profileName {
+    margin: 0.2rem 0 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    outline: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    min-height: 0 !important;
+    max-width: 100%;
+    position: static !important;
+    letter-spacing: -0.01em !important;
+    text-transform: none !important;
+    font-size: 0.95rem !important;
+    color: #0f172a !important;
+    -webkit-text-fill-color: #0f172a !important;
+}
+
+/* Annule le trait décoratif rouge des h1 de section (style_tcf) */
+.profile-card-v2--hero .profile-name::before,
+.profile-card-v2--hero #profileName::before,
+.profile-page .profile-name::before,
+.profile-drawer-v2 .profile-name::before {
+    content: none !important;
+    display: none !important;
+    border: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+.profile-card-v2--hero .profile-email,
+.profile-card-v2--hero .profile-card-v2__email {
+    margin: 0.12rem 0 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    outline: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    min-height: 0 !important;
+    line-height: 1.3 !important;
+    opacity: 1;
+}
+
+.profile-card-v2--hero .profile-meta-badges {
+    margin-top: 0.35rem !important;
+}
+
+.profile-card-v2--hero .profile-avatar {
+    margin: 0 auto !important;
+}
+
+.profile-card-v2--hero .profile-badge:empty {
+    display: none !important;
+}
+
 .profile-card-v2__heading {
-    margin: 0 0 0.85rem;
-    font-size: 0.78rem;
+    margin: 0 0 0.4rem;
+    font-size: 0.7rem;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
     color: #64748b;
     font-weight: 700;
     display: flex;
     align-items: center;
-    gap: 0.45rem;
+    gap: 0.35rem;
 }
 
 .profile-card-v2__heading i {
-    font-size: 1.1rem;
+    font-size: 0.95rem;
     color: var(--main-color, #d30d0d);
 }
 
@@ -281,12 +341,12 @@ nav .others.nav-others--user .nav-avatar-fallback {
 
 .profile-card-v2__avatar-edit {
     position: absolute;
-    bottom: 2px;
-    right: 2px;
-    width: 36px;
-    height: 36px;
+    bottom: 0;
+    right: 0;
+    width: 26px;
+    height: 26px;
     border-radius: 50%;
-    border: 3px solid #fff;
+    border: 2px solid #fff;
     background: var(--main-color, #d30d0d);
     color: #fff;
     display: flex;
@@ -303,12 +363,13 @@ nav .others.nav-others--user .nav-avatar-fallback {
 
 .profile-card-v2__email {
     color: #64748b;
-    font-size: 0.88rem;
+    font-size: 0.78rem;
+    margin: 0;
 }
 
 .profile-avatar {
-    width: 100px;
-    height: 100px;
+    width: 64px;
+    height: 64px;
     border-radius: 50%;
     margin: 0 auto;
     display: flex;
@@ -319,13 +380,13 @@ nav .others.nav-others--user .nav-avatar-fallback {
 
 .profile-avatar--placeholder {
     background: linear-gradient(145deg, var(--main-color, #d30d0d), var(--secondary-color, #a50a0a));
-    font-size: 3rem;
+    font-size: 1.75rem;
     color: #fff;
 }
 
 .profile-avatar--photo {
-    border: 4px solid #fff;
-    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15);
+    border: 3px solid #fff;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12);
     padding: 0;
     overflow: hidden;
 }
@@ -338,27 +399,46 @@ nav .others.nav-others--user .nav-avatar-fallback {
 }
 
 .profile-name {
-    font-size: 1.4rem;
-    font-weight: 800;
-    margin: 0.5rem 0 0.2rem;
-    color: #0f172a;
-    letter-spacing: -0.02em;
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin: 0.35rem 0 0.1rem;
+    color: #0f172a !important;
+    -webkit-text-fill-color: #0f172a !important;
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+}
+
+#profileName,
+.profile-card-v2--hero .profile-name,
+.profile-page .profile-name,
+.profile-drawer-v2 .profile-card-v2--hero .profile-name {
+    color: #0f172a !important;
+    -webkit-text-fill-color: #0f172a !important;
+    font-size: 0.95rem !important;
+    font-weight: 700 !important;
+    line-height: 1.25 !important;
+}
+
+.profile-card-v2--hero .profile-email,
+.profile-card-v2__email {
+    color: #64748b !important;
+    font-size: 0.78rem !important;
 }
 
 .profile-meta-badges {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 5px;
     justify-content: center;
-    margin-top: 12px;
+    margin-top: 0.45rem;
 }
 
 .profile-badge {
-    font-size: 0.65rem;
+    font-size: 0.58rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
-    padding: 5px 12px;
+    letter-spacing: 0.04em;
+    padding: 3px 8px;
     border-radius: 999px;
     background: #f1f5f9;
     color: #475569;
@@ -380,13 +460,13 @@ nav .others.nav-others--user .nav-avatar-fallback {
 .profile-stats-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 10px;
+    gap: 6px;
 }
 
 .profile-stat-card {
     background: #f8fafc;
-    border-radius: 12px;
-    padding: 12px 10px;
+    border-radius: 10px;
+    padding: 8px 8px;
     text-align: center;
     border: 1px solid #e2e8f0;
 }
@@ -465,18 +545,18 @@ nav .others.nav-others--user .nav-avatar-fallback {
 .profile-v2-menu {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 5px;
 }
 
 .profile-v2-menu__row {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     width: 100%;
     text-align: left;
-    padding: 12px 14px;
+    padding: 0.55rem 0.7rem;
     border: 1px solid #e2e8f0;
-    border-radius: 14px;
+    border-radius: 10px;
     background: #f8fafc;
     cursor: pointer;
     transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
@@ -499,15 +579,15 @@ nav .others.nav-others--user .nav-avatar-fallback {
 }
 
 .profile-v2-menu__icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
     background: #fff;
     border: 1px solid #e2e8f0;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.25rem;
+    font-size: 1rem;
     color: var(--main-color, #d30d0d);
     flex-shrink: 0;
 }
@@ -519,17 +599,17 @@ nav .others.nav-others--user .nav-avatar-fallback {
 
 .profile-v2-menu__mid small {
     display: block;
-    font-size: 0.65rem;
+    font-size: 0.58rem;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.05em;
     color: #94a3b8;
     font-weight: 600;
-    margin-bottom: 2px;
+    margin-bottom: 1px;
 }
 
 .profile-v2-menu__mid strong {
     display: block;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     color: #0f172a;
     font-weight: 600;
     overflow: hidden;
@@ -1047,10 +1127,11 @@ nav .others.nav-others--user .nav-avatar-fallback {
     margin: 0;
     flex: 1;
     text-align: center;
-    font-size: 0.95rem;
-    font-weight: 800;
+    font-size: 0.78rem;
+    font-weight: 700;
     text-transform: capitalize;
     color: #0f172a;
+    line-height: 1.25;
 }
 
 .profile-cal__nav {

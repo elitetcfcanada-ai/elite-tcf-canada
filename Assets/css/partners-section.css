@@ -1,0 +1,221 @@
+/**
+ * Section partenaires — fond sombre (alternance accueil) + cartes premium.
+ * Logos en couleurs exactes · 2 colonnes mobile.
+ */
+
+.tcf-partners {
+    --tp-bg: var(--tcf-footer-bg, #141622);
+    --tp-red: var(--main-color, #d30d0d);
+    --tp-ink: #0f172a;
+    --tp-muted: rgba(248, 250, 252, 0.72);
+    position: relative;
+    padding: clamp(3.25rem, 6.5vw, 5rem) clamp(1rem, 3vw, 1.5rem);
+    background:
+        radial-gradient(ellipse 70% 50% at 50% -5%, rgba(211, 13, 13, 0.14), transparent 55%),
+        radial-gradient(ellipse 40% 40% at 100% 100%, rgba(255, 255, 255, 0.04), transparent 45%),
+        var(--tp-bg);
+    color: #fff;
+    overflow: hidden;
+}
+
+.tcf-partners__inner {
+    position: relative;
+    z-index: 1;
+    max-width: 1080px;
+    margin: 0 auto;
+}
+
+.tcf-partners__header {
+    text-align: center;
+    margin-bottom: clamp(1.85rem, 3.8vw, 2.65rem);
+}
+
+.tcf-partners .tcf-sub-kicker {
+    color: var(--tp-red);
+}
+
+.tcf-partners .tfc-sub-main-title {
+    color: #fff;
+}
+
+.tcf-partners .tfc-sub-main-title .tcf-sub-accent,
+.tcf-partners .tfc-sub-main-title span {
+    color: var(--tp-red);
+}
+
+.tcf-partners .tcf-sub-title-bar {
+    background: var(--tp-red);
+}
+
+.tcf-partners__lead {
+    margin: 0.95rem auto 0;
+    max-width: 34rem;
+    font-size: 0.95rem;
+    line-height: 1.65;
+    color: var(--tp-muted);
+}
+
+.tcf-partners__grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.9rem;
+    align-items: stretch;
+}
+
+.tcf-partners__item {
+    margin: 0;
+    min-width: 0;
+}
+
+/* Carte premium : surface claire sur fond sombre */
+.tcf-partners__card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    height: 100%;
+    text-decoration: none;
+    color: inherit;
+    background: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow:
+        0 2px 4px rgba(0, 0, 0, 0.12),
+        0 14px 36px rgba(0, 0, 0, 0.28);
+    transition:
+        transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+        box-shadow 0.28s ease,
+        border-color 0.28s ease;
+}
+
+.tcf-partners__card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--tp-red), transparent);
+    opacity: 0;
+    transition: opacity 0.28s ease;
+}
+
+a.tcf-partners__card {
+    cursor: pointer;
+}
+
+.tcf-partners__card:hover,
+.tcf-partners__card:focus-visible {
+    transform: translateY(-5px);
+    border-color: rgba(211, 13, 13, 0.45);
+    box-shadow:
+        0 6px 12px rgba(0, 0, 0, 0.18),
+        0 22px 48px rgba(0, 0, 0, 0.35),
+        0 0 0 1px rgba(211, 13, 13, 0.15);
+    outline: none;
+}
+
+.tcf-partners__card:hover::before,
+.tcf-partners__card:focus-visible::before {
+    opacity: 1;
+}
+
+.tcf-partners__logo-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 118px;
+    padding: 1.35rem 1.1rem 1.15rem;
+    background:
+        radial-gradient(ellipse 80% 70% at 50% 40%, #ffffff 0%, #f4f6f8 100%);
+}
+
+.tcf-partners__logo {
+    display: block;
+    max-width: 100%;
+    max-height: 76px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    filter: none;
+    opacity: 1;
+}
+
+.tcf-partners__name {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 0.75rem 0.8rem 0.9rem;
+    text-align: center;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.015em;
+    color: var(--tp-ink);
+    line-height: 1.35;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    background: #fff;
+    border-top: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.tcf-partners__card:hover .tcf-partners__name {
+    color: var(--tp-red);
+}
+
+@media (min-width: 640px) {
+    .tcf-partners__grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1.05rem;
+    }
+
+    .tcf-partners__logo-wrap {
+        min-height: 136px;
+        padding: 1.55rem 1.25rem 1.35rem;
+    }
+
+    .tcf-partners__logo {
+        max-height: 86px;
+    }
+
+    .tcf-partners__name {
+        font-size: 0.84rem;
+        padding: 0.85rem 0.95rem 1rem;
+    }
+}
+
+@media (min-width: 960px) {
+    .tcf-partners__grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 1.2rem;
+    }
+
+    .tcf-partners__card {
+        border-radius: 20px;
+    }
+
+    .tcf-partners__logo-wrap {
+        min-height: 150px;
+        padding: 1.7rem 1.35rem 1.45rem;
+    }
+
+    .tcf-partners__logo {
+        max-height: 94px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tcf-partners__card {
+        transition: none;
+    }
+
+    .tcf-partners__card:hover,
+    .tcf-partners__card:focus-visible {
+        transform: none;
+    }
+}

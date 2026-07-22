@@ -21,8 +21,43 @@ function tcf_notification_insert(PDO $pdo, ?int $user_id, string $type, string $
 }
 
 /**
+ * Message de bienvenue pour un apprenant (idempotent).
+ */
+function tcf_ensure_welcome_notification(PDO $pdo, ?array $user): void
+{
+    if (!$user || empty($user['id'])) {
+        return;
+    }
+    if (($user['role'] ?? '') !== 'user') {
+        return;
+    }
+    $uid = (int) $user['id'];
+    try {
+        $st = $pdo->prepare(
+            "SELECT 1 FROM notifications WHERE user_id = ? AND type = 'welcome' LIMIT 1"
+        );
+        $st->execute([$uid]);
+        if ($st->fetchColumn()) {
+            return;
+        }
+    } catch (Throwable $e) {
+        return;
+    }
+
+    $link = function_exists('site_href') ? site_href('index.php') : 'index.php';
+    tcf_notification_insert(
+        $pdo,
+        $uid,
+        'welcome',
+        'Bienvenue sur ELITE TCF Canada',
+        'Votre compte est prêt. Explorez les épreuves, les vidéos et suivez votre progression.',
+        $link
+    );
+}
+
+/**
  * Notifie uniquement les comptes `user` déjà inscrits à l’instant donné
- * (les inscriptions ultérieures ne reçoivent pas cette alerte).
+ * (vidéos, épreuves, annonces — les inscriptions ultérieures ne reçoivent pas cette alerte).
  */
 function tcf_notify_users_registered_before(
     PDO $pdo,
@@ -37,7 +72,8 @@ function tcf_notify_users_registered_before(
         $stmt = $pdo->prepare(
             "SELECT id FROM users
              WHERE role = 'user' AND id > 0
-               AND created_at IS NOT NULL AND created_at <= ?"
+               AND created_at IS NOT NULL AND created_at <= ?
+               AND (status IS NULL OR status = '' OR status = 'active')"
         );
         $stmt->execute([$before]);
         $ids = $stmt->fetchAll(PDO::FETCH_COLUMN);
@@ -53,6 +89,67 @@ function tcf_notify_users_registered_before(
     }
 
     return $n;
+}
+
+/**
+ * Supprime les notifications dont le deep_link contient un fragment
+ * (ex. "exam_id=12", "watch.php?v=3", "epreuve_ee.php?id=5").
+ */
+function tcf_delete_notifications_matching(PDO $pdo, string $deepLinkFragment): int
+{
+    $frag = trim($deepLinkFragment);
+    if ($frag === '') {
+        return 0;
+    }
+    try {
+        $st = $pdo->prepare(
+            'DELETE FROM notifications WHERE deep_link IS NOT NULL AND deep_link LIKE ?'
+        );
+        $st->execute(['%' . $frag . '%']);
+        return (int) $st->rowCount();
+    } catch (Throwable $e) {
+        error_log('tcf_delete_notifications_matching: ' . $e->getMessage());
+        return 0;
+    }
+}
+
+/**
+ * Supprime les notifications d’un type donné filtrées par titre et/ou contenu
+ * (utile quand le deep_link est générique, ex. posts.php).
+ */
+function tcf_delete_notifications_by_type_payload(
+    PDO $pdo,
+    string $type,
+    ?string $title = null,
+    ?string $content = null
+): int {
+    $type = trim($type);
+    if ($type === '') {
+        return 0;
+    }
+    $title = $title !== null ? trim($title) : null;
+    $content = $content !== null ? trim($content) : null;
+    if (($title === null || $title === '') && ($content === null || $content === '')) {
+        return 0;
+    }
+    try {
+        $sql = 'DELETE FROM notifications WHERE type = ?';
+        $params = [$type];
+        if ($title !== null && $title !== '') {
+            $sql .= ' AND title = ?';
+            $params[] = $title;
+        }
+        if ($content !== null && $content !== '') {
+            $sql .= ' AND content = ?';
+            $params[] = $content;
+        }
+        $st = $pdo->prepare($sql);
+        $st->execute($params);
+        return (int) $st->rowCount();
+    } catch (Throwable $e) {
+        error_log('tcf_delete_notifications_by_type_payload: ' . $e->getMessage());
+        return 0;
+    }
 }
 
 function tcf_notification_exists_recent(

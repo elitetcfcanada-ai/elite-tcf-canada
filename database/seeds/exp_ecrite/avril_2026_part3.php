@@ -9,7 +9,7 @@ return [
             [
                 'task' => 1,
                 'prompt' => 'Vous voulez changer la décoration de votre appartement (meubles, peinture, objets, etc.). Vous écrivez un message à un(e) ami(e). Vous lui décrivez votre projet et vous lui demandez de vous aider.',
-                'correction' => "Objet : Besoin de ton aide pour la déco de mon appart\n\nSalut Aly,\n\nJ'espère que tu vas bien ! Je suis en train de repenser la déco de mon appartement, et j'aurais besoin de ton aide. Je compte changer les meubles, repeindre les murs, et ajouter quelques objets déco pour rendre l'espace plus moderne et chaleureux. Tu as toujours eu un super goût pour ça, et j'adorerais avoir ton avis et ton aide pour choisir les couleurs et les éléments.\n\nSerais-tu dispo ce week-end pour venir m'aider à planifier tout ça ? Ça serait génial de le faire ensemble !\n\nMerci d'avance,\nAyoub",
+                'correction' => "Objet : Besoin de ton aide pour la déco de mon appart\n\nSalut Aly,\n\nJ'espère que tu vas bien ! Je suis en train de repenser la déco de mon appartement, et j'aurais besoin de ton aide. Je compte changer les meubles, repeindre les murs, et ajouter quelques objets déco pour rendre l'espace plus moderne et chaleureux. Tu as toujours eu un super goût pour ça, et j'adorerais avoir ton avis et ton aide pour choisir les couleurs et les éléments.\n\nSerais-tu dispo ce week-end pour venir m'aider à planifier tout ça ? Ça serait génial de le faire ensemble !\n\nMerci d'avance,\nelite tcf canada",
             ],
             [
                 'task' => 2,
@@ -39,7 +39,7 @@ return [
             [
                 'task' => 1,
                 'prompt' => '« Je cherche un vélo en bon état et bon marché. Contactez- moi par courriel : mathieu@gmail.com Vous avez un vélo à vendre. Vous écrivez un courriel pour décrire votre vélo et proposer un prix. Vous lui donnez un rendez-vous pour essayer le vélo.',
-                'correction' => "Bonjour Mathieu,\n\nJ'ai vu votre annonce et je pense que mon vélo pourrait vous intéresser. Il s'agit d'un VTT en bon état, avec un cadre solide et des pneus récemment changés. Il dispose également de 18 vitesses et de freins fonctionnels. Je le vends à 120 €, un prix raisonnable pour sa qualité.\n\nSi vous souhaitez l'essayer, nous pouvons convenir d'un rendez-vous ce samedi après-midi près du parc central. Faites-moi savoir si cela vous convient ou si une autre date vous arrange.\n\nDans l'attente de votre réponse,\n\nCordialement,\nAyoub",
+                'correction' => "Bonjour Mathieu,\n\nJ'ai vu votre annonce et je pense que mon vélo pourrait vous intéresser. Il s'agit d'un VTT en bon état, avec un cadre solide et des pneus récemment changés. Il dispose également de 18 vitesses et de freins fonctionnels. Je le vends à 120 €, un prix raisonnable pour sa qualité.\n\nSi vous souhaitez l'essayer, nous pouvons convenir d'un rendez-vous ce samedi après-midi près du parc central. Faites-moi savoir si cela vous convient ou si une autre date vous arrange.\n\nDans l'attente de votre réponse,\n\nCordialement,\nelite tcf canada",
             ],
             [
                 'task' => 2,
@@ -69,7 +69,7 @@ return [
             [
                 'task' => 1,
                 'prompt' => 'Rédigez un message pour inviter votre ami(e) à passer ses vacances dans votre ville en précisant les lieux et les endroits à visiter.',
-                'correction' => "Salut Jean,\n\nJ'espère que tu vas bien ! J'aimerais t'inviter à passer tes vacances dans ma ville. C'est un endroit magnifique avec beaucoup à offrir : des plages splendides, des restaurants délicieux, et une vie nocturne animée. Je te ferai découvrir les meilleurs coins et les petites merveilles cachées. Ce serait génial de passer du temps ensemble et de te montrer pourquoi j'aime tant cet endroit. J'ai hâte de te voir ici !\n\nÀ bientôt,\nAyoub",
+                'correction' => "Salut Jean,\n\nJ'espère que tu vas bien ! J'aimerais t'inviter à passer tes vacances dans ma ville. C'est un endroit magnifique avec beaucoup à offrir : des plages splendides, des restaurants délicieux, et une vie nocturne animée. Je te ferai découvrir les meilleurs coins et les petites merveilles cachées. Ce serait génial de passer du temps ensemble et de te montrer pourquoi j'aime tant cet endroit. J'ai hâte de te voir ici !\n\nÀ bientôt,\nelite tcf canada",
             ],
             [
                 'task' => 2,
@@ -99,7 +99,7 @@ return [
             [
                 'task' => 1,
                 'prompt' => '« Salut, j\'ai appris que tu vas à une salle de sport et qu\'elle est magnifique. Peux-tu m\'en dire plus ? ». Écrivez un message pour répondre à votre ami concernant ce sujet.',
-                'correction' => "Salut,\n\nC'est vrai, je vais à une salle de sport qui est vraiment top, et je te la recommande ! Elle est moderne, avec des équipements de qualité pour tous les types d'exercices : musculation, cardio, et même des cours collectifs comme le yoga ou le spinning.\n\nCe que j'aime particulièrement, c'est l'ambiance conviviale. Les coachs sont super sympas, toujours prêts à donner des conseils personnalisés, et les vestiaires sont impeccables. En plus, il y a un espace détente avec sauna, parfait pour se relaxer après l'effort.\n\nSi tu veux, je peux te donner plus d'infos ou t'accompagner pour une séance découverte. Je suis sûr que tu vas adorer !\n\nÀ bientôt,\nAyoub",
+                'correction' => "Salut,\n\nC'est vrai, je vais à une salle de sport qui est vraiment top, et je te la recommande ! Elle est moderne, avec des équipements de qualité pour tous les types d'exercices : musculation, cardio, et même des cours collectifs comme le yoga ou le spinning.\n\nCe que j'aime particulièrement, c'est l'ambiance conviviale. Les coachs sont super sympas, toujours prêts à donner des conseils personnalisés, et les vestiaires sont impeccables. En plus, il y a un espace détente avec sauna, parfait pour se relaxer après l'effort.\n\nSi tu veux, je peux te donner plus d'infos ou t'accompagner pour une séance découverte. Je suis sûr que tu vas adorer !\n\nÀ bientôt,\nelite tcf canada",
             ],
             [
                 'task' => 2,
@@ -129,7 +129,7 @@ return [
             [
                 'task' => 1,
                 'prompt' => 'Vous allez déménager à Nice, en France. Vous écrivez un message sur le site d\'une agence immobilière. Vous donnez les informations nécessaires (superficie, budget, nombre de pièces, etc).',
-                'correction' => "Bonjour,\n\nJe me permets de vous écrire à propos de l'annonce que vous avez publiée en ligne concernant la location de votre appartement. Je suis très intéressé(e) par ce logement, mais j'aimerais obtenir quelques informations supplémentaires. Pourriez-vous me préciser la superficie exacte, les équipements inclus (lave-linge, meubles, etc.) et le montant des charges ?\n\nPar ailleurs, pourriez-vous me donner quelques détails sur le quartier : commerces à proximité, accès aux transports en commun, ambiance générale ?\n\nJe suis disponible pour une visite à votre convenance. En vous remerciant par avance pour votre réponse, je vous souhaite une excellente journée.\n\nCordialement,\nAyoub",
+                'correction' => "Bonjour,\n\nJe me permets de vous écrire à propos de l'annonce que vous avez publiée en ligne concernant la location de votre appartement. Je suis très intéressé(e) par ce logement, mais j'aimerais obtenir quelques informations supplémentaires. Pourriez-vous me préciser la superficie exacte, les équipements inclus (lave-linge, meubles, etc.) et le montant des charges ?\n\nPar ailleurs, pourriez-vous me donner quelques détails sur le quartier : commerces à proximité, accès aux transports en commun, ambiance générale ?\n\nJe suis disponible pour une visite à votre convenance. En vous remerciant par avance pour votre réponse, je vous souhaite une excellente journée.\n\nCordialement,\nelite tcf canada",
             ],
             [
                 'task' => 2,
@@ -159,7 +159,7 @@ return [
             [
                 'task' => 1,
                 'prompt' => 'Votre ami(e) veut découvrir la région dans laquelle vous habitez. Écrivez-lui un message pour lui proposer des sites à visiter.',
-                'correction' => "Salut Noman,\n\nJ'espère que tu vas bien ! Je suis ravi que tu souhaites découvrir la région où j'habite. Voici quelques sites à visiter : le Vieux Port avec ses charmants cafés, la plage de la Pointe des Sables pour un après-midi de détente, le musée d'art contemporain pour les amateurs de culture, et une randonnée au Mont des Étoiles pour une vue imprenable.\n\nJ'ai hâte de partager ces moments avec toi. Fais-moi savoir quand tu seras disponible !\n\nÀ bientôt,\nAyoub",
+                'correction' => "Salut Noman,\n\nJ'espère que tu vas bien ! Je suis ravi que tu souhaites découvrir la région où j'habite. Voici quelques sites à visiter : le Vieux Port avec ses charmants cafés, la plage de la Pointe des Sables pour un après-midi de détente, le musée d'art contemporain pour les amateurs de culture, et une randonnée au Mont des Étoiles pour une vue imprenable.\n\nJ'ai hâte de partager ces moments avec toi. Fais-moi savoir quand tu seras disponible !\n\nÀ bientôt,\nelite tcf canada",
             ],
             [
                 'task' => 2,

@@ -17,20 +17,14 @@
     text-align: center;
     margin-bottom: 1.35rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    background:
-        radial-gradient(ellipse 90% 140% at 50% -30%, rgba(211, 13, 13, 0.28), transparent 58%),
-        linear-gradient(180deg, #1a1d2b 0%, var(--text-color, #141622) 100%);
+    background: linear-gradient(180deg, #1a1d2b 0%, var(--text-color, #141622) 100%);
     color: #fff;
     overflow: hidden;
 }
 
 .hero-banner::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background:
-        linear-gradient(115deg, transparent 40%, rgba(211, 13, 13, 0.06) 50%, transparent 60%);
-    pointer-events: none;
+    display: none;
+    content: none;
 }
 
 .hero-banner::after {
@@ -292,7 +286,7 @@ body .hero-banner h1.hero-skill-title::before {
 
 /* Section Épreuve — EE / EO listes : cadré avec marges latérales */
 .section_epreuve {
-    max-width: 960px;
+    max-width: 1180px;
     margin: 0 auto 60px;
     padding: 0 clamp(1rem, 4vw, 1.75rem);
     box-sizing: border-box;
@@ -301,8 +295,8 @@ body .hero-banner h1.hero-skill-title::before {
 
 .row_arrangement {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 25px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.25rem;
     margin-bottom: 40px;
 }
 
@@ -435,6 +429,12 @@ button.column_arrangement {
     #ce-consignes-section > header h1,
     #co-consignes-section > header h1 {
         font-size: 1.35rem;
+    }
+}
+
+@media (max-width: 992px) {
+    .row_arrangement {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 

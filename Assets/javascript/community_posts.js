@@ -14,6 +14,10 @@
         return d.innerHTML;
     }
 
+    function escAttr(s) {
+        return esc(s).replace(/"/g, '&quot;');
+    }
+
     function renderPost(p) {
         var liked = !!p.liked_by_me;
         var imgSrc = p.image_href || p.image_url || '';
@@ -21,12 +25,21 @@
             ? '<div class="tcp-card__media-wrap"><img class="tcp-card__media" src="' + esc(imgSrc) + '" alt="" loading="lazy"></div>'
             : '';
         var body = p.body ? '<div class="tcp-card__body">' + esc(p.body) + '</div>' : '';
+        var link = (p.link_url || '').trim();
+        var linkHtml = link
+            ? '<a class="tcp-card__link" href="' +
+              escAttr(link) +
+              '" target="_blank" rel="noopener noreferrer"><i class="bx bx-link-external" aria-hidden="true"></i> ' +
+              esc(link) +
+              '</a>'
+            : '';
         return (
             '<article class="tcp-card" data-id="' +
             esc(p.id) +
             '">' +
             img +
             body +
+            linkHtml +
             '<div class="tcp-card__actions">' +
             '<button type="button" class="tcp-like-btn' +
             (liked ? ' is-liked' : '') +

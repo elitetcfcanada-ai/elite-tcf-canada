@@ -17,7 +17,7 @@ Je souhaite partager mon expérience de sportif amateur. Depuis quatre ans, je p
 
 Cordialement,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -32,7 +32,7 @@ L’après-midi, nous avons nagé dans le lac, goûté des plats traditionnels e
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -69,7 +69,7 @@ Je vais à la salle FitZone, à Lyon, depuis six mois et je la trouve vraiment b
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -86,7 +86,7 @@ En revanche, je n’ai pas aimé la salle de classe, qui était trop petite et u
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -123,7 +123,7 @@ J’espère que tu vas bien. Je t’écris pour t’inviter à une rencontre ave
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -140,7 +140,7 @@ J’ai beaucoup aimé cette journée, car j’ai découvert de nouvelles saveurs
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -177,7 +177,7 @@ Merci encore pour votre aide ! Le déménagement aura lieu samedi 15 juin. Rende
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -194,7 +194,7 @@ Ce que j’admire chez lui, c’est sa sensibilité, son style unique et sa faç
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -231,7 +231,7 @@ Je cherche un colocataire sérieux et agréable pour partager mon appartement de
 
 Cordialement,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -248,7 +248,7 @@ Cette première expérience m’a vraiment plu, et depuis, j’y vais chaque sem
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -285,7 +285,7 @@ Merci encore d’avoir accepté de garder ma maison et le jardin pendant mes vac
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -300,7 +300,7 @@ J’étais très déçu et frustré, car cette escapade devait être reposante. 
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,

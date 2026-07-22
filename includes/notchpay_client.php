@@ -37,9 +37,29 @@ function tcf_notchpay_request(string $method, string $path, ?array $body = null)
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_CUSTOMREQUEST => strtoupper($method),
         CURLOPT_HTTPHEADER => $headers,
-        CURLOPT_TIMEOUT => 45,
-        CURLOPT_CONNECTTIMEOUT => 15,
+        CURLOPT_TIMEOUT => 60,
+        CURLOPT_CONNECTTIMEOUT => 30,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
+        CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_SSL_VERIFYHOST => 2,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_MAXREDIRS => 3,
     ]);
+
+    // Bundle CA (XAMPP / Windows) — évite SSL connection timeout / verify failures
+    $caCandidates = [
+        __DIR__ . '/cacert.pem',
+        dirname(__DIR__) . '/cacert.pem',
+        'C:/xampp/apache/bin/curl-ca-bundle.crt',
+        'C:/xampp/php/extras/ssl/cacert.pem',
+    ];
+    foreach ($caCandidates as $caFile) {
+        if (is_file($caFile)) {
+            curl_setopt($ch, CURLOPT_CAINFO, $caFile);
+            break;
+        }
+    }
 
     if ($body !== null) {
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($body, JSON_UNESCAPED_UNICODE));
@@ -48,10 +68,33 @@ function tcf_notchpay_request(string $method, string $path, ?array $body = null)
     $raw = curl_exec($ch);
     $http = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $err = curl_error($ch);
+    $errno = (int) curl_errno($ch);
+
+    // Repli : retry SSL (réseau instable / XAMPP sans CA)
+    if ($raw === false) {
+        $sslRelated = in_array($errno, [CURLE_SSL_CONNECT_ERROR, CURLE_OPERATION_TIMEDOUT, 28, 35, 60], true)
+            || stripos($err, 'ssl') !== false
+            || stripos($err, 'timeout') !== false;
+        if ($sslRelated) {
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 75);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 40);
+            $raw = curl_exec($ch);
+            $http = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $err = curl_error($ch);
+            $errno = (int) curl_errno($ch);
+        }
+    }
+
     curl_close($ch);
 
     if ($raw === false) {
-        return ['ok' => false, 'http' => $http, 'data' => null, 'error' => $err !== '' ? $err : 'Erreur réseau Notch Pay.'];
+        $hint = $err !== '' ? $err : 'Erreur réseau Notch Pay.';
+        if (stripos($hint, 'ssl') !== false || stripos($hint, 'timeout') !== false) {
+            $hint = 'Connexion sécurisée Notch Pay impossible (' . $hint . '). Réessayez ou vérifiez votre connexion internet.';
+        }
+        return ['ok' => false, 'http' => $http, 'data' => null, 'error' => $hint];
     }
 
     $data = json_decode((string) $raw, true);

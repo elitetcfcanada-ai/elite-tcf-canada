@@ -1,5 +1,5 @@
 /**
- * Quiz CE/CO intégrés au chrome site (header + bas de navigation fixe).
+ * Quiz CE/CO intégrés au chrome site (header sticky + barre mobile).
  */
 body.tcf-quiz-with-site-nav {
     padding: 0;
@@ -8,7 +8,7 @@ body.tcf-quiz-with-site-nav {
 
 body.tcf-quiz-with-site-nav .tcf-quiz-standalone-wrap {
     position: relative;
-    z-index: 1;
+    z-index: auto;
     width: 100%;
     max-width: 100%;
     min-height: 0;
@@ -19,30 +19,128 @@ body.tcf-quiz-with-site-nav .tcf-quiz-standalone-wrap .app-container {
     padding-bottom: 1.5rem;
 }
 
-/* La barre mobile reste au-dessus du quiz */
-body.tcf-quiz-with-site-nav.tcf-has-mobile-nav {
-    padding-bottom: calc(var(--tcf-mobile-nav-h, 4.6rem) + env(safe-area-inset-bottom, 0px));
+/* Pied quiz (Précédent / points / Suivant) — dans le flux, pas fixed */
+body.tcf-quiz-with-site-nav #quiz-screen .quiz-footer {
+    position: static !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    z-index: auto !important;
+    margin: 0.5rem 0 0 !important;
+    border-radius: 14px !important;
+    border: 1px solid #e5e7eb !important;
+    background: #fff !important;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04) !important;
+    padding: 0.75rem 0.9rem !important;
+    max-width: none !important;
+    width: 100% !important;
+    min-height: 0;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
-body.tcf-quiz-with-site-nav .tcf-mobile-nav {
-    position: fixed !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    z-index: 5000 !important;
-    pointer-events: auto !important;
-    transform: none !important;
+body.tcf-quiz-with-site-nav #quiz-screen:not(.hidden) .co-exam-main,
+body.tcf-quiz-with-site-nav #quiz-screen:not(.hidden) .co-exam-layout,
+body.tcf-quiz-with-site-nav #quiz-screen:not(.hidden) {
+    padding-bottom: 0.5rem !important;
 }
 
-/* La nav de correction reste au-dessus du contenu, sous la barre site */
-body.tcf-quiz-with-site-nav .tcf-qpro-review-nav {
-    bottom: calc(var(--tcf-mobile-nav-h, 4.6rem) + env(safe-area-inset-bottom, 0px) + 0.35rem);
-    z-index: 40;
+/* Réserve / barre mobile : téléphone & tablette uniquement */
+@media (max-width: 991px) {
+    body.tcf-quiz-with-site-nav.tcf-has-mobile-nav {
+        padding-bottom: calc(var(--tcf-mobile-nav-h, 4.6rem) + env(safe-area-inset-bottom, 0px));
+    }
+
+    body.tcf-quiz-with-site-nav .tcf-mobile-nav {
+        position: fixed !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        z-index: 5000 !important;
+        pointer-events: auto !important;
+        transform: none !important;
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+
+    body.tcf-quiz-with-site-nav #quiz-screen .quiz-footer {
+        position: static !important;
+        bottom: auto !important;
+        margin: 0.35rem 0 0.5rem !important;
+        padding: 0.55rem 0.65rem !important;
+    }
+
+    body.tcf-quiz-with-site-nav .tcf-qpro-review-nav {
+        bottom: calc(var(--tcf-mobile-nav-h, 4.6rem) + env(safe-area-inset-bottom, 0px) + 0.35rem);
+        z-index: 40;
+    }
+}
+
+/* Ordinateur : jamais de barre Accueil / Vidéos / Menu */
+@media (min-width: 992px) {
+    body.tcf-quiz-with-site-nav .tcf-mobile-nav,
+    body.tcf-quiz-with-site-nav .tcf-mobile-sheet,
+    body.tcf-quiz-with-site-nav .tcf-mobile-sheet-overlay {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+    }
+
+    body.tcf-quiz-with-site-nav.tcf-has-mobile-nav {
+        padding-bottom: 0;
+    }
+
+    body.tcf-quiz-with-site-nav .tcf-qpro-review-nav {
+        bottom: 0.75rem;
+    }
+}
+
+@media (max-width: 991px) {
+    body.tcf-quiz-with-site-nav #quiz-screen .navigation-buttons {
+        flex-wrap: nowrap !important;
+    }
+
+    body.tcf-quiz-with-site-nav #quiz-screen .co-exam-meta-badge {
+        flex: 0 0 auto !important;
+        width: auto !important;
+        max-width: 5.5rem;
+        margin: 0 !important;
+        order: 0 !important;
+    }
+
+    body.tcf-quiz-with-site-nav #quiz-screen .navigation-buttons .btn-nav,
+    body.tcf-quiz-with-site-nav #quiz-screen .navigation-buttons .btn-finish {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+        font-size: 0.7rem !important;
+        padding-left: 0.3rem !important;
+        padding-right: 0.3rem !important;
+    }
 }
 
 @media (min-width: 992px) {
     body.tcf-quiz-with-site-nav .tcf-qpro-review-nav {
         bottom: 0.75rem;
+    }
+
+    body.tcf-quiz-with-site-nav #quiz-screen .navigation-buttons {
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+    }
+
+    body.tcf-quiz-with-site-nav #quiz-screen .navigation-buttons .btn-nav,
+    body.tcf-quiz-with-site-nav #quiz-screen .navigation-buttons .btn-finish {
+        flex: 0 0 auto !important;
+        min-width: 7.5rem !important;
+    }
+
+    body.tcf-quiz-with-site-nav #quiz-screen .co-exam-meta-badge {
+        flex: 1 1 auto;
+        justify-content: center;
+        max-width: 12rem;
+        margin: 0 auto;
     }
 }
 
@@ -50,22 +148,30 @@ body.tcf-quiz-with-site-nav .tcf-mobile-sheet {
     z-index: 5100 !important;
 }
 
-/* Header sticky du site au-dessus du quiz-header interne */
-body.tcf-quiz-with-site-nav > .top-header,
-body.tcf-quiz-with-site-nav > header.header {
+/* Header site (logo + menu) : reste collé en haut pendant l’épreuve */
+body.tcf-quiz-with-site-nav > .top-header {
     position: relative;
-    z-index: 1000;
+    z-index: 4200;
 }
 
-/* Espace sous le bas de page pour ne pas masquer Terminer / indicateurs */
+body.tcf-quiz-with-site-nav > header.header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 4200 !important;
+    background: #fff !important;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08);
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Espace sous le bas de page — la barre quiz est fixed, pas besoin d’extra */
 @media (max-width: 991px) {
-    body.tcf-quiz-with-site-nav .quiz-footer,
     body.tcf-quiz-with-site-nav .results-footer,
     body.tcf-quiz-with-site-nav .app-footer {
         padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
         margin-bottom: 0.25rem;
     }
-
 }
 
 /* Précédent / Suivant / Terminer : une seule ligne ; Terminer peut être masqué (.hidden) */
@@ -126,11 +232,17 @@ body.tcf-quiz-with-site-nav #correction-panel.is-open {
     visibility: visible !important;
 }
 
-/* Footer global inchangé sur les pages quiz (ne pas hériter du fond gris du body) */
+/* Footer global : discret pendant le quiz (la barre Précédent/Terminer est fixed) */
 body.tcf-quiz-with-site-nav > footer.site-footer {
     background-color: var(--tcf-footer-bg, #141622) !important;
     color: var(--tcf-text-on-dark, #f8fafc) !important;
-    margin-top: 3rem !important;
+    margin-top: 1rem !important;
+}
+
+body.tcf-quiz-with-site-nav #quiz-screen:not(.hidden) ~ * footer.site-footer,
+body.tcf-quiz-with-site-nav:has(#quiz-screen:not(.hidden)) > footer.site-footer {
+    /* Pendant l’épreuve, le pied de page site reste sous le fold */
+    margin-top: 2rem !important;
 }
 
 /* Dialogue de confirmation quiz */

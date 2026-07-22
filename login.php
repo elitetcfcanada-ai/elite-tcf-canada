@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/tcf_notifications_helper.php';
+require_once __DIR__ . '/includes/admin_notifications.php';
 
 /**
  * Paramètre next / redirect interne uniquement (fichier .php sous le site).
@@ -116,6 +117,14 @@ if (isset($_POST['register_start'])) {
             'Bienvenue sur ELITE TCF Canada',
             'Votre compte est prêt. Explorez les épreuves, les vidéos et suivez votre progression.',
             site_href('index.php')
+        );
+
+        tcf_add_staff_notification(
+            $pdo,
+            'user',
+            'Nouvel inscrit',
+            $name . ' (' . $email . ') vient de créer un compte.',
+            'admin/superAdmin.php?sa_focus=user&id=' . $user_id
         );
         
         $regNext = tcf_login_safe_next(isset($_POST['register_next']) ? (string) $_POST['register_next'] : null);

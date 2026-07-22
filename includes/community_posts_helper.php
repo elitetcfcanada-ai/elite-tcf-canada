@@ -13,6 +13,7 @@ function tcf_community_posts_ensure_tables(PDO $pdo): void
             id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             body TEXT NOT NULL,
             image_url VARCHAR(500) DEFAULT NULL,
+            link_url VARCHAR(1000) DEFAULT NULL,
             visibility ENUM('visitors','registered','premium') NOT NULL DEFAULT 'registered',
             is_published TINYINT(1) NOT NULL DEFAULT 1,
             created_by INT DEFAULT NULL,
@@ -22,6 +23,14 @@ function tcf_community_posts_ensure_tables(PDO $pdo): void
             KEY idx_cp_vis (visibility)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
     );
+    try {
+        $cols = $pdo->query('SHOW COLUMNS FROM community_posts LIKE \'link_url\'')->fetchAll();
+        if (!$cols) {
+            $pdo->exec('ALTER TABLE community_posts ADD COLUMN link_url VARCHAR(1000) DEFAULT NULL AFTER image_url');
+        }
+    } catch (Throwable $e) {
+        // ignore
+    }
     $pdo->exec(
         "CREATE TABLE IF NOT EXISTS community_post_likes (
             post_id INT UNSIGNED NOT NULL,
@@ -41,6 +50,33 @@ function tcf_community_posts_ensure_tables(PDO $pdo): void
             KEY idx_cpv_post (post_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
     );
+}
+
+/**
+ * Normalise un lien d’annonce (http/https uniquement).
+ */
+function tcf_community_normalize_link(?string $url): ?string
+{
+    $url = trim((string) $url);
+    if ($url === '') {
+        return null;
+    }
+    if (!preg_match('#^https?://#i', $url)) {
+        $url = 'https://' . $url;
+    }
+    if (!filter_var($url, FILTER_VALIDATE_URL)) {
+        return null;
+    }
+    $parts = parse_url($url);
+    $scheme = strtolower((string) ($parts['scheme'] ?? ''));
+    if (!in_array($scheme, ['http', 'https'], true)) {
+        return null;
+    }
+    if (strlen($url) > 1000) {
+        return null;
+    }
+
+    return $url;
 }
 
 function tcf_community_visibility_label(string $v): string

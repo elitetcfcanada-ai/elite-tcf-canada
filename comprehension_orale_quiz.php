@@ -47,11 +47,11 @@ $aboUrl = site_href('abonnement.php');
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Source+Sans+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="Assets/css/theme-vars.css">
-    <link rel="stylesheet" href="Assets/css/comprehesion_Orale.css?v=7">
+    <link rel="stylesheet" href="Assets/css/comprehesion_Orale.css?v=20">
     <link rel="stylesheet" href="Assets/css/header_footer.css">
     <link rel="stylesheet" href="Assets/css/tcf-responsive-pills.css">
-    <link rel="stylesheet" href="Assets/css/quiz-site-chrome.css?v=6">
-    <link rel="stylesheet" href="Assets/css/tcf-quiz-pro.css?v=5">
+    <link rel="stylesheet" href="Assets/css/quiz-site-chrome.css?v=16">
+    <link rel="stylesheet" href="Assets/css/tcf-quiz-pro.css?v=6">
 </head>
 <body class="tcf-quiz-with-site-nav">
 <?php include __DIR__ . '/includes/header.php'; ?>
@@ -64,8 +64,7 @@ $aboUrl = site_href('abonnement.php');
             <i class='bx bx-arrow-back'></i> Retour aux épreuves
         </a>
         <div class="tcf-qpro-start-card">
-            <div class="tcf-qpro-kicker"><i class='bx bx-headphone'></i> Compréhension orale</div>
-            <h2 id="quiz-title">Compréhension Orale</h2>
+            <h2 id="quiz-title">Épreuve</h2>
             <p id="quiz-description" class="tcf-qpro-desc">Chargement de l’épreuve…</p>
             <ul class="tcf-qpro-meta" aria-label="Informations de l’épreuve">
                 <li>
@@ -90,70 +89,105 @@ $aboUrl = site_href('abonnement.php');
     </div>
 
     <div class="app-container hidden" id="quiz-screen">
-        <div class="quiz-header">
-            <div class="header-content">
-                <div class="timer-container">
+        <div class="co-exam-layout">
+            <aside class="co-exam-sidebar" aria-label="Navigation de l’examen">
+                <div class="co-exam-timer" id="co-exam-timer-block">
+                    <div class="co-exam-timer__top">
+                        <span class="timer" id="timer-display">35:00</span>
+                        <span class="co-exam-timer__label">Temps restant</span>
+                    </div>
                     <div class="progress-container">
                         <div class="progress-bar">
                             <div class="progress" id="time-progress"></div>
-                            <div class="progress-wave"></div>
                         </div>
                     </div>
-                    <span class="timer" id="timer-display">30:00</span>
                 </div>
-                <button type="button" id="quit-btn" class="btn btn-danger">
-                    <i class='bx bx-power-off'></i> Quitter
+
+                <div class="co-exam-nav-panel">
+                    <h3 class="co-exam-nav-panel__title">Navigation des questions</h3>
+                    <div class="indicators-container">
+                        <div class="indicators" id="question-indicators"></div>
+                    </div>
+                    <ul class="co-exam-legend" aria-label="Légende">
+                        <li><span class="co-exam-legend__swatch is-current"></span> Actuelle</li>
+                        <li><span class="co-exam-legend__swatch is-answered"></span> Répondue</li>
+                        <li><span class="co-exam-legend__swatch is-todo"></span> Non rép.</li>
+                    </ul>
+                </div>
+
+                <button type="button" id="quit-btn" class="btn btn-danger co-exam-quit">
+                    <i class='bx bx-log-out'></i> Quitter l’examen
                 </button>
+            </aside>
+
+            <div class="co-exam-main">
+                <main class="quiz-main">
+                    <div class="question-card">
+                        <div class="question-number" id="question-number">
+                            <span>Question : 1</span>
+                        </div>
+
+                        <div class="situation-container">
+                            <div class="situation-title">
+                                <i class='bx bx-image'></i>
+                                <span>Situation visuelle</span>
+                            </div>
+                            <img id="situation-image" class="situation-image" src="" alt="">
+                        </div>
+
+                        <p class="question-text" id="co-question-text"></p>
+
+                        <div class="audio-container" id="co-audio-box">
+                            <div class="situation-title">
+                                <i class='bx bx-headphone'></i>
+                                <span>Extrait audio</span>
+                            </div>
+                            <p class="co-tts-status" id="co-tts-status" aria-live="polite">Prêt à écouter</p>
+
+                            <div class="co-audio-player" id="co-audio-player" role="group" aria-label="Lecteur audio">
+                                <button type="button" id="play-btn" class="co-audio-player__btn play-btn" aria-pressed="false" aria-label="Écouter">
+                                    <i class="bx bx-play"></i>
+                                </button>
+                                <div class="co-audio-player__track">
+                                    <div class="co-audio-player__bar" id="co-audio-progress-bar" role="slider" tabindex="0" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Progression — cliquer pour revenir en arrière">
+                                        <div class="co-audio-player__fill" id="co-audio-progress-fill"></div>
+                                    </div>
+                                    <div class="co-audio-player__times">
+                                        <span id="co-audio-time-current">0:00</span>
+                                        <span id="co-audio-time-total">0:00</span>
+                                    </div>
+                                </div>
+                                <button type="button" id="co-audio-replay-btn" class="co-audio-player__replay" title="Réécouter" aria-label="Réécouter depuis le début">
+                                    <i class="bx bx-revision"></i>
+                                </button>
+                            </div>
+
+                            <audio id="question-audio" class="audio-player hidden" controls></audio>
+                        </div>
+
+                        <div class="answers-grid" id="answers-container"></div>
+                    </div>
+                </main>
+
+                <footer class="quiz-footer">
+                    <div class="navigation-buttons">
+                        <button type="button" id="prev-btn" class="btn btn-nav">
+                            <i class='bx bx-chevron-left'></i> Précédent
+                        </button>
+                        <div class="co-exam-meta-badge" id="co-exam-meta-badge" aria-live="polite">
+                            <span class="co-exam-meta-badge__level" id="question-level-badge">—</span>
+                            <span class="co-exam-meta-badge__pts" id="question-points">0 pts</span>
+                        </div>
+                        <button type="button" id="next-btn" class="btn btn-nav btn-nav--next">
+                            Suivant <i class='bx bx-chevron-right'></i>
+                        </button>
+                        <button type="button" id="finish-btn" class="btn btn-finish hidden">
+                            <i class='bx bx-flag'></i> Terminer
+                        </button>
+                    </div>
+                </footer>
             </div>
         </div>
-
-        <main class="quiz-main">
-            <div class="question-card">
-                <div class="question-number" id="question-number">
-                    <span>Question 1/1</span>
-                    <span class="question-points" id="question-points">0 points</span>
-                </div>
-                <p class="question-text" id="co-question-text" style="margin-bottom:12px;"></p>
-
-                <div class="situation-container">
-                    <div class="situation-title">
-                        <i class='bx bx-image'></i>
-                        <span>Situation visuelle</span>
-                    </div>
-                    <img id="situation-image" class="situation-image" src="" alt="">
-                </div>
-
-                <div class="audio-container">
-                    <div class="situation-title">
-                        <i class='bx bx-volume-full'></i>
-                        <span>Écoute</span>
-                    </div>
-                    <audio id="question-audio" class="audio-player" controls></audio>
-                    <button type="button" id="play-btn" class="play-btn">
-                        <i class='bx bx-play'></i> Lancer l’audio
-                    </button>
-                </div>
-
-                <div class="answers-grid" id="answers-container"></div>
-            </div>
-        </main>
-
-        <footer class="quiz-footer">
-            <div class="navigation-buttons">
-                <button type="button" id="prev-btn" class="btn btn-nav">
-                    <i class='bx bx-chevron-left'></i> Précédent
-                </button>
-                <button type="button" id="next-btn" class="btn btn-nav">
-                    Suivant <i class='bx bx-chevron-right'></i>
-                </button>
-                <button type="button" id="finish-btn" class="btn btn-finish hidden">
-                    <i class='bx bx-flag'></i> Terminer
-                </button>
-            </div>
-            <div class="indicators-container">
-                <div class="indicators" id="question-indicators"></div>
-            </div>
-        </footer>
     </div>
 
     <div class="app-container tcf-qpro-results hidden" id="results-screen">
@@ -247,8 +281,9 @@ $aboUrl = site_href('abonnement.php');
         window.TCF_ABO_URL = <?php echo json_encode($aboUrl); ?>;
         window.TCF_BACK_URL = <?php echo json_encode($backList); ?>;
     </script>
+    <script src="Assets/javascript/tcf-tts.js?v=8"></script>
     <script src="Assets/javascript/tcf_quiz_dialog.js?v=1"></script>
-    <script src="Assets/javascript/comprehension_quiz_dynamic.js?v=9"></script>
+    <script src="Assets/javascript/comprehension_quiz_dynamic.js?v=19"></script>
 </div>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>

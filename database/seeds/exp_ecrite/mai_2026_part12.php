@@ -17,7 +17,7 @@ J’espère que tu vas bien. Depuis quelque temps, j’ai envie de faire plus de
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -34,7 +34,7 @@ Cette expérience m’a rendu plus autonome, plus ouvert et plus confiant. J’e
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -71,7 +71,7 @@ J’ai trouvé un hôtel qui me semble parfait pour nos vacances à Nice, du 12 
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -86,7 +86,7 @@ Cette expérience m’a beaucoup appris. Je me suis senti plus autonome, plus co
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -123,7 +123,7 @@ Oui, bien sûr ! Depuis le mois dernier, je fais de la natation et j’aime beau
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -140,7 +140,7 @@ Si j’étais à votre place, je garderais cette motivation, car les grands chan
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -177,7 +177,7 @@ J’espère que tu vas bien. Je t’écris pour t’annoncer une très bonne nou
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -194,7 +194,7 @@ J’ai beaucoup aimé cette expérience, car elle m’a rendu plus autonome, plu
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -231,7 +231,7 @@ Bienvenue dans la ville ! Pour te déplacer, tu as plusieurs choix : le bus, le 
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -246,7 +246,7 @@ Quelques semaines plus tard, elle a aussi rendu visite à des personnes âgées 
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -283,7 +283,7 @@ Merci pour ta réponse ! Le Château de Chombony est un très beau lieu de réce
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -298,7 +298,7 @@ Après quelques mois, j’ai décidé de pratiquer davantage. J’ai regardé de
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,

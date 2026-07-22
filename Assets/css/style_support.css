@@ -1,17 +1,22 @@
-/* Page Support — simple, propre, une seule teinte d’accent */
+/**
+ * Page Support — alternance clair / sombre + contraste lisible.
+ */
+
 :root {
-    --sup-bg: #f7f7f8;
-    --sup-card: #ffffff;
-    --sup-text: #1f2937;
-    --sup-muted: #6b7280;
-    --sup-line: #e5e7eb;
+    --sup-page: #eef0f3;
+    --sup-light: #ffffff;
+    --sup-dark: var(--tcf-footer-bg, #141622);
+    --sup-dark-elev: #1c2030;
+    --sup-text: #141622;
+    --sup-muted: #64748b;
+    --sup-line: #e2e8f0;
     --sup-accent: var(--main-color, #d30d0d);
-    --sup-accent-soft: rgba(211, 13, 13, 0.08);
-    --sup-radius: 14px;
+    --sup-accent-soft: rgba(211, 13, 13, 0.1);
+    --sup-radius: 16px;
 }
 
-body {
-    background: var(--sup-bg);
+body.tcf-support-page {
+    background: var(--sup-page);
 }
 
 .support-main {
@@ -20,15 +25,212 @@ body {
     padding: 1.75rem 1rem 3.5rem;
 }
 
-/* Hero */
-.support-hero-block {
-    background: var(--sup-card);
-    border: 1px solid var(--sup-line);
+/* ---------- Blocs de base ---------- */
+.support-hero-block,
+.support-section {
     border-radius: var(--sup-radius);
-    padding: 1.75rem 1.35rem;
-    margin-bottom: 1.25rem;
+    padding: 1.45rem 1.25rem;
+    margin-bottom: 1.05rem;
+    border: 1px solid transparent;
 }
 
+.support-section h2 {
+    margin: 0 0 0.9rem;
+    font-size: 1.15rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 750;
+    line-height: 1.3;
+}
+
+.support-section h2 i {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex: 0 0 auto;
+}
+
+.support-section p {
+    margin: 0 0 0.7rem;
+    font-size: 0.95rem;
+    line-height: 1.65;
+}
+
+.support-section p:last-child {
+    margin-bottom: 0;
+}
+
+.support-section-intro {
+    font-style: normal;
+}
+
+.support-section strong {
+    font-weight: 750;
+}
+
+/* ---------- LIGHT ---------- */
+.support-block--light {
+    background: var(--sup-light);
+    border-color: var(--sup-line);
+    color: var(--sup-text);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.support-block--light h2 {
+    color: var(--sup-text);
+}
+
+.support-block--light h2 i {
+    background: var(--sup-accent-soft);
+    color: var(--sup-accent);
+}
+
+.support-block--light p,
+.support-block--light .support-section-intro {
+    color: var(--sup-muted);
+}
+
+.support-block--light strong {
+    color: var(--sup-text);
+}
+
+.support-block--light .tcf-skill-card,
+.support-block--light .tcf-level-card,
+.support-block--light .support-tips li,
+.support-block--light .support-card {
+    background: #f8fafc;
+    border: 1px solid var(--sup-line);
+}
+
+.support-block--light .tcf-nclc-table-wrap {
+    background: #f8fafc;
+    border-color: var(--sup-line);
+}
+
+.support-block--light .tcf-nclc-table th {
+    background: #eef2f7;
+    color: var(--sup-text);
+}
+
+.support-block--light .tcf-nclc-table td {
+    color: var(--sup-muted);
+    border-bottom-color: var(--sup-line);
+}
+
+.support-block--light .tcf-nclc-highlight td {
+    background: var(--sup-accent-soft);
+    color: var(--sup-text);
+}
+
+/* ---------- DARK ---------- */
+.support-block--dark {
+    background:
+        radial-gradient(ellipse 70% 55% at 50% -10%, rgba(211, 13, 13, 0.16), transparent 55%),
+        var(--sup-dark);
+    border-color: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+}
+
+.support-block--dark h2 {
+    color: #fff !important;
+}
+
+.support-block--dark h2 i {
+    background: rgba(211, 13, 13, 0.2);
+    color: #ff6b6b;
+}
+
+.support-block--dark p,
+.support-block--dark .support-section-intro,
+.support-block--dark .tcf-nclc-note {
+    color: rgba(248, 250, 252, 0.78) !important;
+}
+
+.support-block--dark strong {
+    color: #fff;
+}
+
+/* Cartes internes : claires sur fond sombre (contraste impeccable) */
+.support-block--dark .tcf-skill-card,
+.support-block--dark .tcf-level-card,
+.support-block--dark .support-tips li,
+.support-block--dark .support-card {
+    background: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--sup-text);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.2);
+}
+
+.support-block--dark .tcf-skill-card h3,
+.support-block--dark .tcf-level-label,
+.support-block--dark .support-card h2,
+.support-block--dark .support-tips strong,
+.support-block--dark .tcf-skill-score,
+.support-block--dark .tcf-level-card ul strong {
+    color: var(--sup-text) !important;
+}
+
+.support-block--dark .tcf-skill-card p,
+.support-block--dark .tcf-level-card ul,
+.support-block--dark .tcf-level-card > p,
+.support-block--dark .support-tips li,
+.support-block--dark .support-card p {
+    color: var(--sup-muted) !important;
+}
+
+.support-block--dark .tcf-skill-meta {
+    color: var(--sup-accent) !important;
+}
+
+.support-block--dark .tcf-skill-score {
+    border-top-color: var(--sup-line);
+}
+
+.support-block--dark .tcf-skill-score strong,
+.support-block--dark .support-card a {
+    color: var(--sup-accent) !important;
+}
+
+.support-block--dark .support-card a:hover {
+    text-decoration: underline;
+}
+
+.support-block--dark .tcf-nclc-table-wrap {
+    background: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.2);
+}
+
+.support-block--dark .tcf-nclc-table th {
+    background: #f1f5f9;
+    color: var(--sup-text);
+}
+
+.support-block--dark .tcf-nclc-table td {
+    color: var(--sup-muted);
+    border-bottom-color: var(--sup-line);
+}
+
+.support-block--dark .tcf-nclc-table td strong {
+    color: var(--sup-text);
+}
+
+.support-block--dark .tcf-nclc-highlight td {
+    background: var(--sup-accent-soft);
+    color: var(--sup-text);
+}
+
+.support-block--dark .tcf-nclc-note i {
+    color: #ff6b6b;
+}
+
+/* ---------- Hero ---------- */
 .support-hero-kicker {
     display: inline-flex;
     align-items: center;
@@ -40,21 +242,41 @@ body {
     letter-spacing: 0.02em;
 }
 
-.support-hero-block h1 {
-    margin: 0 0 0.75rem;
-    font-size: clamp(1.55rem, 4vw, 2.1rem);
-    line-height: 1.2;
-    color: var(--sup-text);
-    font-weight: 800;
+.support-block--dark .support-hero-kicker {
+    color: #ff6b6b;
+}
+
+/* Annule le style global style_tcf « section h1 { color:#fff } » quand le fond est clair,
+   et force un contraste correct ici. */
+.support-hero-block .support-hero-title,
+.support-hero-block h1.support-hero-title,
+section.support-hero-block h1 {
+    margin: 0 0 0.75rem !important;
+    padding: 0 !important;
+    font-size: clamp(1.55rem, 4vw, 2.1rem) !important;
+    line-height: 1.2 !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.02em !important;
+    text-transform: none !important;
+    position: static !important;
+    color: #fff !important;
+    -webkit-text-fill-color: #fff !important;
 }
 
 .support-hero-block h1 span {
-    color: var(--sup-accent);
+    color: var(--sup-accent) !important;
+    -webkit-text-fill-color: var(--sup-accent) !important;
+}
+
+.support-hero-block h1::before,
+.support-hero-block .support-hero-title::before {
+    content: none !important;
+    display: none !important;
 }
 
 .support-hero-block > p {
     margin: 0;
-    color: var(--sup-muted);
+    color: rgba(248, 250, 252, 0.78);
     font-size: 0.98rem;
     line-height: 1.65;
     max-width: 42rem;
@@ -74,11 +296,12 @@ body {
 }
 
 .support-hero-stats div {
-    background: var(--sup-bg);
-    border: 1px solid var(--sup-line);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 12px;
     padding: 0.85rem 0.7rem;
     text-align: center;
+    backdrop-filter: blur(6px);
 }
 
 .support-hero-stats strong,
@@ -87,66 +310,19 @@ body {
 }
 
 .support-hero-stats strong {
-    color: var(--sup-text);
+    color: #fff;
     font-size: 1.15rem;
     font-weight: 800;
 }
 
 .support-hero-stats span {
     margin-top: 0.2rem;
-    color: var(--sup-muted);
+    color: rgba(248, 250, 252, 0.7);
     font-size: 0.78rem;
     font-weight: 600;
 }
 
-/* Sections */
-.support-section {
-    background: var(--sup-card);
-    border: 1px solid var(--sup-line);
-    border-radius: var(--sup-radius);
-    padding: 1.35rem 1.2rem;
-    margin-bottom: 1rem;
-}
-
-.support-section h2 {
-    margin: 0 0 0.85rem;
-    font-size: 1.15rem;
-    color: var(--sup-text);
-    display: flex;
-    align-items: center;
-    gap: 0.45rem;
-    font-weight: 750;
-}
-
-.support-section h2 i {
-    width: 2rem;
-    height: 2rem;
-    border-radius: 10px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--sup-accent-soft);
-    color: var(--sup-accent);
-    font-size: 1.1rem;
-    flex: 0 0 auto;
-}
-
-.support-section p {
-    margin: 0 0 0.7rem;
-    color: var(--sup-muted);
-    font-size: 0.95rem;
-    line-height: 1.65;
-}
-
-.support-section p:last-child {
-    margin-bottom: 0;
-}
-
-.support-section-intro {
-    font-style: normal;
-}
-
-/* Cartes compétences */
+/* ---------- Grilles / cartes internes ---------- */
 .tcf-skills-grid {
     display: grid;
     grid-template-columns: 1fr;
@@ -161,9 +337,7 @@ body {
 }
 
 .tcf-skill-card {
-    background: var(--sup-bg);
-    border: 1px solid var(--sup-line);
-    border-radius: 12px;
+    border-radius: 14px;
     padding: 1.1rem 1rem;
 }
 
@@ -210,7 +384,6 @@ body {
     color: var(--sup-accent);
 }
 
-/* Niveaux */
 .tcf-levels-grid {
     display: grid;
     grid-template-columns: 1fr;
@@ -230,9 +403,7 @@ body {
 }
 
 .tcf-level-card {
-    background: var(--sup-bg);
-    border: 1px solid var(--sup-line);
-    border-radius: 12px;
+    border-radius: 14px;
     padding: 1rem;
 }
 
@@ -280,12 +451,10 @@ body {
     font-size: 0.88rem;
 }
 
-/* Tableau NCLC */
 .tcf-nclc-table-wrap {
     overflow-x: auto;
     border: 1px solid var(--sup-line);
     border-radius: 12px;
-    background: var(--sup-bg);
 }
 
 .tcf-nclc-table {
@@ -300,12 +469,9 @@ body {
     padding: 0.7rem 0.75rem;
     text-align: center;
     border-bottom: 1px solid var(--sup-line);
-    color: var(--sup-muted);
 }
 
 .tcf-nclc-table th {
-    background: #f3f4f6;
-    color: var(--sup-text);
     font-weight: 700;
     white-space: nowrap;
 }
@@ -315,8 +481,6 @@ body {
 }
 
 .tcf-nclc-highlight td {
-    background: var(--sup-accent-soft);
-    color: var(--sup-text);
     font-weight: 600;
 }
 
@@ -333,7 +497,6 @@ body {
     margin-top: 0.15rem;
 }
 
-/* Conseils */
 .support-tips {
     margin: 0;
     padding: 0;
@@ -344,10 +507,7 @@ body {
     position: relative;
     padding: 0.75rem 0.85rem 0.75rem 2.2rem;
     margin-bottom: 0.55rem;
-    background: var(--sup-bg);
-    border: 1px solid var(--sup-line);
     border-radius: 12px;
-    color: var(--sup-muted);
     font-size: 0.92rem;
     line-height: 1.55;
 }
@@ -367,11 +527,6 @@ body {
     background: var(--sup-accent);
 }
 
-.support-tips strong {
-    color: var(--sup-text);
-}
-
-/* Contact */
 .support-contact-block .support-grid {
     display: grid;
     grid-template-columns: 1fr;
@@ -386,16 +541,13 @@ body {
 }
 
 .support-card {
-    background: var(--sup-bg);
-    border: 1px solid var(--sup-line);
-    border-radius: 12px;
+    border-radius: 14px;
     padding: 1rem;
 }
 
 .support-card h2 {
     margin: 0 0 0.4rem;
     font-size: 0.92rem;
-    color: var(--sup-text);
     display: flex;
     align-items: center;
     gap: 0.4rem;
@@ -403,24 +555,18 @@ body {
 
 .support-card h2 i {
     color: var(--sup-accent);
+    width: auto;
+    height: auto;
+    background: none;
 }
 
 .support-card p {
     margin: 0;
     font-size: 0.9rem;
-    color: var(--sup-muted);
     word-break: break-word;
 }
 
 .support-card a {
-    color: var(--sup-text);
-    font-weight: 600;
+    font-weight: 650;
     text-decoration: none;
-}
-
-.support-card a:hover,
-.support-card a:focus-visible {
-    color: var(--sup-accent);
-    text-decoration: underline;
-    text-underline-offset: 3px;
 }

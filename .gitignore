@@ -20,3 +20,6 @@ database/epreuve.sql
 *.zip
 *.pyc
 
+
+cacert.pem
+includes/cacert.pem

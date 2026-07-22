@@ -39,7 +39,7 @@ return [
             [
                 'task' => 1,
                 'prompt' => 'Un nouveau restaurant vient d\'ouvrir près de chez vous. Vous écrivez à un(e) ami(e) pour lui proposer d\'y aller avec vous. Vous décrivez le restaurant (cuisine, prix, décoration, etc.).',
-                'correction' => "Salut,\nJ'espère que tu vas bien. Je voulais te proposer d'aller ensemble dans un nouveau restaurant qui vient d'ouvrir près de chez moi. Il propose une cuisine variée, surtout des plats méditerranéens, avec des produits frais. Les prix sont raisonnables et la décoration est moderne, avec une ambiance chaleureuse. J'aimerais beaucoup le découvrir avec toi ce week-end, par exemple samedi soir. Dis-moi si tu es disponible.\n\nÀ bientôt,\nAyoub",
+                'correction' => "Salut,\nJ'espère que tu vas bien. Je voulais te proposer d'aller ensemble dans un nouveau restaurant qui vient d'ouvrir près de chez moi. Il propose une cuisine variée, surtout des plats méditerranéens, avec des produits frais. Les prix sont raisonnables et la décoration est moderne, avec une ambiance chaleureuse. J'aimerais beaucoup le découvrir avec toi ce week-end, par exemple samedi soir. Dis-moi si tu es disponible.\n\nÀ bientôt,\nelite tcf canada",
             ],
             [
                 'task' => 2,
@@ -69,7 +69,7 @@ return [
             [
                 'task' => 1,
                 'prompt' => 'Écrivez un message à votre ami(e) qui souhaite suivre des cours de langue dans votre école. Donnez les détails spécifiques pour aider votre ami(e) à faire son choix. (lieu, tarifs, types de cours disponibles, etc.).',
-                'correction' => "Salut Raoul,\n\nJ'espère que tu vas bien, tu m'as parlé de ton projet de suivre des cours de langue, et je te conseille vraiment mon école. Elle est située en centre-ville, facilement accessible en bus et en métro. Les tarifs sont raisonnables, avec des formules mensuelles et des réductions pour les inscriptions longues. Il y a plusieurs types de cours : cours intensifs, cours du soir et cours en ligne, selon ton emploi du temps. Les classes sont en petits groupes et les professeurs sont très expérimentés. Tu peux aussi passer un test de niveau gratuit avant de commencer. À mon avis, c'est une très bonne option pour progresser rapidement.\n\nAyoub",
+                'correction' => "Salut Raoul,\n\nJ'espère que tu vas bien, tu m'as parlé de ton projet de suivre des cours de langue, et je te conseille vraiment mon école. Elle est située en centre-ville, facilement accessible en bus et en métro. Les tarifs sont raisonnables, avec des formules mensuelles et des réductions pour les inscriptions longues. Il y a plusieurs types de cours : cours intensifs, cours du soir et cours en ligne, selon ton emploi du temps. Les classes sont en petits groupes et les professeurs sont très expérimentés. Tu peux aussi passer un test de niveau gratuit avant de commencer. À mon avis, c'est une très bonne option pour progresser rapidement.\n\nelite tcf canada",
             ],
             [
                 'task' => 2,
@@ -99,7 +99,7 @@ return [
             [
                 'task' => 1,
                 'prompt' => 'Écrivez un message pour inviter vos amis à une fête de fin d\'année.',
-                'correction' => "Salut les amis,\nJe vous invite à une fête de fin d'année pour célébrer ensemble autour d'un bon moment. La fête aura lieu samedi 28 décembre, à partir de 19 h, chez moi. Il y aura de la musique, de quoi manger et une bonne ambiance pour clôturer l'année. Chacun peut apporter quelque chose à boire ou à grignoter. J'espère vraiment vous voir nombreux pour partager cette soirée ensemble. Merci de me confirmer si vous pouvez venir.\n\nAYOUB",
+                'correction' => "Salut les amis,\nJe vous invite à une fête de fin d'année pour célébrer ensemble autour d'un bon moment. La fête aura lieu samedi 28 décembre, à partir de 19 h, chez moi. Il y aura de la musique, de quoi manger et une bonne ambiance pour clôturer l'année. Chacun peut apporter quelque chose à boire ou à grignoter. J'espère vraiment vous voir nombreux pour partager cette soirée ensemble. Merci de me confirmer si vous pouvez venir.\n\nelite tcf canada",
             ],
             [
                 'task' => 2,
@@ -129,7 +129,7 @@ return [
             [
                 'task' => 1,
                 'prompt' => '« Je cherche un vélo en bon état et bon marché. Contactez-moi par courriel : mathieu@gmail.com » Vous avez un vélo à vendre. Vous écrivez un courriel pour décrire votre vélo et proposer un prix. Vous lui donnez un rendez-vous pour essayer le vélo.',
-                'correction' => "Objet : Vélo à vendre en bon état\n\nBonjour,\n\nJ'ai vu votre annonce concernant la recherche d'un vélo en bon état et à bon prix. Je possède justement un vélo à vendre. C'est un vélo de ville, très bien entretenu, utilisé occasionnellement. Les freins et les vitesses fonctionnent parfaitement, et les pneus sont en bon état.\n\nJe le vends au prix de 120 dollars, négociable. Si vous le souhaitez, vous pouvez venir l'essayer avant de prendre une décision. Je vous propose un rendez-vous samedi après-midi, vers 15 h, dans mon quartier, près du parc central.\n\nN'hésitez pas à me confirmer votre disponibilité.\n\nCordialement,\nAyoub",
+                'correction' => "Objet : Vélo à vendre en bon état\n\nBonjour,\n\nJ'ai vu votre annonce concernant la recherche d'un vélo en bon état et à bon prix. Je possède justement un vélo à vendre. C'est un vélo de ville, très bien entretenu, utilisé occasionnellement. Les freins et les vitesses fonctionnent parfaitement, et les pneus sont en bon état.\n\nJe le vends au prix de 120 dollars, négociable. Si vous le souhaitez, vous pouvez venir l'essayer avant de prendre une décision. Je vous propose un rendez-vous samedi après-midi, vers 15 h, dans mon quartier, près du parc central.\n\nN'hésitez pas à me confirmer votre disponibilité.\n\nCordialement,\nelite tcf canada",
             ],
             [
                 'task' => 2,
@@ -189,7 +189,7 @@ return [
             [
                 'task' => 1,
                 'prompt' => 'Écrivez un courriel à vos amis pour les inviter à un anniversaire surprise de votre meilleur(e) ami(e). (Lieu, date, horaire, etc.).',
-                'correction' => "Objet : Invitation à un anniversaire surprise\n\nSalut tout le monde,\n\nJ'espère que vous allez bien. Je vous écris pour vous inviter à l'anniversaire surprise de notre meilleur(e) ami(e). L'événement aura lieu samedi 15 juin, à partir de 19 h, chez moi, au 17682 rue Verdier, à Saint-Léonard.\n\nL'idée est de garder la surprise jusqu'au dernier moment, donc merci de ne rien lui dire. Chacun peut apporter quelque chose à manger ou à boire afin de partager un moment convivial. Nous prévoyons de la musique, un gâteau et quelques jeux pour passer une excellente soirée ensemble.\n\nMerci de me confirmer votre présence avant mercredi afin que je puisse bien organiser la soirée.\n\nÀ très bientôt,\nAyoub Boulal",
+                'correction' => "Objet : Invitation à un anniversaire surprise\n\nSalut tout le monde,\n\nJ'espère que vous allez bien. Je vous écris pour vous inviter à l'anniversaire surprise de notre meilleur(e) ami(e). L'événement aura lieu samedi 15 juin, à partir de 19 h, chez moi, au 17682 rue Verdier, à Saint-Léonard.\n\nL'idée est de garder la surprise jusqu'au dernier moment, donc merci de ne rien lui dire. Chacun peut apporter quelque chose à manger ou à boire afin de partager un moment convivial. Nous prévoyons de la musique, un gâteau et quelques jeux pour passer une excellente soirée ensemble.\n\nMerci de me confirmer votre présence avant mercredi afin que je puisse bien organiser la soirée.\n\nÀ très bientôt,\nelite tcf canada Boulal",
             ],
             [
                 'task' => 2,

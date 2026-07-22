@@ -31,8 +31,8 @@ if (!function_exists('tcf_get_all_notifications_for_panel')) {
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
 
-        /* Apprenants : pas d’historique global avant inscription ; pas de notifications « staff » */
-        $types = ['video', 'topic', 'message', 'user', 'update', 'subscription', 'exam'];
+        /* Apprenants : bienvenue + contenus publiés (pas d’alertes staff) */
+        $types = ['video', 'topic', 'message', 'update', 'subscription', 'exam', 'welcome'];
         $ph = implode(',', array_fill(0, count($types), '?'));
         $stmt = $pdo->prepare(
             "SELECT n.* FROM notifications n
@@ -43,10 +43,11 @@ if (!function_exists('tcf_get_all_notifications_for_panel')) {
                  OR (
                    n.user_id IS NULL
                    AND n.created_at >= u.created_at
-                   AND NOT (n.type = 'subscription' AND n.user_id IS NULL)
+                   AND n.type NOT IN ('subscription')
                  )
                )
-             ORDER BY n.created_at DESC"
+             ORDER BY n.created_at DESC
+             LIMIT 100"
         );
         $stmt->execute(array_merge([$user_id], $types, [$user_id]));
 
@@ -91,6 +92,7 @@ $tcf_notif_type_label = static function (string $type): string {
         'topic', 'exam' => 'Épreuve',
         'message' => 'Annonce',
         'user' => 'Compte',
+        'welcome' => 'Bienvenue',
         'video_comment' => 'Commentaire',
         'testimonial' => 'Témoignage',
         'subscription', 'subscription_staff' => 'Abonnement',
@@ -173,6 +175,9 @@ $tcf_notif_relative = static function (string $createdAt): string {
                         break;
                     case 'user':
                         $icon = 'bx bx-user-plus';
+                        break;
+                    case 'welcome':
+                        $icon = 'bx bx-party';
                         break;
                     case 'video_comment':
                         $icon = 'bx bx-chat';
@@ -395,7 +400,7 @@ $tcf_notif_relative = static function (string $createdAt): string {
                     <i class="bx bxs-camera"></i>
                 </button>
             </div>
-            <h1 class="profile-name" id="profileName"><?php echo htmlspecialchars($user['name']); ?></h1>
+            <p class="profile-name" id="profileName"><?php echo htmlspecialchars($user['name']); ?></p>
             <p class="profile-email profile-card-v2__email"><?php echo htmlspecialchars($user['email']); ?></p>
             <div class="profile-meta-badges">
                 <span class="profile-badge profile-badge--role"><?php echo htmlspecialchars($roleLabel); ?></span>
@@ -694,7 +699,7 @@ $tcf_notif_relative = static function (string $createdAt): string {
 
 <?php if (empty($tcf_profile_panel_skip_assets)) { ?>
 <?php /* Rechargement en fin de page : gagne sur style_tcf / legacy notifications. */ ?>
-<link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/profile_panel.css')); ?>?v=notif-dense-6">
+<link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/profile_panel.css')); ?>?v=profile-cal-month-11">
 <link rel="stylesheet" href="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.css">
 <script src="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.js"></script>
 <script src="<?php echo htmlspecialchars(site_href('Assets/javascript/profile_panel.js')); ?>?v=notif-ui-3"></script>

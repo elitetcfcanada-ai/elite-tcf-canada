@@ -155,30 +155,20 @@ declare(strict_types=1);
                     <i class="bx bx-moon"></i>
                 </div>
                 <div class="notifications" id="notifications-btn">
-                    <i class="bx bxs-bell"></i>
-                    <div class="notification-count" id="notification-count">0</div>
+                    <a href="#" class="notification-icon sa-nav-notification-icon" id="showNotifications" aria-label="Notifications" title="Notifications">
+                        <i class="bx bx-bell"></i>
+                        <span class="notification-badge" id="notification-count" style="display:none;">0</span>
+                    </a>
                 </div>
                 <a href="#" class="admin-profile-trigger" id="showProfile" title="Mon profil" aria-label="Mon profil">
-                    <span class="admin-nav-avatar-wrap">
+                    <span class="admin-nav-avatar-wrap nav-avatar-wrap">
                         <?php if (!empty($tcf_profile_panel_user) && !empty($tcf_profile_panel_user['avatar_display_url'])): ?>
-                            <img src="<?php echo htmlspecialchars((string) $tcf_profile_panel_user['avatar_display_url']); ?>" alt="" class="admin-nav-avatar-img" width="40" height="40" loading="lazy" decoding="async">
+                            <img src="<?php echo htmlspecialchars((string) $tcf_profile_panel_user['avatar_display_url']); ?>" alt="" class="admin-nav-avatar-img nav-avatar-img" width="40" height="40" loading="lazy" decoding="async">
                         <?php else: ?>
-                            <span class="admin-nav-avatar-fallback"><i class="bx bx-user" aria-hidden="true"></i></span>
+                            <span class="admin-nav-avatar-fallback nav-avatar-fallback"><i class="bx bx-user" aria-hidden="true"></i></span>
                         <?php endif; ?>
                     </span>
                 </a>
-            </div>
-        </div>
-
-        <!-- Notifications Panel -->
-        <div class="notifications-panel" id="notifications-panel">
-            <div class="notifications-header">
-                <div class="notifications-title">Notifications</div>
-                <button class="mark-all-read" id="mark-all-read">Tout marquer comme lu</button>
-            </div>
-            <div id="notifications-list"></div>
-            <div class="notifications-footer">
-                <a href="#" class="view-all-notifications">Voir toutes les notifications</a>
             </div>
         </div>
 

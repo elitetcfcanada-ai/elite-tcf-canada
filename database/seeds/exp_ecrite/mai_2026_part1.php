@@ -69,7 +69,7 @@ J’espère que tu vas bien. Je veux changer la décoration de mon appartement l
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -82,7 +82,7 @@ L’après-midi, nous avons écouté un petit concert. Les élèves jouaient du 
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -119,7 +119,7 @@ J’ai vu votre annonce et je vous propose mon vélo à vendre. C’est un vélo
 
 Cordialement,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -134,7 +134,7 @@ Hier, j’ai passé une journée magnifique à la campagne avec mes amis. Nous s
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -167,13 +167,13 @@ La sévérité des parents envers les enfants suscite des avis partagés. Dans l
 
 Bonjour,
 
-Je m’appelle Ayoub et je suis installé dans cette ville depuis trois mois. Je viens de Rabat et j’ai choisi de vivre ici pour le travail, mais aussi pour l’ambiance calme et accueillante. Les habitants sont souriants et toujours prêts à aider, ce qui m’a permis de m’adapter rapidement.
+Je m’appelle elite tcf canada et je suis installé dans cette ville depuis trois mois. Je viens de Rabat et j’ai choisi de vivre ici pour le travail, mais aussi pour l’ambiance calme et accueillante. Les habitants sont souriants et toujours prêts à aider, ce qui m’a permis de m’adapter rapidement.
 
 Mes lieux préférés sont d’abord le grand parc du centre-ville, où je me promène chaque soir après 18 h. J’aime aussi beaucoup la bibliothèque municipale, très moderne et tranquille. Le marché du samedi matin est un autre endroit que j’adore, pour ses produits frais et son atmosphère vivante. Enfin, le bord de la rivière est parfait pour se détendre le week-end.
 
 Cordialement,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -190,7 +190,7 @@ J’ai passé une soirée inoubliable, pleine de joie et de frissons. Si vous ai
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -223,13 +223,13 @@ Les jeux vidéo occupent une place importante dans la vie des jeunes. Selon le p
 
 Bonjour,
 
-Je m’appelle Ayoub, j’ai 27 ans et j’habite à Casablanca. J’ai lu votre annonce sur internet et je suis très intéressé par votre aide pour pratiquer le français. J’apprends cette langue depuis plusieurs années, mais je manque encore de confiance à l’oral. Je souhaite améliorer ma prononciation, enrichir mon vocabulaire et parler plus naturellement dans la vie quotidienne.
+Je m’appelle elite tcf canada, j’ai 27 ans et j’habite à Casablanca. J’ai lu votre annonce sur internet et je suis très intéressé par votre aide pour pratiquer le français. J’apprends cette langue depuis plusieurs années, mais je manque encore de confiance à l’oral. Je souhaite améliorer ma prononciation, enrichir mon vocabulaire et parler plus naturellement dans la vie quotidienne.
 
 Je veux pratiquer le français parce qu’il est très utile pour mon travail et pour mes futurs projets d’études au Canada. Je suis disponible le soir après 18 h et le week-end. J’aimerais échanger avec une personne patiente et motivée.
 
 Cordialement,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -244,7 +244,7 @@ Ce que j’ai le plus aimé, c’était le moment du dessert, quand nous avons m
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,
@@ -281,7 +281,7 @@ J’ai vu votre annonce et je vous propose mon vélo à vendre. C’est un vélo
 
 Cordialement,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 2,
@@ -296,7 +296,7 @@ Cette expérience m’a beaucoup plu. J’ai appris à mieux communiquer, à êt
 
 À bientôt,
 
-AYOUB',
+elite tcf canada',
             ],
             [
                 'task' => 3,

@@ -6,6 +6,7 @@ require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/subscription_access.php';
 require_once __DIR__ . '/includes/community_posts_helper.php';
 require_once __DIR__ . '/includes/tcf_notifications_helper.php';
+require_once __DIR__ . '/includes/admin_roles.php';
 if (is_file(__DIR__ . '/includes/visitor_id.php')) {
     require_once __DIR__ . '/includes/visitor_id.php';
 }
@@ -114,7 +115,13 @@ try {
                 cp_json(['success' => false, 'message' => 'Accès refusé.'], 403);
             }
             $id = (int) ($_POST['id'] ?? 0);
+            // Conserver les retours à la ligne internes ; trim uniquement aux extrémités
             $body = trim((string) ($_POST['body'] ?? ''));
+            $linkUrl = tcf_community_normalize_link((string) ($_POST['link_url'] ?? ''));
+            $rawLink = trim((string) ($_POST['link_url'] ?? ''));
+            if ($rawLink !== '' && $linkUrl === null) {
+                cp_json(['success' => false, 'message' => 'Lien invalide. Utilisez une URL http(s).'], 422);
+            }
             $visibility = strtolower(trim((string) ($_POST['visibility'] ?? 'registered')));
             if (!in_array($visibility, ['visitors', 'registered', 'premium'], true)) {
                 $visibility = 'registered';
@@ -160,8 +167,8 @@ try {
                 }
                 $wasPublished = (int) ($old['is_published'] ?? 0) === 1;
                 $pdo->prepare(
-                    'UPDATE community_posts SET body=?, image_url=?, visibility=?, is_published=?, updated_at=NOW() WHERE id=?'
-                )->execute([$body, $finalImg !== '' ? $finalImg : null, $visibility, $isPublished, $id]);
+                    'UPDATE community_posts SET body=?, image_url=?, link_url=?, visibility=?, is_published=?, updated_at=NOW() WHERE id=?'
+                )->execute([$body, $finalImg !== '' ? $finalImg : null, $linkUrl, $visibility, $isPublished, $id]);
                 if ($isPublished && !$wasPublished) {
                     $excerpt = function_exists('mb_substr') ? mb_substr($body, 0, 140) : substr($body, 0, 140);
                     if ((function_exists('mb_strlen') ? mb_strlen($body) : strlen($body)) > 140) {
@@ -173,7 +180,7 @@ try {
                             'message',
                             'Nouvelle annonce communautaire',
                             $excerpt,
-                            site_href('posts.php')
+                            site_href('posts.php?id=' . $id)
                         );
                     } catch (Throwable $e) {
                         error_log('community post notify: ' . $e->getMessage());
@@ -183,8 +190,8 @@ try {
             }
 
             $pdo->prepare(
-                'INSERT INTO community_posts (body, image_url, visibility, is_published, created_by) VALUES (?,?,?,?,?)'
-            )->execute([$body, $imageUrl, $visibility, $isPublished, $uid > 0 ? $uid : null]);
+                'INSERT INTO community_posts (body, image_url, link_url, visibility, is_published, created_by) VALUES (?,?,?,?,?,?)'
+            )->execute([$body, $imageUrl, $linkUrl, $visibility, $isPublished, $uid > 0 ? $uid : null]);
             $newId = (int) $pdo->lastInsertId();
 
             if ($isPublished && $newId > 0) {
@@ -198,7 +205,7 @@ try {
                         'message',
                         'Nouvelle annonce communautaire',
                         $excerpt,
-                        site_href('posts.php')
+                        site_href('posts.php?id=' . $newId)
                     );
                 } catch (Throwable $e) {
                     error_log('community post notify: ' . $e->getMessage());
@@ -211,13 +218,36 @@ try {
             if (!cp_is_admin()) {
                 cp_json(['success' => false, 'message' => 'Accès refusé.'], 403);
             }
+            if (!tcf_is_super_admin()) {
+                cp_json(['success' => false, 'message' => 'Seul le super administrateur peut supprimer une annonce.'], 403);
+            }
             $id = (int) ($_POST['id'] ?? 0);
             if ($id <= 0) {
                 cp_json(['success' => false, 'message' => 'ID invalide.'], 422);
             }
+            $bodyPrev = '';
+            try {
+                $stB = $pdo->prepare('SELECT body FROM community_posts WHERE id = ?');
+                $stB->execute([$id]);
+                $bodyPrev = (string) ($stB->fetchColumn() ?: '');
+            } catch (Throwable $e) {
+            }
             $pdo->prepare('DELETE FROM community_post_likes WHERE post_id = ?')->execute([$id]);
             $pdo->prepare('DELETE FROM community_post_views WHERE post_id = ?')->execute([$id]);
             $pdo->prepare('DELETE FROM community_posts WHERE id = ?')->execute([$id]);
+            tcf_delete_notifications_matching($pdo, 'posts.php?id=' . $id);
+            if ($bodyPrev !== '') {
+                $excerpt = function_exists('mb_substr') ? mb_substr($bodyPrev, 0, 140) : substr($bodyPrev, 0, 140);
+                if ((function_exists('mb_strlen') ? mb_strlen($bodyPrev) : strlen($bodyPrev)) > 140) {
+                    $excerpt .= '…';
+                }
+                tcf_delete_notifications_by_type_payload(
+                    $pdo,
+                    'message',
+                    'Nouvelle annonce communautaire',
+                    $excerpt
+                );
+            }
             cp_json(['success' => true, 'message' => 'Annonce supprimée.']);
         }
 

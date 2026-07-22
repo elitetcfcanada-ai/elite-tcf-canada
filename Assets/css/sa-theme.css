@@ -369,6 +369,20 @@ html[data-sa-theme='dark'] .tcf-superadmin-app .sa-channel-crop-modal__footer {
     color: var(--sa-text);
 }
 
+html[data-sa-theme='dark'] .tcf-superadmin-app .admin-nav-avatar-wrap,
+html[data-sa-theme='light'] .tcf-superadmin-app .admin-nav-avatar-wrap,
+.tcf-superadmin-app .admin-nav-avatar-wrap.nav-avatar-wrap {
+    background: var(--main-color, #d30d0d) !important;
+    border-color: var(--main-color, #d30d0d) !important;
+}
+
+html[data-sa-theme='dark'] .tcf-superadmin-app .admin-nav-avatar-fallback,
+html[data-sa-theme='light'] .tcf-superadmin-app .admin-nav-avatar-fallback,
+.tcf-superadmin-app .admin-nav-avatar-fallback.nav-avatar-fallback,
+.tcf-superadmin-app .admin-nav-avatar-fallback i {
+    color: #ffffff !important;
+}
+
 html[data-sa-theme='dark'] .tcf-superadmin-app .notifications-panel {
     background: var(--card-bg);
     color: var(--sa-text);

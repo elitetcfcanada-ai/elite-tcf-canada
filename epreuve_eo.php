@@ -169,7 +169,7 @@ function eo_render_subjects(array $subjects): void
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/theme-vars.css')); ?>">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/header_footer.css')); ?>">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/style_tcf.css')); ?>">
-    <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/style_sujets.css')); ?>?v=frame-margins">
+    <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/style_sujets.css')); ?>?v=no-glow-1">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/style_Expresion_Ecrite.css')); ?>">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/expression_orale.css')); ?>?v=frame-margins">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/epreuve_reader.css')); ?>?v=frame-margins">

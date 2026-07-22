@@ -29,7 +29,7 @@ $loginUrl = site_href('login.php?next=' . rawurlencode('posts.php'));
     <link rel="stylesheet" href="Assets/css/theme-vars.css">
     <link rel="stylesheet" href="Assets/css/header_footer.css">
     <link rel="stylesheet" href="Assets/css/style_tcf.css">
-    <link rel="stylesheet" href="Assets/css/community_posts.css?v=3">
+    <link rel="stylesheet" href="Assets/css/community_posts.css?v=annonce-link-1">
 </head>
 <body class="tcf-posts-page">
 <?php include __DIR__ . '/includes/header.php'; ?>
@@ -46,6 +46,6 @@ $loginUrl = site_href('login.php?next=' . rawurlencode('posts.php'));
 
 <?php include __DIR__ . '/includes/footer.php'; ?>
 <?php include __DIR__ . '/includes/cookie_banner.php'; ?>
-<script src="Assets/javascript/community_posts.js?v=3"></script>
+<script src="Assets/javascript/community_posts.js?v=annonce-link-1"></script>
 </body>
 </html>
