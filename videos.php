@@ -3,7 +3,6 @@
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/site_contact.php';
 require_once __DIR__ . '/includes/video_duration.php';
-require_once __DIR__ . '/includes/subscription_access.php';
 
 $videosList = [];
 try {
@@ -15,17 +14,6 @@ try {
     )->fetchAll(PDO::FETCH_ASSOC);
 } catch (Throwable $e) {
     $videosList = [];
-}
-
-$tcfVideoAccessUser = null;
-if (!empty($_SESSION['user_id'])) {
-    try {
-        $stU = $pdo->prepare('SELECT * FROM users WHERE id = ?');
-        $stU->execute([(int) $_SESSION['user_id']]);
-        $tcfVideoAccessUser = $stU->fetch(PDO::FETCH_ASSOC) ?: null;
-    } catch (Throwable $e) {
-        $tcfVideoAccessUser = null;
-    }
 }
 
 function tcf_video_watch_href(int $videoId): string
@@ -84,20 +72,17 @@ function tcf_video_duration_label(array $v): string
             $thumb = tcf_uploads_public_href($v['thumbnail_url'] ?? '');
             $durLabel = tcf_video_duration_label($v);
             $watchHref = tcf_video_watch_href($vidId);
-            $isPremium = strtolower((string) ($v['visibility'] ?? '')) === 'premium';
-            $isLocked = $isPremium && !tcf_user_has_premium_access($tcfVideoAccessUser);
             ?>
-            <article class="tcf-videos-simple__card<?php echo $isLocked ? ' tcf-videos-simple__card--locked' : ''; ?>">
+            <article class="tcf-videos-simple__card">
                 <a class="tcf-videos-simple__link" href="<?php echo htmlspecialchars($watchHref); ?>">
                     <div class="tcf-videos-simple__thumb">
-                        <?php if ($isLocked): ?><span class="tcf-tv-premium-badge">Premium</span><?php endif; ?>
                         <?php if ($thumb !== ''): ?>
                             <img src="<?php echo htmlspecialchars($thumb); ?>" alt="" loading="lazy">
                         <?php endif; ?>
                         <?php if ($durLabel !== ''): ?>
                             <span class="tcf-tv-duration"><?php echo htmlspecialchars($durLabel); ?></span>
                         <?php endif; ?>
-                        <span class="tcf-videos-simple__play"><i class="bx <?php echo $isLocked ? 'bx-lock-alt' : 'bx-play-circle'; ?>"></i></span>
+                        <span class="tcf-videos-simple__play"><i class="bx bx-play-circle"></i></span>
                     </div>
                     <h2 class="tcf-videos-simple__card-title"><?php echo htmlspecialchars($v['title'] ?? ''); ?></h2>
                 </a>

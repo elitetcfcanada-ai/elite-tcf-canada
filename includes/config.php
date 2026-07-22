@@ -48,6 +48,29 @@ if (!isset($port)) {
 }
 
 if (session_status() === PHP_SESSION_NONE) {
+    $tcfSessionLifetime = 60 * 24 * 60 * 60; // 60 jours
+    $tcfIsHttps = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+    // Chemin cookie (sous-dossier XAMPP inclus)
+    $tcfCookiePath = '/';
+    if (!empty($_SERVER['DOCUMENT_ROOT'])) {
+        $doc = realpath($_SERVER['DOCUMENT_ROOT']);
+        $root = realpath(__DIR__ . '/..');
+        if ($doc && $root && str_starts_with(str_replace('\\', '/', $root), str_replace('\\', '/', $doc))) {
+            $rel = substr(str_replace('\\', '/', $root), strlen(str_replace('\\', '/', $doc)));
+            $rel = '/' . trim($rel, '/');
+            $tcfCookiePath = ($rel === '/' ? '/' : $rel . '/');
+        }
+    }
+    session_set_cookie_params([
+        'lifetime' => $tcfSessionLifetime,
+        'path' => $tcfCookiePath,
+        'secure' => $tcfIsHttps,
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+    ini_set('session.gc_maxlifetime', (string) $tcfSessionLifetime);
+    ini_set('session.cookie_httponly', '1');
+    ini_set('session.use_strict_mode', '1');
     session_start();
 }
 
@@ -64,7 +87,9 @@ try {
 
 require_once __DIR__ . '/platform_settings.php';
 require_once __DIR__ . '/tcf_brand_logo.php';
+require_once __DIR__ . '/auth_remember.php';
 tcf_platform_settings_ensure($pdo);
+tcf_remember_try_resume($pdo);
 
 /**
  * Chemin URL du dossier d’application (ex. /tcf1) calculé depuis DOCUMENT_ROOT — fiable sous XAMPP.

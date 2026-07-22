@@ -3,7 +3,6 @@
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/site_contact.php';
 require_once __DIR__ . '/includes/video_duration.php';
-require_once __DIR__ . '/includes/subscription_access.php';
 require_once __DIR__ . '/includes/video_player.php';
 
 $videoId = isset($_GET['v']) ? (int) $_GET['v'] : 0;
@@ -26,28 +25,15 @@ try {
     $video = null;
 }
 
-$tcfVideoAccessUser = null;
-if (!empty($_SESSION['user_id'])) {
-    try {
-        $stU = $pdo->prepare('SELECT * FROM users WHERE id = ?');
-        $stU->execute([(int) $_SESSION['user_id']]);
-        $tcfVideoAccessUser = $stU->fetch(PDO::FETCH_ASSOC) ?: null;
-    } catch (Throwable $e) {
-        $tcfVideoAccessUser = null;
-    }
-}
-
 $isLocked = false;
 $isPublic = false;
 if ($video !== null) {
     $vis = strtolower((string) ($video['visibility'] ?? 'public'));
-    $isPublic = ($vis === 'public');
-    $isLocked = ($vis === 'premium') && !tcf_user_has_premium_access($tcfVideoAccessUser);
-    if (!$isPublic && $isLocked) {
-        // premium sans accès : page visible mais lecteur bloqué
-    } elseif (!$isPublic && !$isLocked) {
+    // Lecture ouverte à tous (public + premium) — likes/commentaires restent liés au compte
+    if ($vis === 'public' || $vis === 'premium') {
         $isPublic = true;
-    } elseif (!$isPublic && $vis !== 'premium') {
+        $isLocked = false;
+    } else {
         $video = null;
     }
 }

@@ -108,6 +108,7 @@ if (isset($_POST['register_start'])) {
         }
 
         tcf_login_apply_session($user, $pdo);
+        tcf_remember_issue($pdo, (int) $user['id']);
         $_SESSION['success'] = 'Bienvenue ! Votre compte a été créé avec succès.';
 
         tcf_notification_insert(
@@ -194,6 +195,13 @@ if (isset($_POST['login_start'])) {
         }
 
         tcf_login_apply_session($user, $pdo);
+        // Rester connecté par défaut (case cochée), sauf refus explicite
+        $wantRemember = !isset($_POST['remember_me']) || (string) $_POST['remember_me'] === '1';
+        if ($wantRemember) {
+            tcf_remember_issue($pdo, (int) $user['id']);
+        } else {
+            tcf_remember_revoke_current($pdo);
+        }
         tcf_login_redirect_logged_user($user, isset($_POST['login_next']) ? (string) $_POST['login_next'] : null);
         
     } catch (PDOException $e) {
@@ -256,6 +264,10 @@ unset($_SESSION['error'], $_SESSION['success']);
                     <i class='bx bxs-lock-alt'></i>
                     <span class="error-message" aria-live="polite"></span>
                 </div>
+                <label class="tcf-remember-row">
+                    <input type="checkbox" name="remember_me" value="1" checked>
+                    <span>Rester connecté</span>
+                </label>
                 <div class="forgot-link">
                     <a href="<?php echo htmlspecialchars(site_href('resetPassword.php')); ?>">Mot de passe oublié ?</a>
                 </div>
@@ -311,6 +323,7 @@ unset($_SESSION['error'], $_SESSION['success']);
         </div>
     </div>
     <script src="Assets/javascript/script_login.js"></script>
+    <?php include __DIR__ . '/includes/cookie_banner.php'; ?>
 </body>
 
 </html>

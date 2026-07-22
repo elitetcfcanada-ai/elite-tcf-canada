@@ -112,8 +112,26 @@ form {
     margin-top: 5px;
 }
 
+.tcf-remember-row {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    width: 100%;
+    margin: 0 0 0.65rem;
+    font-size: 0.88rem;
+    color: #334155;
+    cursor: pointer;
+    user-select: none;
+}
+.tcf-remember-row input {
+    width: 1rem;
+    height: 1rem;
+    accent-color: var(--main-color, #d30d0d);
+    cursor: pointer;
+}
+
 .forgot-link {
-    margin: -15px 0 15px;
+    margin: -5px 0 15px;
     text-align: right;
 }
 

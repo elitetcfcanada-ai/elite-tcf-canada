@@ -42,21 +42,37 @@ function tcf_render_video_player(string $videoUrl, array $opts = []): void
         return;
     }
 
+    $pathOnly = (string) (parse_url($url, PHP_URL_PATH) ?: $url);
+    $ext = strtolower(pathinfo($pathOnly, PATHINFO_EXTENSION));
+    $mimeMap = [
+        'mp4' => 'video/mp4',
+        'm4v' => 'video/mp4',
+        'webm' => 'video/webm',
+        'ogg' => 'video/ogg',
+        'ogv' => 'video/ogg',
+        'mov' => 'video/quicktime',
+    ];
+    $mime = $mimeMap[$ext] ?? '';
+
     $cls = 'tcf-html5-video' . ($class !== '' ? ' ' . htmlspecialchars($class) : '');
     echo '<video id="' . htmlspecialchars($id) . '" class="' . $cls . '"';
     if ($controls) {
         echo ' controls';
     }
-    echo ' playsinline preload="metadata"';
+    echo ' playsinline webkit-playsinline preload="metadata" controlslist="nodownload"';
     if ($poster !== '') {
         echo ' poster="' . htmlspecialchars($poster) . '"';
     }
     echo '>';
-    echo '<source src="' . htmlspecialchars($url) . '" type="video/mp4">';
+    echo '<source src="' . htmlspecialchars($url) . '"';
+    if ($mime !== '') {
+        echo ' type="' . htmlspecialchars($mime) . '"';
+    }
+    echo '>';
     echo 'Votre navigateur ne supporte pas la lecture vidéo.';
     echo '</video>';
     echo '<div class="tcf-video-error-msg" id="' . htmlspecialchars($id) . '-error" hidden role="alert">';
     echo '<i class="bx bx-error-circle"></i>';
-    echo '<p>Impossible de lire cette vidéo. Le fichier est peut‑être absent ou inaccessible.</p>';
+    echo '<p>Impossible de lire cette vidéo. Le fichier est peut‑être absent du serveur (uploads non synchronisés) ou dans un format non supporté.</p>';
     echo '</div>';
 }

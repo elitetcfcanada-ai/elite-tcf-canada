@@ -29,3 +29,17 @@ php_value post_max_size 64M
 php_value max_execution_time 300
 php_value memory_limit 256M
 </IfModule>
+
+# Lecture vidéo : types MIME + streaming (Range) pour HTML5
+<IfModule mod_mime.c>
+    AddType video/mp4 .mp4 .m4v
+    AddType video/webm .webm
+    AddType video/ogg .ogv .ogg
+    AddType video/quicktime .mov
+</IfModule>
+<IfModule mod_headers.c>
+    <FilesMatch "\.(mp4|m4v|webm|ogv|ogg|mov)$">
+        Header set Accept-Ranges bytes
+        Header set Cache-Control "public, max-age=604800"
+    </FilesMatch>
+</IfModule>

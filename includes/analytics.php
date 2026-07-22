@@ -108,16 +108,11 @@ function tcf_geo_for_ip(string $ip): array
 }
 
 /**
- * Mesure d’audience : autorisée sauf refus explicite (« essential » uniquement).
- * Si l’utilisateur n’a pas encore choisi, on enregistre (session PHP, pas de cookie publicitaire).
- * Dès qu’il clique « Essentiels uniquement », l’enregistrement s’arrête.
+ * Mesure d’audience uniquement après « Tout accepter » (opt-in).
  */
 function tcf_cookie_consent_allows_analytics(): bool
 {
-    if (!isset($_COOKIE['tcf_consent'])) {
-        return true;
-    }
-    return $_COOKIE['tcf_consent'] === 'all';
+    return isset($_COOKIE['tcf_consent']) && $_COOKIE['tcf_consent'] === 'all';
 }
 
 function tcf_should_skip_tracking(): bool
