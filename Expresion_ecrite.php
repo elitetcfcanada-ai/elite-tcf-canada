@@ -207,9 +207,11 @@ try {
                 : '<p class="tcf-consigne-empty">Aucune consigne publiée pour cette tâche.</p>';
             return '<div class="combinaison' + (idx === 0 ? ' active' : '') + '" id="consigne-' + t.key + '" data-task="' + t.key + '">' +
                 '<div class="combinaison-header" role="button" tabindex="0">' +
-                '<div><h2>' + esc(title) + '</h2><span class="ee-consigne-meta">' + esc(t.meta) + '</span></div>' +
+                '<div><h2>' + esc(title) + '</h2></div>' +
                 '<span class="icon">▼</span></div>' +
-                '<div class="combinaison-content"' + (idx === 0 ? ' style="display:block;"' : '') + '>' + body + '</div></div>';
+                '<div class="combinaison-content"' + (idx === 0 ? ' style="display:block;"' : '') + '>' +
+                '<p class="ee-consigne-meta ee-consigne-meta--in-body">' + esc(t.meta) + '</p>' +
+                body + '</div></div>';
         }).join('');
 
         html += '<div class="combinaison" id="consigne-criteres">' +

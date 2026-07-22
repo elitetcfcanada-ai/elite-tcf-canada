@@ -226,13 +226,17 @@ body {
     font-weight: 700;
 }
 
-#ee-consignes-container .combinaison-header .ee-consigne-meta {
+#ee-consignes-container .ee-consigne-meta--in-body {
     display: block;
-    margin-top: 0.2rem;
-    font-size: 0.75rem;
-    font-weight: 500;
-    opacity: 0.92;
-    color: #fff;
+    margin: 0 0 0.75rem;
+    padding: 0.45rem 0.7rem;
+    border-radius: 8px;
+    background: rgba(211, 13, 13, 0.08);
+    border: 1px solid rgba(211, 13, 13, 0.18);
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: #7a1010;
 }
 
 #ee-consignes-container .combinaison-content {
@@ -301,15 +305,19 @@ body {
     font-size: 0.95rem;
     font-weight: 700;
 }
-#eo-consignes-container .combinaison-header .ee-consigne-meta,
-#ce-consignes-container .combinaison-header .ee-consigne-meta,
-#co-consignes-container .combinaison-header .ee-consigne-meta {
+#eo-consignes-container .ee-consigne-meta--in-body,
+#ce-consignes-container .ee-consigne-meta--in-body,
+#co-consignes-container .ee-consigne-meta--in-body {
     display: block;
-    margin-top: 0.2rem;
-    font-size: 0.75rem;
-    font-weight: 500;
-    opacity: 0.92;
-    color: #fff;
+    margin: 0 0 0.75rem;
+    padding: 0.45rem 0.7rem;
+    border-radius: 8px;
+    background: rgba(211, 13, 13, 0.08);
+    border: 1px solid rgba(211, 13, 13, 0.18);
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: #7a1010;
 }
 #eo-consignes-container .combinaison-content,
 #ce-consignes-container .combinaison-content,
