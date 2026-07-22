@@ -23,13 +23,13 @@ function tcf_subscription_plans_apply_payment_overlay(array $plans): array
 
     foreach ($plans as &$p) {
         if ($isTest) {
-            $p['price'] = tcf_subscription_display_usd_amount();
+            // En test Notch Pay : montant XAF de test, mais on garde le prix USD affiché du forfait
             $p['currency'] = '$';
             $p['payment_xaf'] = tcf_subscription_payment_xaf_amount();
         } else {
             // Production: Keep actual price, convert USD to XAF (1 USD = 600 XAF)
             $rate = 600;
-            $p['payment_xaf'] = (int)round(($p['price'] ?? 0.0) * $rate);
+            $p['payment_xaf'] = (int) round(($p['price'] ?? 0.0) * $rate);
         }
     }
     unset($p);
@@ -56,19 +56,10 @@ function tcf_subscription_plans_catalog_static(): array
 
     return [
         [
-            'key' => 'plan_1w',
-            'tier' => 'BASIC',
-            'badge' => 'UNE SEMAINE',
-            'price' => 0.16,
-            'currency' => '$',
-            'duration_days' => 7,
-            'features' => $features,
-        ],
-        [
             'key' => 'plan_2w',
             'tier' => 'STANDARD',
             'badge' => 'DEUX SEMAINES',
-            'price' => 0.16,
+            'price' => 35.0,
             'currency' => '$',
             'duration_days' => 14,
             'features' => $features,
@@ -77,7 +68,7 @@ function tcf_subscription_plans_catalog_static(): array
             'key' => 'plan_1m',
             'tier' => 'STANDARD',
             'badge' => 'UN MOIS',
-            'price' => 0.16,
+            'price' => 50.0,
             'currency' => '$',
             'duration_days' => 30,
             'features' => $features,
@@ -86,7 +77,7 @@ function tcf_subscription_plans_catalog_static(): array
             'key' => 'plan_2m',
             'tier' => 'PREMIUM',
             'badge' => 'DEUX MOIS',
-            'price' => 0.16,
+            'price' => 75.0,
             'currency' => '$',
             'duration_days' => 60,
             'features' => $features,
@@ -222,12 +213,6 @@ function tcf_subscription_plans_dedupe_db(?PDO $db = null): array
  */
 function tcf_subscription_plans_catalog(bool $activeOnly = true): array
 {
-    static $deduped = false;
-    if (!$deduped) {
-        $deduped = true;
-        tcf_subscription_plans_dedupe_db();
-    }
-
     $rows = tcf_subscription_plans_rows_from_db();
     if ($rows !== null && $rows !== []) {
         $normalized = tcf_subscription_plans_normalize_rows($rows, $activeOnly);
