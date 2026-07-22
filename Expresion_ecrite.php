@@ -80,8 +80,8 @@ try {
     <link rel="stylesheet" href="Assets/css/theme-vars.css">
     <link rel="stylesheet" href="Assets/css/header_footer.css">
     <link rel="stylesheet" href="Assets/css/style_tcf.css">
-    <link rel="stylesheet" href="Assets/css/style_sujets.css?v=no-glow-1">
-    <link rel="stylesheet" href="Assets/css/style_Expresion_Ecrite.css?v=ee-consigne-combo">
+    <link rel="stylesheet" href="Assets/css/style_sujets.css?v=consigne-header-2">
+    <link rel="stylesheet" href="Assets/css/style_Expresion_Ecrite.css?v=consigne-header-2">
 </head>
 <body>
 <?php include __DIR__ . '/includes/header.php'; ?>
