@@ -54,18 +54,31 @@ function tcf_repair_cp850_mojibake(string $text): string
         return $text;
     }
 
-    if (!function_exists('iconv')) {
-        return $text;
+    $bytes = false;
+    if (function_exists('iconv')) {
+        $bytes = @iconv('UTF-8', 'CP850//IGNORE', $text);
+    }
+    if (($bytes === false || $bytes === '') && function_exists('mb_convert_encoding')) {
+        $bytes = @mb_convert_encoding($text, 'CP850', 'UTF-8');
+    }
+    if (is_string($bytes) && $bytes !== '' && mb_check_encoding($bytes, 'UTF-8')) {
+        // Ne garder le résultat que s'il réduit les marqueurs mojibake
+        $before = substr_count($text, '├') + substr_count($text, 'ÔÇ');
+        $after = substr_count($bytes, '├') + substr_count($bytes, 'ÔÇ');
+        if ($after < $before) {
+            return $bytes;
+        }
     }
 
-    $bytes = @iconv('UTF-8', 'CP850//IGNORE', $text);
-    if ($bytes === false || $bytes === '') {
-        return $text;
-    }
-    if (!mb_check_encoding($bytes, 'UTF-8')) {
-        return $text;
-    }
-    return $bytes;
+    // Fallback : substitutions fréquentes UTF-8 lu en CP850
+    $map = [
+        '├ë' => 'É', '├®' => 'é', '├á' => 'à', '├¿' => 'è', '├¬' => 'ê',
+        '├╗' => 'û', '├┤' => 'ô', '├║' => 'ù', '├º' => 'ç', '├Ç' => 'À',
+        '├î' => 'Î', '├ï' => 'ï', '├«' => 'ë', '├£' => 'ã', '├ó' => 'ó',
+        'ÔÇö' => '—', 'ÔÇô' => '–', 'ÔÇÖ' => '’', 'ÔÇØ' => '‘', 'ÔÇª' => '…',
+        'ÔÇ£' => '“', 'ÔÇü' => '”',
+    ];
+    return strtr($text, $map);
 }
 
 $tables = [
@@ -142,9 +155,38 @@ try {
     foreach ($sample as $s) {
         echo '  #' . $s['id'] . ' ' . $s['title'] . "\n";
     }
-    $bad = (int) $pdo->query("SELECT COUNT(*) FROM tcf_ee_exams WHERE title LIKE '%├%' OR title LIKE '%ÔÇ%'")->fetchColumn();
-    echo "\nRemaining mojibake titles in tcf_ee_exams: {$bad}\n";
-    echo "DONE rows={$totalRows} fields={$totalFields}\n";
+    $badRows = $pdo->query(
+        "SELECT id, title, subtitle FROM tcf_ee_exams WHERE title LIKE '%├%' OR title LIKE '%ÔÇ%' OR subtitle LIKE '%├%' OR subtitle LIKE '%ÔÇ%'"
+    )->fetchAll(PDO::FETCH_ASSOC);
+    echo "\nRemaining mojibake in tcf_ee_exams: " . count($badRows) . "\n";
+    foreach ($badRows as $b) {
+        echo '  BAD #' . $b['id'] . ' title=' . $b['title'] . ' | subtitle=' . ($b['subtitle'] ?? '') . "\n";
+    }
+    // Second pass: any leftover text columns still matching markers
+    $leftover = 0;
+    foreach (array_keys($tables) as $table) {
+        $exists = $pdo->query("SHOW TABLES LIKE " . $pdo->quote($table))->fetchColumn();
+        if (!$exists) {
+            continue;
+        }
+        $cols = [];
+        foreach ($pdo->query('SHOW COLUMNS FROM `' . $table . '`')->fetchAll(PDO::FETCH_ASSOC) as $c) {
+            $type = strtolower((string) $c['Type']);
+            if (str_contains($type, 'char') || str_contains($type, 'text')) {
+                $cols[] = (string) $c['Field'];
+            }
+        }
+        foreach ($cols as $col) {
+            $n = (int) $pdo->query(
+                "SELECT COUNT(*) FROM `{$table}` WHERE `{$col}` LIKE '%├%' OR `{$col}` LIKE '%ÔÇ%'"
+            )->fetchColumn();
+            if ($n > 0) {
+                echo "LEFTOVER {$table}.{$col}={$n}\n";
+                $leftover += $n;
+            }
+        }
+    }
+    echo "DONE rows={$totalRows} fields={$totalFields} leftover_cells={$leftover}\n";
 } catch (Throwable $e) {
     echo 'FATAL: ' . $e->getMessage() . "\n";
     exit(1);
