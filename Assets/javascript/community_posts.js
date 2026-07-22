@@ -18,6 +18,22 @@
         return esc(s).replace(/"/g, '&quot;');
     }
 
+    function shortLinkLabel(url) {
+        var raw = String(url || '').trim();
+        if (!raw) return '';
+        try {
+            var u = new URL(raw, window.location.origin);
+            var host = (u.hostname || '').replace(/^www\./i, '');
+            var path = u.pathname && u.pathname !== '/' ? u.pathname : '';
+            var label = host + path;
+            if (u.search) label += '…';
+            if (label.length > 40) label = label.slice(0, 37) + '…';
+            return label || raw;
+        } catch (e) {
+            return raw.length > 40 ? raw.slice(0, 37) + '…' : raw;
+        }
+    }
+
     function renderPost(p) {
         var liked = !!p.liked_by_me;
         var imgSrc = p.image_href || p.image_url || '';
@@ -29,9 +45,11 @@
         var linkHtml = link
             ? '<a class="tcp-card__link" href="' +
               escAttr(link) +
-              '" target="_blank" rel="noopener noreferrer"><i class="bx bx-link-external" aria-hidden="true"></i> ' +
-              esc(link) +
-              '</a>'
+              '" target="_blank" rel="noopener noreferrer" title="' +
+              escAttr(link) +
+              '"><i class="bx bx-link" aria-hidden="true"></i><span class="tcp-card__link-text">' +
+              esc(shortLinkLabel(link)) +
+              '</span></a>'
             : '';
         return (
             '<article class="tcp-card" data-id="' +

@@ -26,11 +26,11 @@
 #eo-detail-root > header.eo-exam-page-header {
     background: var(--tcf-secondary, #141622);
     color: var(--tcf-text-on-dark, #ffffff);
-    padding: 40px 20px;
+    padding: 1.15rem 1.1rem;
     text-align: center;
-    border-radius: 10px;
-    margin-bottom: 30px;
-    box-shadow: var(--shadow);
+    border-radius: 12px;
+    margin-bottom: 1.15rem;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
     position: relative;
     overflow: hidden;
 }
@@ -57,16 +57,17 @@
 
 #eo-consignes > header.eo-exam-page-header h1,
 #eo-detail-root > header.eo-exam-page-header h1 {
-    font-size: 2.8rem;
-    font-weight: 700;
-    margin-bottom: 1rem;
+    font-size: clamp(1.15rem, 2.4vw, 1.55rem);
+    font-weight: 750;
+    margin: 0 0 0.45rem;
     padding-bottom: 0;
     text-align: center;
     text-transform: none;
-    letter-spacing: 0.02em;
+    letter-spacing: -0.01em;
     color: #ffffff !important;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    text-shadow: none;
     position: relative;
+    line-height: 1.25;
 }
 
 #eo-consignes > header.eo-exam-page-header h1::before,
@@ -74,16 +75,27 @@
     display: none;
 }
 
+#eo-consignes > header.eo-exam-page-header h1::after,
+#eo-detail-root > header.eo-exam-page-header h1::after {
+    content: '';
+    display: block;
+    width: 2.4rem;
+    height: 3px;
+    margin: 0.55rem auto 0;
+    border-radius: 999px;
+    background: #d30d0d;
+}
+
 #eo-consignes > header.eo-exam-page-header .subtitle,
 #eo-detail-root > header.eo-exam-page-header .subtitle,
 #eo-consignes > header.eo-exam-page-header p,
 #eo-detail-root > header.eo-exam-page-header p {
-    font-size: 1.2rem;
-    line-height: 1.6;
-    max-width: 800px;
+    font-size: clamp(0.8rem, 1.6vw, 0.92rem);
+    line-height: 1.4;
+    max-width: 36rem;
     margin: 0 auto;
     text-align: center;
-    color: rgba(255, 255, 255, 0.92) !important;
+    color: rgba(255, 255, 255, 0.82) !important;
     opacity: 1;
     position: relative;
 }
@@ -457,14 +469,29 @@
         gap: 14px !important;
     }
     
+    #eo-consignes > header.eo-exam-page-header,
+    #eo-detail-root > header.eo-exam-page-header {
+        padding: 0.75rem 0.8rem;
+        margin-bottom: 0.85rem;
+        border-radius: 10px;
+    }
+
     #eo-consignes > header.eo-exam-page-header h1,
     #eo-detail-root > header.eo-exam-page-header h1 {
-        font-size: 2.2rem;
+        font-size: 1.05rem;
+        margin-bottom: 0.3rem;
+    }
+
+    #eo-consignes > header.eo-exam-page-header h1::after,
+    #eo-detail-root > header.eo-exam-page-header h1::after {
+        width: 1.85rem;
+        height: 2.5px;
+        margin-top: 0.4rem;
     }
 
     #eo-consignes > header.eo-exam-page-header .subtitle,
     #eo-detail-root > header.eo-exam-page-header .subtitle {
-        font-size: 1.05rem;
+        font-size: 0.78rem;
     }
     
     .section-title {

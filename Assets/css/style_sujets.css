@@ -426,10 +426,6 @@ button.column_arrangement {
         gap: 0.5rem;
     }
 
-    #ce-consignes-section > header h1,
-    #co-consignes-section > header h1 {
-        font-size: 1.35rem;
-    }
 }
 
 @media (max-width: 992px) {
@@ -458,16 +454,16 @@ button.column_arrangement {
     }
 }
 
-/* Consignes CE / CO : en-tête comme Expression Orale (bloc foncé dans la page sujets) */
+/* Consignes CE / CO : en-tête compact (propre desktop + mobile) */
 #ce-consignes-section > header,
 #co-consignes-section > header {
     background: #141622;
     color: #fff;
-    padding: 40px 20px;
+    padding: 1.15rem 1.1rem;
     text-align: center;
-    border-radius: 10px;
-    margin-bottom: 30px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    margin-bottom: 1.15rem;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
     position: relative;
     overflow: hidden;
 }
@@ -477,7 +473,7 @@ button.column_arrangement {
     content: '';
     position: absolute;
     inset: 0;
-    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,0 L100,0 L100,100 Z" fill="rgba(255,255,255,0.1)"/></svg>');
+    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,0 L100,0 L100,100 Z" fill="rgba(255,255,255,0.08)"/></svg>');
     background-size: cover;
     pointer-events: none;
 }
@@ -485,14 +481,85 @@ button.column_arrangement {
 #ce-consignes-section > header .header-content,
 #co-consignes-section > header .header-content {
     position: relative;
+    max-width: 36rem;
+    margin: 0 auto;
 }
 
 #ce-consignes-section > header h1,
 #co-consignes-section > header h1 {
-    font-size: 2.8rem;
-    margin-bottom: 0;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-    font-weight: 700;
+    font-size: clamp(1.15rem, 2.4vw, 1.55rem);
+    margin: 0 0 0.45rem;
+    text-shadow: none;
+    font-weight: 750;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    color: #fff !important;
+}
+
+#ce-consignes-section > header h1::after,
+#co-consignes-section > header h1::after {
+    content: '';
+    display: block;
+    width: 2.4rem;
+    height: 3px;
+    margin: 0.55rem auto 0;
+    border-radius: 999px;
+    background: #d30d0d;
+}
+
+#ce-consignes-section > header .subtitle,
+#co-consignes-section > header .subtitle,
+#ce-consignes-section > header p,
+#co-consignes-section > header p {
+    margin: 0;
+    font-size: clamp(0.8rem, 1.6vw, 0.92rem);
+    line-height: 1.4;
+    color: rgba(255, 255, 255, 0.82) !important;
+    font-weight: 500;
+}
+
+@media (max-width: 992px) {
+    #ce-consignes-section > header,
+    #co-consignes-section > header {
+        padding: 0.95rem 0.95rem;
+        margin-bottom: 1rem;
+        border-radius: 10px;
+    }
+
+    #ce-consignes-section > header h1,
+    #co-consignes-section > header h1 {
+        font-size: 1.2rem;
+    }
+}
+
+@media (max-width: 600px) {
+    #ce-consignes-section > header,
+    #co-consignes-section > header {
+        padding: 0.75rem 0.8rem;
+        margin-bottom: 0.85rem;
+        border-radius: 10px;
+    }
+
+    #ce-consignes-section > header h1,
+    #co-consignes-section > header h1 {
+        font-size: 1.05rem;
+        margin-bottom: 0.3rem;
+    }
+
+    #ce-consignes-section > header h1::after,
+    #co-consignes-section > header h1::after {
+        width: 1.85rem;
+        height: 2.5px;
+        margin-top: 0.4rem;
+    }
+
+    #ce-consignes-section > header .subtitle,
+    #co-consignes-section > header .subtitle,
+    #ce-consignes-section > header p,
+    #co-consignes-section > header p {
+        font-size: 0.78rem;
+        line-height: 1.35;
+    }
 }
 
 @media (max-width: 480px) {
