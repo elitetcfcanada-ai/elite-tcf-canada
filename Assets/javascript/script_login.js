@@ -126,11 +126,12 @@ function showError(fieldId, message) {
     }, { once: true });
 }
 
-// Réinitialiser tous les messages d'erreur
+// Réinitialiser les messages d'erreur des champs (pas les alertes serveur)
 function clearErrorMessages() {
-    const errorMessages = document.querySelectorAll('.error-message');
+    const errorMessages = document.querySelectorAll('.input-box .error-message');
     errorMessages.forEach(error => {
         error.style.display = 'none';
+        error.textContent = '';
     });
 }
 

@@ -3,6 +3,7 @@
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/tcf_notifications_helper.php';
 require_once __DIR__ . '/includes/admin_notifications.php';
+require_once __DIR__ . '/includes/auth_flash.php';
 
 /**
  * Paramètre next / redirect interne uniquement (fichier .php sous le site).
@@ -86,7 +87,7 @@ if (isset($_POST['register_start'])) {
 
     $err = tcf_validate_registration_name_email_password($name, $email, $password, $confirmPassword, $pdo);
     if ($err !== null) {
-        $_SESSION['error'] = $err;
+        tcf_auth_flash('error', $err, 'register');
         $q = tcf_login_safe_next(isset($_POST['register_next']) ? (string) $_POST['register_next'] : null);
         header('Location: login.php' . ($q !== null ? ('?next=' . rawurlencode($q)) : ''));
         exit;
@@ -123,7 +124,13 @@ if (isset($_POST['register_start'])) {
 
         tcf_login_apply_session($user, $pdo);
         tcf_remember_issue($pdo, (int) $user['id']);
-        $_SESSION['success'] = 'Bienvenue ! Votre compte a été créé avec succès.';
+        $welcomeName = trim((string) ($user['name'] ?? $name));
+        tcf_auth_flash(
+            'success',
+            $welcomeName !== ''
+                ? ('Bienvenue, ' . $welcomeName . ' ! Votre compte a été créé avec succès.')
+                : 'Bienvenue ! Votre compte a été créé avec succès.'
+        );
 
         tcf_notification_insert(
             $pdo,
@@ -153,17 +160,17 @@ if (isset($_POST['register_start'])) {
     } catch (PDOException $e) {
         $code = isset($e->errorInfo[1]) ? (int) $e->errorInfo[1] : 0;
         if ($code === 1062) {
-            $_SESSION['error'] = 'Cet email est déjà utilisé.';
+            tcf_auth_flash('error', 'Cet email est déjà utilisé. Connectez-vous ou utilisez une autre adresse.', 'register');
         } else {
             error_log('TCF inscription PDO: ' . $e->getMessage());
-            $_SESSION['error'] = "Erreur technique lors de l'inscription. Code: $code";
+            tcf_auth_flash('error', "Erreur technique lors de l'inscription. Veuillez réessayer.", 'register');
         }
         $q = tcf_login_safe_next(isset($_POST['register_next']) ? (string) $_POST['register_next'] : null);
         header('Location: login.php' . ($q !== null ? ('?next=' . rawurlencode($q)) : ''));
         exit;
     } catch (Throwable $e) {
         error_log('TCF inscription: ' . $e->getMessage());
-        $_SESSION['error'] = "Impossible de finaliser l'inscription: " . $e->getMessage();
+        tcf_auth_flash('error', "Impossible de finaliser l'inscription. Veuillez réessayer.", 'register');
         $q = tcf_login_safe_next(isset($_POST['register_next']) ? (string) $_POST['register_next'] : null);
         header('Location: login.php' . ($q !== null ? ('?next=' . rawurlencode($q)) : ''));
         exit;
@@ -178,52 +185,84 @@ if (isset($_POST['login_start'])) {
     $loginNextKeep = tcf_login_safe_next(isset($_POST['login_next']) ? (string) $_POST['login_next'] : null);
     $loginBack = 'login.php' . ($loginNextKeep !== null ? ('?next=' . rawurlencode($loginNextKeep)) : '');
 
-    if ($email === '' || $password === '') {
-        $_SESSION['error'] = 'Tous les champs sont obligatoires.';
+    if ($email === '' && $password === '') {
+        tcf_auth_flash('error', 'Veuillez saisir votre email et votre mot de passe.', 'login');
         header('Location: ' . $loginBack);
         exit;
     }
-    
+    if ($email === '') {
+        tcf_auth_flash('error', 'Veuillez saisir votre adresse email.', 'login');
+        header('Location: ' . $loginBack);
+        exit;
+    }
+    if ($password === '') {
+        tcf_auth_flash('error', 'Veuillez saisir votre mot de passe.', 'login');
+        header('Location: ' . $loginBack);
+        exit;
+    }
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        tcf_auth_flash('error', "L'adresse email n'est pas valide.", 'login');
+        header('Location: ' . $loginBack);
+        exit;
+    }
+
     try {
         $stmt = $pdo->prepare('SELECT * FROM users WHERE email = ? LIMIT 1');
         $stmt->execute([$email]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        
+
         if (!$user) {
-            $_SESSION['error'] = 'Email ou mot de passe incorrect.';
+            tcf_auth_flash('error', 'Email ou mot de passe incorrect.', 'login');
             header('Location: ' . $loginBack);
             exit;
         }
-        
-        if (!password_verify($password, $user['password'])) {
-            $_SESSION['error'] = 'Email ou mot de passe incorrect.';
+
+        $hash = (string) ($user['password'] ?? '');
+        if ($hash === '' || !password_verify($password, $hash)) {
+            tcf_auth_flash('error', 'Email ou mot de passe incorrect.', 'login');
             header('Location: ' . $loginBack);
             exit;
         }
-        
-        // Vérifier le statut du compte si la colonne existe
-        if (isset($user['status']) && $user['status'] === 'inactive') {
-            $_SESSION['error'] = 'Ce compte est désactivé. Contactez l\'administrateur.';
+
+        $status = strtolower(trim((string) ($user['status'] ?? 'active')));
+        if ($status === 'inactive' || $status === 'disabled') {
+            tcf_auth_flash('error', 'Ce compte est désactivé. Contactez le support.', 'login');
+            header('Location: ' . $loginBack);
+            exit;
+        }
+        if ($status === 'banned' || $status === 'suspended') {
+            tcf_auth_flash('error', 'Ce compte est suspendu. Contactez le support.', 'login');
+            header('Location: ' . $loginBack);
+            exit;
+        }
+        if ($status !== '' && $status !== 'active') {
+            tcf_auth_flash('error', 'Impossible de vous connecter pour le moment (compte non actif).', 'login');
             header('Location: ' . $loginBack);
             exit;
         }
 
         tcf_login_apply_session($user, $pdo);
-        // Session longue jusqu’à déconnexion explicite
         tcf_remember_issue($pdo, (int) $user['id']);
+        $welcomeName = trim((string) ($user['name'] ?? ''));
+        tcf_auth_flash(
+            'success',
+            $welcomeName !== ''
+                ? ('Bienvenue, ' . $welcomeName . ' ! Connexion réussie.')
+                : 'Bienvenue ! Connexion réussie.'
+        );
         tcf_login_redirect_logged_user($user, isset($_POST['login_next']) ? (string) $_POST['login_next'] : null);
-        
+
     } catch (PDOException $e) {
         error_log('TCF connexion PDO: ' . $e->getMessage());
-        $_SESSION['error'] = 'Erreur technique lors de la connexion. Veuillez réessayer.';
+        tcf_auth_flash('error', 'Erreur technique lors de la connexion. Veuillez réessayer.', 'login');
         header('Location: ' . $loginBack);
         exit;
     }
 }
 
-$tcf_flash_error = $_SESSION['error'] ?? null;
-$tcf_flash_success = $_SESSION['success'] ?? null;
-unset($_SESSION['error'], $_SESSION['success']);
+$tcf_auth_flash = tcf_auth_flash_consume();
+$tcf_flash_form = is_array($tcf_auth_flash) ? ($tcf_auth_flash['form'] ?? null) : null;
+$tcf_show_register = ($tcf_flash_form === 'register');
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -237,22 +276,27 @@ unset($_SESSION['error'], $_SESSION['success']);
     ?>
     <link rel="stylesheet" href="https://unpkg.com/boxicons@latest/css/boxicons.min.css">
     <link rel="stylesheet" href="Assets/css/theme-vars.css">
-    <link rel="stylesheet" href="Assets/css/style_login.css">
+    <link rel="stylesheet" href="Assets/css/style_login.css?v=auth-alert-2">
     <title>Inscription / Connexion — ELITE TCF CANADA</title>
 </head>
 
 <body>
-    <div class="container">
-        <?php if ($tcf_flash_error !== null && $tcf_flash_error !== ''): ?>
-            <div class="error-message tcf-login-flash" style="display: block; text-align: center; margin-bottom: 15px; grid-column: 1 / -1;">
-                <?php echo htmlspecialchars((string) $tcf_flash_error); ?>
-            </div>
-        <?php endif; ?>
-        <?php if ($tcf_flash_success !== null && $tcf_flash_success !== ''): ?>
-            <div class="success-message tcf-login-flash" style="display: block; text-align: center; margin-bottom: 15px; color: green; grid-column: 1 / -1;">
-                <?php echo htmlspecialchars((string) $tcf_flash_success); ?>
-            </div>
-        <?php endif; ?>
+    <?php
+    $tcf_alert_html = '';
+    if (is_array($tcf_auth_flash) && ($tcf_auth_flash['message'] ?? '') !== '') {
+        $atype = (string) ($tcf_auth_flash['type'] ?? 'error');
+        if (!in_array($atype, ['success', 'error', 'warning', 'info'], true)) {
+            $atype = 'error';
+        }
+        $icon = $atype === 'success' ? 'bx-check-circle' : ($atype === 'warning' ? 'bx-error' : 'bx-error-circle');
+        $tcf_alert_html =
+            '<div class="tcf-auth-alert tcf-auth-alert--' . htmlspecialchars($atype) . '" role="alert">'
+            . '<i class="bx ' . $icon . '" aria-hidden="true"></i>'
+            . '<span>' . htmlspecialchars((string) $tcf_auth_flash['message']) . '</span>'
+            . '</div>';
+    }
+    ?>
+    <div class="container<?php echo $tcf_show_register ? ' active' : ''; ?>">
 
         <!-- Formulaire de Connexion -->
         <div class="form-box login">
@@ -262,6 +306,9 @@ unset($_SESSION['error'], $_SESSION['success']);
                     <input type="hidden" name="login_next" value="<?php echo htmlspecialchars($tcf_login_next); ?>">
                 <?php endif; ?>
                 <h1>Connexion</h1>
+                <?php if (!$tcf_show_register && $tcf_alert_html !== '') {
+                    echo $tcf_alert_html;
+                } ?>
 
                 <div class="input-box">
                     <input type="email" name="email" id="loginEmail" placeholder="Email" required>
@@ -288,6 +335,9 @@ unset($_SESSION['error'], $_SESSION['success']);
                     <input type="hidden" name="register_next" value="<?php echo htmlspecialchars($tcf_login_next); ?>">
                 <?php endif; ?>
                 <h1>Inscription</h1>
+                <?php if ($tcf_show_register && $tcf_alert_html !== '') {
+                    echo $tcf_alert_html;
+                } ?>
 
                 <div class="input-box">
                     <input type="text" id="name" name="name" placeholder="Nom complet" minlength="4" required>
@@ -327,7 +377,7 @@ unset($_SESSION['error'], $_SESSION['success']);
             </div>
         </div>
     </div>
-    <script src="Assets/javascript/script_login.js"></script>
+    <script src="Assets/javascript/script_login.js?v=auth-alert-2"></script>
     <?php include __DIR__ . '/includes/cookie_banner.php'; ?>
 </body>
 

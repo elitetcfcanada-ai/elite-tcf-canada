@@ -2100,6 +2100,13 @@ function generateAvatar($name)
 
 $profile_flash = $_SESSION['profile_flash'] ?? null;
 unset($_SESSION['profile_flash']);
+if (!function_exists('tcf_auth_flash_consume')) {
+    require_once dirname(__DIR__) . '/includes/auth_flash.php';
+}
+$auth_flash = tcf_auth_flash_consume();
+if (empty($profile_flash) && !empty($auth_flash)) {
+    $profile_flash = $auth_flash;
+}
 
 $tcf_profile_panel_user = null;
 try {

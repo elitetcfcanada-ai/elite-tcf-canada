@@ -3,6 +3,7 @@ require_once __DIR__ . '/site_contact.php';
 require_once __DIR__ . '/avatar_helper.php';
 require_once __DIR__ . '/subscription_access.php';
 require_once __DIR__ . '/tcf_notifications_helper.php';
+require_once __DIR__ . '/auth_flash.php';
 $tcf_site_contact = tcf_site_contact();
 
 // Empêcher le zoom sur mobile
@@ -20,6 +21,7 @@ $user = null;
 $unread_count = 0;
 $profile_flash = $_SESSION['profile_flash'] ?? null;
 unset($_SESSION['profile_flash']);
+$auth_flash = tcf_auth_flash_consume();
 
 if ($is_logged_in) {
     // Récupérer les informations de l'utilisateur
@@ -149,6 +151,10 @@ $tcf_tg_href = tcf_site_telegram_url($tcf_site_contact);
 <?php if ($is_logged_in && !empty($profile_flash)): ?>
 <div class="tcf-toast tcf-toast--<?php echo htmlspecialchars($profile_flash['type']); ?>" role="status">
     <?php echo htmlspecialchars($profile_flash['message']); ?>
+</div>
+<?php elseif (!empty($auth_flash)): ?>
+<div class="tcf-toast tcf-toast--<?php echo htmlspecialchars((string) ($auth_flash['type'] ?? 'info')); ?>" role="status">
+    <?php echo htmlspecialchars((string) ($auth_flash['message'] ?? '')); ?>
 </div>
 <?php endif; ?>
 

@@ -67,6 +67,12 @@
     border-bottom: 1px solid #fcd34d;
 }
 
+.tcf-toast--info {
+    background: #eff6ff;
+    color: #1e40af;
+    border-bottom: 1px solid #bfdbfe;
+}
+
 @keyframes tcfToastIn {
     from {
         transform: translateY(-100%);

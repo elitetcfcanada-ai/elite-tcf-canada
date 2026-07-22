@@ -112,6 +112,52 @@ form {
     margin-top: 5px;
 }
 
+/* Alerte globale connexion / inscription */
+.tcf-auth-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    width: 100%;
+    margin: 0 0 0.85rem;
+    padding: 0.7rem 0.8rem;
+    border-radius: 12px;
+    font-size: 0.84rem;
+    font-weight: 600;
+    line-height: 1.4;
+    text-align: left;
+    box-sizing: border-box;
+}
+
+.tcf-auth-alert i {
+    flex-shrink: 0;
+    font-size: 1.2rem;
+    margin-top: 0.05rem;
+}
+
+.tcf-auth-alert--error {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+.tcf-auth-alert--success {
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+}
+
+.tcf-auth-alert--warning {
+    background: #fffbeb;
+    color: #92400e;
+    border: 1px solid #fcd34d;
+}
+
+.tcf-auth-alert--info {
+    background: #eff6ff;
+    color: #1e40af;
+    border: 1px solid #bfdbfe;
+}
+
 .tcf-remember-row {
     display: flex;
     align-items: center;
