@@ -127,11 +127,17 @@ function tcf_subscription_plans_rows_from_db(): ?array
 function tcf_subscription_plans_normalize_rows(array $rows, bool $activeOnly): array
 {
     $out = [];
+    $seenKeys = [];
     $defaults = tcf_subscription_default_features();
     foreach ($rows as $r) {
         if ($activeOnly && (int) ($r['is_active'] ?? 1) !== 1) {
             continue;
         }
+        $key = trim((string) ($r['plan_key'] ?? ''));
+        if ($key === '' || isset($seenKeys[$key])) {
+            continue; // anti-doublon (même plan_key)
+        }
+        $seenKeys[$key] = true;
         $features = [];
         if (!empty($r['features_json'])) {
             $j = json_decode((string) $r['features_json'], true);
@@ -149,7 +155,7 @@ function tcf_subscription_plans_normalize_rows(array $rows, bool $activeOnly): a
         }
         $out[] = [
             'id' => (int) ($r['id'] ?? 0),
-            'key' => (string) ($r['plan_key'] ?? ''),
+            'key' => $key,
             'tier' => (string) ($r['tier'] ?? ''),
             'badge' => (string) ($r['badge'] ?? ''),
             'price' => (float) ($r['price'] ?? 0),
@@ -165,12 +171,63 @@ function tcf_subscription_plans_normalize_rows(array $rows, bool $activeOnly): a
 }
 
 /**
+ * Supprime les doublons en base (garde la plus petite id par plan_key) + index unique.
+ *
+ * @return array{removed:int, remaining:int}
+ */
+function tcf_subscription_plans_dedupe_db(?PDO $db = null): array
+{
+    if ($db === null) {
+        global $pdo;
+        $db = $pdo ?? null;
+    }
+    if (!$db instanceof PDO) {
+        return ['removed' => 0, 'remaining' => 0];
+    }
+    $removed = 0;
+    try {
+        $dupes = $db->query(
+            'SELECT plan_key, MIN(id) AS keep_id, COUNT(*) AS n
+             FROM subscription_plan_catalog
+             GROUP BY plan_key
+             HAVING COUNT(*) > 1'
+        )->fetchAll(PDO::FETCH_ASSOC);
+        $del = $db->prepare('DELETE FROM subscription_plan_catalog WHERE plan_key = ? AND id <> ?');
+        foreach ($dupes as $d) {
+            $del->execute([(string) $d['plan_key'], (int) $d['keep_id']]);
+            $removed += max(0, (int) $d['n'] - 1);
+        }
+        // Empêche les futurs doublons
+        try {
+            $db->exec('ALTER TABLE subscription_plan_catalog ADD UNIQUE KEY uq_subscription_plan_key (plan_key)');
+        } catch (Throwable $e) {
+            // Index déjà présent
+        }
+    } catch (Throwable $e) {
+        error_log('tcf_subscription_plans_dedupe_db: ' . $e->getMessage());
+    }
+    $remaining = 0;
+    try {
+        $remaining = (int) $db->query('SELECT COUNT(*) FROM subscription_plan_catalog')->fetchColumn();
+    } catch (Throwable $e) {
+    }
+
+    return ['removed' => $removed, 'remaining' => $remaining];
+}
+
+/**
  * Formules affichées au public (page abonnement).
  *
  * @return list<array{key:string,tier:string,badge:string,price:float,currency:string,duration_days:int,features:list<string>}>
  */
 function tcf_subscription_plans_catalog(bool $activeOnly = true): array
 {
+    static $deduped = false;
+    if (!$deduped) {
+        $deduped = true;
+        tcf_subscription_plans_dedupe_db();
+    }
+
     $rows = tcf_subscription_plans_rows_from_db();
     if ($rows !== null && $rows !== []) {
         $normalized = tcf_subscription_plans_normalize_rows($rows, $activeOnly);

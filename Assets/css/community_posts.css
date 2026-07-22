@@ -103,17 +103,18 @@ body.tcf-posts-page {
     display: flex;
     align-items: center;
     justify-content: center;
-    max-height: 360px;
-    overflow: hidden;
+    padding: 0.65rem 0.65rem 0;
+    box-sizing: border-box;
 }
 
 .tcp-card__media {
     display: block;
-    width: 100%;
+    width: auto;
     height: auto;
-    max-height: 360px;
-    object-fit: cover;
-    background: #f1f3f7;
+    max-width: 100%;
+    max-height: 280px;
+    object-fit: contain; /* garde tout le format, sans couper l’image */
+    background: transparent;
 }
 
 .tcp-card__actions {
@@ -161,9 +162,8 @@ body.tcf-posts-page {
         padding: 1.1rem 0.75rem 2.5rem;
     }
 
-    .tcp-card__media-wrap,
     .tcp-card__media {
-        max-height: 240px;
+        max-height: 220px;
     }
 }
 
@@ -195,9 +195,12 @@ body.tcf-posts-page {
         font-size: 0.84rem;
     }
 
-    .tcp-card__media-wrap,
+    .tcp-card__media-wrap {
+        padding: 0.5rem 0.5rem 0;
+    }
+
     .tcp-card__media {
-        max-height: 190px;
+        max-height: 180px;
     }
 
     .tcp-card__actions {
