@@ -21,7 +21,7 @@ if (!function_exists('tcf_get_all_notifications_for_panel')) {
     function tcf_get_all_notifications_for_panel(PDO $pdo, int $user_id, string $role): array
     {
         if (in_array($role, ['admin', 'super_admin'], true)) {
-            $types = ['video', 'topic', 'message', 'user', 'update', 'video_comment', 'testimonial', 'subscription', 'subscription_staff'];
+            $types = ['video', 'topic', 'message', 'user', 'update', 'video_comment', 'testimonial', 'subscription', 'subscription_staff', 'exam'];
             $ph = implode(',', array_fill(0, count($types), '?'));
             $stmt = $pdo->prepare(
                 "SELECT * FROM notifications WHERE (user_id = ? OR user_id IS NULL) AND type IN ($ph) ORDER BY created_at DESC"
@@ -32,7 +32,7 @@ if (!function_exists('tcf_get_all_notifications_for_panel')) {
         }
 
         /* Apprenants : pas d’historique global avant inscription ; pas de notifications « staff » */
-        $types = ['video', 'topic', 'message', 'user', 'update', 'subscription'];
+        $types = ['video', 'topic', 'message', 'user', 'update', 'subscription', 'exam'];
         $ph = implode(',', array_fill(0, count($types), '?'));
         $stmt = $pdo->prepare(
             "SELECT n.* FROM notifications n
@@ -73,124 +73,196 @@ if (($user['role'] ?? '') === 'user') {
 ?>
 <div id="tcf-profile-api-config" class="tcf-sr-only" hidden
     data-api-url="<?php echo htmlspecialchars(site_href('profile_api.php')); ?>"
+    data-notifications-url="<?php echo htmlspecialchars(site_href('notifications_api.php')); ?>"
     data-user-email="<?php echo htmlspecialchars($user['email'] ?? ''); ?>"
     <?php if (!empty($tcf_is_staff_notifications)): ?>data-superadmin-endpoint="<?php echo htmlspecialchars(site_href('admin/superAdmin.php')); ?>"<?php endif; ?>
     aria-hidden="true"></div>
 <?php if (!$tcf_profile_panel_hide_notifications): ?>
-<!-- Page de notifications (seulement pour utilisateurs connectés) -->
-<div class="notification-overlay" id="notificationOverlay"></div>
-<div class="notification-page" id="notificationPage">
-    <div class="notification-header">
-        <div class="notification-header__top">
-            <h2>Notifications</h2>
-            <button type="button" class="notification-header__close" id="closeNotifications" aria-label="Fermer">
-                <i class="bx bx-x" style="font-size: 2rem;"></i>
-            </button>
+<?php
+$tcf_notif_unread = 0;
+foreach ($notifications as $_n) {
+    if (empty($_n['is_read'])) {
+        $tcf_notif_unread++;
+    }
+}
+$tcf_notif_type_label = static function (string $type): string {
+    return match ($type) {
+        'video' => 'Vidéo',
+        'topic', 'exam' => 'Épreuve',
+        'message' => 'Annonce',
+        'user' => 'Compte',
+        'video_comment' => 'Commentaire',
+        'testimonial' => 'Témoignage',
+        'subscription', 'subscription_staff' => 'Abonnement',
+        'update' => 'Mise à jour',
+        default => 'Info',
+    };
+};
+$tcf_notif_relative = static function (string $createdAt): string {
+    try {
+        $dt = new DateTime($createdAt);
+        $diff = (new DateTime())->getTimestamp() - $dt->getTimestamp();
+        if ($diff < 60) {
+            return 'À l’instant';
+        }
+        if ($diff < 3600) {
+            $m = (int) floor($diff / 60);
+            return 'Il y a ' . $m . ' min';
+        }
+        if ($diff < 86400) {
+            $h = (int) floor($diff / 3600);
+            return 'Il y a ' . $h . ' h';
+        }
+        if ($diff < 604800) {
+            $d = (int) floor($diff / 86400);
+            return 'Il y a ' . $d . ' j';
+        }
+        return $dt->format('d/m/Y');
+    } catch (Throwable $e) {
+        return $createdAt;
+    }
+};
+?>
+<!-- Tiroir notifications — même shell ultra-pro que le profil -->
+<div class="notification-overlay profile-overlay-v2" id="notificationOverlay"></div>
+<div class="notification-page notification-drawer-v2 profile-drawer-v2" id="notificationPage" role="dialog" aria-labelledby="notificationDrawerTitle" aria-modal="true">
+    <div class="profile-drawer-v2__top">
+        <div>
+            <p class="profile-drawer-v2__eyebrow">Centre d’alertes</p>
+            <h2 class="profile-drawer-v2__title" id="notificationDrawerTitle">
+                Notifications
+                <?php if ($tcf_notif_unread > 0): ?>
+                    <span class="notif-title-badge" id="notifUnreadBadge"><?php echo (int) $tcf_notif_unread; ?></span>
+                <?php else: ?>
+                    <span class="notif-title-badge is-empty" id="notifUnreadBadge" hidden>0</span>
+                <?php endif; ?>
+            </h2>
         </div>
-        <?php if (count($notifications) > 0): ?>
-        <form method="POST" class="notification-header__mark-all">
-            <button type="submit" name="mark_all_read" class="btn">Tout marquer comme lu</button>
-        </form>
-        <?php endif; ?>
+        <button type="button" class="profile-drawer-v2__close" id="closeNotifications" aria-label="Fermer">
+            <i class="bx bx-x"></i>
+        </button>
     </div>
-    <div class="notification-content">
+
+    <div class="profile-drawer-v2__scroll notification-drawer-v2__scroll" id="notificationScroll">
         <?php if (count($notifications) > 0): ?>
+            <div class="notif-feed" id="notifList">
             <?php foreach ($notifications as $notification): ?>
                 <?php
                 $tcf_notif_deep_href = '';
-                if (!empty($tcf_is_staff_notifications) && !empty($notification['deep_link'])) {
-                    $tcf_notif_deep_href = site_href(trim((string) $notification['deep_link']));
-                }
-                ?>
-                <div class="notification-item <?php echo $notification['is_read'] ? '' : 'unread'; ?><?php echo $tcf_notif_deep_href !== '' ? ' notification-item--tcf-deep' : ''; ?>"<?php echo $tcf_notif_deep_href !== '' ? ' data-tcf-notif-deep="' . htmlspecialchars($tcf_notif_deep_href) . '" data-tcf-notif-id="' . (int) $notification['id'] . '"' : ''; ?>>
-                    <?php
-                    $icon = 'bx bx-info-circle';
-                    switch ($notification['type']) {
-                        case 'video':
-                            $icon = 'bx bx-video';
-                            break;
-                        case 'topic':
-                            $icon = 'bx bx-book';
-                            break;
-                        case 'message':
-                            $icon = 'bx bx-message';
-                            break;
-                        case 'user':
-                            $icon = 'bx bx-user-plus';
-                            break;
-                        case 'video_comment':
-                            $icon = 'bx bx-message-rounded-dots';
-                            break;
-                        case 'testimonial':
-                            $icon = 'bx bx-quote-alt-left';
-                            break;
-                        case 'subscription':
-                            $icon = 'bx bx-gift';
-                            break;
-                        case 'subscription_staff':
-                            $icon = 'bx bx-briefcase';
-                            break;
-                        default:
-                            $icon = 'bx bx-bell';
-                            break;
+                if (!empty($notification['deep_link'])) {
+                    $rawDeep = trim((string) $notification['deep_link']);
+                    if ($rawDeep !== '') {
+                        if (preg_match('#^https?://#i', $rawDeep) || str_starts_with($rawDeep, '/')) {
+                            $tcf_notif_deep_href = $rawDeep;
+                        } else {
+                            $tcf_notif_deep_href = site_href($rawDeep);
+                        }
                     }
-                    $fullContent = (string) $notification['content'];
-                    $notifType = (string) ($notification['type'] ?? '');
-                    ?>
-                    <i class='<?php echo $icon; ?> notification-icon'></i>
-                    <div class="notification-text">
-                        <div class="notification-title"><?php echo htmlspecialchars($notification['title']); ?></div>
-                        <?php if ($notifType === 'message' || $notifType === 'subscription'): ?>
-                            <?php
-                            /* Messages communautaires : comme WhatsApp — tout le texte est présent ; troncature visuelle + « Voir plus » */
-                            $norm = str_replace(["\r\n", "\r"], "\n", $fullContent);
-                            $lineCount = $fullContent === '' ? 0 : substr_count($norm, "\n") + 1;
-                            $charLen = function_exists('mb_strlen') ? mb_strlen($fullContent) : strlen($fullContent);
-                            $needsToggle = $charLen > 180 || $lineCount > 3;
-                            ?>
-                        <div class="notification-desc tcf-notif-body tcf-notif-body--wa<?php echo $needsToggle ? ' tcf-notif-body--trunc' : ''; ?>"
-                             data-tcf-notif-expanded="<?php echo $needsToggle ? '0' : '1'; ?>">
-                            <div class="tcf-notif-text"><?php echo nl2br(htmlspecialchars($fullContent)); ?></div>
-                            <?php if ($needsToggle): ?>
-                            <button type="button" class="tcf-notif-toggle" aria-expanded="false">Voir plus</button>
-                            <?php endif; ?>
+                }
+                $icon = 'bx bx-bell';
+                switch ($notification['type']) {
+                    case 'video':
+                        $icon = 'bx bx-video';
+                        break;
+                    case 'topic':
+                    case 'exam':
+                        $icon = 'bx bx-book-open';
+                        break;
+                    case 'message':
+                        $icon = 'bx bx-news';
+                        break;
+                    case 'user':
+                        $icon = 'bx bx-user-plus';
+                        break;
+                    case 'video_comment':
+                        $icon = 'bx bx-chat';
+                        break;
+                    case 'testimonial':
+                        $icon = 'bx bx-quote-alt-left';
+                        break;
+                    case 'subscription':
+                    case 'subscription_staff':
+                        $icon = 'bx bx-crown';
+                        break;
+                    case 'update':
+                        $icon = 'bx bx-refresh';
+                        break;
+                    default:
+                        $icon = 'bx bx-bell';
+                        break;
+                }
+                $fullContent = (string) $notification['content'];
+                $notifType = (string) ($notification['type'] ?? '');
+                $typeLabel = $tcf_notif_type_label($notifType);
+                $isUnread = empty($notification['is_read']);
+                $relative = $tcf_notif_relative((string) ($notification['created_at'] ?? ''));
+                $norm = str_replace(["\r\n", "\r"], "\n", $fullContent);
+                $lineCount = $fullContent === '' ? 0 : substr_count($norm, "\n") + 1;
+                $charLen = function_exists('mb_strlen') ? mb_strlen($fullContent) : strlen($fullContent);
+                $needsToggle = $charLen > 160 || $lineCount > 3;
+                $nid = (int) $notification['id'];
+                ?>
+                <article
+                    class="profile-card-v2 notif-card notification-item<?php echo $isUnread ? ' is-unread' : ' is-read'; ?><?php echo $tcf_notif_deep_href !== '' ? ' notification-item--tcf-deep' : ''; ?>"
+                    <?php echo $tcf_notif_deep_href !== '' ? ' data-tcf-notif-deep="' . htmlspecialchars($tcf_notif_deep_href) . '"' : ''; ?>
+                    data-tcf-notif-id="<?php echo $nid; ?>"
+                >
+                    <div class="notif-card__top">
+                        <span class="notif-card__icon" aria-hidden="true"><i class="<?php echo $icon; ?>"></i></span>
+                        <div class="notif-card__meta">
+                            <span class="notif-card__type"><?php echo htmlspecialchars($typeLabel); ?></span>
+                            <time datetime="<?php echo htmlspecialchars((string) ($notification['created_at'] ?? '')); ?>"><?php echo htmlspecialchars($relative); ?></time>
                         </div>
-                        <?php else: ?>
-                            <?php
-                            $excerptLen = 200;
-                            if (function_exists('mb_strlen') && function_exists('mb_substr')) {
-                                $long = mb_strlen($fullContent) > $excerptLen;
-                                $excerpt = $long ? mb_substr($fullContent, 0, $excerptLen) . '…' : $fullContent;
-                            } else {
-                                $long = strlen($fullContent) > $excerptLen;
-                                $excerpt = $long ? substr($fullContent, 0, $excerptLen) . '…' : $fullContent;
-                            }
-                            ?>
-                        <div class="notification-desc tcf-notif-body" data-tcf-notif-expanded="0">
-                            <span class="tcf-notif-excerpt"><?php echo nl2br(htmlspecialchars($excerpt)); ?></span>
-                            <?php if ($long): ?>
-                            <span class="tcf-notif-full" hidden><?php echo nl2br(htmlspecialchars($fullContent)); ?></span>
-                            <button type="button" class="tcf-notif-toggle" aria-expanded="false">Voir plus</button>
-                            <?php endif; ?>
-                        </div>
-                        <?php endif; ?>
-                        <div class="notification-time">
-                            <?php
-                            $date = new DateTime($notification['created_at']);
-                            echo $date->format('d/m/Y à H:i');
-                            ?>
-                        </div>
+                        <label class="notif-card__check" title="<?php echo $isUnread ? 'Marquer comme lu' : 'Lu'; ?>">
+                            <input
+                                type="checkbox"
+                                class="notif-read-check"
+                                data-tcf-notif-id="<?php echo $nid; ?>"
+                                <?php echo $isUnread ? '' : 'checked'; ?>
+                                <?php echo $isUnread ? '' : 'disabled'; ?>
+                                aria-label="<?php echo $isUnread ? 'Marquer comme lu' : 'Déjà lu'; ?>"
+                            >
+                            <span class="notif-card__check-ui" aria-hidden="true"></span>
+                        </label>
                     </div>
-                    <?php if (!$notification['is_read']): ?>
-                        <form method="POST" style="display: inline;">
-                            <input type="hidden" name="notification_id" value="<?php echo $notification['id']; ?>">
-                            <button type="submit" name="mark_as_read" class="btn" style="padding: 2px 5px; font-size: 0.8rem;">Marquer comme lu</button>
-                        </form>
+
+                    <h3 class="notif-card__title notification-title"><?php echo htmlspecialchars((string) $notification['title']); ?></h3>
+
+                    <div class="notification-desc tcf-notif-body tcf-notif-body--wa<?php echo $needsToggle ? ' tcf-notif-body--trunc' : ''; ?>"
+                         data-tcf-notif-expanded="<?php echo $needsToggle ? '0' : '1'; ?>">
+                        <div class="tcf-notif-text"><?php echo nl2br(htmlspecialchars($fullContent)); ?></div>
+                        <?php if ($needsToggle): ?>
+                            <button type="button" class="tcf-notif-toggle" aria-expanded="false">Voir plus</button>
+                        <?php endif; ?>
+                    </div>
+
+                    <?php if ($tcf_notif_deep_href !== ''): ?>
+                        <a class="notif-card__cta" href="<?php echo htmlspecialchars($tcf_notif_deep_href); ?>" data-tcf-notif-open="<?php echo $nid; ?>">
+                            Ouvrir <i class="bx bx-chevron-right" aria-hidden="true"></i>
+                        </a>
                     <?php endif; ?>
-                </div>
+                </article>
             <?php endforeach; ?>
+            </div>
         <?php else: ?>
-            <p style="text-align: center; padding: 20px; color: #888;">Aucune notification pour le moment.</p>
+            <section class="profile-card-v2 notif-empty-card">
+                <div class="notif-empty-card__icon" aria-hidden="true"><i class="bx bx-bell-off"></i></div>
+                <h3>Aucune notification</h3>
+                <p>Les nouveautés (vidéos, épreuves, messages) apparaîtront ici.</p>
+            </section>
+        <?php endif; ?>
+    </div>
+
+    <div class="profile-drawer-v2__footer notification-drawer-v2__footer">
+        <button type="button" class="tcf-btn tcf-btn--ghost" id="notifDrawerCloseBtn">Fermer</button>
+        <?php if (count($notifications) > 0): ?>
+            <button type="button" class="tcf-btn tcf-btn--primary" id="notifMarkAllReadBtn"<?php echo $tcf_notif_unread > 0 ? '' : ' hidden'; ?>>
+                <i class="bx bx-check-double"></i> Tout marquer comme lu
+            </button>
+        <?php else: ?>
+            <button type="button" class="tcf-btn tcf-btn--primary" id="notifMarkAllReadBtn" hidden>
+                <i class="bx bx-check-double"></i> Tout marquer comme lu
+            </button>
         <?php endif; ?>
     </div>
 </div>
@@ -405,7 +477,7 @@ if (($user['role'] ?? '') === 'user') {
                     <?php if ($tcf_sub_platform_free): ?>
                         <i class="bx bx-check-circle" aria-hidden="true"></i> Mode gratuit plateforme : tout le contenu <strong>premium</strong> est accessible.
                     <?php elseif ($tcf_premium_ok): ?>
-                        <i class="bx bx-check-circle" aria-hidden="true"></i> Accès au contenu <strong>premium</strong> actif (chaîne Vidéos, etc.).
+                        <i class="bx bx-check-circle" aria-hidden="true"></i> Accès au contenu <strong>premium</strong> actif (vidéos, etc.).
                     <?php elseif (($user['subscription_type'] ?? 'free') === 'free'): ?>
                         <i class="bx bx-info-circle" aria-hidden="true"></i> Sans formule payante : les vidéos marquées « premium » restent réservées aux abonnés.
                     <?php else: ?>
@@ -621,8 +693,9 @@ if (($user['role'] ?? '') === 'user') {
 </div>
 
 <?php if (empty($tcf_profile_panel_skip_assets)) { ?>
-<?php /* profile_panel.css est déjà chargé via @import dans Assets/css/header_footer.css — pas de second <link> (évite doublons / conflits de cascade). */ ?>
+<?php /* Rechargement en fin de page : gagne sur style_tcf / legacy notifications. */ ?>
+<link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/profile_panel.css')); ?>?v=notif-dense-6">
 <link rel="stylesheet" href="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.css">
 <script src="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.js"></script>
-<script src="<?php echo htmlspecialchars(site_href('Assets/javascript/profile_panel.js')); ?>"></script>
+<script src="<?php echo htmlspecialchars(site_href('Assets/javascript/profile_panel.js')); ?>?v=notif-ui-3"></script>
 <?php } ?>

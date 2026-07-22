@@ -36,14 +36,14 @@ nav .others > a.notification-icon i {
     font-size: 1.25rem !important;
 }
 
-/* Titres de section — légèrement réduits vs 3rem brut */
-section h4,
+/* Titres de section — légèrement réduits vs 3rem brut (hors bandeau épreuves) */
+section:not(.hero-banner) h4,
 .tcf-main-title {
     font-size: clamp(1.5rem, 2.8vw, 2rem) !important;
 }
 
-/* Paragraphes — taille corps standard */
-section p,
+/* Paragraphes — taille corps standard (hors bandeau épreuves) */
+section:not(.hero-banner) p,
 .footer-description,
 .tcf-subtitle {
     font-size: 1rem !important;
@@ -62,7 +62,8 @@ section p,
 
 .site-footer .footer-links a,
 .site-footer .footer-description,
-.site-footer .contact-item span {
+.site-footer .contact-item span,
+.site-footer .contact-item a {
     font-size: 0.9375rem !important;
 }
 

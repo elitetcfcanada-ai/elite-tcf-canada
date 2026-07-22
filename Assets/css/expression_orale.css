@@ -14,9 +14,11 @@
    On NE touche PAS à .header global (navbar) ni à .site-footer (footer global). */
 #eo-consignes.container,
 #eo-detail-root.container {
-    max-width: 1200px;
+    max-width: 920px;
     margin: 0 auto;
-    padding: 20px;
+    padding: 20px clamp(1rem, 4vw, 1.75rem);
+    box-sizing: border-box;
+    width: 100%;
 }
 
 /* En-tête épreuve / consignes : bloc foncé centré (évite texte blanc sur fond clair via section h1) */
@@ -92,32 +94,58 @@
     vertical-align: middle;
 }
 
-/* Parties = accordéons type « combinaison » (expression écrite) */
+/* Parties = accordéons type « combinaison » (rouge comme EE) */
 #eo-detail-container .combinaison,
 #eo-consignes-container .combinaison {
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.75rem;
 }
 
 #eo-detail-container .combinaison-header,
-#eo-consignes-container .combinaison-header {
-    background: var(--tcf-secondary, #141622);
-    gap: 0.75rem;
+#eo-consignes-container .combinaison-header,
+#eo-detail-container .combinaison-header.eo-part-bar {
+    background-color: #9c0a0a !important;
+    background: #9c0a0a !important;
+    color: #fff !important;
+    gap: 0.65rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.9rem 1.35rem;
+    min-height: 0;
 }
 
 #eo-detail-container .combinaison-header h2,
 #eo-consignes-container .combinaison-header h2 {
     margin: 0;
-    font-size: 1.5rem;
+    font-size: 1.35rem;
     flex-shrink: 0;
+    color: #fff !important;
+    line-height: 1.25;
 }
 
 #eo-detail-container .combinaison-header .eo-part-meta,
-#eo-consignes-container .combinaison-header .eo-part-meta {
-    font-size: 0.95rem;
-    opacity: 0.9;
-    margin-right: auto;
-    margin-left: 1rem;
-    font-weight: 500;
+#eo-consignes-container .combinaison-header .eo-part-meta,
+#eo-detail-container .eo-part-bar .eo-part-meta {
+    font-size: 0.92rem;
+    font-weight: 600;
+    opacity: 0.95;
+    margin: 0;
+    white-space: nowrap;
+    color: #fff !important;
+}
+
+#eo-detail-container .eo-part-bar .tcf-combo-bar__right {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+#eo-detail-container .eo-part-bar .icon {
+    color: #fff;
+    font-size: 0.85rem;
+    line-height: 1;
 }
 
 #eo-detail-container .eo-prompt .enonce-label,
@@ -164,8 +192,8 @@
 }
 
 #eo-detail-container .eo-correction-body {
-    white-space: pre-wrap;
-    line-height: 1.7;
+    white-space: normal;
+    line-height: 1.45;
 }
 
 .attention-box {
@@ -205,26 +233,20 @@
     border-radius: 50%;
 }
 
-/* Expression orale : 1 colonne sous 1024px, 3 cartes par ligne à partir de 1024px */
+/* Expression orale : un sujet par ligne (comme les tâches EE) */
 #eo-detail-container .task-container,
 .task-container {
-    display: grid !important;
-    grid-template-columns: 1fr !important;
-    gap: 20px !important;
-    margin-bottom: 50px;
-}
-
-@media (min-width: 1024px) {
-    #eo-detail-container .task-container,
-    .task-container {
-        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-        gap: 20px !important;
-    }
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1.25rem !important;
+    margin-bottom: 1.5rem;
 }
 
 #eo-detail-container .task-card,
+#eo-detail-container .task-card.eo-subject-card,
 .task-card {
     width: 100% !important;
+    max-width: 100% !important;
     min-width: 0 !important;
 }
 

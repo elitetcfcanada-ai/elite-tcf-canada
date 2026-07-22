@@ -94,13 +94,50 @@ function tcf_notchpay_initialize_payment(int $amount, string $reference, string 
 function tcf_notchpay_process_mobile(string $paymentReference, string $channel, string $phone): array
 {
     $normalized = tcf_notchpay_normalize_phone($phone);
+    // Notch Pay Mobile Money : uniquement `phone` au format E.164 (+237…)
     return tcf_notchpay_request('POST', '/payments/' . rawurlencode($paymentReference), [
         'channel' => $channel,
         'data' => [
             'phone' => $normalized,
-            'account_number' => $normalized,
         ],
     ]);
+}
+
+/**
+ * Charge MoMo avec repli sur cm.mobile (auto MTN/Orange) si le canal précis échoue.
+ *
+ * @return array{ok:bool,http?:int,data?:?array,error?:string,channel_used?:string}
+ */
+function tcf_notchpay_charge_mobile(string $paymentReference, string $channel, string $phone): array
+{
+    $channel = trim($channel) !== '' ? trim($channel) : 'cm.mobile';
+    $attempts = [$channel];
+    if ($channel === 'cm.mtn' || $channel === 'cm.orange') {
+        $attempts[] = 'cm.mobile';
+    } elseif ($channel === 'cm.mobile') {
+        $detected = tcf_notchpay_detect_channel($phone);
+        if ($detected !== 'cm.mobile') {
+            $attempts[] = $detected;
+        }
+    }
+
+    $last = ['ok' => false, 'http' => 0, 'data' => null, 'error' => 'Charge Mobile Money impossible.', 'channel_used' => $channel];
+    foreach (array_values(array_unique($attempts)) as $ch) {
+        $res = tcf_notchpay_process_mobile($paymentReference, $ch, $phone);
+        $res['channel_used'] = $ch;
+        if (!empty($res['ok'])) {
+            $status = '';
+            if (is_array($res['data'] ?? null)) {
+                $status = tcf_notchpay_payment_status_from_response($res['data']);
+            }
+            if (!tcf_notchpay_is_failure_status($status)) {
+                return $res;
+            }
+        }
+        $last = $res;
+    }
+
+    return $last;
 }
 
 function tcf_notchpay_get_payment(string $paymentReference): array
@@ -173,80 +210,132 @@ function tcf_notchpay_is_failure_status(string $status): bool
     return in_array(strtolower(trim($status)), tcf_notchpay_failure_statuses(), true);
 }
 
+/**
+ * Normalise un numéro Mobile Money au format E.164 (+237XXXXXXXXX pour le Cameroun).
+ */
 function tcf_notchpay_normalize_phone(string $phone): string
 {
-    $p = preg_replace('/[^\d+]/', '', trim($phone)) ?? '';
-    if ($p === '') {
+    $raw = trim($phone);
+    if ($raw === '') {
         return '';
     }
-    
-    // Codes de pays internationaux
+
+    $digits = preg_replace('/\D+/', '', $raw) ?? '';
+    if ($digits === '') {
+        return '';
+    }
+
+    // 00… → indicatif international
+    if (str_starts_with($digits, '00')) {
+        $digits = substr($digits, 2);
+    }
+
+    // Double indicatif Cameroun : 2372376… → 2376…
+    while (str_starts_with($digits, '237237')) {
+        $digits = substr($digits, 3);
+    }
+
+    // 2370XXXXXXXXX (0 national collé après l'indicatif)
+    if (preg_match('/^2370(\d{9})$/', $digits, $m)) {
+        $digits = '237' . $m[1];
+    }
+
+    // Déjà E.164 Cameroun (237 + 9 chiffres)
+    if (preg_match('/^2376\d{8}$/', $digits)) {
+        return '+' . $digits;
+    }
+
+    // Numéro local Cameroun avec 0 : 06XXXXXXXX
+    if (preg_match('/^0(6\d{8})$/', $digits, $m)) {
+        return '+237' . $m[1];
+    }
+
+    // Numéro local Cameroun 9 chiffres (6XXXXXXXX)
+    if (preg_match('/^6\d{8}$/', $digits)) {
+        return '+237' . $digits;
+    }
+
     $countryCodes = [
-        '237' => 'CM', // Cameroun
-        '225' => 'CI', // Côte d'Ivoire
-        '221' => 'SN', // Sénégal
-        '226' => 'BF', // Burkina Faso
-        '223' => 'ML', // Mali
-        '227' => 'NE', // Niger
-        '228' => 'TG', // Togo
-        '229' => 'BJ', // Bénin
-        '243' => 'CD', // RD Congo
-        '241' => 'GA', // Gabon
-        '242' => 'CG', // Congo
-        '236' => 'CF', // Centrafrique
-        '235' => 'TD', // Tchad
-        '256' => 'UG', // Ouganda
-        '254' => 'KE', // Kenya
-        '255' => 'TZ', // Tanzanie
-        '250' => 'RW', // Rwanda
-        '233' => 'GH', // Ghana
-        '234' => 'NG', // Nigeria
-        '260' => 'ZM', // Zambie
+        '237', '225', '221', '226', '223', '227', '228', '229',
+        '243', '241', '242', '236', '235', '256', '254', '255',
+        '250', '233', '234', '260',
     ];
-    
-    // Si le numéro commence déjà par +
-    if ($p[0] === '+') {
-        return $p;
-    }
-    
-    // Si le numéro commence par 0, essayer de détecter le pays
-    if (str_starts_with($p, '0')) {
-        // Par défaut, on ne peut pas deviner le pays sans contexte
-        // On retourne le numéro tel quel pour que l'utilisateur le corrige
-        return $p;
-    }
-    
-    // Vérifier si le numéro commence par un code de pays
-    foreach ($countryCodes as $code => $country) {
-        if (str_starts_with($p, (string) $code)) {
-            return '+' . $p;
+    foreach ($countryCodes as $code) {
+        if (str_starts_with($digits, $code) && strlen($digits) >= strlen($code) + 8) {
+            return '+' . $digits;
         }
     }
-    
-    // Si aucun code de pays n'est détecté, par défaut Cameroun
-    return '+237' . $p;
+
+    // Par défaut : Cameroun
+    $local = ltrim($digits, '0');
+    if ($local !== '' && !str_starts_with($local, '237')) {
+        return '+237' . $local;
+    }
+
+    return '+' . $digits;
+}
+
+/** True si numéro Cameroun Mobile Money valide (+237 + 9 chiffres commençant par 6). */
+function tcf_notchpay_is_valid_cm_phone(string $phone): bool
+{
+    $n = tcf_notchpay_normalize_phone($phone);
+    return (bool) preg_match('/^\+2376\d{8}$/', $n);
+}
+
+/**
+ * Mappe le choix UI (mtn_momo / orange_money / auto) vers un canal Notch Pay.
+ */
+function tcf_notchpay_provider_to_channel(string $provider): string
+{
+    $p = strtolower(trim($provider));
+    if (in_array($p, ['mtn_momo', 'mtn', 'cm.mtn', 'momo', 'mtm'], true)) {
+        return 'cm.mtn';
+    }
+    if (in_array($p, ['orange_money', 'orange', 'cm.orange'], true)) {
+        return 'cm.orange';
+    }
+    if (in_array($p, ['auto', 'cm.mobile', 'mobile', ''], true)) {
+        return '';
+    }
+
+    return '';
+}
+
+/**
+ * Canal final : priorité au fournisseur choisi, sinon détection préfixe, sinon cm.mobile.
+ */
+function tcf_notchpay_resolve_channel(string $phone, string $provider = ''): string
+{
+    $fromProvider = tcf_notchpay_provider_to_channel($provider);
+    if ($fromProvider !== '') {
+        return $fromProvider;
+    }
+
+    return tcf_notchpay_detect_channel($phone);
 }
 
 function tcf_notchpay_detect_channel(string $phone): string
 {
     $normalized = tcf_notchpay_normalize_phone($phone);
-    $digits = preg_replace('/[^\d]/', '', $normalized) ?? '';
-    
-    // Cameroun (+237 ou numéro local de 9 chiffres)
-    if (str_starts_with($digits, '237') || strlen($digits) === 9) {
+    $digits = preg_replace('/\D+/', '', $normalized) ?? '';
+
+    // Cameroun
+    if (str_starts_with($digits, '237') || (strlen($digits) === 9 && str_starts_with($digits, '6'))) {
         $local = strlen($digits) === 9 ? $digits : substr($digits, 3);
-        
-        // MTN préfixes : 67x, 68x, 650, 651, 652, 653, 654
+
+        // MTN MoMo CM : 67x, 68x, 650-654
         if (preg_match('/^(67|68|650|651|652|653|654)/', $local)) {
             return 'cm.mtn';
         }
-        // Orange préfixes : 69x, 655, 656, 657, 658, 659
+        // Orange Money CM : 69x, 655-659
         if (preg_match('/^(69|655|656|657|658|659)/', $local)) {
             return 'cm.orange';
         }
-        return 'cm.mtn';
+
+        // Préfixe ambigu / nouveau → auto MTN/Orange côté Notch
+        return 'cm.mobile';
     }
-    
+
     // Côte d'Ivoire (+225)
     if (str_starts_with($digits, '225')) {
         $local = substr($digits, 3);
@@ -261,7 +350,7 @@ function tcf_notchpay_detect_channel(string $phone): string
         }
         return 'ci.mtn';
     }
-    
+
     // Sénégal (+221)
     if (str_starts_with($digits, '221')) {
         $local = substr($digits, 3);
@@ -273,6 +362,6 @@ function tcf_notchpay_detect_channel(string $phone): string
         }
         return 'sn.wave';
     }
-    
-    return 'cm.mtn';
+
+    return 'cm.mobile';
 }

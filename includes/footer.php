@@ -5,6 +5,10 @@ if (!function_exists('tcf_brand_logo_href')) {
 }
 $tcf_foot_contact = tcf_site_contact();
 $tcf_footer_hours = trim((string) ($tcf_foot_contact['hours'] ?? ''));
+$tcf_foot_mail = tcf_site_mailto($tcf_foot_contact);
+$tcf_foot_tel = tcf_site_tel($tcf_foot_contact);
+$tcf_foot_wa = tcf_site_whatsapp_url($tcf_foot_contact);
+$tcf_foot_tg = tcf_site_telegram_url($tcf_foot_contact);
 
 $__tcf_root = str_replace('\\', '/', realpath(__DIR__ . '/..'));
 $__tcf_here = str_replace('\\', '/', dirname($_SERVER['SCRIPT_FILENAME'] ?? ''));
@@ -26,16 +30,34 @@ $tcf_is_admin_area = strpos((string) ($_SERVER['SCRIPT_NAME'] ?? ''), '/admin/')
 <link rel="stylesheet" href="<?php echo htmlspecialchars($FOOTER_ASSET_PREFIX); ?>Assets/css/tcf-responsive-pills.css">
 <link rel="stylesheet" href="<?php echo htmlspecialchars($FOOTER_ASSET_PREFIX); ?>Assets/css/tcf-typography.css">
 <link rel="stylesheet" href="<?php echo htmlspecialchars($FOOTER_ASSET_PREFIX); ?>Assets/css/tcf-brand-logo.css">
-<link rel="stylesheet" href="<?php echo htmlspecialchars($FOOTER_ASSET_PREFIX); ?>Assets/css/mobile-bottom-nav.css">
-<link rel="stylesheet" href="<?php echo htmlspecialchars($FOOTER_ASSET_PREFIX); ?>Assets/css/site-footer.css">
-<link rel="stylesheet" href="<?php echo htmlspecialchars($FOOTER_ASSET_PREFIX); ?>Assets/css/tcf-ui-layers.css">
+<link rel="stylesheet" href="<?php echo htmlspecialchars(function_exists('site_href') ? site_href('Assets/css/mobile-bottom-nav.css') : ($FOOTER_ASSET_PREFIX . 'Assets/css/mobile-bottom-nav.css')); ?>?v=nav-go-3">
+<link rel="stylesheet" href="<?php echo htmlspecialchars(function_exists('site_href') ? site_href('Assets/css/site-footer.css') : ($FOOTER_ASSET_PREFIX . 'Assets/css/site-footer.css')); ?>?v=foot-iso-2">
+<link rel="stylesheet" href="<?php echo htmlspecialchars(function_exists('site_href') ? site_href('Assets/css/tcf-ui-layers.css') : ($FOOTER_ASSET_PREFIX . 'Assets/css/tcf-ui-layers.css')); ?>?v=2">
 <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+<style id="tcf-footer-contact-force">
+.site-footer .footer-contact a,
+.site-footer .footer-contact a:any-link,
+.site-footer .footer-contact a:link,
+.site-footer .footer-contact a:visited,
+.site-footer .footer-contact a:hover,
+.site-footer .footer-contact a:active {
+    color: #fff !important;
+    -webkit-text-fill-color: #fff !important;
+    text-decoration: none !important;
+}
+.site-footer .footer-logo {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.3rem !important;
+}
+.site-footer .footer-logo .tcf-brand-logo { margin-right: 0 !important; }
+</style>
 
 <footer class="site-footer footer">
     <div class="footer-container">
         <div class="footer-row">
             <div class="footer-col footer-about">
-                <div class="footer-logo">
+                <div class="footer-logo" aria-label="ELITE TCF CANADA">
                     <?php echo tcf_brand_logo_img(['class' => 'tcf-brand-logo tcf-brand-logo--footer', 'size' => 30, 'prefix' => $FOOTER_ASSET_PREFIX]); ?>
                     <span class="footer-logo-text">ELITE&nbsp;TCF&nbsp;CANADA</span>
                 </div>
@@ -43,7 +65,7 @@ $tcf_is_admin_area = strpos((string) ($_SERVER['SCRIPT_NAME'] ?? ''), '/admin/')
                 <div class="footer-contact">
                     <div class="contact-item">
                         <i class='bx bx-phone'></i>
-                        <span><?php echo htmlspecialchars($tcf_foot_contact['phone_display']); ?></span>
+                        <a href="<?php echo htmlspecialchars($tcf_foot_tel); ?>"><?php echo htmlspecialchars($tcf_foot_contact['phone_display']); ?></a>
                     </div>
                     <div class="contact-item">
                         <i class='bx bx-time-five'></i>
@@ -55,7 +77,7 @@ $tcf_is_admin_area = strpos((string) ($_SERVER['SCRIPT_NAME'] ?? ''), '/admin/')
                     </div>
                     <div class="contact-item">
                         <i class='bx bxs-envelope'></i>
-                        <span><?php echo htmlspecialchars($tcf_foot_contact['email']); ?></span>
+                        <a href="<?php echo htmlspecialchars($tcf_foot_mail); ?>"><?php echo htmlspecialchars($tcf_foot_contact['email']); ?></a>
                     </div>
                 </div>
             </div>
@@ -66,8 +88,6 @@ $tcf_is_admin_area = strpos((string) ($_SERVER['SCRIPT_NAME'] ?? ''), '/admin/')
                     <li><a href="<?php echo htmlspecialchars($tcf_foot_url('index.php')); ?>"><i class='bx bx-chevron-right'></i> Accueil</a></li>
                     <li><a href="<?php echo htmlspecialchars($tcf_foot_url('support.php')); ?>"><i class='bx bx-chevron-right'></i> Support</a></li>
                     <li><a href="<?php echo htmlspecialchars($tcf_foot_url('login.php')); ?>"><i class='bx bx-chevron-right'></i> Connexion</a></li>
-                    <li><a href="<?php echo htmlspecialchars($tcf_foot_url('politique-confidentialite.php')); ?>"><i class='bx bx-chevron-right'></i> Confidentialité</a></li>
-                    <li><a href="<?php echo htmlspecialchars($tcf_foot_url('politique-cookies.php')); ?>"><i class='bx bx-chevron-right'></i> Cookies</a></li>
                 </ul>
             </div>
 
@@ -97,11 +117,11 @@ $tcf_is_admin_area = strpos((string) ($_SERVER['SCRIPT_NAME'] ?? ''), '/admin/')
                     <p>&copy; <?php echo date('Y'); ?> <span>ELITE TCF</span> CANADA. Tous droits réservés.</p>
                 </div>
                 <div class="social-links">
-                    <a href="#" aria-label="WhatsApp"><i class='bx bxl-whatsapp'></i></a>
+                    <a href="<?php echo htmlspecialchars($tcf_foot_wa); ?>" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><i class='bx bxl-whatsapp'></i></a>
                     <a href="#" aria-label="Facebook"><i class='bx bxl-facebook'></i></a>
                     <a href="#" aria-label="Instagram"><i class='bx bxl-instagram'></i></a>
                     <a href="#" aria-label="YouTube"><i class='bx bxl-youtube'></i></a>
-                    <a href="#" aria-label="Telegram"><i class='bx bxl-telegram'></i></a>
+                    <a href="<?php echo htmlspecialchars($tcf_foot_tg); ?>" target="_blank" rel="noopener noreferrer" aria-label="Telegram"><i class='bx bxl-telegram'></i></a>
                 </div>
             </div>
         </div>
@@ -114,7 +134,7 @@ $tcf_is_admin_area = strpos((string) ($_SERVER['SCRIPT_NAME'] ?? ''), '/admin/')
 
 <?php if (!$tcf_is_admin_area): ?>
     <?php include __DIR__ . '/mobile_bottom_nav.php'; ?>
-    <script src="<?php echo htmlspecialchars($FOOTER_ASSET_PREFIX); ?>Assets/javascript/mobile-bottom-nav.js"></script>
+    <script src="<?php echo htmlspecialchars(function_exists('site_href') ? site_href('Assets/javascript/mobile-bottom-nav.js') : ($FOOTER_ASSET_PREFIX . 'Assets/javascript/mobile-bottom-nav.js')); ?>?v=nav-go-3"></script>
 <?php endif; ?>
 
 <script>

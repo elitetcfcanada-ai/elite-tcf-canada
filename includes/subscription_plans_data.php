@@ -183,12 +183,56 @@ function tcf_subscription_plans_catalog(bool $activeOnly = true): array
 }
 
 /**
+ * Insère les forfaits de secours si la table est vide.
+ */
+function tcf_subscription_plans_seed_if_empty(): void
+{
+    global $pdo;
+    if (!isset($pdo)) {
+        return;
+    }
+    try {
+        $n = (int) $pdo->query('SELECT COUNT(*) FROM subscription_plan_catalog')->fetchColumn();
+        if ($n > 0) {
+            return;
+        }
+        $static = tcf_subscription_plans_catalog_static();
+        $st = $pdo->prepare(
+            'INSERT INTO subscription_plan_catalog
+                (plan_key, tier, badge, price, currency, duration_days, features_json, sort_order, is_active)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)'
+        );
+        $order = 1;
+        foreach ($static as $p) {
+            $feats = json_encode($p['features'] ?? tcf_subscription_default_features(), JSON_UNESCAPED_UNICODE);
+            if ($feats === false) {
+                $feats = '[]';
+            }
+            $st->execute([
+                (string) ($p['key'] ?? ('plan_' . $order)),
+                (string) ($p['tier'] ?? 'STANDARD'),
+                (string) ($p['badge'] ?? ''),
+                (float) ($p['price'] ?? 0),
+                (string) (($p['currency'] ?? '') !== '' ? $p['currency'] : '$'),
+                (int) ($p['duration_days'] ?? 7),
+                $feats,
+                $order,
+            ]);
+            $order++;
+        }
+    } catch (Throwable $e) {
+        error_log('tcf_subscription_plans_seed_if_empty: ' . $e->getMessage());
+    }
+}
+
+/**
  * Toutes les lignes pour l’admin (y compris inactives).
  *
  * @return list<array<string,mixed>>
  */
 function tcf_subscription_plans_catalog_admin(): array
 {
+    tcf_subscription_plans_seed_if_empty();
     $rows = tcf_subscription_plans_rows_from_db();
     if ($rows === null || $rows === []) {
         return [];

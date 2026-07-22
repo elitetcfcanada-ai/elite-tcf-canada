@@ -5,10 +5,15 @@ tcf_admin_apply_upload_limits();
 require_once '../includes/config.php';
 require_once __DIR__ . '/channel_handlers.php';
 require_once __DIR__ . '/../includes/site_contact.php';
-require_once __DIR__ . '/../includes/channel_branding.php';
 require_once __DIR__ . '/../includes/video_duration.php';
-$tcf_brand_default_name = (string) (tcf_site_contact()['brand'] ?? 'ELITE TCF CANADA');
-$tcf_brand_default_tag = tcf_channel_branding_default_tagline();
+require_once __DIR__ . '/../includes/tcf_notifications_helper.php';
+require_once __DIR__ . '/../includes/community_posts_helper.php';
+try {
+    tcf_community_posts_ensure_tables($pdo);
+    tcf_community_drop_channel_tables($pdo);
+} catch (Throwable $e) {
+    // ignore bootstrap DB cleanup errors
+}
 
 // Vérifier si l'utilisateur est connecté et est un super admin ou admin
 if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'super_admin' && $_SESSION['role'] !== 'admin')) {
@@ -158,12 +163,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             break;
         case 'mark_notification_read':
             markNotificationRead();
-            break;
-        case 'get_chat_messages':
-            getChatMessages();
-            break;
-        case 'send_chat_message':
-            sendChatMessage();
             break;
         case 'get_traceability':
             getTraceability();
@@ -445,7 +444,7 @@ function addVideo()
     global $pdo;
     try {
         $title = trim((string) ($_POST['title'] ?? ''));
-        $description = (string) ($_POST['description'] ?? '');
+        $description = trim((string) ($_POST['description'] ?? ''));
         $visibility = strtolower(trim((string) ($_POST['visibility'] ?? 'public')));
         if (!in_array($visibility, ['public', 'private', 'premium'], true)) {
             $visibility = 'public';
@@ -517,15 +516,17 @@ function addVideo()
             } catch (Throwable $e) {
             }
             addActivity($_SESSION['user_id'], 'video', 'Nouvelle vidéo publiée', "La vidéo '$title' a été publiée");
-            
-            // Envoyer notification à tous les utilisateurs (role user)
+
+            // Uniquement les utilisateurs déjà inscrits au moment de la publication
             try {
-                $stmt = $pdo->prepare("SELECT id FROM users WHERE role = 'user' AND id > 0");
-                $stmt->execute();
-                $users = $stmt->fetchAll(PDO::FETCH_COLUMN);
-                foreach ($users as $userId) {
-                    addNotification((int) $userId, 'video', 'Nouvelle vidéo publiée', "La vidéo '$title' a été publiée", 'videos.php');
-                }
+                $deep = site_href('watch.php?v=' . $newVid);
+                tcf_notify_users_registered_before(
+                    $pdo,
+                    'video',
+                    'Nouvelle vidéo publiée',
+                    "La vidéo « $title » est maintenant disponible.",
+                    $deep
+                );
             } catch (Throwable $e) {
                 error_log('Erreur lors de l\'envoi des notifications vidéo: ' . $e->getMessage());
             }
@@ -546,10 +547,11 @@ function addVideo()
 function updateVideo()
 {
     global $pdo;
+    saRequireSuperAdminJson();
     try {
         $id = (int) ($_POST['id'] ?? 0);
         $title = trim((string) ($_POST['title'] ?? ''));
-        $description = (string) ($_POST['description'] ?? '');
+        $description = trim((string) ($_POST['description'] ?? ''));
         $visibility = strtolower(trim((string) ($_POST['visibility'] ?? 'public')));
         if (!in_array($visibility, ['public', 'private', 'premium'], true)) {
             $visibility = 'public';
@@ -619,6 +621,7 @@ function updateVideo()
 function deleteVideo()
 {
     global $pdo;
+    saRequireSuperAdminJson();
     try {
         $id = $_POST['id'];
         $stmt = $pdo->prepare("SELECT thumbnail_url, video_url, title FROM videos WHERE id = ?");
@@ -906,7 +909,7 @@ function addMessage()
                 $stmt->execute();
                 $users = $stmt->fetchAll(PDO::FETCH_COLUMN);
                 foreach ($users as $userId) {
-                    addNotification((int) $userId, 'message', $notifTitle, $notifContent, 'messages.php');
+                    addNotification((int) $userId, 'message', $notifTitle, $notifContent, 'posts.php');
                 }
             } catch (Throwable $e) {
                 error_log('Erreur lors de l\'envoi des notifications message communautaire: ' . $e->getMessage());
@@ -1128,58 +1131,6 @@ function demoteToUser()
             echo json_encode(['success' => true, 'message' => 'Administrateur rétrogradé avec succès.']);
         } else {
             echo json_encode(['success' => false, 'message' => 'Erreur lors de la rétrogradation de l\'administrateur.']);
-        }
-    } catch (PDOException $e) {
-        echo json_encode(['success' => false, 'message' => 'Erreur base de données: ' . $e->getMessage()]);
-    }
-    exit();
-}
-
-// Fonctions pour le chat
-function getChatMessages()
-{
-    global $pdo;
-    try {
-        $user_id = $_POST['user_id'] ?? null;
-
-        if (!$user_id) {
-            echo json_encode(['success' => false, 'message' => 'ID utilisateur manquant']);
-            exit();
-        }
-
-        $stmt = $pdo->prepare("
-            SELECT cm.*, u.name as user_name, a.name as admin_name 
-            FROM chat_messages cm 
-            LEFT JOIN users u ON cm.user_id = u.id 
-            LEFT JOIN users a ON cm.admin_id = a.id 
-            WHERE cm.user_id = ? 
-            ORDER BY cm.created_at ASC
-        ");
-        $stmt->execute([$user_id]);
-        $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        echo json_encode(['success' => true, 'data' => $messages]);
-    } catch (PDOException $e) {
-        echo json_encode(['success' => false, 'message' => 'Erreur base de données: ' . $e->getMessage()]);
-    }
-    exit();
-}
-
-function sendChatMessage()
-{
-    global $pdo;
-    try {
-        $user_id = $_POST['user_id'];
-        $message = $_POST['message'];
-        $is_admin = 1; // Toujours admin car c'est le super admin qui envoie
-
-        $stmt = $pdo->prepare("INSERT INTO chat_messages (user_id, admin_id, message, is_admin) VALUES (?, ?, ?, ?)");
-        $success = $stmt->execute([$user_id, $_SESSION['user_id'], $message, $is_admin]);
-
-        if ($success) {
-            echo json_encode(['success' => true, 'message' => 'Message envoyé avec succès.']);
-        } else {
-            echo json_encode(['success' => false, 'message' => 'Erreur lors de l\'envoi du message.']);
         }
     } catch (PDOException $e) {
         echo json_encode(['success' => false, 'message' => 'Erreur base de données: ' . $e->getMessage()]);
@@ -2016,17 +1967,16 @@ $notifications_json = json_encode($notifications);
     </script>
     <?php
     $tcf_brand_title = ($isSuperAdmin ? 'Super Admin' : 'Administration') . ' — ELITE TCF CANADA';
-    $tcf_brand_desc = 'Espace d\'administration ELITE TCF CANADA — gestion utilisateurs, vidéos, sujets et messagerie.';
+    $tcf_brand_desc = 'Espace d\'administration ELITE TCF CANADA — gestion utilisateurs, vidéos, sujets et annonces.';
     include __DIR__ . '/../includes/tcf_brand_head.php';
     ?>
     <title><?php echo htmlspecialchars($tcf_brand_title); ?></title>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="../Assets/css/sa-theme.css">
     <script src="../Assets/javascript/sa-theme.js"></script>
-    <link rel="stylesheet" href="../Assets/css/superAdmin.css">
+    <link rel="stylesheet" href="../Assets/css/superAdmin.css?v=admin-inline-1">
     <link rel="stylesheet" href="../Assets/css/tcf-brand-logo.css">
-    <link rel="stylesheet" href="../Assets/css/sa-staff-chat.css">
-    <link rel="stylesheet" href="../Assets/css/sa_subscription_plans.css">
+    <link rel="stylesheet" href="../Assets/css/sa_subscription_plans.css?v=userlike-2">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/profile_panel.css')); ?>">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/tcf-responsive-pills.css')); ?>">
     <link rel="stylesheet" href="../Assets/css/admin-mobile-nav.css">
@@ -2077,13 +2027,9 @@ $notifications_json = json_encode($notifications);
                 <i class='bx bxs-user'></i>
                 <span>Gestion Utilisateurs</span>
             </div>
-            <div class="menu-item" id="site-management-menu">
+            <div class="menu-item" data-target="admins">
                 <i class='bx bxs-shield'></i>
                 <span>Gestion des administrateurs</span>
-                <i class='bx bx-chevron-down' style="margin-left: auto;"></i>
-            </div>
-            <div class="sub-menu" id="site-management-submenu">
-                <div class="sub-item" data-target="admins">Membres</div>
             </div>
         <?php endif; ?>
 
@@ -2094,10 +2040,7 @@ $notifications_json = json_encode($notifications);
         </div>
         <div class="sub-menu" id="videos-submenu">
             <div class="sub-item" data-target="videos">Vidéos</div>
-            <div class="sub-item" data-target="channel-posts">Publications chaîne</div>
-            <div class="sub-item" data-target="channel-playlists">Playlists chaîne</div>
             <div class="sub-item" data-target="analytics">Analyse vidéo</div>
-            <div class="sub-item" data-target="channel-branding">Paramètres chaîne</div>
         </div>
 
         <?php if ($isSuperAdmin): ?>
@@ -2117,19 +2060,19 @@ $notifications_json = json_encode($notifications);
         </div>
         <div class="menu-item" data-target="messages">
             <i class='bx bxs-megaphone'></i>
-            <span>Gestion des annonces</span>
+            <span>Annonces communautaires</span>
         </div>
         <?php else: ?>
+        <div class="menu-item" data-target="messages">
+            <i class='bx bxs-megaphone'></i>
+            <span>Annonces communautaires</span>
+        </div>
         <div class="menu-item" data-target="subscription-revenue">
             <i class='bx bx-wallet'></i>
             <span>Revenus</span>
         </div>
         <?php endif; ?>
 
-        <div class="menu-item" data-target="chat">
-            <i class='bx bxs-chat'></i>
-            <span>Messagerie</span>
-        </div>
         <div class="menu-item" id="topics-menu">
             <i class='bx bxs-book'></i>
             <span>Gestion des sujets</span>
@@ -2369,15 +2312,60 @@ $notifications_json = json_encode($notifications);
         </div>
         <?php endif; ?>
 
-        <!-- Comptes admin / super_admin — super_admin, entrée « Membres » -->
+        <!-- Comptes admin / super_admin -->
         <?php if ($isSuperAdmin): ?>
         <div id="admins" class="content-section" style="display:none;">
             <div class="dashboard-section">
                 <div class="section-header">
-                    <div class="section-title">Membres</div>
+                    <div class="section-title">Gestion des administrateurs</div>
                     <button type="button" class="btn btn-primary" id="add-admin-btn">
                         <i class='bx bx-plus'></i> Ajouter un administrateur
                     </button>
+                </div>
+
+                <div class="sa-admin-form-panel" id="admin-form-panel" hidden>
+                    <div class="sa-admin-form-panel__head">
+                        <h3 class="sa-admin-form-panel__title" id="admin-form-title">Ajouter un administrateur</h3>
+                        <button type="button" class="btn btn-outline btn-sm" id="admin-form-cancel">Fermer</button>
+                    </div>
+                    <form id="admin-form-modal" class="sa-admin-form-inline">
+                        <input type="hidden" id="admin-edit-id">
+                        <div class="sa-admin-form-grid">
+                            <div class="form-group">
+                                <label class="form-label" for="admin-name">Nom complet</label>
+                                <input type="text" class="form-control" id="admin-name" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="admin-email">Email</label>
+                                <input type="email" class="form-control" id="admin-email" required>
+                            </div>
+                            <div class="form-group admin-password-fields">
+                                <label class="form-label" for="admin-password">Mot de passe</label>
+                                <input type="password" class="form-control" id="admin-password" autocomplete="new-password" minlength="8">
+                            </div>
+                            <div class="form-group admin-password-fields">
+                                <label class="form-label" for="admin-password-confirm">Confirmer le mot de passe</label>
+                                <input type="password" class="form-control" id="admin-password-confirm" autocomplete="new-password" minlength="8">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="admin-role">Rôle</label>
+                                <select class="form-control" id="admin-role" required>
+                                    <option value="admin">Administrateur</option>
+                                    <option value="super_admin">Super Administrateur</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="admin-status">Statut</label>
+                                <select class="form-control" id="admin-status">
+                                    <option value="active">Actif</option>
+                                    <option value="inactive">Inactif</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="sa-admin-form-actions">
+                            <button type="submit" class="btn btn-primary">Enregistrer</button>
+                        </div>
+                    </form>
                 </div>
 
                 <div class="table-container">
@@ -2419,8 +2407,8 @@ $notifications_json = json_encode($notifications);
                         <input type="text" class="form-control" id="video-title" name="title" required>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Description</label>
-                        <textarea class="form-control" id="video-description" name="description" rows="3" required></textarea>
+                        <label class="form-label">Description <span style="font-weight:400;color:#64748b;">(optionnel)</span></label>
+                        <textarea class="form-control" id="video-description" name="description" rows="3" placeholder="Résumé ou contexte de la vidéo (facultatif)"></textarea>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Miniature</label>
@@ -2457,11 +2445,6 @@ $notifications_json = json_encode($notifications);
                             <option value="premium">Premium</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Playlists (optionnel)</label>
-                        <p style="margin:0 0 8px;font-size:13px;color:#64748b;">Cochez les playlists dans lesquelles cette vidéo doit apparaître.</p>
-                        <div id="video-playlist-checkboxes" class="tcf-channel-pl-checkboxes" style="max-height:180px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px;background:#f8fafc;"></div>
-                    </div>
                     <div class="form-buttons">
                         <button type="button" class="btn btn-outline" id="cancel-video-btn">Annuler</button>
                         <button type="submit" class="btn btn-primary" id="video-form-submit">Enregistrer</button>
@@ -2491,214 +2474,6 @@ $notifications_json = json_encode($notifications);
                         <video id="admin-vcm-player" controls playsinline preload="metadata"></video>
                         <div id="admin-vcm-threads" class="sa-vcmodal__threads"></div>
                     </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Playlists chaîne -->
-        <div id="channel-playlists" class="content-section" style="display:none;">
-            <div class="dashboard-section">
-                <div class="section-header">
-                    <div class="section-title">Playlists (chaîne type YouTube)</div>
-                    <button type="button" class="btn btn-primary" id="channel-playlist-add-btn">
-                        <i class='bx bx-plus'></i> Nouvelle playlist
-                    </button>
-                </div>
-                <p style="color:#64748b;font-size:14px;margin-bottom:16px;">Visibilité publique ou privée. Les vidéos incluses sont choisies ici ou depuis le formulaire vidéo.</p>
-                <form id="channel-playlist-form" style="display:none;">
-                    <input type="hidden" id="channel-playlist-edit-id" value="">
-                    <div class="form-group">
-                        <label class="form-label">Titre</label>
-                        <input type="text" class="form-control" id="channel-playlist-title" maxlength="255" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Description</label>
-                        <textarea class="form-control" id="channel-playlist-description" rows="3"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Visibilité</label>
-                        <select class="form-control" id="channel-playlist-visibility">
-                            <option value="public">Public</option>
-                            <option value="private">Privé</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Vidéos dans cette playlist</label>
-                        <div id="channel-playlist-video-checkboxes" style="max-height:220px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px;background:#f8fafc;"></div>
-                    </div>
-                    <div class="form-buttons">
-                        <button type="button" class="btn btn-outline" id="channel-playlist-cancel-btn">Annuler</button>
-                        <button type="submit" class="btn btn-primary">Enregistrer</button>
-                    </div>
-                </form>
-                <div class="section-header" style="margin-top:24px;">
-                    <div class="section-title">Playlists</div>
-                </div>
-                <div style="overflow-x:auto;">
-                    <table class="table" style="width:100%;border-collapse:collapse;font-size:13px;">
-                        <thead>
-                            <tr style="border-bottom:1px solid #e2e8f0;text-align:left;">
-                                <th style="padding:8px;">Titre</th>
-                                <th style="padding:8px;">Visibilité</th>
-                                <th style="padding:8px;">Vidéos</th>
-                                <th style="padding:8px;">Créée</th>
-                                <th class="sa-th-actions" style="padding:8px;width:160px;">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="channel-playlists-tbody"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Publications chaîne -->
-        <div id="channel-posts" class="content-section" style="display:none;">
-            <div class="dashboard-section">
-                <div class="section-header">
-                    <div class="section-title">Publications (fil d’actualité)</div>
-                    <button type="button" class="btn btn-primary" id="channel-post-add-btn" aria-label="Nouvelle publication" title="Nouvelle publication">
-                        <i class="bx bx-plus" aria-hidden="true"></i>
-                    </button>
-                </div>
-                <form id="channel-post-form" style="display:none;" enctype="multipart/form-data">
-                    <input type="hidden" name="id" id="channel-post-edit-id" value="">
-                    <div class="form-group">
-                        <label class="form-label">Type de publication</label>
-                        <select class="form-control" name="post_type" id="channel-post-type">
-                            <option value="text">Texte</option>
-                            <option value="image">Texte + image</option>
-                            <option value="poll">Sondage</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Titre (optionnel)</label>
-                        <input type="text" class="form-control" name="title" id="channel-post-title" maxlength="255">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Texte / légende / question</label>
-                        <textarea class="form-control" name="body" id="channel-post-body" rows="5" maxlength="8000"></textarea>
-                    </div>
-                    <div class="form-group" id="channel-post-image-wrap" style="display:none;">
-                        <label class="form-label">Image (JPG, PNG, WebP, GIF — max 5 Mo)</label>
-                        <input type="file" class="form-control" name="image" id="channel-post-image" accept="image/jpeg,image/png,image/webp,image/gif">
-                        <img id="channel-post-image-preview" alt="" style="display:none;max-height:140px;margin-top:8px;border-radius:8px;border:1px solid #e2e8f0;">
-                        <label style="display:block;margin-top:8px;font-size:13px;font-weight:400;">
-                            <input type="checkbox" name="remove_image" id="channel-post-remove-image" value="1">
-                            Retirer l’image actuelle
-                        </label>
-                    </div>
-                    <div class="form-group" id="channel-post-poll-wrap" style="display:none;">
-                        <label class="form-label">Options du sondage (une par ligne, 2 à 10)</label>
-                        <textarea class="form-control" name="poll_options" id="channel-post-poll-options" rows="4" maxlength="4000"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Vidéo liée (optionnel)</label>
-                        <select class="form-control" name="video_id" id="channel-post-video-id">
-                            <option value="">— Aucune —</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Visibilité</label>
-                        <select class="form-control" name="visibility" id="channel-post-visibility">
-                            <option value="public">Public</option>
-                            <option value="private">Privé</option>
-                        </select>
-                    </div>
-                    <div class="form-buttons">
-                        <button type="button" class="btn btn-outline" id="channel-post-cancel-btn">Annuler</button>
-                        <button type="submit" class="btn btn-primary">Enregistrer</button>
-                    </div>
-                </form>
-                <div class="section-header" style="margin-top:24px;">
-                    <div class="section-title">Publications</div>
-                </div>
-                <div style="overflow-x:auto;">
-                    <table class="table" style="width:100%;border-collapse:collapse;font-size:13px;">
-                        <thead>
-                            <tr style="border-bottom:1px solid #e2e8f0;text-align:left;">
-                                <th style="padding:8px;">Date</th>
-                                <th style="padding:8px;">Type</th>
-                                <th style="padding:8px;">Titre / extrait</th>
-                                <th style="padding:8px;">Visibilité</th>
-                                <th style="padding:8px;">Vidéo</th>
-                                <th class="sa-th-actions" style="padding:8px;width:180px;">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="channel-posts-tbody"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Identité chaîne (page Vidéos) -->
-        <div id="channel-branding" class="content-section" style="display:none;">
-            <div class="dashboard-section sa-branding-wrap">
-                <div class="section-header">
-                    <div class="section-title">Identité de la chaîne</div>
-                </div>
-                <p class="sa-branding-lead">Personnalisez l’en-tête public de la page <strong>Vidéos</strong> (style chaîne YouTube) : logo rond, bannière, titre et accroche.</p>
-                <div class="sa-branding-grid">
-                    <div class="sa-branding-form-card">
-                        <form id="channel-branding-form" enctype="multipart/form-data" autocomplete="off">
-                            <input type="hidden" name="remove_logo" id="channel-branding-remove-logo" value="0">
-                            <input type="hidden" name="remove_banner" id="channel-branding-remove-banner" value="0">
-                            <div class="form-group">
-                                <label class="form-label" for="channel-branding-title">Titre de la chaîne</label>
-                                <input type="text" class="form-control" id="channel-branding-title" name="title" maxlength="255" placeholder="<?php echo htmlspecialchars($tcf_brand_default_name, ENT_QUOTES, 'UTF-8'); ?>">
-                                <p class="sa-branding-hint">Laissez vide pour utiliser le nom du site : <strong><?php echo htmlspecialchars($tcf_brand_default_name); ?></strong></p>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" for="channel-branding-tagline">Description / accroche</label>
-                                <textarea class="form-control" id="channel-branding-tagline" name="tagline" rows="3" maxlength="800" placeholder="<?php echo htmlspecialchars((function_exists('mb_substr') ? mb_substr($tcf_brand_default_tag, 0, 80) : substr($tcf_brand_default_tag, 0, 80)) . '…', ENT_QUOTES, 'UTF-8'); ?>"></textarea>
-                                <p class="sa-branding-hint">Texte sous le titre. Laissez vide pour le texte par défaut.</p>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" for="channel-branding-logo">Photo de profil — recadrage carré (512×512 px à l’enregistrement, affichée ~112 px)</label>
-                                <input type="file" class="form-control" id="channel-branding-logo" name="logo" accept="image/jpeg,image/png,image/webp,image/gif">
-                                <div class="sa-branding-file-row">
-                                    <button type="button" class="btn btn-outline btn-sm" id="channel-branding-clear-logo">Retirer le logo personnalisé</button>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" for="channel-branding-banner">Bannière — recadrage 4:1 (1600×400 px à l’enregistrement)</label>
-                                <input type="file" class="form-control" id="channel-branding-banner" name="banner" accept="image/jpeg,image/png,image/webp,image/gif">
-                                <div class="sa-branding-file-row">
-                                    <button type="button" class="btn btn-outline btn-sm" id="channel-branding-clear-banner">Retirer la bannière personnalisée</button>
-                                </div>
-                            </div>
-                            <div class="form-buttons">
-                                <button type="submit" class="btn btn-primary" id="channel-branding-save-btn"><i class="bx bx-save" style="vertical-align:middle"></i> Enregistrer</button>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="sa-branding-preview-card" aria-hidden="true">
-                        <div class="sa-branding-preview-label">Aperçu</div>
-                        <div class="sa-branding-preview-mock">
-                            <div class="sa-branding-preview-cover" id="sa-branding-preview-cover"></div>
-                            <div class="sa-branding-preview-body">
-                                <img class="sa-branding-preview-avatar" id="sa-branding-preview-avatar" src="" alt="">
-                                <div class="sa-branding-preview-text">
-                                    <h3 id="sa-branding-preview-title"><i class="bx bxl-youtube"></i> <span id="sa-branding-preview-title-txt"></span></h3>
-                                    <p id="sa-branding-preview-tag"></p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="sa-channel-crop-modal" class="sa-channel-crop-modal" hidden aria-hidden="true">
-            <div class="sa-channel-crop-modal__backdrop" id="sa-channel-crop-backdrop"></div>
-            <div class="sa-channel-crop-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="sa-channel-crop-title">
-                <h2 id="sa-channel-crop-title" class="sa-channel-crop-modal__title">Recadrer l’image</h2>
-                <p class="sa-channel-crop-modal__hint" id="sa-channel-crop-hint"></p>
-                <div class="sa-channel-crop-wrap">
-                    <img id="sa-channel-crop-img" src="" alt="Crop preview" style="max-width:100%;">
-                </div>
-                <div class="form-buttons" style="margin-top: 15px; text-align: right;">
-                    <button type="button" class="btn btn-secondary" id="sa-channel-crop-cancel">Annuler</button>
-                    <button type="button" class="btn btn-primary" id="sa-channel-crop-apply">Appliquer</button>
                 </div>
             </div>
         </div>
@@ -2937,186 +2712,59 @@ $notifications_json = json_encode($notifications);
             </div>
         </div>
 
-        <!-- Messages Section -->
+        <!-- Annonces communautaires -->
         <div id="messages" class="content-section" style="display:none;">
             <div class="dashboard-section">
                 <div class="section-header">
-                    <div class="section-title">Messages Communautaires</div>
-                    <button class="btn btn-primary" id="add-message-btn">
-                        <i class='bx bx-plus'></i> Nouveau message
+                    <div class="section-title">Annonces communautaires</div>
+                    <button type="button" class="btn btn-primary" id="add-message-btn">
+                        <i class='bx bx-plus'></i> Nouvelle annonce
                     </button>
                 </div>
+                <p style="color:#64748b;font-size:14px;margin-bottom:16px;">
+                    Publiez une image et un texte. Les membres inscrits sont notifiés. Visibilité : visiteurs, membres, ou abonnés payants.
+                </p>
 
-                <!-- Formulaire de message -->
-                <form id="message-form" style="display: none;">
-                    <input type="hidden" id="message-edit-id">
+                <form id="message-form" style="display:none;" enctype="multipart/form-data">
+                    <input type="hidden" id="message-edit-id" value="">
                     <div class="form-group">
-                        <label class="form-label">Sujet du message</label>
-                        <input type="text" class="form-control" id="message-subject" required>
+                        <label class="form-label" for="message-content">Texte / description</label>
+                        <textarea class="form-control" id="message-content" rows="5" maxlength="8000" required placeholder="Écrivez votre annonce…"></textarea>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Contenu du message</label>
-                        <textarea class="form-control" id="message-content" rows="5" required></textarea>
+                        <label class="form-label" for="message-image">Image (optionnel — JPG, PNG, WebP, GIF)</label>
+                        <input type="file" class="form-control" id="message-image" accept="image/jpeg,image/png,image/webp,image/gif">
+                        <img id="message-image-preview" alt="" style="display:none;max-height:160px;margin-top:8px;border-radius:8px;border:1px solid #e2e8f0;">
+                        <label style="display:none;margin-top:8px;font-size:13px;font-weight:400;" id="message-clear-image-wrap">
+                            <input type="checkbox" id="message-clear-image" value="1">
+                            Retirer l’image actuelle
+                        </label>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Destinataires</label>
-                        <select class="form-control" id="message-recipients" required>
-                            <option value="all">Tous les utilisateurs</option>
-                            <option value="active">Utilisateurs actifs</option>
-                            <option value="premium">Utilisateurs premium</option>
-                            <option value="new">Nouveaux utilisateurs</option>
-                            <option value="admins">Administrateurs</option>
+                        <label class="form-label" for="message-visibility">Qui peut voir cette annonce ?</label>
+                        <select class="form-control" id="message-visibility">
+                            <option value="registered">Membres inscrits</option>
+                            <option value="premium">Abonnés payants uniquement</option>
+                            <option value="visitors">Tout le monde (visiteurs inclus)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="message-published">Statut</label>
+                        <select class="form-control" id="message-published">
+                            <option value="1">Publiée</option>
+                            <option value="0">Brouillon</option>
                         </select>
                     </div>
                     <div class="form-buttons">
                         <button type="button" class="btn btn-outline" id="cancel-message-btn">Annuler</button>
-                        <button type="submit" class="btn btn-primary">Envoyer</button>
+                        <button type="submit" class="btn btn-primary">Enregistrer</button>
                     </div>
                 </form>
 
-                <!-- Liste des messages -->
                 <div class="section-header" style="margin-top: 30px;">
-                    <div class="section-title">Messages envoyés</div>
+                    <div class="section-title">Annonces publiées</div>
                 </div>
                 <div id="messages-container"></div>
-            </div>
-        </div>
-
-        <!-- Messagerie équipe (admin / super_admin) -->
-        <div id="chat" class="content-section" style="display:none;" data-chat-me-id="<?php echo (int) ($_SESSION['user_id'] ?? 0); ?>">
-            <div class="dashboard-section">
-                <div class="section-header">
-                    <div class="section-title">Messagerie équipe</div>
-                </div>
-                <div class="ssc-app" id="ssc-app">
-                    <aside class="ssc-sidebar">
-                        <div class="ssc-sidebar-head">
-                            <div class="ssc-sidebar-title-row">
-                                <h2>Conversations</h2>
-                                <span class="ssc-online-pill" id="ssc-online-count">0 en ligne</span>
-                            </div>
-                            <p class="ssc-sidebar-sub">Échanges réservés aux administrateurs et super-administrateurs — les apprenants n’y ont pas accès.</p>
-                            <div class="ssc-toolbar">
-                                <button type="button" class="btn btn-primary btn-sm" id="ssc-new-dm"><i class="bx bx-message-add"></i> Nouveau message</button>
-                                <button type="button" class="btn btn-outline btn-sm" id="ssc-new-group"><i class="bx bx-group"></i> Groupe</button>
-                                <button type="button" class="btn btn-outline btn-sm" id="ssc-refresh"><i class="bx bx-refresh"></i></button>
-                                <button type="button" class="btn btn-outline btn-sm" id="ssc-toggle-presence" data-visible="1"><i class="bx bx-wifi"></i> Présence</button>
-                            </div>
-                            <div class="ssc-search-wrap">
-                                <i class="bx bx-search" aria-hidden="true"></i>
-                                <input type="search" id="ssc-search" class="ssc-search-input" placeholder="Rechercher…" autocomplete="off" aria-label="Rechercher une conversation">
-                            </div>
-                        </div>
-                        <div class="ssc-thread-list" id="ssc-thread-list"></div>
-                    </aside>
-                    <main class="ssc-main">
-                        <header class="ssc-thread-head">
-                            <button type="button" class="ssc-back-btn" id="ssc-back" aria-label="Retour"><i class="bx bx-arrow-back"></i></button>
-                            <div class="ssc-head-avatar" id="ssc-head-avatar"><i class="bx bx-message-dots"></i></div>
-                            <div class="ssc-head-info">
-                                <div class="ssc-head-name" id="ssc-head-name">Messagerie équipe</div>
-                                <div class="ssc-head-status" id="ssc-head-status">Administrateurs et super-administrateurs</div>
-                            </div>
-                            <button type="button" class="btn btn-outline btn-sm" id="ssc-group-settings-btn" hidden><i class="bx bx-cog"></i> Groupe</button>
-                        </header>
-                        <div class="ssc-messages" id="ssc-messages">
-                            <div class="ssc-empty-state"><i class="bx bxs-chat"></i><p>Sélectionnez une conversation pour échanger avec l’équipe.</p></div>
-                        </div>
-                        <footer class="ssc-composer" id="ssc-composer">
-                            <div class="ssc-edit-banner" id="ssc-edit-banner"><span>Modification du message</span><button type="button" class="ssc-edit-cancel" id="ssc-edit-cancel">Annuler</button></div>
-                            <div class="ssc-emoji-pop" id="ssc-emoji-pop" hidden></div>
-                            <div class="ssc-composer-row">
-                                <div class="ssc-composer-tools">
-                                    <button type="button" class="ssc-emoji-btn" id="ssc-emoji-btn" title="Emoji">😊</button>
-                                </div>
-                                <textarea class="ssc-composer-input" id="ssc-composer-input" rows="1" maxlength="4000" placeholder="Écrivez votre message…"></textarea>
-                                <button type="button" class="ssc-send-btn" id="ssc-send-btn" aria-label="Envoyer"><i class="bx bxs-send"></i></button>
-                            </div>
-                        </footer>
-                    </main>
-                </div>
-            </div>
-        </div>
-
-        <div class="modal" id="ssc-new-dm-modal" aria-hidden="true" role="dialog">
-            <div class="modal-content">
-                <button type="button" class="modal-close" data-ssc-modal-close="1" aria-label="Fermer">&times;</button>
-                <h2 class="modal-title">Nouveau message</h2>
-                <p class="ssc-staff-modal-lead">Choisissez un administrateur ou super-administrateur pour démarrer une conversation privée.</p>
-                <input type="search" id="ssc-dm-search" class="form-control" placeholder="Rechercher par nom ou e-mail…" autocomplete="off" style="margin-bottom:0.75rem;">
-                <div class="ssc-staff-picker" id="ssc-dm-staff-list"></div>
-            </div>
-        </div>
-
-        <div class="modal sa-new-group-modal" id="sa-new-group-modal" aria-hidden="true" role="dialog" aria-labelledby="sa-new-group-title">
-            <div class="modal-content sa-new-group-modal__content">
-                <button type="button" class="modal-close" data-ssc-modal-close="1" aria-label="Fermer">&times;</button>
-                <h2 class="modal-title" id="sa-new-group-title">Nouveau groupe</h2>
-                <p class="ssc-staff-modal-lead">Créez un groupe et ajoutez des administrateurs ou super-administrateurs. Les apprenants ne peuvent pas y accéder.</p>
-                <div class="sa-new-group-grid">
-                    <div class="sa-new-group-col sa-new-group-col--settings">
-                        <label class="form-label" for="sa-new-group-name">Nom du groupe</label>
-                        <input type="text" id="sa-new-group-name" class="form-control" maxlength="180" placeholder="Ex. Groupe TCF avril" autocomplete="off">
-                        <label class="form-label" for="sa-new-group-photo">Photo du groupe (optionnel)</label>
-                        <input type="file" id="sa-new-group-photo" class="form-control" accept="image/jpeg,image/png,image/webp">
-                        <label class="sa-new-group-check">
-                            <input type="checkbox" id="sa-new-group-admins-only">
-                            <span>Seuls les administrateurs peuvent écrire (les membres lisent seulement)</span>
-                        </label>
-                    </div>
-                    <div class="sa-new-group-col sa-new-group-col--members">
-                        <label class="form-label" for="sa-new-group-email-input">Ajouter par e-mail</label>
-                        <div class="sa-new-group-email-row">
-                            <input type="email" id="sa-new-group-email-input" class="form-control" placeholder="membre@email.com" autocomplete="off">
-                            <button type="button" class="btn btn-outline" id="sa-new-group-email-add">Ajouter</button>
-                        </div>
-                        <label class="form-label" for="sa-new-group-user-search">Rechercher un membre du staff</label>
-                        <input type="search" id="sa-new-group-user-search" class="form-control" placeholder="Nom ou e-mail…" autocomplete="off">
-                        <div id="sa-new-group-user-cards" class="sa-new-group-user-cards" role="list"></div>
-                        <div class="sa-new-group-selected">
-                            <span class="sa-new-group-selected-label">Membres sélectionnés</span>
-                            <div id="sa-new-group-chips" class="sa-new-group-chips"></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="form-buttons" style="display:flex;gap:0.5rem;justify-content:flex-end;flex-wrap:wrap;">
-                    <button type="button" class="btn btn-outline" data-ssc-modal-close="1">Annuler</button>
-                    <button type="button" class="btn btn-primary" id="sa-new-group-submit"><i class="bx bx-check"></i> Créer le groupe</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="modal" id="sa-group-settings-modal" aria-hidden="true">
-            <div class="modal-content">
-                <button type="button" class="modal-close" data-ssc-modal-close="1" aria-label="Fermer">&times;</button>
-                <h2 class="modal-title">Paramètres du groupe</h2>
-                <input type="hidden" id="sa-group-settings-thread-id" value="">
-                <div class="form-group">
-                    <label class="form-label" for="sa-group-settings-title">Nom du groupe</label>
-                    <input type="text" class="form-control" id="sa-group-settings-title" maxlength="180" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Membres</label>
-                    <div class="ssc-group-members-list" id="ssc-group-members-list"></div>
-                    <label class="form-label" for="ssc-group-add-search" style="margin-top:0.75rem;">Ajouter un membre</label>
-                    <input type="search" id="ssc-group-add-search" class="form-control" placeholder="Rechercher un administrateur…" autocomplete="off">
-                    <div class="ssc-staff-picker" id="ssc-group-add-list" style="margin-top:0.5rem;max-height:140px;"></div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="sa-group-settings-avatar">Photo du groupe</label>
-                    <input type="file" class="form-control" id="sa-group-settings-avatar" accept="image/jpeg,image/png,image/webp">
-                    <button type="button" class="btn btn-outline btn-sm" id="sa-group-settings-remove-avatar" style="margin-top:0.5rem;">Retirer la photo</button>
-                </div>
-                <div class="form-group">
-                    <label class="form-label" style="display:flex;align-items:flex-start;gap:0.5rem;cursor:pointer;font-weight:500;">
-                        <input type="checkbox" id="sa-group-settings-admins-only" style="margin-top:0.2rem;">
-                        <span>Seuls les administrateurs peuvent envoyer des messages (les membres lisent seulement).</span>
-                    </label>
-                </div>
-                <div class="form-buttons" style="display:flex;gap:0.5rem;justify-content:flex-end;flex-wrap:wrap;">
-                    <button type="button" class="btn btn-outline" data-ssc-modal-close="1">Annuler</button>
-                    <button type="button" class="btn btn-primary" id="sa-group-settings-save">Enregistrer</button>
-                </div>
             </div>
         </div>
 
@@ -3217,20 +2865,21 @@ $notifications_json = json_encode($notifications);
                     <div class="dashboard-section" style="margin-top:16px;">
                         <div class="section-header">
                             <div class="section-title">Consignes Expression Écrite</div>
-                            <button type="button" class="btn btn-primary" id="ee-open-consignes-btn"><i class='bx bx-edit'></i> Consigne</button>
+                            <button type="button" class="btn btn-primary" id="ee-open-consignes-btn"><i class='bx bx-edit'></i> Modifier les consignes</button>
                         </div>
+                        <p style="margin:0 0 10px;color:#64748b;font-size:.92rem;">Chaque tâche a sa propre consigne. HTML autorisé (titres <code>&lt;h4&gt;</code>, listes, gras).</p>
                         <form id="ee-consignes-bundle-form" style="display:none;">
                             <div class="form-group">
-                                <label class="form-label">Consigne Tâche 1</label>
-                                <textarea class="form-control" id="ee-consigne-tache1" rows="4" required></textarea>
+                                <label class="form-label">Consigne Tâche 1 — Message court (60-120 mots)</label>
+                                <textarea class="form-control" id="ee-consigne-tache1" rows="12" required></textarea>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">Consigne Tâche 2</label>
-                                <textarea class="form-control" id="ee-consigne-tache2" rows="4" required></textarea>
+                                <label class="form-label">Consigne Tâche 2 — Article / narration (120-150 mots)</label>
+                                <textarea class="form-control" id="ee-consigne-tache2" rows="12" required></textarea>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">Consigne Tâche 3</label>
-                                <textarea class="form-control" id="ee-consigne-tache3" rows="4" required></textarea>
+                                <label class="form-label">Consigne Tâche 3 — Texte argumentatif (120-180 mots)</label>
+                                <textarea class="form-control" id="ee-consigne-tache3" rows="12" required></textarea>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Statut</label>
@@ -3328,8 +2977,16 @@ $notifications_json = json_encode($notifications);
                         </div>
                         <form id="ce-consignes-bundle-form" style="display:none;">
                             <div class="form-group">
-                                <label class="form-label">Texte (HTML autorisé)</label>
-                                <textarea class="form-control" id="ce-consigne-body" rows="8" required></textarea>
+                                <label class="form-label">Structure & scoring (HTML)</label>
+                                <textarea class="form-control" id="ce-consigne-structure" rows="10" required></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">5 techniques essentielles (HTML)</label>
+                                <textarea class="form-control" id="ce-consigne-techniques" rows="10" required></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Erreurs courantes (HTML)</label>
+                                <textarea class="form-control" id="ce-consigne-erreurs" rows="10" required></textarea>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Statut</label>
@@ -3427,8 +3084,16 @@ $notifications_json = json_encode($notifications);
                         </div>
                         <form id="co-consignes-bundle-form" style="display:none;">
                             <div class="form-group">
-                                <label class="form-label">Texte (HTML autorisé)</label>
-                                <textarea class="form-control" id="co-consigne-body" rows="8" required></textarea>
+                                <label class="form-label">Structure & scoring (HTML)</label>
+                                <textarea class="form-control" id="co-consigne-structure" rows="10" required></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">5 techniques essentielles (HTML)</label>
+                                <textarea class="form-control" id="co-consigne-techniques" rows="10" required></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Erreurs courantes (HTML)</label>
+                                <textarea class="form-control" id="co-consigne-erreurs" rows="10" required></textarea>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Statut</label>
@@ -3486,16 +3151,21 @@ $notifications_json = json_encode($notifications);
                     <div class="dashboard-section" style="margin-top:16px;">
                         <div class="section-header">
                             <div class="section-title">Consignes Expression Orale</div>
-                            <button type="button" class="btn btn-primary" id="eo-open-consignes-btn"><i class='bx bx-edit'></i> Consigne</button>
+                            <button type="button" class="btn btn-primary" id="eo-open-consignes-btn"><i class='bx bx-edit'></i> Modifier les consignes</button>
                         </div>
+                        <p style="margin:0 0 10px;color:#64748b;font-size:.92rem;">Chaque tâche a sa propre consigne. HTML autorisé (titres <code>&lt;h4&gt;</code>, listes, gras).</p>
                         <form id="eo-consignes-bundle-form" style="display:none;">
                             <div class="form-group">
-                                <label class="form-label">Consigne Tâche 2</label>
-                                <textarea class="form-control" id="eo-consigne-tache2" rows="4" required></textarea>
+                                <label class="form-label">Consigne Tâche 1 — Présentation / entretien dirigé (2 min • 3/20)</label>
+                                <textarea class="form-control" id="eo-consigne-tache1" rows="12" required></textarea>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">Consigne Tâche 3</label>
-                                <textarea class="form-control" id="eo-consigne-tache3" rows="4" required></textarea>
+                                <label class="form-label">Consigne Tâche 2 — Exercice en interaction (2 min + 3 min 30 • 7/20)</label>
+                                <textarea class="form-control" id="eo-consigne-tache2" rows="12" required></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Consigne Tâche 3 — Expression d’un point de vue (4 min 30 • 10/20)</label>
+                                <textarea class="form-control" id="eo-consigne-tache3" rows="12" required></textarea>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Statut</label>
@@ -3659,47 +3329,6 @@ $notifications_json = json_encode($notifications);
         </div>
     </div>
 
-    <div class="modal" id="admin-modal">
-        <div class="modal-content">
-            <span class="modal-close">&times;</span>
-            <h2 class="modal-title">Ajouter un administrateur</h2>
-            <form id="admin-form-modal">
-                <input type="hidden" id="admin-edit-id">
-                <div class="form-group">
-                    <label class="form-label">Nom complet</label>
-                    <input type="text" class="form-control" id="admin-name" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Email</label>
-                    <input type="email" class="form-control" id="admin-email" required>
-                </div>
-                <div class="form-group admin-password-fields">
-                    <label class="form-label">Mot de passe</label>
-                    <input type="password" class="form-control" id="admin-password" autocomplete="new-password" minlength="8">
-                </div>
-                <div class="form-group admin-password-fields">
-                    <label class="form-label">Confirmer le mot de passe</label>
-                    <input type="password" class="form-control" id="admin-password-confirm" autocomplete="new-password" minlength="8">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Rôle</label>
-                    <select class="form-control" id="admin-role" required>
-                        <option value="admin">Administrateur</option>
-                        <option value="super_admin">Super Administrateur</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Statut</label>
-                    <select class="form-control" id="admin-status">
-                        <option value="active">Actif</option>
-                        <option value="inactive">Inactif</option>
-                    </select>
-                </div>
-                <button type="submit" class="btn btn-primary">Enregistrer</button>
-            </form>
-        </div>
-    </div>
-
     <div class="modal" id="user-profile-view-modal">
         <div class="modal-content">
             <span class="modal-close" id="close-user-profile-view">&times;</span>
@@ -3780,14 +3409,10 @@ $notifications_json = json_encode($notifications);
         var notificationsFromDB = <?php echo $notifications_json; ?>;
     </script>
     <script>
-        window.TCF_SA_BRANDING_DEFAULTS = <?php echo json_encode(['title' => $tcf_brand_default_name, 'tag' => $tcf_brand_default_tag], JSON_UNESCAPED_UNICODE); ?>;
-        window.TCF_SA_FALLBACK_LOGO = <?php echo json_encode(site_href('Assets/IMAGE/home/canada.jpg')); ?>;
-        window.TCF_CHAT_API = <?php echo json_encode(site_href('chat_api.php')); ?>;
         window.TCF_SITE_PUBLIC = <?php echo json_encode(rtrim(site_href(''), '/')); ?>;
+        window.TCF_COMMUNITY_API = <?php echo json_encode(site_href('community_api.php')); ?>;
     </script>
-    <script src="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.js"></script>
-    <script src="../Assets/javascript/sa-staff-chat.js"></script>
-    <script src="../Assets/javascript/superAdmin.ui.js"></script>
+    <script src="../Assets/javascript/superAdmin.ui.js?v=no-chat-2"></script>
     <script src="../Assets/javascript/admin-mobile-nav.js"></script>
 
     <div class="tcf-ai-assistant" id="tcf-ai-assistant" data-greeting="Bonjour, je suis votre assistant administration. Comment puis-je vous aider sur la plateforme ?">
@@ -3813,7 +3438,7 @@ $notifications_json = json_encode($notifications);
         window.TCF_ASSISTANT_API = <?php echo json_encode(site_href('gemini_assistant_api.php')); ?>;
         window.TCF_ASSISTANT_LS_KEY = 'tcf_ai_assistant_history_admin_v1';
     </script>
-    <script src="<?php echo htmlspecialchars(site_href('Assets/javascript/tcf-assistant-widget.js')); ?>"></script>
+    <script src="<?php echo htmlspecialchars(site_href('Assets/javascript/tcf-assistant-widget.js?v=gemini-fix-1')); ?>"></script>
 
     <?php
     if (!empty($tcf_profile_panel_user['id'])) {

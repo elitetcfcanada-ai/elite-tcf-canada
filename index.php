@@ -37,7 +37,7 @@ unset($_SESSION['contact_flash']);
     <link rel="stylesheet" href="<?php echo site_href('Assets/css/theme-vars.css'); ?>">
     <link rel="stylesheet" href="<?php echo site_href('Assets/css/header_footer.css'); ?>">
     <link rel="stylesheet" href="<?php echo site_href('Assets/css/tcf-brand-logo.css'); ?>">
-    <link rel="stylesheet" href="<?php echo site_href('Assets/css/style_tcf.css'); ?>">
+    <link rel="stylesheet" href="<?php echo site_href('Assets/css/style_tcf.css'); ?>?v=tc-card-2">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/subscription_section.css')); ?>">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/services-section.css')); ?>">
     <link rel="stylesheet" href="https://unpkg.com/boxicons@latest/css/boxicons.min.css">
@@ -84,7 +84,7 @@ unset($_SESSION['contact_flash']);
 <?php /* Bloc "Votre accès aux ressources / Gérer mon abonnement" supprimé à la demande */ ?>
 
 <!-- Début configuration de la section à propos -->
-<section class="tcf-container">
+<section class="tcf-container" id="formations">
     <div class="tcf-wrapper">
                             
         <h4 class="tcf-main-title"><i class='bx bxs-school'></i> NOS FORMATIONS</h4>
@@ -346,11 +346,11 @@ unset($_SESSION['contact_flash']);
             <div class="tcf-contact-cards">
                 <div class="tcf-contact-info-card">
                     <h5><i class="bx bxs-envelope"></i> E-mail</h5>
-                    <p><a href="mailto:<?php echo htmlspecialchars($tcf_index_contact['email']); ?>"><?php echo htmlspecialchars($tcf_index_contact['email']); ?></a></p>
+                    <p><a href="<?php echo htmlspecialchars(tcf_site_mailto($tcf_index_contact)); ?>"><?php echo htmlspecialchars($tcf_index_contact['email']); ?></a></p>
                 </div>
                 <div class="tcf-contact-info-card">
                     <h5><i class="bx bxs-phone-call"></i> Téléphone</h5>
-                    <p><?php echo htmlspecialchars($tcf_index_contact['phone_display']); ?></p>
+                    <p><a href="<?php echo htmlspecialchars(tcf_site_tel($tcf_index_contact)); ?>"><?php echo htmlspecialchars($tcf_index_contact['phone_display']); ?></a></p>
                 </div>
                 <div class="tcf-contact-info-card">
                     <h5><i class="bx bxs-time"></i> Horaires</h5>
@@ -398,7 +398,8 @@ unset($_SESSION['contact_flash']);
     if (!track) return;
 
     var BACKUP = track.innerHTML;
-    var MOBILE_MQ = window.matchMedia('(max-width: 640px)');
+    /* Sous ~900px : une carte/page (format carte de visite). Au-delà : 2 cartes côte à côte. */
+    var MOBILE_MQ = window.matchMedia('(max-width: 899px)');
     var state = { i: 0, timer: null, go: null, n: 0 };
 
     function debounce(fn, ms) {
@@ -602,7 +603,7 @@ unset($_SESSION['contact_flash']);
         window.TCF_SUBSCRIBE_LOGGED_IN = <?php echo !empty($_SESSION['user_id']) ? 'true' : 'false'; ?>;
         window.TCF_SUBSCRIBE_RETURN_PATH = <?php echo json_encode('abonnement.php'); ?>;
     </script>
-    <script src="<?php echo htmlspecialchars(site_href('Assets/javascript/subscription_checkout.js')); ?>" defer></script>
+    <script src="<?php echo htmlspecialchars(site_href('Assets/javascript/payment_modal.js')); ?>?v=<?php echo filemtime(__DIR__ . '/Assets/javascript/payment_modal.js'); ?>"></script>
     <script>
         (function() {
             var grid = document.querySelector('.pricing-grid');

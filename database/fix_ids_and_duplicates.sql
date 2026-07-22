@@ -17,7 +17,6 @@ DELETE FROM playlist_videos WHERE id = 0;
 DELETE FROM channel_playlists WHERE id = 0;
 DELETE FROM channel_posts WHERE id = 0;
 DELETE FROM channel_post_comments WHERE id = 0;
-DELETE FROM chat_messages WHERE id = 0;
 DELETE FROM community_messages WHERE id = 0;
 DELETE FROM videos WHERE id = 0;
 DELETE FROM users WHERE id = 0;
@@ -56,9 +55,6 @@ ALTER TABLE channel_posts MODIFY id INT(11) NOT NULL AUTO_INCREMENT;
 ALTER TABLE channel_post_comments ADD PRIMARY KEY (id);
 ALTER TABLE channel_post_comments MODIFY id INT(11) NOT NULL AUTO_INCREMENT;
 
-ALTER TABLE chat_messages ADD PRIMARY KEY (id);
-ALTER TABLE chat_messages MODIFY id INT(11) NOT NULL AUTO_INCREMENT;
-
 ALTER TABLE community_messages ADD PRIMARY KEY (id);
 ALTER TABLE community_messages MODIFY id INT(11) NOT NULL AUTO_INCREMENT;
 
@@ -82,7 +78,7 @@ ALTER TABLE trainers MODIFY id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 ALTER TABLE user_email_codes ADD PRIMARY KEY (id);
 ALTER TABLE user_email_codes MODIFY id INT(11) NOT NULL AUTO_INCREMENT;
 
--- Examens / chat (même règle : PK puis AI)
+-- Examens (même règle : PK puis AI)
 ALTER TABLE tcf_ce_consignes ADD PRIMARY KEY (id);
 ALTER TABLE tcf_ce_consignes MODIFY id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
@@ -106,15 +102,6 @@ ALTER TABLE tcf_ee_exam_views MODIFY id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREM
 
 ALTER TABLE tcf_eo_exam_views ADD PRIMARY KEY (id);
 ALTER TABLE tcf_eo_exam_views MODIFY id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE tcf_chat_messages ADD PRIMARY KEY (id);
-ALTER TABLE tcf_chat_messages MODIFY id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE tcf_chat_thread_members ADD PRIMARY KEY (id);
-ALTER TABLE tcf_chat_thread_members MODIFY id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE tcf_chat_threads ADD PRIMARY KEY (id);
-ALTER TABLE tcf_chat_threads MODIFY id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 ALTER TABLE tcf_eo_exams ADD PRIMARY KEY (id);
 ALTER TABLE tcf_eo_exams MODIFY id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT;

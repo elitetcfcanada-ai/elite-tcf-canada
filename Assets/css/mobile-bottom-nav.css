@@ -103,7 +103,8 @@
         position: fixed;
         left: 0;
         right: 0;
-        bottom: 0;
+        /* Au-dessus de la barre fixe — la barre ne doit jamais disparaître */
+        bottom: calc(var(--tcf-mobile-nav-h) + env(safe-area-inset-bottom, 0px));
         z-index: 1260;
         max-height: min(72vh, 520px);
         background: #fff;
@@ -112,11 +113,19 @@
         transform: translateY(105%);
         transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
         flex-direction: column;
-        padding-bottom: calc(var(--tcf-mobile-nav-h) + env(safe-area-inset-bottom, 0px));
+        padding-bottom: 0.35rem;
     }
 
     .tcf-mobile-sheet.is-open {
         transform: translateY(0);
+    }
+
+    .tcf-mobile-sheet[hidden] {
+        display: none !important;
+    }
+
+    .tcf-mobile-sheet:not([hidden]) {
+        display: flex !important;
     }
 
     .tcf-mobile-sheet__head {
@@ -184,8 +193,14 @@
         appearance: none;
     }
 
+    .tcf-mobile-sheet__link.is-active {
+        color: var(--main-color, #d30d0d);
+        background: rgba(211, 13, 13, 0.06);
+    }
+
     body.tcf-mobile-sheet-open {
         overflow: hidden;
+        touch-action: none;
     }
 
     /* Bouton remonter — à droite, au-dessus de la barre du bas */
@@ -207,6 +222,18 @@
 
     .tcf-mobile-nav {
         z-index: var(--tcf-mobile-nav-z) !important;
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        transform: none !important;
+    }
+
+    body.tcf-mobile-sheet-open .tcf-mobile-nav {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        z-index: var(--tcf-mobile-nav-z) !important;
     }
 
     .tcf-mobile-sheet-overlay {
@@ -218,6 +245,7 @@
 
     .tcf-mobile-sheet {
         z-index: 4900 !important;
+        bottom: var(--tcf-mobile-nav-reserve) !important;
     }
 
     /* Notifications / profil : panneaux internes, barre du bas toujours visible */

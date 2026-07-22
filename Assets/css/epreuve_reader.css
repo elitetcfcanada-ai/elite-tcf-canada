@@ -1,0 +1,1000 @@
+/* Page lecture épreuve — EE / EO : contenu cadré, marges extérieures */
+.tcf-epreuve-reader {
+    width: 100%;
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 0 clamp(1rem, 4.5vw, 2rem) 5.5rem;
+    box-sizing: border-box;
+}
+
+/* Même largeur pour EE et EO (ne plus élargir l’oral) */
+.tcf-epreuve-reader--wide {
+    max-width: 920px;
+}
+
+#ee-combos-container,
+#eo-detail-container {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    box-sizing: border-box;
+}
+
+body.tcf-page-epreuve-reader .tcf-epreuve-reader .combinaison,
+body.tcf-page-epreuve-reader #eo-detail-container .combinaison {
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+@media (max-width: 991px) {
+    .tcf-epreuve-reader,
+    .tcf-epreuve-reader--wide {
+        max-width: 100%;
+        padding-left: clamp(0.9rem, 3.5vw, 1.5rem);
+        padding-right: clamp(0.9rem, 3.5vw, 1.5rem);
+    }
+}
+
+@media (max-width: 560px) {
+    .tcf-epreuve-reader,
+    .tcf-epreuve-reader--wide {
+        padding-left: 0.85rem;
+        padding-right: 0.85rem;
+    }
+}
+
+/* Même bandeau sombre centré que les listes d’épreuves */
+body.tcf-page-epreuve-reader .hero-banner {
+    width: 100%;
+    margin: 0 0 1.15rem;
+    padding: clamp(1.1rem, 3vw, 1.85rem) 1rem;
+}
+
+body.tcf-page-epreuve-reader .hero-banner .hero-content {
+    max-width: 40rem;
+}
+
+body.tcf-page-epreuve-reader .hero-banner h1,
+body.tcf-page-epreuve-reader .hero-banner h1.hero-skill-title {
+    color: #d30d0d !important;
+    -webkit-text-fill-color: #d30d0d !important;
+    font-size: clamp(1.15rem, 4.2vw, 1.75rem) !important;
+    margin: 0 0 0.4rem !important;
+    padding-bottom: 0 !important;
+    line-height: 1.2 !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-transform: none !important;
+}
+
+body.tcf-page-epreuve-reader .hero-banner h1::before,
+body.tcf-page-epreuve-reader .hero-banner h1.hero-skill-title::before {
+    display: none !important;
+    content: none !important;
+}
+
+body.tcf-page-epreuve-reader .hero-banner p {
+    color: rgba(255, 255, 255, 0.8) !important;
+    font-size: clamp(0.8rem, 2vw, 0.95rem) !important;
+    line-height: 1.45 !important;
+    max-width: 32rem;
+    margin: 0 auto !important;
+}
+
+.tcf-epreuve-search {
+    margin-bottom: 1.25rem;
+}
+
+/* Contenu riche (HTML admin/seed) : mise en forme, pas de balises visibles */
+.tcf-epreuve-reader .ee-rich-text {
+    font-size: inherit;
+    line-height: 1.55;
+    word-wrap: break-word;
+}
+
+.tcf-epreuve-reader .ee-rich-text > :first-child {
+    margin-top: 0;
+}
+
+.tcf-epreuve-reader .ee-rich-text > :last-child {
+    margin-bottom: 0;
+}
+
+.tcf-epreuve-reader .ee-rich-text p {
+    margin: 0 0 0.75rem;
+}
+
+.tcf-epreuve-reader .document .ee-rich-text p {
+    font-size: 0.95rem;
+}
+
+.tcf-epreuve-reader .correction .ee-rich-text p,
+.tcf-epreuve-reader .correction .ee-rich-text li {
+    font-size: inherit;
+}
+
+/* EE reader : typo compacte comme EO (parties / énoncés) */
+#ee-combos-container .combinaison-header.tcf-combo-bar,
+#ee-combos-container .combinaison-header {
+    padding: 0.55rem 0.9rem !important;
+}
+
+#ee-combos-container .ee-rich-text,
+#ee-combos-container .ee-rich-text p,
+#ee-combos-container .ee-rich-text li,
+#ee-combos-container .ee-rich-text div,
+#ee-combos-container .ee-rich-text span {
+    font-size: 0.95rem !important;
+    line-height: 1.55 !important;
+}
+
+#ee-combos-container .tache .enonce-label {
+    font-size: 0.95rem !important;
+}
+
+#ee-combos-container .correction h4 {
+    font-size: 0.95rem !important;
+}
+
+#ee-combos-container .correction p,
+#ee-combos-container .correction li {
+    font-size: 0.92rem !important;
+    line-height: 1.55 !important;
+}
+
+
+.tcf-epreuve-reader .combinaison-header.tcf-combo-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    user-select: none;
+}
+
+.tcf-combo-bar__left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+.tcf-epreuve-reader .tcf-combo-bar h2 {
+    margin: 0;
+    font-size: 0.92rem !important;
+    color: #fff;
+}
+
+.tcf-combo-bar__right {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex-shrink: 0;
+}
+
+.tcf-combo-sim-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.4rem 0.75rem;
+    border: none;
+    border-radius: 10px;
+    background: #fff;
+    color: #1f2430;
+    font-weight: 700;
+    font-size: clamp(0.72rem, 2.2vw, 0.92rem);
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    transition: transform 0.15s ease, background 0.15s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.tcf-combo-sim-btn span {
+    display: inline !important;
+}
+
+.tcf-combo-sim-btn i {
+    font-size: 1em;
+    color: var(--primary-color, #d30d0d);
+}
+
+.tcf-combo-sim-btn:hover,
+.tcf-combo-sim-btn.is-active {
+    background: #fff5f5;
+    transform: translateY(-1px);
+}
+
+.tcf-combo-bar__chevron {
+    font-size: 0.85rem;
+    color: #fff;
+    transition: transform 0.2s ease;
+}
+
+.tcf-epreuve-reader .combinaison.active .tcf-combo-bar__chevron {
+    transform: rotate(180deg);
+}
+
+/* Bouton correction arrondi (style ancienne EO), aligné à droite */
+.tcf-task-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    margin-top: 1rem;
+}
+
+.tcf-sim-pill,
+.tcf-corr-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    margin: 0;
+    padding: 0.65rem 1.25rem;
+    border: 2px solid var(--main-color, #d30d0d);
+    border-radius: 50px;
+    background: #fff;
+    color: var(--main-color, #d30d0d);
+    font-weight: 600;
+    font-size: 1rem;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease, opacity 0.15s ease, border-color 0.15s ease;
+}
+
+.tcf-sim-pill i {
+    font-size: 1.05em;
+}
+
+.tcf-sim-pill:hover,
+.tcf-sim-pill.is-active {
+    background: var(--main-color, #d30d0d);
+    color: #fff;
+}
+
+.tcf-corr-pill:hover,
+.tcf-corr-pill[aria-expanded="true"] {
+    background: var(--main-color, #d30d0d);
+    color: #fff;
+}
+
+.tcf-corr-pill.is-disabled,
+.tcf-corr-pill:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    background: #f1f5f9 !important;
+    color: #94a3b8 !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: none;
+    transform: none;
+}
+
+.tcf-correction-panel {
+    display: none;
+    margin-top: 0.85rem;
+}
+
+.tcf-correction-panel.is-open {
+    display: block;
+}
+
+.tcf-task-sim-panel {
+    margin-top: 0.9rem;
+    padding: 1rem;
+    border: 1px solid #d7ddeb;
+    border-left: 4px solid var(--primary-color, #d30d0d);
+    border-radius: 10px;
+    background: #f8f9fd;
+}
+
+.tcf-task-sim-hint {
+    margin: 0 0 0.75rem;
+    color: #475569;
+    font-size: 0.95rem;
+    line-height: 1.45;
+}
+
+.tcf-task-sim-panel .ee-user-text,
+.tcf-combo-sim-panel .ee-user-text {
+    width: 100%;
+    min-height: 160px;
+    resize: vertical;
+}
+
+.tcf-task-sim-panel .ee-ai-correct-btn,
+.tcf-combo-sim-panel .ee-ai-correct-btn {
+    margin-top: 0.7rem;
+}
+
+.tcf-task-sim-panel .ee-ai-result,
+.tcf-combo-sim-panel .ee-ai-result {
+    margin-top: 0.85rem;
+}
+
+.tcf-sim-enonce-preview {
+    margin: 0 0 0.85rem;
+}
+
+.tcf-sim-enonce-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+}
+
+.tcf-sim-enonce-card strong {
+    display: block;
+    margin-bottom: 0.35rem;
+    color: var(--main-color, #d30d0d);
+    font-size: 0.95rem;
+}
+
+.tcf-sim-enonce-card p {
+    margin: 0;
+    color: #334155;
+    font-size: 0.98rem;
+    line-height: 1.55;
+    white-space: pre-wrap;
+}
+
+/* Simulateur : une seule zone + choix de tâche */
+.tcf-combo-sim-panel {
+    margin-top: 1.25rem;
+    padding: 1rem;
+    border: 1px solid #d7ddeb;
+    border-left: 4px solid var(--primary-color, #d30d0d);
+    border-radius: 10px;
+    background: #f8f9fd;
+}
+
+.tcf-sim-task-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.85rem;
+}
+
+.tcf-sim-task-btn {
+    border: 1px solid #d6ddf2;
+    background: #fff;
+    color: #223154;
+    border-radius: 999px;
+    padding: 0.45rem 0.95rem;
+    cursor: pointer;
+    font-weight: 700;
+    font-family: inherit;
+    transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.tcf-sim-task-btn:hover {
+    border-color: var(--primary-color, #d30d0d);
+    color: var(--primary-color, #d30d0d);
+}
+
+.tcf-sim-task-btn.is-active {
+    background: var(--primary-color, #d30d0d);
+    border-color: var(--primary-color, #d30d0d);
+    color: #fff;
+}
+
+@media (max-width: 560px) {
+    .tcf-epreuve-reader .tcf-combo-bar h2 {
+        font-size: 0.88rem !important;
+    }
+    .tcf-combo-sim-btn {
+        padding: 0.35rem 0.55rem;
+        font-size: 0.72rem;
+    }
+}
+
+/* La barre mobile doit rester au-dessus des sheets (ne pas baisser son z-index). */
+
+/* Barre tâches (EO + EE) — une ligne, case blanche comme le mockup */
+.eo-task-switcher,
+.ee-task-switcher {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 0.2rem;
+    width: 100%;
+    margin: 0 0 0.85rem;
+    padding: 0.3rem;
+    box-sizing: border-box;
+    background: #fff;
+    border: 1px solid #e8ecf2;
+    border-radius: 14px;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+}
+
+#eo-detail-container .eo-partie-body .eo-task-switcher {
+    margin: 0 0 0.85rem;
+}
+
+.eo-task-switcher__btn,
+.ee-task-switcher__btn {
+    flex: 1 1 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    min-width: 0;
+    padding: 0.65rem 0.55rem;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: #1e293b;
+    cursor: pointer;
+    font-family: inherit;
+    box-shadow: none;
+    transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.eo-task-switcher__btn i,
+.ee-task-switcher__btn i {
+    font-size: 1.15rem;
+    color: #94a3b8;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.eo-task-switcher__texts,
+.ee-task-switcher__texts {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 0;
+    text-align: left;
+    line-height: 1.15;
+}
+
+.eo-task-switcher__texts strong,
+.ee-task-switcher__texts strong {
+    font-size: 0.92rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.eo-task-switcher__texts small,
+.ee-task-switcher__texts small {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.eo-task-switcher__btn.is-active,
+.ee-task-switcher__btn.is-active {
+    background: #d30d0d;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(211, 13, 13, 0.32);
+}
+
+.eo-task-switcher__btn.is-active i,
+.eo-task-switcher__btn.is-active .eo-task-switcher__texts small,
+.ee-task-switcher__btn.is-active i,
+.ee-task-switcher__btn.is-active .ee-task-switcher__texts small {
+    color: rgba(255, 255, 255, 0.95);
+}
+
+/* Bandeau info Tâche 2 / 3 — même ligne, case claire */
+.eo-task-info {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.65rem;
+    margin: 0 0 0.75rem;
+    padding: 0.7rem 0.9rem;
+    border-radius: 12px;
+    background: rgba(211, 13, 13, 0.05);
+    border: 1px solid rgba(211, 13, 13, 0.22);
+    box-sizing: border-box;
+}
+
+.eo-task-info__icon {
+    flex-shrink: 0;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #d30d0d;
+    color: #fff;
+    font-size: 1.05rem;
+}
+
+.eo-task-info > div {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.eo-task-info strong {
+    display: block;
+    font-size: 0.92rem;
+    color: #141622;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.eo-task-info span {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #9c0a0a;
+    margin-top: 0.12rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.eo-task-empty,
+.ee-task-empty {
+    margin: 0;
+    padding: 0.75rem 0.9rem;
+    font-size: 0.9rem;
+    color: #475569;
+    background: #fff;
+    border: 1px solid #e8ecf2;
+    border-radius: 10px;
+}
+
+/* Carte Tâche 1 — Présentation (design mockup, couleurs plateforme) */
+.eo-t1-card {
+    background: #fff;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+    border: 1px solid #e8ecf2;
+}
+
+.eo-t1-card__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.9rem 1rem;
+    background: linear-gradient(90deg, #9c0a0a 0%, #d30d0d 100%);
+    color: #fff;
+}
+
+.eo-t1-card__title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    min-width: 0;
+}
+
+.eo-t1-card__icon {
+    width: 2.35rem;
+    height: 2.35rem;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1.15rem;
+}
+
+.eo-t1-card__head h3 {
+    margin: 0;
+    font-size: 0.98rem;
+    font-weight: 800;
+    color: #fff;
+}
+
+.eo-t1-card__head p {
+    margin: 0.15rem 0 0;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.88);
+}
+
+.eo-t1-card__time {
+    flex-shrink: 0;
+    font-size: 0.82rem;
+    font-weight: 700;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.eo-t1-card__body {
+    padding: 0.95rem 1rem 1.05rem;
+}
+
+.eo-t1-card__lead {
+    margin: 0 0 0.85rem;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #334155;
+}
+
+.eo-t1-card__points-title {
+    margin: 0 0 0.55rem;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #9c0a0a;
+}
+
+.eo-t1-points {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.55rem;
+    margin-bottom: 0.9rem;
+}
+
+.eo-t1-point {
+    background: #fff5f5;
+    border: 1px solid rgba(211, 13, 13, 0.14);
+    border-radius: 10px;
+    padding: 0.65rem 0.55rem;
+    text-align: center;
+}
+
+.eo-t1-point__n {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.55rem;
+    height: 1.55rem;
+    border-radius: 50%;
+    background: #d30d0d;
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 800;
+    margin-bottom: 0.35rem;
+}
+
+.eo-t1-point strong {
+    display: block;
+    font-size: 0.82rem;
+    color: #9c0a0a;
+    margin-bottom: 0.15rem;
+}
+
+.eo-t1-point small {
+    display: block;
+    font-size: 0.72rem;
+    color: #64748b;
+    line-height: 1.3;
+}
+
+.eo-t1-soon {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.7rem 1rem;
+    border: none;
+    border-radius: 999px;
+    background: #e2e8f0;
+    color: #64748b;
+    font-weight: 700;
+    font-size: 0.92rem;
+    font-family: inherit;
+    cursor: not-allowed;
+}
+
+/* EO : un sujet par ligne, cartes un peu compactes — bouton correction inchangé */
+#eo-detail-container .task-container {
+    display: flex !important;
+    flex-direction: column !important;
+    grid-template-columns: none !important;
+    gap: 0.75rem !important;
+    margin-bottom: 0;
+}
+
+#eo-detail-container .task-container > .task-card,
+#eo-detail-container .task-container > .eo-subject-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: 0 0 auto !important;
+}
+
+#eo-detail-container .eo-subject-card.task-card,
+#eo-detail-container .eo-subject-card {
+    display: block;
+    height: auto;
+    padding: 0.9rem 1rem 1rem !important;
+    border-radius: 10px !important;
+    border-top-width: 3px !important;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06) !important;
+    transform: none !important;
+}
+
+#eo-detail-container .eo-subject-card:hover {
+    transform: none !important;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.1) !important;
+}
+
+#eo-detail-container .eo-subject-card::after {
+    display: none !important;
+}
+
+#eo-detail-container .eo-subject-card .card-number {
+    width: 1.85rem !important;
+    height: 1.85rem !important;
+    font-size: 0.8rem !important;
+    border-bottom-left-radius: 8px !important;
+}
+
+#eo-detail-container .eo-subject-card h3 {
+    margin: 0 0 0.4rem !important;
+    padding-right: 2rem;
+    font-size: 1.05rem !important;
+    gap: 0.4rem !important;
+}
+
+#eo-detail-container .eo-subject-card h3 i {
+    font-size: 1.15rem !important;
+}
+
+#eo-detail-container .eo-subject-card .eo-role-label {
+    margin: 0 0 0.45rem !important;
+    font-size: 0.82rem !important;
+}
+
+#eo-detail-container .eo-subject-card .enonce-label {
+    margin: 0 0 0.25rem !important;
+    font-size: 0.88rem !important;
+}
+
+#eo-detail-container .eo-subject-card .eo-prompt,
+#eo-detail-container .eo-subject-card .ee-rich-text,
+#eo-detail-container .eo-subject-card .ee-rich-text p {
+    margin-bottom: 0.35rem !important;
+    font-size: 0.95rem !important;
+    line-height: 1.5 !important;
+}
+
+#eo-detail-container .eo-subject-card .tcf-task-actions {
+    margin-top: 0.75rem;
+    padding-top: 0;
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* Ne pas modifier .tcf-corr-pill — design plateforme conservé */
+
+#eo-detail-container .eo-subject-card .tcf-correction-panel {
+    margin-top: 0.65rem !important;
+}
+
+#eo-detail-container .combinaison {
+    margin-bottom: 0.75rem !important;
+}
+
+#eo-detail-container .combinaison-content.eo-partie-body {
+    padding: 1rem 1.1rem !important;
+}
+
+#eo-detail-container .combinaison-header h2 {
+    font-size: 1.35rem !important;
+    font-weight: 700 !important;
+    line-height: 1.25 !important;
+}
+
+/* EO : barres Partie = épaisseur type combinaisons EE (sans sur-épaisseur) */
+body.tcf-page-epreuve-reader #eo-detail-container .combinaison-header,
+body.tcf-page-epreuve-reader #eo-detail-container .combinaison-header.eo-part-bar,
+body.tcf-page-epreuve-reader #eo-detail-container .combinaison-header.tcf-combo-bar {
+    background-color: #9c0a0a !important;
+    background: #9c0a0a !important;
+    color: #fff !important;
+    padding: 0.9rem 1.35rem !important;
+    min-height: 0 !important;
+}
+
+body.tcf-page-epreuve-reader #eo-detail-container .combinaison-header h2,
+body.tcf-page-epreuve-reader #eo-detail-container .eo-part-meta,
+body.tcf-page-epreuve-reader #eo-detail-container .combinaison-header .icon {
+    color: #fff !important;
+}
+
+body.tcf-page-epreuve-reader #eo-detail-container .eo-part-meta {
+    font-size: 0.92rem !important;
+    font-weight: 600 !important;
+}
+
+body.tcf-page-epreuve-reader #eo-detail-container .combinaison-header .icon {
+    font-size: 0.85rem !important;
+}
+
+/* Correction EO : compacte, lisible, pas collée (annule line-height 1.9 d’EE) */
+#eo-detail-container .correction.tcf-correction-panel,
+#eo-detail-container .eo-subject-card .correction {
+    padding: 0.75rem 0.9rem !important;
+    margin-top: 0.55rem !important;
+    border-radius: 8px !important;
+}
+
+#eo-detail-container .correction h4,
+#eo-detail-container .eo-subject-card .correction h4 {
+    margin: 0 0 0.4rem !important;
+    font-size: 1.05rem !important;
+    line-height: 1.3 !important;
+}
+
+#eo-detail-container .eo-correction-body,
+#eo-detail-container .correction .eo-correction-body,
+#eo-detail-container .correction .ee-rich-text {
+    white-space: normal !important;
+    font-size: 0.95rem !important;
+    line-height: 1.45 !important;
+}
+
+#eo-detail-container .correction .ee-rich-text p,
+#eo-detail-container .correction .ee-rich-text li,
+#eo-detail-container .correction .eo-correction-body p,
+#eo-detail-container .correction .eo-correction-body li,
+#eo-detail-container .correction .eo-correction-body div,
+#eo-detail-container .correction .eo-correction-body span,
+#eo-detail-container .combinaison-content .correction p,
+#eo-detail-container .combinaison-content .correction li,
+#eo-detail-container .combinaison-content .correction div,
+#eo-detail-container .combinaison-content .correction span {
+    font-size: 0.95rem !important;
+    line-height: 1.45 !important;
+    margin: 0 0 0.35rem !important;
+}
+
+#eo-detail-container .correction .ee-rich-text > :last-child,
+#eo-detail-container .correction .eo-correction-body > :last-child {
+    margin-bottom: 0 !important;
+}
+
+#eo-detail-container .correction .ee-rich-text br,
+#eo-detail-container .correction .eo-correction-body br {
+    line-height: 1.35;
+}
+
+@media (max-width: 991px) {
+    .eo-task-switcher,
+    .ee-task-switcher {
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        gap: 0.15rem;
+        padding: 0.25rem;
+        border-radius: 12px;
+    }
+
+    .eo-task-switcher__btn,
+    .ee-task-switcher__btn {
+        justify-content: center;
+        gap: 0.3rem;
+        padding: 0.5rem 0.35rem;
+        border-radius: 8px;
+    }
+
+    .eo-task-switcher__btn i,
+    .ee-task-switcher__btn i {
+        font-size: 1rem;
+    }
+
+    .eo-task-switcher__texts strong,
+    .ee-task-switcher__texts strong {
+        font-size: 0.78rem;
+    }
+
+    .eo-task-switcher__texts small,
+    .ee-task-switcher__texts small {
+        font-size: 0.62rem;
+    }
+
+    .eo-task-info {
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        gap: 0.5rem;
+        padding: 0.55rem 0.7rem;
+        border-radius: 10px;
+    }
+
+    .eo-task-info__icon {
+        width: 1.7rem;
+        height: 1.7rem;
+        font-size: 0.9rem;
+        border-radius: 7px;
+    }
+
+    .eo-task-info strong {
+        font-size: 0.8rem;
+    }
+
+    .eo-task-info span {
+        font-size: 0.68rem;
+    }
+}
+
+@media (max-width: 700px) {
+    .eo-task-switcher,
+    .ee-task-switcher,
+    #eo-detail-container .eo-partie-body .eo-task-switcher {
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        gap: 0.1rem;
+        padding: 0.2rem;
+        border-radius: 11px;
+    }
+
+    .eo-task-switcher__btn,
+    .ee-task-switcher__btn {
+        justify-content: center;
+        gap: 0.22rem;
+        padding: 0.42rem 0.22rem;
+        border-radius: 8px;
+    }
+
+    .eo-task-switcher__btn i,
+    .ee-task-switcher__btn i {
+        font-size: 0.9rem;
+    }
+
+    .eo-task-switcher__texts strong,
+    .ee-task-switcher__texts strong {
+        font-size: 0.7rem;
+    }
+
+    .eo-task-switcher__texts small,
+    .ee-task-switcher__texts small {
+        font-size: 0.56rem;
+    }
+
+    .eo-task-info {
+        gap: 0.4rem;
+        padding: 0.45rem 0.55rem;
+    }
+
+    .eo-task-info__icon {
+        width: 1.5rem;
+        height: 1.5rem;
+        font-size: 0.8rem;
+    }
+
+    .eo-task-info strong {
+        font-size: 0.72rem;
+    }
+
+    .eo-task-info span {
+        font-size: 0.6rem;
+    }
+
+    .eo-t1-points {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .eo-t1-card__head {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 420px) {
+    .eo-task-switcher__btn i,
+    .ee-task-switcher__btn i {
+        display: none;
+    }
+
+    .eo-task-switcher__texts strong,
+    .ee-task-switcher__texts strong {
+        font-size: 0.68rem;
+    }
+
+    .eo-task-switcher__texts small,
+    .ee-task-switcher__texts small {
+        font-size: 0.52rem;
+    }
+}

@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/subscription_access.php';
+require_once __DIR__ . '/includes/tcf_notifications_helper.php';
+require_once __DIR__ . '/includes/rich_text.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -87,54 +89,34 @@ function ee_ensure_consignes_table(PDO $pdo): void
 
 function ee_seed_default_consignes(PDO $pdo): void
 {
-    $defaultTask1Body = "Entretien dirigé : vous répondez à des questions sur vous-même.\nObjectif : se présenter clairement et parler de votre quotidien.";
-    $defaultTask2Body = "Exercice en interaction : obtenir des informations dans une situation courante.\nObjectif : poser des questions, reformuler et interagir de manière naturelle.";
-    $defaultTask3Body = "Expression d'un point de vue : argumentez sur un sujet donné.\nObjectif : structurer vos idées (introduction, développement, conclusion).";
-
-    // Nettoyage: retirer les consignes ELITE injectées précédemment.
-    $clean = $pdo->prepare(
-        "UPDATE tcf_ee_consignes
-         SET body = ?, title='Tâche 1', visibility='gratuit', is_published=1
-         WHERE task_key='tache1' AND body LIKE '%ELITE TCF CANADA%'"
-    );
-    $clean->execute([$defaultTask1Body]);
-    $clean2 = $pdo->prepare(
-        "UPDATE tcf_ee_consignes
-         SET body = ?, title='Tâche 2', visibility='gratuit', is_published=1
-         WHERE task_key='tache2' AND body LIKE '%ELITE TCF CANADA%'"
-    );
-    $clean2->execute([$defaultTask2Body]);
-
-    $taskCount = (int) $pdo->query("SELECT COUNT(*) FROM tcf_ee_consignes WHERE task_key IN ('tache1','tache2','tache3')")->fetchColumn();
-    if ($taskCount > 0) {
-        return;
-    }
-    $defaults = [
-        [
-            'title' => "Tâche 1",
-            'body' => $defaultTask1Body,
-            'task_key' => 'tache1',
-            'visibility' => 'gratuit',
-            'sort_order' => 1,
-        ],
-        [
-            'title' => "Tâche 2",
-            'body' => $defaultTask2Body,
-            'task_key' => 'tache2',
-            'visibility' => 'gratuit',
-            'sort_order' => 2,
-        ],
-        [
-            'title' => "Tâche 3",
-            'body' => $defaultTask3Body,
-            'task_key' => 'tache3',
-            'visibility' => 'gratuit',
-            'sort_order' => 3,
-        ],
+    require_once __DIR__ . '/includes/tcf_consignes_defaults.php';
+    $bodies = tcf_consigne_ee_bodies();
+    $titles = [
+        'tache1' => 'Tâche 1 : Message court',
+        'tache2' => 'Tâche 2 : Article de blog / Narration',
+        'tache3' => 'Tâche 3 : Texte argumentatif',
     ];
-    $ins = $pdo->prepare('INSERT INTO tcf_ee_consignes (title, body, task_key, visibility, is_published, sort_order, is_active) VALUES (?, ?, ?, ?, 1, ?, 1)');
-    foreach ($defaults as $row) {
-        $ins->execute([$row['title'], $row['body'], $row['task_key'], $row['visibility'], $row['sort_order']]);
+
+    foreach (['tache1', 'tache2', 'tache3'] as $i => $key) {
+        $sort = $i + 1;
+        $st = $pdo->prepare('SELECT id, body FROM tcf_ee_consignes WHERE task_key=? ORDER BY id ASC LIMIT 1');
+        $st->execute([$key]);
+        $row = $st->fetch(PDO::FETCH_ASSOC);
+        $body = $bodies[$key];
+        $title = $titles[$key];
+        if (!$row) {
+            $ins = $pdo->prepare(
+                'INSERT INTO tcf_ee_consignes (title, body, task_key, visibility, is_published, sort_order, is_active) VALUES (?, ?, ?, ?, 1, ?, 1)'
+            );
+            $ins->execute([$title, $body, $key, 'gratuit', $sort]);
+            continue;
+        }
+        if (tcf_consigne_body_needs_refresh((string) ($row['body'] ?? ''), 'ee')) {
+            $upd = $pdo->prepare(
+                'UPDATE tcf_ee_consignes SET title=?, body=?, visibility=?, is_published=1, sort_order=?, is_active=1 WHERE id=?'
+            );
+            $upd->execute([$title, $body, 'gratuit', $sort, (int) $row['id']]);
+        }
     }
 }
 
@@ -296,9 +278,13 @@ function ee_can_view_premium_consigne(PDO $pdo): bool
 
 function ee_consigne_task_title(string $taskKey): string
 {
-    if ($taskKey === 'tache2') return 'Tâche 2';
-    if ($taskKey === 'tache3') return 'Tâche 3';
-    return 'Tâche 1';
+    if ($taskKey === 'tache2') {
+        return 'Tâche 2 : Article de blog / Narration';
+    }
+    if ($taskKey === 'tache3') {
+        return 'Tâche 3 : Texte argumentatif';
+    }
+    return 'Tâche 1 : Message court';
 }
 
 function ee_simulator_task_defaults(string $taskKey): array
@@ -561,7 +547,12 @@ switch ($action) {
             } else {
                 $stmt = $pdo->query("SELECT id, title, body, task_key, visibility, is_published, sort_order FROM tcf_ee_consignes WHERE is_published=1 AND visibility='gratuit' AND task_key IN ('tache1','tache2','tache3') ORDER BY task_key ASC, sort_order ASC, id ASC");
             }
-            ee_json(['success' => true, 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC), 'can_premium' => $canPremium]);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($rows as &$row) {
+                $row['body'] = tcf_normalize_rich((string) ($row['body'] ?? ''));
+            }
+            unset($row);
+            ee_json(['success' => true, 'data' => $rows, 'can_premium' => $canPremium]);
         } catch (Throwable $e) {
             ee_json(['success' => false, 'message' => $e->getMessage()]);
         }
@@ -880,9 +871,16 @@ switch ($action) {
             try {
                 $pdo->prepare('INSERT INTO activities (user_id,type,title,description,icon) VALUES (?,?,?,?,?)')
                     ->execute([(int) $_SESSION['user_id'], 'topic', 'Épreuve EE publiée', "L'épreuve '$title' a été créée", 'bx bxs-book']);
-                $pdo->prepare("INSERT INTO notifications (user_id,type,title,content) VALUES (NULL,?,?,?)")
-                    ->execute(['topic', "Nouvelle épreuve d'expression écrite", "L'épreuve '$title' vient d'être publiée."]);
             } catch (Throwable $e) {
+            }
+            if ($is_published) {
+                tcf_notify_users_registered_before(
+                    $pdo,
+                    'exam',
+                    'Nouvelle épreuve — Expression écrite',
+                    "L'épreuve « $title » est maintenant disponible.",
+                    site_href('epreuve_ee.php?id=' . $examId)
+                );
             }
 
             ee_json(['success' => true, 'message' => 'Épreuve créée avec succès.', 'exam_id' => $examId]);
@@ -916,6 +914,11 @@ switch ($action) {
 
         try {
             ee_ensure_exams_visibility_column($pdo);
+            $wasPublished = 0;
+            $stWas = $pdo->prepare('SELECT is_published FROM tcf_ee_exams WHERE id=?');
+            $stWas->execute([$examId]);
+            $wasPublished = (int) $stWas->fetchColumn();
+
             $pdo->beginTransaction();
             $pdo->prepare('UPDATE tcf_ee_exams SET title=?,subtitle=?,visibility=?,is_published=?,published_at=CASE WHEN ?=1 AND is_published=0 THEN NOW() ELSE published_at END WHERE id=?')
                 ->execute([$title, $subtitle ?: null, $visibility, $is_published, $is_published, $examId]);
@@ -929,6 +932,15 @@ switch ($action) {
                 $pdo->prepare('INSERT INTO activities (user_id,type,title,description,icon) VALUES (?,?,?,?,?)')
                     ->execute([(int) $_SESSION['user_id'], 'topic', 'Épreuve EE modifiée', "L'épreuve '$title' a été mise à jour", 'bx bxs-book']);
             } catch (Throwable $e) {
+            }
+            if ($is_published && !$wasPublished) {
+                tcf_notify_users_registered_before(
+                    $pdo,
+                    'exam',
+                    'Nouvelle épreuve — Expression écrite',
+                    "L'épreuve « $title » est maintenant disponible.",
+                    site_href('epreuve_ee.php?id=' . $examId)
+                );
             }
 
             ee_json(['success' => true, 'message' => 'Épreuve mise à jour.']);

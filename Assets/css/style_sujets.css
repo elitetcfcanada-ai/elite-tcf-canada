@@ -10,63 +10,169 @@
     --transition: all 0.3s ease;
 }
 
-/* Hero Banner */
+/* Hero Banner — bandeau épreuves (compact, nom en rouge, 1 ligne) */
 .hero-banner {
-    padding: 60px 0;
+    position: relative;
+    padding: 1.85rem 1rem 1.95rem;
     text-align: center;
-    margin-bottom: 40px;
-    border-bottom: 1px solid var(--border-color);
-    background: var(--text-color);
-    color: white;
+    margin-bottom: 1.35rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background:
+        radial-gradient(ellipse 90% 140% at 50% -30%, rgba(211, 13, 13, 0.28), transparent 58%),
+        linear-gradient(180deg, #1a1d2b 0%, var(--text-color, #141622) 100%);
+    color: #fff;
+    overflow: hidden;
+}
+
+.hero-banner::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(115deg, transparent 40%, rgba(211, 13, 13, 0.06) 50%, transparent 60%);
+    pointer-events: none;
+}
+
+.hero-banner::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    width: min(8.5rem, 42%);
+    height: 3px;
+    transform: translateX(-50%);
+    background: linear-gradient(90deg, transparent, var(--main-color, #d30d0d), transparent);
+    border-radius: 999px;
 }
 
 .hero-content {
-    max-width: 800px;
+    position: relative;
+    z-index: 1;
+    max-width: 40rem;
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 0 0.5rem;
 }
 
+.hero-banner .hero-kicker {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    margin: 0 0 0.65rem !important;
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    background: rgba(211, 13, 13, 0.12);
+    border: 1px solid rgba(211, 13, 13, 0.35);
+    color: rgba(255, 255, 255, 0.92) !important;
+    font-size: 0.72rem !important;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    line-height: 1.2 !important;
+}
+
+.hero-banner .hero-kicker i {
+    color: var(--main-color, #d30d0d);
+    font-size: 0.95rem;
+}
+
+.hero-banner .hero-skill-title,
+.hero-banner h1.hero-skill-title,
+section.hero-banner h1.hero-skill-title,
+body .hero-banner h1.hero-skill-title {
+    margin: 0 0 0.4rem !important;
+    padding-bottom: 0 !important;
+    color: #d30d0d !important;
+    -webkit-text-fill-color: #d30d0d !important;
+    font-size: clamp(1.2rem, 5vw, 1.95rem) !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.02em;
+    line-height: 1.15 !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    text-shadow: none;
+    text-transform: none !important;
+}
+
+.hero-banner .hero-skill-title::before,
+.hero-banner h1.hero-skill-title::before,
+section.hero-banner h1.hero-skill-title::before,
+body .hero-banner h1.hero-skill-title::before {
+    display: none !important;
+    content: none !important;
+    border: 0 !important;
+    background: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+.hero-banner .hero-motto {
+    margin: 0 0 0.6rem !important;
+    color: #ffffff !important;
+    font-size: clamp(0.95rem, 2.4vw, 1.2rem) !important;
+    font-weight: 700 !important;
+    line-height: 1.25 !important;
+}
+
+.hero-banner .hero-motto em,
+.hero-banner .hero-motto span {
+    color: var(--main-color, #d30d0d);
+    font-style: normal;
+    font-weight: 800;
+}
+
+.hero-banner .hero-lead,
+.hero-banner p.hero-lead {
+    margin: 0 auto !important;
+    max-width: 32rem;
+    color: rgba(255, 255, 255, 0.78) !important;
+    font-size: clamp(0.8rem, 2vw, 0.95rem) !important;
+    line-height: 1.45 !important;
+    font-weight: 400 !important;
+}
+
+/* Compat anciennes pages / lecteur */
 .hero-banner h4 {
-    font-size: 1.2rem;
-    margin-bottom: 15px;
+    font-size: clamp(0.95rem, 3.5vw, 1.15rem) !important;
+    margin: 0 0 0.4rem !important;
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 0.4rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--main-color, #d30d0d) !important;
+    font-weight: 700 !important;
+    line-height: 1.2 !important;
 }
 
 .hero-banner h4 i {
-    margin-right: 12px;
+    margin-right: 0;
     color: var(--main-color);
-    font-size: 1.5rem;
+    font-size: 1.05rem;
+    flex-shrink: 0;
 }
 
-.hero-banner h1 {
-    font-size: 2.8rem;
-    margin-bottom: 20px;
-    line-height: 1.2;
+.hero-banner h1:not(.hero-skill-title) {
+    font-size: clamp(1.2rem, 4.5vw, 1.75rem) !important;
+    margin: 0 0 0.45rem !important;
+    line-height: 1.2 !important;
+    font-weight: 800 !important;
 }
 
 .hero-banner h1 span {
     color: var(--main-color);
-    position: relative;
 }
 
-.hero-banner h1 span::after {
-    content: '';
-    position: absolute;
-    bottom: 5px;
-    left: 0;
-    width: 100%;
-    height: 8px;
-    background: rgba(211, 13, 13, 0.2);
-    z-index: -1;
-}
-
-.hero-banner p {
-    font-size: 1.1rem;
-    opacity: 0.9;
-    max-width: 600px;
-    margin: 0 auto;
+.hero-banner > .hero-content > p:not(.hero-kicker):not(.hero-motto):not(.hero-lead) {
+    font-size: clamp(0.8rem, 2vw, 0.95rem) !important;
+    opacity: 0.85;
+    max-width: 32rem;
+    margin: 0 auto !important;
+    line-height: 1.45 !important;
 }
 
 /* Bouton Consigne */
@@ -74,10 +180,9 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 10px;
+    gap: 0.55rem;
     flex-wrap: wrap;
-    margin: 20px 0 40px;
-    
+    margin: 0.75rem 0 1.35rem;
 }
 
 .consigne-btn {
@@ -185,11 +290,13 @@
     margin-bottom: 10px;
 }
 
-/* Section Épreuve */
+/* Section Épreuve — EE / EO listes : cadré avec marges latérales */
 .section_epreuve {
-    max-width: 1200px;
+    max-width: 960px;
     margin: 0 auto 60px;
-    padding: 0 20px;
+    padding: 0 clamp(1rem, 4vw, 1.75rem);
+    box-sizing: border-box;
+    width: 100%;
 }
 
 .row_arrangement {
@@ -314,23 +421,20 @@ button.column_arrangement {
     transform: translateY(-5px);
 }
 
-/* Responsive */
-
-
-@media (max-width: 1024px) {
-    .hero-banner h1 {
-        font-size: 2.4rem;
-    }
-}
-
 @media (max-width: 900px) {
-    .hero-banner h1 {
-        font-size: 2rem;
+    .hero-banner {
+        padding: 1.35rem 0.85rem;
+        margin-bottom: 1.05rem;
+    }
+
+    .consigne-container {
+        margin: 0.7rem 0 1.25rem;
+        gap: 0.5rem;
     }
 
     #ce-consignes-section > header h1,
     #co-consignes-section > header h1 {
-        font-size: 2rem;
+        font-size: 1.35rem;
     }
 }
 
@@ -338,9 +442,19 @@ button.column_arrangement {
     .row_arrangement {
         grid-template-columns: 1fr;
     }
-    
-    .hero-banner h1 {
-        font-size: 1.8rem;
+
+    .hero-banner {
+        padding: 1.15rem 0.75rem;
+        margin-bottom: 0.9rem;
+    }
+
+    .hero-banner .hero-skill-title,
+    .hero-banner h1.hero-skill-title {
+        font-size: clamp(1.05rem, 5.5vw, 1.45rem) !important;
+    }
+
+    .consigne-container {
+        margin: 0.55rem 0 1rem;
     }
 }
 
@@ -383,29 +497,48 @@ button.column_arrangement {
 
 @media (max-width: 480px) {
     .hero-banner {
-        padding: 30px 0;
+        padding: 1rem 0.65rem 1.1rem;
+        margin-bottom: 0.75rem;
     }
-    
-    .hero-banner h1 {
-        font-size: 1.6rem;
+
+    .hero-banner .hero-kicker {
+        font-size: 0.68rem !important;
+        padding: 0.22rem 0.55rem;
+        margin-bottom: 0.4rem !important;
     }
-    
-    .hero-banner p {
-        font-size: 1rem;
+
+    .hero-banner .hero-skill-title,
+    .hero-banner h1.hero-skill-title {
+        font-size: clamp(1rem, 5.8vw, 1.28rem) !important;
+        margin-bottom: 0.25rem !important;
     }
-    
+
+    .hero-banner .hero-motto {
+        font-size: 0.92rem !important;
+        margin-bottom: 0.4rem !important;
+    }
+
+    .hero-banner .hero-lead {
+        font-size: 0.78rem !important;
+    }
+
+    .consigne-container {
+        margin: 0.45rem 0 0.9rem;
+        gap: 0.4rem;
+    }
+
     .section_epreuve {
         padding: 0 15px;
     }
-    
+
     .column_arrangement {
         padding: 20px;
     }
-    
+
     .consigne-btn {
-        padding: 10px 14px;
-        font-size: 0.88rem;
-        min-width: 120px;
+        padding: 0.55rem 0.85rem;
+        font-size: 0.85rem;
+        min-width: 0;
         justify-content: center;
     }
 }

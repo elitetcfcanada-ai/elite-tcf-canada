@@ -978,505 +978,6 @@
     color: var(--text-color);
 }
 
-/* Chat */
-.tcf-superadmin-app .chat-users-wrap {
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    min-width: 0;
-    background: var(--sa-surface2);
-    border: 1px solid var(--sa-border);
-    border-radius: 10px;
-    overflow: hidden;
-}
-
-.tcf-superadmin-app .sa-chat-search-wrap {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.55rem 0.65rem;
-    border-bottom: 1px solid var(--sa-border);
-    background: var(--card-bg);
-    flex-shrink: 0;
-}
-
-.tcf-superadmin-app .sa-chat-search-wrap .bx-search {
-    font-size: 1.1rem;
-    color: var(--sa-muted);
-    flex-shrink: 0;
-}
-
-.tcf-superadmin-app .sa-chat-search-input {
-    flex: 1;
-    min-width: 0;
-    border: 0;
-    background: transparent;
-    font-size: 0.9rem;
-    color: var(--text-color);
-    padding: 0.35rem 0.25rem;
-    outline: none;
-}
-
-.tcf-superadmin-app .sa-chat-search-input::placeholder {
-    color: var(--sa-muted);
-}
-
-.tcf-superadmin-app .sa-chat-list-empty {
-    padding: 1rem 0.85rem;
-    font-size: 0.88rem;
-    line-height: 1.45;
-    color: var(--sa-muted);
-}
-
-.tcf-superadmin-app .chat-container {
-    display: grid;
-    grid-template-columns: minmax(240px, 32%) 1fr;
-    gap: 1rem;
-    align-items: stretch;
-    min-height: min(560px, calc(100vh - 280px));
-    min-height: min(560px, calc(100dvh - 280px));
-}
-
-.tcf-superadmin-app .chat-container > .chat-messages {
-    min-height: 0;
-}
-
-.tcf-superadmin-app .chat-users {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    max-height: none;
-    background: transparent;
-    border: 0;
-    border-radius: 0;
-    -webkit-overflow-scrolling: touch;
-}
-
-.tcf-superadmin-app .sa-chat-back-btn {
-    display: none;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    margin: 0;
-    padding: 0;
-    flex-shrink: 0;
-    border: 0;
-    border-radius: 10px;
-    background: rgba(20, 22, 34, 0.06);
-    color: var(--text-color);
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-}
-
-.tcf-superadmin-app .message-header-main {
-    display: flex;
-    align-items: center;
-    gap: 0.65rem;
-    min-width: 0;
-    flex: 1;
-}
-
-.tcf-superadmin-app .message-header-main #current-user-name {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-@media (max-width: 900px) {
-    .tcf-superadmin-app .chat-container {
-        display: flex;
-        flex-direction: column;
-        flex: 1;
-        min-height: min(480px, calc(100dvh - 260px));
-        gap: 0;
-        grid-template-columns: unset;
-        grid-template-rows: unset;
-    }
-
-    .tcf-superadmin-app .chat-container .chat-users-wrap {
-        flex: 1;
-        min-height: 0;
-        max-height: none;
-    }
-
-    .tcf-superadmin-app .chat-container .chat-messages {
-        display: none;
-        flex: 1;
-        flex-direction: column;
-        min-height: 0;
-        min-width: 0;
-    }
-
-    .tcf-superadmin-app .chat-container.sa-chat-mobile-conversation .chat-users-wrap {
-        display: none;
-    }
-
-    .tcf-superadmin-app .chat-container.sa-chat-mobile-conversation .chat-messages {
-        display: flex;
-    }
-
-    .tcf-superadmin-app .chat-container.sa-chat-mobile-conversation .sa-chat-back-btn {
-        display: inline-flex;
-    }
-
-    .tcf-superadmin-app .message-body {
-        flex: 1 !important;
-        min-height: 0 !important;
-        max-height: none !important;
-    }
-
-    .tcf-superadmin-app .message-footer {
-        flex-wrap: nowrap;
-        flex-shrink: 0;
-    }
-
-    .tcf-superadmin-app .message-input {
-        flex: 1 1 auto;
-        min-width: 0;
-        width: auto;
-        order: unset;
-    }
-
-    .tcf-superadmin-app .sa-chat-emoji-btn,
-    .tcf-superadmin-app .send-btn {
-        order: unset;
-        flex-shrink: 0;
-    }
-}
-
-@media (max-width: 480px) {
-    .tcf-superadmin-app .send-btn {
-        min-width: 44px;
-        padding-left: 12px;
-        padding-right: 12px;
-    }
-}
-
-.tcf-superadmin-app .chat-user-item {
-    width: 100%;
-    border: 0;
-    background: transparent;
-    text-align: left;
-    padding: 0.72rem 0.85rem;
-    border-bottom: 1px solid var(--sa-border);
-    cursor: pointer;
-    font-size: 0.875rem;
-    display: flex;
-    align-items: flex-start;
-    gap: 0.6rem;
-}
-
-.tcf-superadmin-app .chat-user-item:hover,
-.tcf-superadmin-app .chat-user-item.is-active {
-    background: rgba(211, 13, 13, 0.1);
-}
-
-.tcf-superadmin-app .chat-user-avatar {
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    overflow: hidden;
-    border: 1px solid var(--sa-border);
-    background: var(--background-color);
-    color: var(--text-color);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex: 0 0 34px;
-}
-
-.tcf-superadmin-app .chat-user-avatar-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.tcf-superadmin-app .chat-user-avatar-fallback {
-    font-size: 0.75rem;
-    font-weight: 700;
-}
-
-.tcf-superadmin-app .chat-user-info {
-    min-width: 0;
-    flex: 1;
-}
-
-.tcf-superadmin-app .chat-user-name {
-    font-weight: 700;
-    color: var(--sa-text);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.tcf-superadmin-app .chat-user-status {
-    font-size: 0.8rem;
-    opacity: 0.88;
-    color: var(--sa-muted);
-}
-
-.tcf-superadmin-app .chat-user-preview {
-    margin-top: 0.18rem;
-    font-size: 0.8rem;
-    opacity: 0.9;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.tcf-superadmin-app .chat-messages {
-    display: flex;
-    flex-direction: column;
-    background: var(--sa-surface2);
-    border: 1px solid var(--sa-border);
-    border-radius: 10px;
-    overflow: hidden;
-}
-
-.tcf-superadmin-app .message-header {
-    padding: 0.85rem 1rem;
-    border-bottom: 1px solid var(--sa-border);
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: var(--card-bg);
-    flex-shrink: 0;
-    min-width: 0;
-}
-
-.tcf-superadmin-app .user-avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    border: 1px solid var(--sa-border);
-    background: var(--background-color);
-    color: var(--text-color);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    font-weight: 700;
-    flex: 0 0 36px;
-}
-
-.tcf-superadmin-app .user-avatar .chat-header-group-avatar-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-}
-
-.tcf-superadmin-app .sa-chat-group-settings-btn {
-    margin-left: auto;
-    flex-shrink: 0;
-}
-
-.tcf-superadmin-app #current-user-name {
-    font-weight: 700;
-    letter-spacing: 0.01em;
-    color: var(--text-color);
-}
-
-.tcf-superadmin-app .message-body {
-    flex: 1;
-    padding: 1rem;
-    overflow-y: auto;
-    min-height: 240px;
-    max-height: 360px;
-    background: var(--background-color);
-}
-
-.tcf-superadmin-app .chat-day-sep {
-    display: flex;
-    justify-content: center;
-    margin: 0.65rem 0 0.5rem;
-}
-
-.tcf-superadmin-app .chat-day-sep span {
-    font-size: 0.72rem;
-    font-weight: 600;
-    color: var(--text-color);
-    opacity: 0.55;
-    background: var(--card-bg);
-    padding: 4px 12px;
-    border-radius: 999px;
-    border: 1px solid var(--border-color);
-    box-shadow: var(--shadow);
-}
-
-.tcf-superadmin-app .chat-bubble {
-    max-width: min(75%, 680px);
-    padding: 0.5rem 0.75rem 0.35rem;
-    border-radius: 14px;
-    margin-bottom: 0;
-    font-size: 0.875rem;
-    line-height: 1.4;
-    color: var(--text-color);
-}
-
-.tcf-superadmin-app .chat-bubble--admin {
-    margin-left: 0;
-    background: rgba(211, 13, 13, 0.12);
-    border: 1px solid rgba(211, 13, 13, 0.28);
-    border-bottom-right-radius: 6px;
-}
-
-.tcf-superadmin-app .chat-bubble--user {
-    margin-right: 0;
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-bottom-left-radius: 6px;
-}
-
-.tcf-superadmin-app .chat-row {
-    display: flex;
-    align-items: flex-end;
-    gap: 0.55rem;
-    margin-bottom: 0.7rem;
-}
-
-.tcf-superadmin-app .chat-row--me {
-    justify-content: flex-end;
-}
-
-.tcf-superadmin-app .chat-row--other {
-    justify-content: flex-start;
-}
-
-.tcf-superadmin-app .chat-avatar {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    overflow: hidden;
-    background: var(--background-color);
-    border: 1px solid var(--sa-border);
-    flex: 0 0 28px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.tcf-superadmin-app .chat-avatar-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.tcf-superadmin-app .chat-avatar-fallback {
-    font-size: 0.72rem;
-    font-weight: 700;
-    color: var(--text-color);
-}
-
-.tcf-superadmin-app .chat-bubble-author {
-    font-size: 0.72rem;
-    font-weight: 700;
-    opacity: 0.75;
-    margin-bottom: 0.2rem;
-}
-
-.tcf-superadmin-app .chat-bubble-msg {
-    white-space: pre-wrap;
-    word-break: break-word;
-}
-
-.tcf-superadmin-app .chat-bubble-foot {
-    text-align: right;
-    margin-top: 0.15rem;
-    font-size: 0.65rem;
-    opacity: 0.55;
-}
-
-.tcf-superadmin-app .message-footer {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem;
-    border-top: 1px solid var(--sa-border);
-    background: var(--card-bg);
-}
-
-.tcf-superadmin-app .sa-chat-emoji-btn {
-    flex: 0 0 40px;
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-    background: var(--card-bg);
-    cursor: pointer;
-    font-size: 1.1rem;
-    line-height: 1;
-}
-
-.tcf-superadmin-app .sa-chat-emoji-popover {
-    position: absolute;
-    bottom: 100%;
-    left: 0.75rem;
-    margin-bottom: 6px;
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 10px;
-    box-shadow: var(--shadow);
-    padding: 8px;
-    display: grid;
-    grid-template-columns: repeat(8, 1fr);
-    gap: 4px;
-    z-index: 30;
-    max-width: 280px;
-}
-
-.tcf-superadmin-app .sa-chat-emoji-popover[hidden] {
-    display: none !important;
-}
-
-.tcf-superadmin-app .sa-chat-emoji-popover button {
-    border: 0;
-    background: transparent;
-    cursor: pointer;
-    font-size: 1.2rem;
-    padding: 4px;
-    border-radius: 6px;
-}
-
-.tcf-superadmin-app .sa-chat-emoji-popover button:hover {
-    background: var(--background-color);
-}
-
-.tcf-superadmin-app .message-input {
-    flex: 1;
-    padding: 0.55rem 0.75rem;
-    border-radius: 8px;
-    border: 1px solid var(--sa-border);
-    background: var(--card-bg);
-    color: var(--text-color);
-}
-
-.tcf-superadmin-app .message-input::placeholder {
-    color: var(--sa-muted);
-}
-
-.tcf-superadmin-app .send-btn {
-    width: 44px;
-    border-radius: 8px;
-    border: none;
-    background: var(--main-color);
-    color: #fff;
-    cursor: pointer;
-}
-
-.tcf-superadmin-app .send-btn:hover {
-    background: var(--hover-color);
-}
-
-.tcf-superadmin-app .no-chat-selected {
-    text-align: center;
-    padding: 3rem 1rem;
-    color: var(--sa-muted);
-}
-
 /* Messages communautaires cards */
 .tcf-superadmin-app #messages .dashboard-section {
     min-width: 0;
@@ -2094,99 +1595,43 @@ body.tcf-superadmin-app > .notification-overlay.active {
     pointer-events: auto !important;
 }
 
-body.tcf-superadmin-app > .notification-page {
+body.tcf-superadmin-app > .notification-page.notification-drawer-v2 {
     position: fixed !important;
     top: 0 !important;
-    right: -420px !important;
+    right: -440px !important;
     left: auto !important;
-    width: min(420px, 92vw) !important;
+    width: min(440px, 100vw) !important;
     height: 100vh !important;
     max-height: 100vh !important;
-    background: var(--sa-surface) !important;
-    border-left: 1px solid var(--sa-border);
-    box-shadow: -10px 0 28px rgba(0, 0, 0, 0.18);
-    transition: right 0.3s ease !important;
+    background: #f1f5f9 !important;
+    border-left: 0 !important;
+    box-shadow: -12px 0 40px rgba(15, 23, 42, 0.12) !important;
+    transition: right 0.28s ease !important;
     z-index: 199100 !important;
 }
 
-body.tcf-superadmin-app > .notification-page.active {
+body.tcf-superadmin-app > .notification-page.notification-drawer-v2.active {
     right: 0 !important;
     visibility: visible !important;
     pointer-events: auto !important;
 }
 
-body.tcf-superadmin-app .notification-page .notification-header {
-    background: var(--main-color, #d30d0d) !important;
-    color: #fff !important;
-    padding: 14px 16px 12px !important;
-}
-
-body.tcf-superadmin-app .notification-header__top h2 {
-    font-size: 1.55rem !important;
-    font-weight: 700 !important;
-}
-
-body.tcf-superadmin-app .notification-page .notification-header__mark-all {
-    margin-top: 8px !important;
-    text-align: center;
-}
-
-body.tcf-superadmin-app .notification-page .notification-header__mark-all .btn {
-    width: auto !important;
-    background: transparent !important;
-    border: 0 !important;
-    color: #fff !important;
-    font-size: 0.92rem !important;
-    font-weight: 500 !important;
-    text-decoration: none;
-    box-shadow: none !important;
-    padding: 2px 0 !important;
-}
-
-body.tcf-superadmin-app .notification-page .notification-content {
-    padding: 0 !important;
-    background: var(--sa-surface);
-}
-
-body.tcf-superadmin-app .notification-page .notification-item {
+/* Laisser le design profil/cards gérer le contenu */
+body.tcf-superadmin-app .notification-drawer-v2 .notification-feed-card,
+body.tcf-superadmin-app .notification-drawer-v2 .notification-summary-card,
+body.tcf-superadmin-app .notification-drawer-v2 .notification-empty-card {
     margin: 0 !important;
-    padding: 12px 14px !important;
-    border-bottom: 1px solid var(--sa-border) !important;
-    border-radius: 0 !important;
-    background: var(--sa-surface) !important;
+    border-radius: 16px !important;
+    border: 1px solid #e2e8f0 !important;
 }
 
-body.tcf-superadmin-app .notification-page .notification-item.unread {
-    background: var(--sa-surface2) !important;
+body.tcf-superadmin-app .notification-drawer-v2 .profile-drawer-v2__scroll {
+    padding: 1rem 1rem 1.25rem !important;
+    background: transparent !important;
 }
 
-body.tcf-superadmin-app .notification-page .notification-item .notification-icon {
-    color: var(--main-color, #d30d0d) !important;
-    font-size: 1.15rem !important;
-    margin-top: 2px;
-}
-
-body.tcf-superadmin-app .notification-page .notification-title {
-    color: var(--sa-text);
-    font-size: 0.84rem;
-    font-weight: 700;
-}
-
-body.tcf-superadmin-app .notification-page .notification-desc {
-    color: var(--sa-muted);
-    font-size: 0.82rem;
-    line-height: 1.35;
-}
-
-body.tcf-superadmin-app .notification-page .notification-time {
-    color: var(--sa-muted);
-    font-size: 0.72rem;
-    opacity: 0.85;
-}
-
-/* Dans le panneau admin, on garde un rendu clean (pas de petit bouton par ligne). */
-body.tcf-superadmin-app .notification-page .notification-item form {
-    display: none !important;
+body.tcf-superadmin-app .notification-drawer-v2 .notification-feed-card.is-unread {
+    background: linear-gradient(180deg, #fff9f9 0%, #ffffff 48%) !important;
 }
 
 /* --- Identité chaîne (admin) --- */
@@ -2480,287 +1925,56 @@ html[data-sa-theme='dark'] .tcf-superadmin-app .sa-branding-preview-text p {
     background: rgba(234, 179, 8, 0.1);
 }
 
-/* ——— Vidéos admin : vitrine 3D ——— */
+/* ——— Vidéos admin ——— */
 .sa-videos-showcase {
-    perspective: 1600px;
+    perspective: none;
 }
 
 .sa-videos-orbit-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
-    gap: 2rem 1.5rem;
-    padding: 1.5rem 0 2.5rem;
-    transform-style: preserve-3d;
+    gap: 1.25rem 1.15rem;
+    padding: 1.25rem 0 2rem;
 }
 
-.sa-videos-3d-card {
+.tcf-admin-video-card {
     position: relative;
-    transform-style: preserve-3d;
-    border-radius: 22px;
-    transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.45s ease;
-    will-change: transform;
-}
-
-.sa-videos-card-glow {
-    position: absolute;
-    inset: -20%;
-    border-radius: 28px;
-    background: radial-gradient(ellipse at 50% 30%, rgba(211, 13, 13, 0.22), transparent 62%);
-    opacity: 0;
-    pointer-events: none;
-    z-index: 0;
-    transition: opacity 0.45s ease;
-}
-
-.sa-videos-3d-card:hover .sa-videos-card-glow {
-    opacity: 1;
-}
-
-.sa-videos-3d-card:hover {
-    transform: rotateX(7deg) rotateY(-10deg) translateZ(28px) scale(1.03);
-    box-shadow:
-        0 28px 56px -12px rgba(15, 23, 42, 0.45),
-        0 0 0 1px rgba(255, 255, 255, 0.06) inset,
-        -12px 20px 40px rgba(211, 13, 13, 0.12);
-    z-index: 2;
-}
-
-.sa-videos-3d-card .tcf-admin-video-thumb {
-    position: relative;
-    z-index: 1;
-    border-radius: 18px;
+    border-radius: 14px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
     overflow: hidden;
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
 }
 
-.sa-videos-3d-card .tcf-admin-video-body {
+.tcf-admin-video-card .tcf-admin-video-thumb {
     position: relative;
     z-index: 1;
-    margin-top: 0.65rem;
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .sa-videos-3d-card,
-    .sa-videos-3d-card:hover {
-        transition: none;
-        transform: none;
-    }
-}
-
-/* ——— Assistant création de groupe (messagerie admin) ——— */
-.sa-new-group-modal .modal-content.sa-new-group-modal__content {
-    max-width: min(920px, 96vw);
+    border-radius: 0;
+    overflow: hidden;
+    box-shadow: none;
     width: 100%;
-    max-height: min(92vh, 720px);
-    overflow: auto;
-}
-
-.sa-new-group-lead {
-    margin: 0 0 1rem;
-    font-size: 0.92rem;
-    color: var(--sa-muted, #64748b);
-    line-height: 1.5;
-}
-
-.sa-new-group-grid {
-    display: grid;
-    grid-template-columns: 1fr 1.15fr;
-    gap: 1.25rem 1.5rem;
-    align-items: start;
-}
-
-@media (max-width: 880px) {
-    .sa-new-group-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-.sa-new-group-col--settings .form-label,
-.sa-new-group-col--members .form-label {
-    margin-top: 0.65rem;
-}
-
-.sa-new-group-col--settings .form-label:first-child {
-    margin-top: 0;
-}
-
-.sa-new-group-email-row {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-    align-items: stretch;
-}
-
-.sa-new-group-email-row .form-control {
-    flex: 1 1 200px;
-    min-width: 0;
-}
-
-.sa-new-group-check {
-    display: flex;
-    gap: 0.5rem;
-    align-items: flex-start;
-    margin-top: 1rem;
-    font-size: 0.88rem;
-    line-height: 1.45;
-    cursor: pointer;
-}
-
-.sa-new-group-user-cards {
-    margin-top: 0.65rem;
-    max-height: 240px;
-    overflow: auto;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 0.5rem;
-    padding: 0.35rem;
-    border: 1px solid var(--sa-border, #e2e8f0);
-    border-radius: 12px;
-    background: var(--sa-surface-2, #f8fafc);
-}
-
-.sa-new-group-user-card {
-    display: flex;
-    align-items: center;
-    gap: 0.55rem;
-    text-align: left;
-    padding: 0.55rem 0.6rem;
-    border-radius: 10px;
-    border: 1px solid transparent;
-    background: var(--sa-surface, #fff);
-    cursor: pointer;
-    font: inherit;
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.sa-new-group-user-card:hover {
-    border-color: rgba(211, 13, 13, 0.25);
-}
-
-.sa-new-group-user-card.is-on {
-    border-color: rgba(211, 13, 13, 0.55);
-    box-shadow: 0 4px 14px rgba(211, 13, 13, 0.12);
-}
-
-.sa-new-group-user-card-av {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: rgba(211, 13, 13, 0.12);
-    color: var(--main-color, #d30d0d);
-    font-weight: 800;
-    font-size: 0.9rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.sa-new-group-user-card-body {
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.1rem;
-}
-
-.sa-new-group-user-card-body strong {
-    font-size: 0.82rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.sa-new-group-user-card-body small {
-    font-size: 0.72rem;
-    color: var(--sa-muted, #64748b);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.sa-new-group-user-card-tick {
-    margin-left: auto;
-    color: var(--main-color, #d30d0d);
-    opacity: 0;
-    font-size: 1.1rem;
-}
-
-.sa-new-group-user-card.is-on .sa-new-group-user-card-tick {
-    opacity: 1;
-}
-
-.sa-new-group-selected {
-    margin-top: 1rem;
-}
-
-.sa-new-group-selected-label {
-    display: block;
-    font-size: 0.78rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--sa-muted, #64748b);
-    margin-bottom: 0.45rem;
-}
-
-.sa-new-group-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.45rem;
-    min-height: 2rem;
-}
-
-.sa-new-group-chips-empty {
-    font-size: 0.85rem;
-    color: var(--sa-muted, #94a3b8);
-}
-
-.sa-new-group-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    padding: 0.35rem 0.5rem 0.35rem 0.65rem;
-    border-radius: 999px;
-    background: rgba(15, 23, 42, 0.06);
-    border: 1px solid var(--sa-border, #e2e8f0);
-    font-size: 0.78rem;
-    max-width: 100%;
-}
-
-.sa-new-group-chip-text {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 280px;
-}
-
-.sa-new-group-chip-x {
+    aspect-ratio: 16 / 9;
     border: 0;
-    background: transparent;
+    padding: 0;
     cursor: pointer;
-    font-size: 1.1rem;
-    line-height: 1;
-    padding: 0 0.15rem;
-    color: var(--sa-muted, #64748b);
+    background: #0f172a;
 }
 
-.sa-new-group-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-    margin-top: 1.25rem;
-    padding-top: 1rem;
-    border-top: 1px solid var(--sa-border, #e2e8f0);
+.tcf-admin-video-card .tcf-admin-video-body {
+    position: relative;
+    z-index: 1;
+    margin-top: 0;
+    padding: 0.85rem 0.95rem 1rem;
 }
 
-.sa-new-group-cards-empty,
-.sa-new-group-cards-loading {
-    grid-column: 1 / -1;
-    text-align: center;
-    padding: 1.25rem 0.5rem;
-    font-size: 0.88rem;
-    color: var(--sa-muted, #64748b);
+/* Ancien effet 3D désactivé */
+.sa-videos-3d-card,
+.sa-videos-3d-card:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
+.sa-videos-card-glow {
+    display: none !important;
 }
 
 /* ================================================================
@@ -3096,4 +2310,50 @@ body.sa-testi-modal-open { overflow: hidden; }
     .sa-testi-stats { flex-direction: column; }
     .sa-testi-grid  { grid-template-columns: 1fr; }
     .sa-testi-modal-box { padding: 1.25rem; }
+}
+
+/* Formulaire admin inline (plus de modale) */
+.sa-admin-form-panel {
+    margin: 0 0 1.25rem;
+    padding: 1.15rem 1.2rem;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+}
+
+.sa-admin-form-panel[hidden] {
+    display: none !important;
+}
+
+.sa-admin-form-panel__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.sa-admin-form-panel__title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #111827;
+}
+
+.sa-admin-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem 1rem;
+}
+
+.sa-admin-form-actions {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: flex-end;
+}
+
+@media (max-width: 720px) {
+    .sa-admin-form-grid {
+        grid-template-columns: 1fr;
+    }
 }

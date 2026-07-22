@@ -53,28 +53,38 @@
     });
   }
 
-  // Lien actif selon la page courante
+  // Lien actif selon la page courante (y compris pages épreuve / quiz)
   if (!navbar) return;
   try {
     var path = (window.location.pathname || "").toLowerCase();
     var file = path.split("/").pop() || "";
-    if (!file) file = "index.php";
+    if (!file || file.indexOf(".") === -1) file = "index.php";
+
+    var aliases = {
+      "epreuve_ee.php": "expresion_ecrite.php",
+      "epreuve_eo.php": "expresion_orale.php",
+      "comprehesion_ecrite_quiz.php": "comprehesion_ecrite.php",
+      "comprehension_orale_quiz.php": "comprehension_orale.php",
+      "watch.php": "videos.php"
+    };
+
+    var target = aliases[file] || file;
 
     var links = navbar.querySelectorAll("a[href]");
     links.forEach(function (a) {
       a.classList.remove("active");
+      a.removeAttribute("aria-current");
     });
 
     var best = null;
     links.forEach(function (a) {
       var href = (a.getAttribute("href") || "").toLowerCase();
-      if (!href || href.indexOf("javascript:") === 0 || href.indexOf("#") === 0) return;
-      // comparer sur le nom de fichier uniquement
+      if (!href || href.indexOf("javascript:") === 0 || href === "#") return;
       var hfile = href.split("?")[0].split("#")[0].split("/").pop();
-      if (hfile && hfile === file) best = a;
+      if (hfile && hfile === target) best = a;
     });
 
-    if (!best && file === "index.php") {
+    if (!best && (file === "index.php" || file === "" || target === "index.php")) {
       links.forEach(function (a) {
         var href = (a.getAttribute("href") || "").toLowerCase();
         var hfile = href.split("?")[0].split("#")[0].split("/").pop();
@@ -82,7 +92,10 @@
       });
     }
 
-    if (best) best.classList.add("active");
+    if (best) {
+      best.classList.add("active");
+      best.setAttribute("aria-current", "page");
+    }
   } catch (e) {}
 })();
 

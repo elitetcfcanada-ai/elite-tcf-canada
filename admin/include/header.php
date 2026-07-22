@@ -46,11 +46,6 @@ declare(strict_types=1);
             <span>Gestion des annonces</span>
         </a>
 
-        <a href="pages/chat.php" class="menu-item <?php echo $currentPage === 'chat' ? 'active' : ''; ?>">
-            <i class='bx bxs-chat'></i>
-            <span>Chat</span>
-        </a>
-
         <a href="pages/sujets.php" class="menu-item <?php echo $currentPage === 'topics' ? 'active' : ''; ?>">
             <i class='bx bxs-book'></i>
             <span>Gestion des sujets</span>
@@ -123,11 +118,6 @@ declare(strict_types=1);
         <div class="menu-item" data-target="messages">
             <i class="bx bxs-megaphone"></i>
             <span>Gestion des annonces</span>
-        </div>
-
-        <div class="menu-item" data-target="chat">
-            <i class="bx bxs-chat"></i>
-            <span>Chat</span>
         </div>
 
         <div class="menu-item" id="topics-menu">

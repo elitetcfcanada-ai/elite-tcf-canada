@@ -30,13 +30,42 @@ $port = '';
 
 > `config.local.php` a priorité sur `config.hostinger.php`. Ainsi le local ne pointe plus vers la prod.
 
-## Déploiement / mise à jour production
+## Déploiement / mise à jour production (push → Hostinger)
 
+### Nom du commit (juillet)
+`MET première mise à jour cuisson juillet`
+
+### Guide push (local → GitHub → Hostinger)
+
+1. Ouvrez PowerShell dans le dossier du projet :
+   `cd C:\xampp\htdocs\elite-TCFCanada`
+2. Vérifiez l’état :
+   `git status`
+3. Ajoutez les fichiers :
+   `git add -A`
+4. Créez le commit :
+   `git commit -m "MET première mise à jour cuisson juillet"`
+5. Poussez vers GitHub (Hostinger se met à jour si le dépôt est relié) :
+   `git push origin main`
+6. Attendez 1–2 minutes, puis rechargez le site en **Ctrl+F5**.
+
+### Après le push — à faire une fois sur Hostinger
+
+| Action | Détail |
+|--------|--------|
+| Clé Gemini | Créer `includes/gemini_key.php` avec `return 'VOTRE_CLE';` (non versionné) |
+| Webhook paiement | Dashboard Notch Pay → `https://elitetcfcanada.online/payment_webhook.php` |
+| Base chat | Les tables messagerie sont déjà à supprimer en prod si encore présentes |
+| Cache | Vider le cache Hostinger / navigateur si l’ancien JS s’affiche |
+
+### Important
+
+- Ne committez **jamais** `includes/config.local.php` ni `includes/gemini_key.php`.
+- Les `uploads/` (vidéos, images) ne partent en général **pas** avec Git.
 - Un `git push` met à jour le code en ligne si le dépôt est relié à Hostinger.
-- Les fichiers uploadés (`uploads/`) ne sont en général **pas** dans Git : republiez les vidéos depuis l’admin si besoin.
-- Ne committez jamais `includes/config.local.php` (déjà dans `.gitignore`).
 
-## Réparer les IDs / doublons (production)
+## Travail en local (XAMPP) sans casser la prod
+
 
 Si les inscriptions créent des comptes avec le même id, ou si les vidéos n’apparaissent pas :
 

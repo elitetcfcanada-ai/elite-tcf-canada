@@ -552,31 +552,164 @@
         });
     }
 
+    function getNotifEndpoints() {
+        var cfg = document.getElementById('tcf-profile-api-config');
+        return {
+            saEp: cfg && cfg.getAttribute('data-superadmin-endpoint'),
+            notifEp: cfg && cfg.getAttribute('data-notifications-url')
+        };
+    }
+
+    function updateNotifBadgeCount(count) {
+        var n = Math.max(0, Number(count) || 0);
+        var headBadge = document.getElementById('notifUnreadBadge');
+        var markAll = document.getElementById('notifMarkAllReadBtn');
+        var navBadge = document.querySelector('#showNotifications .notification-badge');
+
+        if (headBadge) {
+            if (n > 0) {
+                headBadge.textContent = String(n);
+                headBadge.hidden = false;
+                headBadge.classList.remove('is-empty');
+            } else {
+                headBadge.textContent = '0';
+                headBadge.hidden = true;
+                headBadge.classList.add('is-empty');
+            }
+        }
+        if (markAll) {
+            markAll.hidden = n <= 0;
+        }
+        if (navBadge) {
+            if (n > 0) {
+                navBadge.textContent = String(n);
+                navBadge.hidden = false;
+                navBadge.style.display = '';
+            } else {
+                navBadge.hidden = true;
+                navBadge.style.display = 'none';
+            }
+        } else if (n > 0) {
+            var bell = document.getElementById('showNotifications');
+            if (bell && !bell.querySelector('.notification-badge')) {
+                var span = document.createElement('span');
+                span.className = 'notification-badge';
+                span.textContent = String(n);
+                bell.appendChild(span);
+            }
+        }
+    }
+
+    function countUnreadNotifs() {
+        return document.querySelectorAll('#notifList .notif-card.is-unread, #notifList .notification-item.is-unread').length;
+    }
+
+    function markNotifReadRequest(nid) {
+        var eps = getNotifEndpoints();
+        if (eps.saEp) {
+            var fd = new FormData();
+            fd.append('action', 'mark_notification_read');
+            fd.append('id', String(nid));
+            return fetch(eps.saEp, { method: 'POST', body: fd, credentials: 'same-origin' });
+        }
+        if (eps.notifEp) {
+            return fetch(eps.notifEp, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({ action: 'mark_read', id: Number(nid) })
+            });
+        }
+        return Promise.resolve();
+    }
+
+    function markAllNotifsReadRequest() {
+        var eps = getNotifEndpoints();
+        if (eps.notifEp) {
+            return fetch(eps.notifEp, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({ action: 'mark_all_read' })
+            });
+        }
+        // fallback POST form-like to current page
+        var fd = new FormData();
+        fd.append('mark_all_read', '1');
+        return fetch(window.location.href, { method: 'POST', body: fd, credentials: 'same-origin' });
+    }
+
+    function applyNotifReadUi(item) {
+        if (!item) return;
+        item.classList.remove('is-unread');
+        item.classList.add('is-read');
+        var check = item.querySelector('.notif-read-check');
+        if (check) {
+            check.checked = true;
+            check.disabled = true;
+        }
+        updateNotifBadgeCount(countUnreadNotifs());
+    }
+
     function setupNotificationsAndProfile() {
         var showNotifications = document.getElementById('showNotifications');
         var notificationPage = document.getElementById('notificationPage');
         var notificationOverlay = document.getElementById('notificationOverlay');
         var closeNotifications = document.getElementById('closeNotifications');
+        var notifDrawerCloseBtn = document.getElementById('notifDrawerCloseBtn');
+        var markAllBtn = document.getElementById('notifMarkAllReadBtn');
+
+        function closeNotifDrawer() {
+            if (notificationPage) notificationPage.classList.remove('active');
+            if (notificationOverlay) notificationOverlay.classList.remove('active');
+        }
+        function openNotifDrawer() {
+            if (notificationPage) notificationPage.classList.add('active');
+            if (notificationOverlay) notificationOverlay.classList.add('active');
+        }
 
         if (showNotifications && notificationPage && notificationOverlay) {
             showNotifications.addEventListener('click', function (e) {
                 e.preventDefault();
-                notificationPage.classList.add('active');
-                notificationOverlay.classList.add('active');
+                openNotifDrawer();
             });
         }
-        if (closeNotifications && notificationPage && notificationOverlay) {
-            closeNotifications.addEventListener('click', function () {
-                notificationPage.classList.remove('active');
-                notificationOverlay.classList.remove('active');
-            });
-        }
+        if (closeNotifications) closeNotifications.addEventListener('click', closeNotifDrawer);
+        if (notifDrawerCloseBtn) notifDrawerCloseBtn.addEventListener('click', closeNotifDrawer);
         if (notificationOverlay && notificationPage) {
-            notificationOverlay.addEventListener('click', function () {
-                notificationPage.classList.remove('active');
-                notificationOverlay.classList.remove('active');
+            notificationOverlay.addEventListener('click', closeNotifDrawer);
+        }
+
+        if (markAllBtn) {
+            markAllBtn.addEventListener('click', function () {
+                markAllBtn.disabled = true;
+                markAllNotifsReadRequest()
+                    .then(function () {
+                        document.querySelectorAll('#notifList .notif-card.is-unread, #notifList .notification-item.is-unread').forEach(applyNotifReadUi);
+                        updateNotifBadgeCount(0);
+                    })
+                    .finally(function () {
+                        markAllBtn.disabled = false;
+                    });
             });
         }
+
+        document.addEventListener('change', function (e) {
+            var input = e.target.closest && e.target.closest('.notif-read-check');
+            if (!input || !input.checked) return;
+            var nid = input.getAttribute('data-tcf-notif-id');
+            var item = input.closest('.notif-card, .notification-item');
+            if (!nid || !item || item.classList.contains('is-read')) return;
+            input.disabled = true;
+            markNotifReadRequest(nid)
+                .then(function () {
+                    applyNotifReadUi(item);
+                })
+                .catch(function () {
+                    input.checked = false;
+                    input.disabled = false;
+                });
+        });
 
         var showProfile = document.getElementById('showProfile');
         var profilePage = document.getElementById('profilePage');
@@ -686,33 +819,39 @@
 
     function setupNotificationDeepLinks() {
         document.addEventListener('click', function (e) {
-            var item = e.target.closest && e.target.closest('.notification-item[data-tcf-notif-deep]');
-            if (!item) return;
-            if (e.target.closest('form')) return;
+            if (e.target.closest('.notif-card__check') || e.target.closest('.notif-read-check')) return;
             if (e.target.closest('.tcf-notif-toggle')) return;
+
+            var openLink = e.target.closest && e.target.closest('a.notif-card__cta');
+            var item = e.target.closest && e.target.closest('.notification-item[data-tcf-notif-deep]');
+            if (!openLink && !item) return;
+
+            var url = openLink
+                ? openLink.getAttribute('href')
+                : item.getAttribute('data-tcf-notif-deep');
+            var nid = openLink
+                ? openLink.getAttribute('data-tcf-notif-open')
+                : item.getAttribute('data-tcf-notif-id');
+            var hostItem = (openLink && openLink.closest('.notif-card, .notification-item')) || item;
+
             e.preventDefault();
             e.stopPropagation();
-            var url = item.getAttribute('data-tcf-notif-deep');
-            var nid = item.getAttribute('data-tcf-notif-id');
-            var cfg = document.getElementById('tcf-profile-api-config');
-            var saEp = cfg && cfg.getAttribute('data-superadmin-endpoint');
+
             function go() {
                 if (url) window.location.href = url;
             }
-            if (nid && saEp) {
-                var fd = new FormData();
-                fd.append('action', 'mark_notification_read');
-                fd.append('id', nid);
-                fetch(saEp, { method: 'POST', body: fd, credentials: 'same-origin' })
-                    .then(function () {
-                        go();
-                    })
-                    .catch(function () {
-                        go();
-                    });
-            } else {
+            if (!nid) {
                 go();
+                return;
             }
+            markNotifReadRequest(nid)
+                .then(function () {
+                    applyNotifReadUi(hostItem);
+                    go();
+                })
+                .catch(function () {
+                    go();
+                });
         });
     }
 

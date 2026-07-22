@@ -151,22 +151,6 @@ CREATE TABLE IF NOT EXISTS `channel_subscribers` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Structure de la table `chat_messages`
---
-
-CREATE TABLE IF NOT EXISTS `chat_messages` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `user_id` int(11) NOT NULL,
-  `admin_id` int(11) DEFAULT NULL,
-  `message` text NOT NULL,
-  `is_admin` tinyint(1) NOT NULL DEFAULT 0,
-  `created_at` datetime DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`),
-  KEY `idx_cm_user` (`user_id`),
-  KEY `idx_cm_admin` (`admin_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
 -- Structure de la table `community_messages`
 --
 
@@ -386,61 +370,6 @@ CREATE TABLE IF NOT EXISTS `tcf_ce_questions` (
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=470 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `tcf_chat_messages`
---
-
-CREATE TABLE IF NOT EXISTS `tcf_chat_messages` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `thread_id` int(10) unsigned NOT NULL,
-  `sender_id` int(11) NOT NULL,
-  `message` text NOT NULL,
-  `edited_at` datetime DEFAULT NULL,
-  `deleted_at` datetime DEFAULT NULL,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `tcf_chat_presence_settings`
---
-
-CREATE TABLE IF NOT EXISTS `tcf_chat_presence_settings` (
-  `user_id` int(11) NOT NULL,
-  `is_visible` tinyint(1) NOT NULL DEFAULT 1,
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`user_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `tcf_chat_thread_members`
---
-
-CREATE TABLE IF NOT EXISTS `tcf_chat_thread_members` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `thread_id` int(10) unsigned NOT NULL,
-  `user_id` int(11) NOT NULL,
-  `joined_by` int(11) DEFAULT NULL,
-  `joined_at` datetime NOT NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `tcf_chat_threads`
---
-
-CREATE TABLE IF NOT EXISTS `tcf_chat_threads` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `thread_type` enum('direct','group') NOT NULL DEFAULT 'direct',
-  `title` varchar(180) DEFAULT NULL,
-  `avatar` varchar(255) DEFAULT NULL,
-  `admins_only_post` tinyint(1) NOT NULL DEFAULT 0,
-  `created_by` int(11) NOT NULL,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Structure de la table `tcf_co_answers`

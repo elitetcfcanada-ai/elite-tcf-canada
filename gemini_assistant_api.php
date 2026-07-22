@@ -30,7 +30,113 @@ function assistant_api_key(): string
     if ($serverKey !== '') {
         return $serverKey;
     }
+
     return '';
+}
+
+/**
+ * Appel Gemini avec bascule de modèles + correction des rôles.
+ * @param list<array{role:string,parts:list<array{text:string}>}> $contents
+ * @return array{ok:bool,text?:string,error?:string}
+ */
+function assistant_call_gemini(string $apiKey, string $systemInstruction, array $contents): array
+{
+    $body = [
+        'systemInstruction' => [
+            'parts' => [['text' => $systemInstruction]],
+        ],
+        'contents' => $contents,
+        'generationConfig' => [
+            'temperature' => 0.4,
+            'topP' => 0.9,
+            'maxOutputTokens' => 900,
+        ],
+    ];
+
+    $modelsToTry = [
+        'gemini-2.5-flash',
+        'gemini-2.0-flash',
+        'gemini-2.0-flash-001',
+        'gemini-flash-latest',
+    ];
+
+    $lastError = '';
+
+    foreach ($modelsToTry as $modelName) {
+        $url = 'https://generativelanguage.googleapis.com/v1beta/models/'
+            . rawurlencode($modelName)
+            . ':generateContent?key='
+            . rawurlencode($apiKey);
+
+        $ch = curl_init($url);
+        if ($ch === false) {
+            $lastError = 'Impossible d’initialiser cURL.';
+            continue;
+        }
+
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+            CURLOPT_POSTFIELDS => json_encode($body, JSON_UNESCAPED_UNICODE),
+            CURLOPT_TIMEOUT => 35,
+            CURLOPT_CONNECTTIMEOUT => 12,
+        ]);
+
+        $response = curl_exec($ch);
+        $curlErr = curl_error($ch);
+        $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($response === false) {
+            $lastError = 'Erreur réseau Gemini: ' . $curlErr;
+            continue;
+        }
+
+        $decoded = json_decode($response, true);
+        if (!is_array($decoded)) {
+            $lastError = 'Réponse Gemini invalide.';
+            continue;
+        }
+
+        if ($status >= 400) {
+            $rawMsg = (string) ($decoded['error']['message'] ?? ('HTTP ' . $status));
+            $lower = strtolower($rawMsg);
+            if (str_contains($lower, 'leaked') || str_contains($lower, 'api key not valid') || str_contains($lower, 'permission denied')) {
+                $lastError = 'Clé Gemini invalide ou compromise. Créez une nouvelle clé sur Google AI Studio et mettez-la dans includes/gemini_key.php (ou GEMINI_API_KEY).';
+            } elseif (str_contains($lower, 'quota') || str_contains($lower, 'rate limit') || $status === 429) {
+                $lastError = 'Quota Gemini dépassé. Réessayez plus tard ou activez la facturation / un autre projet API.';
+            } elseif (str_contains($lower, 'not found') || $status === 404) {
+                $lastError = 'Modèle indisponible: ' . $modelName;
+            } else {
+                $lastError = $rawMsg;
+            }
+            continue;
+        }
+
+        $text = '';
+        $parts = $decoded['candidates'][0]['content']['parts'] ?? null;
+        if (is_array($parts)) {
+            foreach ($parts as $part) {
+                $textPart = trim((string) ($part['text'] ?? ''));
+                if ($textPart !== '') {
+                    $text .= ($text !== '' ? "\n\n" : '') . $textPart;
+                }
+            }
+        }
+
+        if ($text === '') {
+            $block = (string) ($decoded['candidates'][0]['finishReason'] ?? '');
+            $lastError = $block !== ''
+                ? 'Réponse vide (finishReason: ' . $block . ').'
+                : 'Aucune réponse générée pour le moment.';
+            continue;
+        }
+
+        return ['ok' => true, 'text' => $text];
+    }
+
+    return ['ok' => false, 'error' => ($lastError !== '' ? $lastError : 'Tous les modèles Gemini ont échoué.')];
 }
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
@@ -66,13 +172,13 @@ $apiKey = assistant_api_key();
 if ($apiKey === '') {
     assistant_json([
         'ok' => false,
-        'message' => 'Clé Gemini manquante. Configurez GEMINI_API_KEY côté serveur.'
+        'message' => 'Clé Gemini manquante. Configurez includes/gemini_key.php ou GEMINI_API_KEY.',
     ], 500);
 }
 
-$prompt = $isAdminStaff
+$systemInstruction = $isAdminStaff
     ? "Rôle: assistant administration ELITE TCF CANADA (tableau de bord admin / super admin).\n"
-        . "Objectif: aider les administrateurs à utiliser la plateforme (gestion utilisateurs, vidéos, abonnements, revenus, témoignages, chat staff, sujets TCF).\n"
+        . "Objectif: aider les administrateurs à utiliser la plateforme (gestion utilisateurs, vidéos, abonnements, revenus, témoignages, annonces, sujets TCF).\n"
         . "Règles:\n"
         . "- Réponds en français, ton professionnel et concis.\n"
         . "- Donne des étapes claires dans l'interface admin (menus, sections).\n"
@@ -88,15 +194,8 @@ $prompt = $isAdminStaff
         . "- Ne fabrique pas d'informations non sûres; si tu n'es pas certain, dis-le et propose une alternative.\n"
         . "Pages utiles du site: Vidéos, Compréhension écrite/orale, Expression écrite/orale, Support, Connexion/Inscription.\n";
 
-// Construire une conversation courte (mémoire) à partir de l'historique côté client
+/* Historique propre : rôles alternés user/model (exigence Gemini) */
 $contents = [];
-$contents[] = [
-    'role' => 'user',
-    'parts' => [
-        ['text' => $prompt]
-    ]
-];
-
 $maxHist = 12;
 $slice = array_slice($history, max(0, count($history) - $maxHist));
 foreach ($slice as $h) {
@@ -108,75 +207,39 @@ foreach ($slice as $h) {
     if ($t === '' || mb_strlen($t) > 1500) {
         continue;
     }
+    $geminiRole = ($r === 'bot' || $r === 'model' || $r === 'assistant') ? 'model' : 'user';
+    $last = $contents[count($contents) - 1] ?? null;
+    if ($last && ($last['role'] ?? '') === $geminiRole) {
+        /* Fusionner si même rôle consécutif */
+        $contents[count($contents) - 1]['parts'][0]['text'] .= "\n" . $t;
+        continue;
+    }
     $contents[] = [
-        'role' => ($r === 'bot' ? 'model' : 'user'),
-        'parts' => [['text' => $t]]
+        'role' => $geminiRole,
+        'parts' => [['text' => $t]],
     ];
 }
 
-$geminiBody = [
-    'contents' => array_merge($contents, [[
-        'role' => 'user',
-        'parts' => [['text' => "Question: " . $message]]
-    ]]),
-    'generationConfig' => [
-        'temperature' => 0.4,
-        'topP' => 0.9,
-        'maxOutputTokens' => 700
-    ]
+/* La dernière entrée avant la question doit être model ou vide — jamais 2 user d’affilée */
+$last = $contents[count($contents) - 1] ?? null;
+if ($last && ($last['role'] ?? '') === 'user') {
+    $contents[] = [
+        'role' => 'model',
+        'parts' => [['text' => 'D’accord, je vous écoute.']],
+    ];
+}
+
+$contents[] = [
+    'role' => 'user',
+    'parts' => [['text' => $message]],
 ];
 
-$modelsToTry = ['gemini-2.5-flash', 'gemini-2.0-flash-001', 'gemini-2.0-flash', 'gemini-flash-latest'];
-$decoded = null;
-$lastErrorMessage = '';
-
-foreach ($modelsToTry as $modelName) {
-    $url = 'https://generativelanguage.googleapis.com/v1beta/models/' . rawurlencode($modelName) . ':generateContent?key=' . rawurlencode($apiKey);
-
-    $ch = curl_init($url);
-    curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_POST => true,
-        CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
-        CURLOPT_POSTFIELDS => json_encode($geminiBody, JSON_UNESCAPED_UNICODE),
-        CURLOPT_TIMEOUT => 25,
-    ]);
-
-    $response = curl_exec($ch);
-    $curlErr = curl_error($ch);
-    $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
-    if ($response === false) {
-        $lastErrorMessage = 'Erreur réseau Gemini: ' . $curlErr;
-        continue;
-    }
-
-    $decodedTry = json_decode($response, true);
-    if (is_array($decodedTry) && $status < 400) {
-        $decoded = $decodedTry;
-        break;
-    }
-
-    $lastErrorMessage = (string) ($decodedTry['error']['message'] ?? 'Réponse Gemini invalide.');
+$result = assistant_call_gemini($apiKey, $systemInstruction, $contents);
+if (empty($result['ok'])) {
+    assistant_json([
+        'ok' => false,
+        'message' => (string) ($result['error'] ?? 'Erreur Gemini.'),
+    ], 502);
 }
 
-if (!is_array($decoded)) {
-    assistant_json(['ok' => false, 'message' => $lastErrorMessage !== '' ? $lastErrorMessage : 'Réponse Gemini invalide.'], 502);
-}
-
-$text = '';
-if (!empty($decoded['candidates'][0]['content']['parts']) && is_array($decoded['candidates'][0]['content']['parts'])) {
-    foreach ($decoded['candidates'][0]['content']['parts'] as $part) {
-        $textPart = trim((string) ($part['text'] ?? ''));
-        if ($textPart !== '') {
-            $text .= ($text !== '' ? "\n\n" : '') . $textPart;
-        }
-    }
-}
-
-if ($text === '') {
-    assistant_json(['ok' => false, 'message' => 'Aucune réponse générée pour le moment.'], 502);
-}
-
-assistant_json(['ok' => true, 'reply' => $text]);
+assistant_json(['ok' => true, 'reply' => (string) $result['text']]);

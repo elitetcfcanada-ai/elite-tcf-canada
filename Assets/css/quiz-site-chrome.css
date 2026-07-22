@@ -1,0 +1,239 @@
+/**
+ * Quiz CE/CO intégrés au chrome site (header + bas de navigation fixe).
+ */
+body.tcf-quiz-with-site-nav {
+    padding: 0;
+    min-height: 100vh;
+}
+
+body.tcf-quiz-with-site-nav .tcf-quiz-standalone-wrap {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 100%;
+    min-height: 0;
+}
+
+body.tcf-quiz-with-site-nav .tcf-quiz-standalone-wrap .app-container {
+    min-height: auto;
+    padding-bottom: 1.5rem;
+}
+
+/* La barre mobile reste au-dessus du quiz */
+body.tcf-quiz-with-site-nav.tcf-has-mobile-nav {
+    padding-bottom: calc(var(--tcf-mobile-nav-h, 4.6rem) + env(safe-area-inset-bottom, 0px));
+}
+
+body.tcf-quiz-with-site-nav .tcf-mobile-nav {
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    z-index: 5000 !important;
+    pointer-events: auto !important;
+    transform: none !important;
+}
+
+/* La nav de correction reste au-dessus du contenu, sous la barre site */
+body.tcf-quiz-with-site-nav .tcf-qpro-review-nav {
+    bottom: calc(var(--tcf-mobile-nav-h, 4.6rem) + env(safe-area-inset-bottom, 0px) + 0.35rem);
+    z-index: 40;
+}
+
+@media (min-width: 992px) {
+    body.tcf-quiz-with-site-nav .tcf-qpro-review-nav {
+        bottom: 0.75rem;
+    }
+}
+
+body.tcf-quiz-with-site-nav .tcf-mobile-sheet {
+    z-index: 5100 !important;
+}
+
+/* Header sticky du site au-dessus du quiz-header interne */
+body.tcf-quiz-with-site-nav > .top-header,
+body.tcf-quiz-with-site-nav > header.header {
+    position: relative;
+    z-index: 1000;
+}
+
+/* Espace sous le bas de page pour ne pas masquer Terminer / indicateurs */
+@media (max-width: 991px) {
+    body.tcf-quiz-with-site-nav .quiz-footer,
+    body.tcf-quiz-with-site-nav .results-footer,
+    body.tcf-quiz-with-site-nav .app-footer {
+        padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+        margin-bottom: 0.25rem;
+    }
+
+}
+
+/* Précédent / Suivant / Terminer : une seule ligne ; Terminer peut être masqué (.hidden) */
+body.tcf-quiz-with-site-nav .navigation-buttons {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 0.4rem;
+    width: 100%;
+}
+
+body.tcf-quiz-with-site-nav .navigation-buttons .btn-nav,
+body.tcf-quiz-with-site-nav .navigation-buttons .btn-finish {
+    flex: 1 1 0;
+    min-width: 0 !important;
+    width: auto !important;
+    max-width: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    padding-left: 0.55rem !important;
+    padding-right: 0.55rem !important;
+    font-size: clamp(0.72rem, 2.8vw, 0.92rem) !important;
+    white-space: nowrap;
+}
+
+body.tcf-quiz-with-site-nav .navigation-buttons .btn-nav.hidden,
+body.tcf-quiz-with-site-nav .navigation-buttons .btn-finish.hidden,
+body.tcf-quiz-with-site-nav #finish-btn.hidden {
+    display: none !important;
+}
+
+body.tcf-quiz-with-site-nav .navigation-buttons .btn-nav:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+body.tcf-quiz-with-site-nav #results-screen:not(.hidden) {
+    display: flex !important;
+    flex-direction: column !important;
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
+    scroll-margin-top: 1rem;
+}
+
+body.tcf-quiz-with-site-nav #results-screen .results-main {
+    flex: 0 0 auto !important;
+    overflow: visible !important;
+}
+
+body.tcf-quiz-with-site-nav #correction-panel.is-open {
+    display: block !important;
+    visibility: visible !important;
+}
+
+/* Footer global inchangé sur les pages quiz (ne pas hériter du fond gris du body) */
+body.tcf-quiz-with-site-nav > footer.site-footer {
+    background-color: var(--tcf-footer-bg, #141622) !important;
+    color: var(--tcf-text-on-dark, #f8fafc) !important;
+    margin-top: 3rem !important;
+}
+
+/* Dialogue de confirmation quiz */
+body.tcf-qdlg-open {
+    overflow: hidden;
+}
+
+.tcf-qdlg {
+    position: fixed;
+    inset: 0;
+    z-index: 12000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem;
+}
+
+.tcf-qdlg[hidden] {
+    display: none !important;
+}
+
+.tcf-qdlg__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.48);
+}
+
+.tcf-qdlg__panel {
+    position: relative;
+    z-index: 1;
+    width: min(100%, 400px);
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 1.5rem 1.35rem 1.25rem;
+    box-shadow: 0 18px 48px rgba(15, 23, 42, 0.18);
+    text-align: center;
+    animation: tcfQdlgIn 0.22s ease;
+}
+
+@keyframes tcfQdlgIn {
+    from { opacity: 0; transform: translateY(10px) scale(0.98); }
+    to { opacity: 1; transform: none; }
+}
+
+.tcf-qdlg__icon {
+    width: 52px;
+    height: 52px;
+    margin: 0 auto 0.85rem;
+    border-radius: 14px;
+    background: rgba(211, 13, 13, 0.1);
+    color: #d30d0d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.55rem;
+}
+
+.tcf-qdlg__title {
+    margin: 0 0 0.45rem;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.02em;
+}
+
+.tcf-qdlg__msg {
+    margin: 0 0 1.25rem;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: #64748b;
+}
+
+.tcf-qdlg__actions {
+    display: flex;
+    gap: 0.6rem;
+}
+
+.tcf-qdlg__btn {
+    flex: 1;
+    border: 0;
+    border-radius: 10px;
+    padding: 0.7rem 0.9rem;
+    font-weight: 700;
+    font-size: 0.92rem;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.tcf-qdlg__btn--ghost {
+    background: #f1f5f9;
+    color: #334155;
+}
+
+.tcf-qdlg__btn--ghost:hover {
+    background: #e2e8f0;
+}
+
+.tcf-qdlg__btn--primary {
+    background: #d30d0d;
+    color: #fff;
+}
+
+.tcf-qdlg__btn--primary:hover {
+    background: #b40b0b;
+}

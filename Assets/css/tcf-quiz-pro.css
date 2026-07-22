@@ -1,0 +1,695 @@
+/**
+ * Écrans démarrage + résultats CE/CO — design pro, lisible, desktop & mobile.
+ */
+:root {
+    --qpro-bg: #f4f5f7;
+    --qpro-card: #ffffff;
+    --qpro-ink: #121826;
+    --qpro-muted: #5b6472;
+    --qpro-line: #e4e7ec;
+    --qpro-accent: #c8102e;
+    --qpro-accent-soft: rgba(200, 16, 46, 0.08);
+    --qpro-ok: #15803d;
+    --qpro-ok-soft: rgba(21, 128, 61, 0.12);
+    --qpro-bad: #b91c1c;
+    --qpro-bad-soft: rgba(185, 28, 28, 0.12);
+    --qpro-warn: #b45309;
+    --qpro-radius: 16px;
+    --qpro-shadow: 0 10px 30px rgba(18, 24, 38, 0.06);
+}
+
+body.tcf-quiz-with-site-nav {
+    background: var(--qpro-bg) !important;
+}
+
+body.tcf-quiz-with-site-nav .bg-pattern {
+    display: none !important;
+}
+
+body.tcf-quiz-with-site-nav .tcf-quiz-standalone-wrap .app-container {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 1.25rem 1rem 2.5rem;
+    overflow: visible;
+    min-height: auto;
+}
+
+/* —— Démarrage —— */
+.tcf-qpro-start {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.tcf-qpro-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: var(--qpro-muted);
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+    width: fit-content;
+}
+
+.tcf-qpro-back:hover {
+    color: var(--qpro-accent);
+}
+
+.tcf-qpro-start-card {
+    background: var(--qpro-card);
+    border: 1px solid var(--qpro-line);
+    border-radius: calc(var(--qpro-radius) + 4px);
+    box-shadow: var(--qpro-shadow);
+    padding: clamp(1.5rem, 4vw, 2.5rem);
+    text-align: left;
+}
+
+.tcf-qpro-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 0.85rem;
+    padding: 0.35rem 0.7rem;
+    border-radius: 999px;
+    background: var(--qpro-accent-soft);
+    color: var(--qpro-accent);
+    font-size: 0.78rem;
+    font-weight: 750;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.tcf-qpro-start-card h1,
+.tcf-qpro-start-card #quiz-title,
+.tcf-qpro-start-card h2#quiz-title {
+    margin: 0 0 0.65rem;
+    font-size: clamp(1.45rem, 3.2vw, 2rem);
+    line-height: 1.2;
+    color: var(--qpro-ink);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.tcf-qpro-start-card #quiz-description,
+.tcf-qpro-start-card .tcf-qpro-desc {
+    margin: 0 0 1.25rem;
+    color: var(--qpro-muted);
+    font-size: 1rem;
+    line-height: 1.6;
+    max-width: 40rem;
+}
+
+.tcf-qpro-meta {
+    list-style: none;
+    margin: 0 0 1.5rem;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.65rem;
+}
+
+.tcf-qpro-meta li {
+    background: var(--qpro-bg);
+    border: 1px solid var(--qpro-line);
+    border-radius: 12px;
+    padding: 0.85rem 0.75rem;
+    text-align: center;
+}
+
+.tcf-qpro-meta strong {
+    display: block;
+    color: var(--qpro-ink);
+    font-size: 1.05rem;
+    font-weight: 800;
+}
+
+.tcf-qpro-meta span {
+    display: block;
+    margin-top: 0.2rem;
+    color: var(--qpro-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.tcf-qpro-start-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.tcf-qpro-start-actions .btn,
+.tcf-qpro-start-actions #start-btn {
+    min-height: 3rem;
+    padding: 0.85rem 1.4rem !important;
+    border-radius: 12px !important;
+    font-size: 1rem !important;
+    font-weight: 750 !important;
+    background: var(--qpro-accent) !important;
+    border: 0 !important;
+    color: #fff !important;
+    box-shadow: 0 8px 20px rgba(200, 16, 46, 0.22) !important;
+}
+
+.tcf-qpro-start-actions .btn:disabled,
+.tcf-qpro-start-actions #start-btn:disabled {
+    opacity: 0.45;
+    box-shadow: none !important;
+    cursor: not-allowed;
+}
+
+.tcf-qpro-start-actions .btn:not(:disabled):hover {
+    filter: brightness(0.96);
+    transform: translateY(-1px);
+}
+
+/* Masquer l’ancien chrome de démarrage */
+.tcf-qpro-start .logo-container,
+.tcf-qpro-start .quiz-card .card-decoration,
+.tcf-qpro-start .card-badge,
+.tcf-qpro-start .card-icon,
+.tcf-qpro-start .app-footer {
+    display: none !important;
+}
+
+/* —— Résultats —— */
+.tcf-qpro-results {
+    gap: 1rem;
+}
+
+.tcf-qpro-results .results-header h2 {
+    margin: 0 0 0.25rem;
+    font-size: clamp(1.35rem, 2.8vw, 1.75rem);
+    color: var(--qpro-ink);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.tcf-qpro-results .results-header h2 i {
+    color: var(--qpro-accent);
+}
+
+.tcf-qpro-score-wrap {
+    background: var(--qpro-card);
+    border: 1px solid var(--qpro-line);
+    border-radius: var(--qpro-radius);
+    box-shadow: var(--qpro-shadow);
+    padding: 1.5rem 1.25rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+}
+
+.tcf-qpro-results .score-circle {
+    width: 150px;
+    height: 150px;
+    margin: 0;
+}
+
+.tcf-qpro-results .score-text #percentage-text {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--qpro-ink);
+}
+
+.tcf-qpro-results .score-text #level-text {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--qpro-accent);
+}
+
+.tcf-qpro-results .stats-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.75rem !important;
+    margin: 0 !important;
+}
+
+@media (min-width: 720px) {
+    .tcf-qpro-results .stats-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    }
+}
+
+.tcf-qpro-results .stat-card {
+    background: var(--qpro-card) !important;
+    border: 1px solid var(--qpro-line) !important;
+    border-radius: 14px !important;
+    box-shadow: none !important;
+    padding: 1rem 0.75rem !important;
+    transform: none !important;
+}
+
+.tcf-qpro-results .stat-card:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.tcf-qpro-results .stat-icon {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 1.1rem !important;
+    margin-bottom: 0.45rem !important;
+}
+
+.tcf-qpro-results .stat-card:nth-child(1) .stat-icon {
+    background: var(--qpro-ok) !important;
+}
+
+.tcf-qpro-results .stat-card:nth-child(2) .stat-icon {
+    background: var(--qpro-bad) !important;
+}
+
+.tcf-qpro-results .stat-value {
+    font-size: 1.25rem !important;
+    color: var(--qpro-ink) !important;
+}
+
+.tcf-qpro-results .stat-label {
+    font-size: 0.78rem !important;
+    color: var(--qpro-muted) !important;
+}
+
+.tcf-qpro-results .results-footer {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch;
+    gap: 0.5rem;
+    justify-content: stretch;
+    margin: 0.25rem 0 0.5rem;
+}
+
+.tcf-qpro-results .results-footer .btn {
+    display: inline-flex !important;
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 2.65rem;
+    border-radius: 12px !important;
+    font-weight: 750 !important;
+    justify-content: center;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.6rem 0.55rem !important;
+    white-space: nowrap;
+    font-size: 0.88rem !important;
+    text-decoration: none;
+    box-sizing: border-box;
+}
+
+.tcf-qpro-results .results-footer .btn .btn-txt--short {
+    display: none;
+}
+
+.tcf-qpro-results .results-footer .btn .btn-txt--full {
+    display: inline;
+}
+
+.tcf-qpro-results #show-correction-btn {
+    background: var(--qpro-accent) !important;
+    color: #fff !important;
+    border: 0 !important;
+}
+
+.tcf-qpro-results #restart-btn {
+    background: #fff !important;
+    color: var(--qpro-ink) !important;
+    border: 1px solid var(--qpro-line) !important;
+}
+
+.tcf-qpro-results #back-to-start-btn {
+    background: transparent !important;
+    color: var(--qpro-muted) !important;
+    border: 1px solid var(--qpro-line) !important;
+}
+
+/* —— Correction —— */
+.tcf-qpro-results .tcf-correction-panel.is-open {
+    display: block !important;
+    padding-bottom: 0.5rem;
+}
+
+.tcf-qpro-results .results-indicators-container {
+    background: var(--qpro-card);
+    border: 1px solid var(--qpro-line);
+    border-radius: var(--qpro-radius);
+    box-shadow: none;
+    padding: 1rem;
+    margin: 0 0 0.85rem;
+}
+
+.tcf-qpro-results .results-indicators-title {
+    color: var(--qpro-ink);
+    font-weight: 750;
+    margin-bottom: 0.75rem;
+    justify-content: flex-start;
+}
+
+.tcf-qpro-results .results-indicators {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.tcf-qpro-results .results-indicators .indicator {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 750;
+    cursor: pointer;
+    color: #fff;
+    background: #94a3b8;
+}
+
+.tcf-qpro-results .results-indicators .indicator.correct {
+    background: var(--qpro-ok) !important;
+}
+
+.tcf-qpro-results .results-indicators .indicator.incorrect {
+    background: var(--qpro-bad) !important;
+}
+
+.tcf-qpro-results .results-indicators .indicator.unanswered {
+    background: #cbd5e1 !important;
+    color: #475569 !important;
+}
+
+.tcf-qpro-results .results-indicators .indicator.is-active {
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--qpro-accent, #d30d0d);
+    transform: scale(1.08);
+}
+
+.tcf-qpro-results .answers-review {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.tcf-qpro-review-card {
+    display: none;
+    background: var(--qpro-card);
+    border: 1px solid var(--qpro-line);
+    border-radius: var(--qpro-radius);
+    padding: 1rem 1.1rem;
+    margin: 0 !important;
+    border-bottom: 0 !important;
+}
+
+.tcf-qpro-review-card.is-focused {
+    display: block;
+}
+
+.tcf-qpro-review-card__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.tcf-qpro-review-card__num {
+    font-weight: 800;
+    color: var(--qpro-ink);
+    font-size: 0.95rem;
+}
+
+.tcf-qpro-review-card__status {
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding: 0.25rem 0.55rem;
+    border-radius: 999px;
+}
+
+.tcf-qpro-review-card__head.is-correct .tcf-qpro-review-card__status {
+    background: var(--qpro-ok-soft);
+    color: var(--qpro-ok);
+}
+
+.tcf-qpro-review-card__head.is-wrong .tcf-qpro-review-card__status {
+    background: var(--qpro-bad-soft);
+    color: var(--qpro-bad);
+}
+
+.tcf-qpro-review-card__head.is-unanswered .tcf-qpro-review-card__status {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.tcf-qpro-results .review-question {
+    font-weight: 600;
+    color: var(--qpro-ink);
+    font-size: 0.98rem;
+    line-height: 1.55;
+    margin-bottom: 0.75rem;
+}
+
+.tcf-qpro-results .review-situation {
+    background: var(--qpro-bg);
+    border-left: 3px solid var(--qpro-accent);
+    border-radius: 0 10px 10px 0;
+    padding: 0.65rem 0.8rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.9rem;
+    color: var(--qpro-muted);
+}
+
+.tcf-qpro-review-choices {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.tcf-qpro-results .review-answer {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.7rem 0.8rem;
+    border-radius: 10px;
+    border: 1px solid var(--qpro-line);
+    background: #fafafa;
+    margin: 0 !important;
+}
+
+.tcf-qpro-results .review-answer.correct {
+    background: var(--qpro-ok-soft) !important;
+    border-color: rgba(21, 128, 61, 0.35) !important;
+    border-left: 3px solid var(--qpro-ok) !important;
+}
+
+.tcf-qpro-results .review-answer.incorrect {
+    background: var(--qpro-bad-soft) !important;
+    border-color: rgba(185, 28, 28, 0.35) !important;
+    border-left: 3px solid var(--qpro-bad) !important;
+}
+
+.tcf-qpro-results .review-answer i {
+    flex-shrink: 0;
+    margin-top: 0;
+    margin-right: 0 !important;
+    background: #94a3b8;
+}
+
+.tcf-qpro-results .review-answer.correct i {
+    background: var(--qpro-ok) !important;
+}
+
+.tcf-qpro-results .review-answer.incorrect i {
+    background: var(--qpro-bad) !important;
+}
+
+.tcf-qpro-results .review-answer.is-other {
+    opacity: 0.85;
+    background: #fff !important;
+    border-color: var(--qpro-line) !important;
+    border-left: 1px solid var(--qpro-line) !important;
+    box-shadow: none !important;
+    font-weight: 400 !important;
+}
+
+.tcf-qpro-results .review-answer.is-other i {
+    background: #cbd5e1 !important;
+}
+
+.tcf-qpro-results .review-answer.is-other .review-answer-meta,
+.tcf-qpro-results .review-answer.is-other .review-badge {
+    display: none !important;
+}
+
+.tcf-qpro-results .review-answer.incorrect .review-badge.yours {
+    display: none !important;
+}
+
+/* Nav correction : sticky au-dessus de la barre mobile */
+.tcf-qpro-review-nav {
+    position: sticky;
+    bottom: calc(var(--tcf-mobile-nav-h, 4.6rem) + env(safe-area-inset-bottom, 0px));
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-top: 0.85rem;
+    padding: 0.65rem 0.7rem;
+    background: rgba(255, 255, 255, 0.97);
+    border: 1px solid var(--qpro-line);
+    border-radius: 14px;
+    box-shadow: 0 -4px 18px rgba(15, 23, 42, 0.08);
+    backdrop-filter: blur(8px);
+}
+
+.tcf-qpro-review-nav[hidden] {
+    display: none !important;
+}
+
+.tcf-qpro-review-nav__pos {
+    flex: 0 0 auto;
+    min-width: 3.2rem;
+    text-align: center;
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: var(--qpro-muted);
+}
+
+.tcf-qpro-review-nav__btn {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 2.45rem;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    border-radius: 10px !important;
+    font-weight: 750 !important;
+    font-size: 0.82rem !important;
+    padding: 0.5rem 0.55rem !important;
+    white-space: nowrap;
+    background: #fff !important;
+    color: var(--qpro-ink) !important;
+    border: 1px solid var(--qpro-line) !important;
+}
+
+.tcf-qpro-review-nav__btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.tcf-qpro-review-nav__btn--next,
+.tcf-qpro-review-nav__btn--restart {
+    background: var(--qpro-accent) !important;
+    color: #fff !important;
+    border-color: transparent !important;
+}
+
+.tcf-qpro-review-nav__btn[hidden] {
+    display: none !important;
+}
+
+@media (min-width: 992px) {
+    .tcf-qpro-review-nav {
+        bottom: 0.75rem;
+    }
+}
+
+.tcf-qpro-results .review-answer > span {
+    flex: 1 1 auto;
+    min-width: 0;
+    color: var(--qpro-ink);
+    font-size: 0.92rem;
+    line-height: 1.45;
+}
+
+.tcf-qpro-results .review-answer-meta {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.35rem;
+    margin: 0 0 0 auto !important;
+    margin-top: 0 !important;
+    padding-left: 0.5rem !important;
+    width: auto !important;
+    max-width: 42%;
+}
+
+.tcf-qpro-results .review-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    padding: 0.2rem 0.5rem;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.tcf-qpro-results .review-badge.yours {
+    background: var(--qpro-bad-soft);
+    color: var(--qpro-bad);
+}
+
+.tcf-qpro-results .review-badge.good {
+    background: var(--qpro-ok-soft);
+    color: var(--qpro-ok);
+}
+
+.tcf-qpro-review-empty {
+    margin: 0;
+    color: var(--qpro-muted);
+    font-size: 0.9rem;
+}
+
+@media (max-width: 560px) {
+    .tcf-qpro-meta {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .tcf-qpro-meta li:last-child {
+        grid-column: 1 / -1;
+    }
+
+    .tcf-qpro-results .results-footer {
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        gap: 0.4rem;
+    }
+
+    .tcf-qpro-results .results-footer .btn {
+        width: auto !important;
+        flex: 1 1 0 !important;
+        min-height: 2.55rem;
+        padding: 0.55rem 0.35rem !important;
+        font-size: 0.76rem !important;
+        gap: 0.22rem;
+    }
+
+    .tcf-qpro-results .results-footer .btn i {
+        font-size: 1rem;
+    }
+
+    .tcf-qpro-results .results-footer .btn .btn-txt--full {
+        display: none;
+    }
+
+    .tcf-qpro-results .results-footer .btn .btn-txt--short {
+        display: inline;
+    }
+}

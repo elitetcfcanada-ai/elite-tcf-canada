@@ -1,6 +1,6 @@
 /**
  * Super Admin — tableau de bord, stats, traçabilité (Chart.js + Leaflet), utilisateurs,
- * messages communautaires, chat, sujets (topics), administrateurs, notifications.
+ * messages communautaires, sujets (topics), administrateurs, notifications.
  * S’appuie sur les actions POST de superAdmin.php et les jeux de données initiaux (usersFromDB, …).
  */
 (function () {
@@ -17,7 +17,6 @@
     };
 
     var traceState = { map: null, charts: {} };
-    var chatState = { userId: null };
     var topicsState = { targetId: 'topics-written' };
 
     function $(sel, root) {
@@ -937,101 +936,6 @@
             .catch(function () {});
     }
 
-    function renderChatUsers(users) {
-        var box = $('#chat-users');
-        if (!box) return;
-        if (!users || !users.length) {
-            box.innerHTML = '<p style="padding:12px;color:var(--sa-muted);font-size:0.85rem;">Aucun utilisateur.</p>';
-            return;
-        }
-        box.innerHTML = users
-            .map(function (u) {
-                var active = chatState.userId && String(chatState.userId) === String(u.id) ? ' is-active' : '';
-                return (
-                    '<div class="chat-user-item' +
-                    active +
-                    '" data-uid="' +
-                    escAttr(String(u.id)) +
-                    '" data-name="' +
-                    escAttr(u.name || '') +
-                    '">' +
-                    escHtml(u.name) +
-                    '</div>'
-                );
-            })
-            .join('');
-    }
-
-    function loadChatThread(userId) {
-        postForm('get_chat_messages', { user_id: userId })
-            .then(function (j) {
-                if (!j || !j.success || !j.data) return;
-                var body = $('#message-body');
-                if (!body) return;
-                body.innerHTML = '';
-                j.data.forEach(function (m) {
-                    var div = document.createElement('div');
-                    var isAd = parseInt(m.is_admin, 10) === 1;
-                    div.className = 'chat-bubble ' + (isAd ? 'chat-bubble--admin' : 'chat-bubble--user');
-                    div.innerHTML =
-                        '<div>' +
-                        escHtml(m.message || '') +
-                        '</div><div style="font-size:0.7rem;opacity:0.75;margin-top:4px;">' +
-                        escHtml(m.created_at || '') +
-                        '</div>';
-                    body.appendChild(div);
-                });
-                body.scrollTop = body.scrollHeight;
-            })
-            .catch(function () {});
-    }
-
-    function initChatSection() {
-        var users = typeof usersFromDB !== 'undefined' ? usersFromDB : [];
-        renderChatUsers(users);
-        var usersBox = $('#chat-users');
-        if (usersBox) {
-            usersBox.addEventListener('click', function (e) {
-                var item = e.target.closest('.chat-user-item');
-                if (!item) return;
-                var uid = item.getAttribute('data-uid');
-                var name = item.getAttribute('data-name') || '';
-                chatState.userId = uid;
-                $all('.chat-user-item').forEach(function (el) {
-                    el.classList.toggle('is-active', el === item);
-                });
-                $('#current-user-name').textContent = name;
-                $('#current-user-avatar').textContent = (name || 'U').substring(0, 2).toUpperCase();
-                $('.message-footer').style.display = 'flex';
-                loadChatThread(uid);
-            });
-        }
-        var sendBtn = $('#send-message-btn');
-        var input = $('#chat-input');
-        function sendChat() {
-            if (!chatState.userId || !input) return;
-            var text = input.value.trim();
-            if (!text) return;
-            postForm('send_chat_message', { user_id: chatState.userId, message: text }).then(function (j) {
-                if (j && j.success) {
-                    input.value = '';
-                    loadChatThread(chatState.userId);
-                } else {
-                    toast((j && j.message) || 'Erreur envoi', true);
-                }
-            });
-        }
-        if (sendBtn) sendBtn.addEventListener('click', sendChat);
-        if (input) {
-            input.addEventListener('keydown', function (e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    sendChat();
-                }
-            });
-        }
-    }
-
     function initAnalytics() {
         var vids = typeof videosFromDB !== 'undefined' ? videosFromDB : [];
         var sorted = []
@@ -1232,7 +1136,6 @@
         initUsersSection();
         initAdminsSection();
         initMessagesSection();
-        initChatSection();
         initNotifications();
         initModalsClose();
         initTraceListeners();

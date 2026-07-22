@@ -149,7 +149,17 @@ if ($action === 'init') {
         exit;
     }
 
-    $channel = tcf_notchpay_detect_channel($phone);
+    $phone = tcf_notchpay_normalize_phone($phone);
+    if ($phone === '' || !tcf_notchpay_is_valid_cm_phone($phone)) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Numéro Cameroun invalide. Exemple MTN : +237 67X XXX XXX — Orange : +237 69X XXX XXX',
+        ]);
+        exit;
+    }
+
+    $provider = isset($input['provider']) ? trim((string) $input['provider']) : 'auto';
+    $channel = tcf_notchpay_resolve_channel($phone, $provider);
     $amountXaf = isset($plan['payment_xaf']) ? (int) $plan['payment_xaf'] : tcf_subscription_payment_xaf_amount();
     $reference = 'tcf_' . $uid . '_' . preg_replace('/[^a-z0-9_]/i', '', $planKey) . '_' . time() . '_' . bin2hex(random_bytes(4));
     $description = 'Abonnement ' . ($plan['tier'] ?? '') . ' — ' . ($plan['badge'] ?? $planKey);
@@ -190,14 +200,34 @@ if ($action === 'init') {
 
     $mode = 'redirect';
     $message = 'Redirection vers la page de paiement sécurisée Notch Pay…';
+    $chargeError = '';
 
-    $charge = tcf_notchpay_process_mobile($notchRef, $channel, $phone);
-    if ($charge['ok'] && is_array($charge['data'])) {
+    $charge = tcf_notchpay_charge_mobile($notchRef, $channel, $phone);
+    if (!empty($charge['ok']) && is_array($charge['data'] ?? null)) {
         $chargeStatus = tcf_notchpay_payment_status_from_response($charge['data']);
         if (!tcf_notchpay_is_failure_status($chargeStatus)) {
             $mode = 'direct';
-            $message = 'Demande envoyée sur votre téléphone. Confirmez le paiement Mobile Money (MTN / Orange).';
+            $usedChannel = (string) ($charge['channel_used'] ?? $channel);
+            if ($usedChannel !== '' && $usedChannel !== $channel) {
+                $channel = $usedChannel;
+                try {
+                    $pdo->prepare('UPDATE subscription_payment_pending SET channel = ? WHERE notch_reference = ?')
+                        ->execute([$channel, $notchRef]);
+                } catch (Throwable $e) {
+                }
+            }
+            $label = ($channel === 'cm.orange') ? 'Orange Money' : (($channel === 'cm.mtn') ? 'MTN Mobile Money' : 'Mobile Money');
+            $message = 'Demande envoyée sur votre téléphone. Confirmez le paiement ' . $label . '.';
+        } else {
+            $chargeError = 'Le paiement a été refusé immédiatement. Vérifiez l\'opérateur (MTN / Orange) et le solde.';
         }
+    } else {
+        $chargeError = (string) ($charge['error'] ?? '');
+    }
+
+    // Si le push USSD échoue, on garde le fallback Collect (page Notch) pour MTN et Orange.
+    if ($mode !== 'direct' && $chargeError !== '') {
+        $message = 'Ouverture de la page Notch Pay pour finaliser (MTN / Orange)…';
     }
 
     $usdPrice = isset($plan['price']) ? (float) $plan['price'] : tcf_subscription_display_usd_amount();
@@ -207,9 +237,11 @@ if ($action === 'init') {
         'reference' => $notchRef,
         'redirect_url' => $authorizationUrl,
         'channel' => $channel,
+        'phone' => $phone,
         'amount_xaf' => $amountXaf,
         'amount_display' => '$' . number_format($usdPrice, 2, '.', ''),
         'message' => $message,
+        'charge_hint' => $chargeError !== '' ? $chargeError : null,
     ], JSON_UNESCAPED_UNICODE);
     exit;
 }

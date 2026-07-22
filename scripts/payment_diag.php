@@ -26,8 +26,27 @@ echo 'https=' . ($_SERVER['HTTPS'] ?? 'off') . "\n";
 echo 'pub_configured=' . ($pub !== '' ? 'yes' : 'no') . ' prefix=' . substr($pub, 0, 8) . "\n";
 echo 'sec_configured=' . ($sec !== '' ? 'yes' : 'no') . ' prefix=' . substr($sec, 0, 8) . "\n";
 echo 'callback=' . tcf_payment_callback_url() . "\n";
+echo 'webhook=' . tcf_payment_webhook_url() . "\n";
+echo 'local_host=' . (tcf_is_local_host() ? 'yes' : 'no') . "\n";
 echo 'local_file=' . (is_file(__DIR__ . '/../includes/payment_config.local.php') ? 'yes' : 'no') . "\n";
 echo 'hostinger_file=' . (is_file(__DIR__ . '/../includes/payment_config.hostinger.php') ? 'yes' : 'no') . "\n";
+
+$samples = [
+    '670000000',
+    '0670000000',
+    '+237670000000',
+    '237670000000',
+    '690000000',
+    '655000000',
+    '650000000',
+];
+echo "\n--- Phone normalize / channel ---\n";
+foreach ($samples as $s) {
+    $n = tcf_notchpay_normalize_phone($s);
+    $ch = tcf_notchpay_detect_channel($s);
+    $ok = tcf_notchpay_is_valid_cm_phone($n) ? 'OK' : 'BAD';
+    echo $s . ' => ' . $n . ' [' . $ch . '] ' . $ok . "\n";
+}
 
 if ($pub !== '') {
     // Ping léger : init impossible sans montant réel ; on teste juste une requête GET si dispo

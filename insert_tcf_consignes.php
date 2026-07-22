@@ -256,25 +256,99 @@ HTML;
 </div>
 HTML;
 
-    // Mise à jour des consignes CE
-    $stmt = $pdo->prepare("UPDATE tcf_ce_consignes SET body = ?, updated_at = NOW() WHERE id = 1");
-    $stmt->execute([$ceConsignes]);
-    echo "<p style='color:green'>✓ Consignes Compréhension Écrite mises à jour</p>";
+    // Mise à jour des consignes CE (3 sections)
+    require_once __DIR__ . '/includes/tcf_consignes_defaults.php';
+    $ceBodies = tcf_consigne_ce_bodies();
+    $ceTitles = [
+        'structure' => 'Structure de l’épreuve et stratégie de scoring',
+        'techniques' => 'Les 5 techniques essentielles',
+        'erreurs' => 'Erreurs courantes à éviter',
+    ];
+    try {
+        $cols = $pdo->query('SHOW COLUMNS FROM tcf_ce_consignes')->fetchAll(PDO::FETCH_ASSOC);
+        $names = array_map(static fn ($c) => (string) ($c['Field'] ?? ''), $cols);
+        if (!in_array('section_key', $names, true)) {
+            $pdo->exec("ALTER TABLE tcf_ce_consignes ADD COLUMN section_key VARCHAR(40) NOT NULL DEFAULT 'structure' AFTER body");
+        }
+        if (!in_array('sort_order', $names, true)) {
+            $pdo->exec('ALTER TABLE tcf_ce_consignes ADD COLUMN sort_order INT NOT NULL DEFAULT 1 AFTER is_published');
+        }
+    } catch (Throwable $e) {
+        // ignore
+    }
+    $pdo->exec("DELETE FROM tcf_ce_consignes WHERE section_key NOT IN ('structure','techniques','erreurs') OR section_key IS NULL");
+    $updCe = $pdo->prepare('UPDATE tcf_ce_consignes SET title=?, body=?, is_published=1, sort_order=?, updated_at=NOW() WHERE section_key=?');
+    $insCe = $pdo->prepare("INSERT INTO tcf_ce_consignes (title, body, section_key, visibility, is_published, sort_order) VALUES (?,?,?,'gratuit',1,?)");
+    foreach (['structure', 'techniques', 'erreurs'] as $i => $key) {
+        $updCe->execute([$ceTitles[$key], $ceBodies[$key], $i + 1, $key]);
+        if ($updCe->rowCount() === 0) {
+            $insCe->execute([$ceTitles[$key], $ceBodies[$key], $key, $i + 1]);
+        }
+    }
+    echo "<p style='color:green'>✓ Consignes Compréhension Écrite (3 sections) mises à jour</p>";
     
-    // Mise à jour des consignes CO
-    $stmt = $pdo->prepare("UPDATE tcf_co_consignes SET body = ?, updated_at = NOW() WHERE id = 1");
-    $stmt->execute([$coConsignes]);
-    echo "<p style='color:green'>✓ Consignes Compréhension Orale mises à jour</p>";
-    
-    // Mise à jour des consignes EE (tache1)
-    $stmt = $pdo->prepare("UPDATE tcf_ee_consignes SET body = ?, updated_at = NOW() WHERE task_key = 'tache1'");
-    $stmt->execute([$eeConsignes]);
-    echo "<p style='color:green'>✓ Consignes Expression Écrite mises à jour</p>";
-    
-    // Mise à jour des consignes EO (tache2)
-    $stmt = $pdo->prepare("UPDATE tcf_eo_consignes SET body = ?, updated_at = NOW() WHERE task_key = 'tache2'");
-    $stmt->execute([$eoConsignes]);
-    echo "<p style='color:green'>✓ Consignes Expression Orale mises à jour</p>";
+    // Mise à jour des consignes CO (3 sections)
+    $coBodies = tcf_consigne_co_bodies();
+    $coTitles = [
+        'structure' => 'Structure de l’épreuve et stratégie de scoring',
+        'techniques' => 'Les 5 techniques essentielles',
+        'erreurs' => 'Erreurs courantes à éviter',
+    ];
+    try {
+        $cols = $pdo->query('SHOW COLUMNS FROM tcf_co_consignes')->fetchAll(PDO::FETCH_ASSOC);
+        $names = array_map(static fn ($c) => (string) ($c['Field'] ?? ''), $cols);
+        if (!in_array('section_key', $names, true)) {
+            $pdo->exec("ALTER TABLE tcf_co_consignes ADD COLUMN section_key VARCHAR(40) NOT NULL DEFAULT 'structure' AFTER body");
+        }
+        if (!in_array('sort_order', $names, true)) {
+            $pdo->exec('ALTER TABLE tcf_co_consignes ADD COLUMN sort_order INT NOT NULL DEFAULT 1 AFTER is_published');
+        }
+    } catch (Throwable $e) {
+        // ignore
+    }
+    $pdo->exec("DELETE FROM tcf_co_consignes WHERE section_key NOT IN ('structure','techniques','erreurs') OR section_key IS NULL");
+    $updCo = $pdo->prepare('UPDATE tcf_co_consignes SET title=?, body=?, is_published=1, sort_order=?, updated_at=NOW() WHERE section_key=?');
+    $insCo = $pdo->prepare("INSERT INTO tcf_co_consignes (title, body, section_key, visibility, is_published, sort_order) VALUES (?,?,?,'gratuit',1,?)");
+    foreach (['structure', 'techniques', 'erreurs'] as $i => $key) {
+        $updCo->execute([$coTitles[$key], $coBodies[$key], $i + 1, $key]);
+        if ($updCo->rowCount() === 0) {
+            $insCo->execute([$coTitles[$key], $coBodies[$key], $key, $i + 1]);
+        }
+    }
+    echo "<p style='color:green'>✓ Consignes Compréhension Orale (3 sections) mises à jour</p>";
+
+    // EE / EO : une consigne détaillée par tâche (pas un seul bloc mélangé)
+    $eeBodies = tcf_consigne_ee_bodies();
+    $eoBodies = tcf_consigne_eo_bodies();
+    $eeTitles = [
+        'tache1' => 'Tâche 1 — Message court',
+        'tache2' => 'Tâche 2 — Narration / article',
+        'tache3' => 'Tâche 3 — Argumentation',
+    ];
+    $eoTitles = [
+        'tache1' => 'Tâche 1 — Entretien dirigé',
+        'tache2' => 'Tâche 2 — Interaction',
+        'tache3' => 'Tâche 3 — Point de vue',
+    ];
+    $updEe = $pdo->prepare("UPDATE tcf_ee_consignes SET title=?, body=?, is_published=1, updated_at=NOW() WHERE task_key=?");
+    $insEe = $pdo->prepare("INSERT INTO tcf_ee_consignes (title, body, task_key, visibility, is_published, sort_order, is_active) VALUES (?,?,?,'gratuit',1,?,1)");
+    foreach (['tache1', 'tache2', 'tache3'] as $i => $key) {
+        $updEe->execute([$eeTitles[$key], $eeBodies[$key], $key]);
+        if ($updEe->rowCount() === 0) {
+            $insEe->execute([$eeTitles[$key], $eeBodies[$key], $key, $i + 1]);
+        }
+    }
+    echo "<p style='color:green'>✓ Consignes Expression Écrite (3 tâches) mises à jour</p>";
+
+    $updEo = $pdo->prepare("UPDATE tcf_eo_consignes SET title=?, body=?, is_published=1, updated_at=NOW() WHERE task_key=?");
+    $insEo = $pdo->prepare("INSERT INTO tcf_eo_consignes (title, body, task_key, visibility, is_published, sort_order, is_active) VALUES (?,?,?,'gratuit',1,?,1)");
+    foreach (['tache1', 'tache2', 'tache3'] as $i => $key) {
+        $updEo->execute([$eoTitles[$key], $eoBodies[$key], $key]);
+        if ($updEo->rowCount() === 0) {
+            $insEo->execute([$eoTitles[$key], $eoBodies[$key], $key, $i + 1]);
+        }
+    }
+    echo "<p style='color:green'>✓ Consignes Expression Orale (3 tâches) mises à jour</p>";
     
     $pdo->commit();
     echo "<p style='color:blue; font-weight:bold;'>✓ Toutes les consignes ont été insérées avec succès !</p>";

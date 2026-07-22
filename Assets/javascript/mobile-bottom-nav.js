@@ -9,6 +9,7 @@
     var overlay = document.getElementById('tcfMobileSheetOverlay');
     var openSheet = null;
     var openTrigger = null;
+    var lockScrollY = 0;
 
     function isMobile() {
         return window.innerWidth <= MOBILE_MAX;
@@ -60,6 +61,11 @@
             profileBtn.click();
             return true;
         }
+        var login = nav.getAttribute('data-tcf-login');
+        if (login) {
+            window.location.assign(login);
+            return true;
+        }
         return false;
     }
 
@@ -68,11 +74,28 @@
         btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
     }
 
-    function closeSheet() {
-        if (!openSheet) {
-            restorePageActive();
-            return;
-        }
+    function lockBodyScroll() {
+        lockScrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
+        document.body.classList.add('tcf-mobile-sheet-open');
+        document.body.style.top = '-' + lockScrollY + 'px';
+        document.body.style.position = 'fixed';
+        document.body.style.width = '100%';
+        document.body.style.left = '0';
+        document.body.style.right = '0';
+    }
+
+    function unlockBodyScroll() {
+        document.body.classList.remove('tcf-mobile-sheet-open');
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.style.left = '';
+        document.body.style.right = '';
+        window.scrollTo(0, lockScrollY || 0);
+    }
+
+    function closeSheetQuiet() {
+        if (!openSheet) return;
         openSheet.classList.remove('is-open');
         openSheet.hidden = true;
         if (overlay) {
@@ -82,7 +105,15 @@
         setTriggerExpanded(openTrigger, false);
         openSheet = null;
         openTrigger = null;
-        document.body.classList.remove('tcf-mobile-sheet-open');
+        unlockBodyScroll();
+    }
+
+    function closeSheet() {
+        if (!openSheet) {
+            restorePageActive();
+            return;
+        }
+        closeSheetQuiet();
         restorePageActive();
     }
 
@@ -92,36 +123,86 @@
         if (!sheet || !overlay) return;
 
         if (openSheet && openSheet !== sheet) {
-            closeSheet();
+            openSheet.classList.remove('is-open');
+            openSheet.hidden = true;
+            setTriggerExpanded(openTrigger, false);
         }
 
         setActiveItem(trigger);
         openSheet = sheet;
         openTrigger = trigger || null;
+
         sheet.hidden = false;
-        requestAnimationFrame(function () {
-            sheet.classList.add('is-open');
-        });
+        sheet.classList.add('is-open');
         overlay.hidden = false;
-        requestAnimationFrame(function () {
-            overlay.classList.add('is-visible');
-        });
+        overlay.classList.add('is-visible');
         setTriggerExpanded(trigger, true);
-        document.body.classList.add('tcf-mobile-sheet-open');
+        lockBodyScroll();
     }
 
-    nav.addEventListener('click', function (e) {
-        var link = e.target.closest && e.target.closest('a.tcf-mobile-nav__item');
-        if (link) {
-            setActiveItem(link);
-            closeSheet();
-            return;
-        }
+    /**
+     * Navigation forcée : ferme le sheet (body unlock) puis redirige.
+     * Évite les liens ancre qui « ne font rien » quand le scroll est verrouillé.
+     */
+    function navigateTo(href) {
+        if (!href) return false;
+        closeSheetQuiet();
 
+        try {
+            var target = new URL(href, window.location.href);
+            var current = new URL(window.location.href);
+            var samePath =
+                target.pathname.replace(/\/+$/, '') === current.pathname.replace(/\/+$/, '');
+            var sameSearch = target.search === current.search;
+
+            if (samePath && sameSearch && target.hash) {
+                var id = decodeURIComponent(target.hash.slice(1));
+                var el = id ? document.getElementById(id) : null;
+                if (el) {
+                    if (history && history.replaceState) {
+                        history.replaceState(null, '', target.hash);
+                    } else {
+                        window.location.hash = target.hash;
+                    }
+                    window.requestAnimationFrame(function () {
+                        try {
+                            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        } catch (e) {
+                            el.scrollIntoView(true);
+                        }
+                    });
+                    restorePageActive();
+                    return true;
+                }
+            }
+
+            window.location.assign(target.href);
+            return true;
+        } catch (err) {
+            window.location.href = href;
+            return true;
+        }
+    }
+
+    function handleNavGoClick(e) {
+        var link = e.target.closest && e.target.closest('[data-tcf-nav-go]');
+        if (!link) return;
+        var href = link.getAttribute('href');
+        if (!href || href === '#' || href.indexOf('javascript:') === 0) return;
+        e.preventDefault();
+        e.stopPropagation();
+        navigateTo(href);
+    }
+
+    document.addEventListener('click', handleNavGoClick, true);
+
+    nav.addEventListener('click', function (e) {
         var openBtn = e.target.closest && e.target.closest('[data-tcf-sheet-open]');
         if (openBtn) {
             e.preventDefault();
+            e.stopPropagation();
             var targetId = openBtn.getAttribute('data-tcf-sheet-open');
+            if (!targetId) return;
             if (openSheet && openSheet.id === targetId) {
                 closeSheet();
             } else {
@@ -150,7 +231,7 @@
         sheetProfile.addEventListener('click', function (e) {
             e.preventDefault();
             closeSheet();
-            triggerProfile();
+            window.setTimeout(triggerProfile, 40);
         });
     }
 

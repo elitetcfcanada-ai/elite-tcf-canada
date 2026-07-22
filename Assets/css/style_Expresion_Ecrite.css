@@ -58,10 +58,11 @@ body {
 }
 
 .container {
-    width: 90%;
-    max-width: 1200px;
+    width: min(92%, 960px);
+    max-width: 960px;
     margin: 0 auto;
-    padding: 2rem 0;
+    padding: 2rem clamp(0.75rem, 3vw, 1.25rem);
+    box-sizing: border-box;
 }
 
 .publication-panel {
@@ -172,7 +173,7 @@ body {
 }
 
 .combinaison-header h2 {
-    font-size: 1.5rem;
+    font-size: 0.98rem;
     margin: 0;
 }
 
@@ -185,20 +186,257 @@ body {
 .combinaison-content li,
 .combinaison-content div,
 .combinaison-content span {
-    font-size: 1.22rem !important;
-    line-height: 1.9 !important;
+    font-size: 0.98rem !important;
+    line-height: 1.6 !important;
 }
 
 .ee-consigne-body p,
 .ee-consigne-body li,
 .ee-consigne-body div,
 .ee-consigne-body span {
-    font-size: 1.12rem !important;
-    line-height: 1.8 !important;
+    font-size: 0.95rem !important;
+    line-height: 1.6 !important;
 }
 
 .combinaison.active .combinaison-content {
     display: block;
+}
+
+/* ========== Consignes EE : mêmes cartes combinaison ========== */
+#ee-consignes-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+#ee-consignes-container .combinaison {
+    margin-bottom: 1rem;
+}
+
+#ee-consignes-container .combinaison:hover {
+    transform: none;
+}
+
+#ee-consignes-container .combinaison-header {
+    padding: 0.7rem 1rem;
+}
+
+#ee-consignes-container .combinaison-header h2 {
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+#ee-consignes-container .combinaison-header .ee-consigne-meta {
+    display: block;
+    margin-top: 0.2rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    opacity: 0.92;
+    color: #fff;
+}
+
+#ee-consignes-container .combinaison-content {
+    padding: 1rem 1.15rem;
+}
+
+#ee-consignes-container .ee-consigne-body h4 {
+    margin: 0.85rem 0 0.4rem;
+    color: var(--main-color, #d30d0d);
+    font-size: 0.95rem !important;
+    font-weight: 700;
+}
+
+#ee-consignes-container .ee-consigne-body h4:first-child {
+    margin-top: 0;
+}
+
+#ee-consignes-container .ee-consigne-body p,
+#ee-consignes-container .ee-consigne-body li {
+    font-size: 0.92rem !important;
+    line-height: 1.55 !important;
+    color: #3a4150;
+}
+
+#ee-consignes-container .ee-consigne-body ul {
+    margin: 0.25rem 0 0.5rem;
+    padding-left: 1.15rem;
+}
+
+#ee-consignes-container .ee-consigne-body p {
+    margin: 0 0 0.45rem;
+}
+
+.tcf-consigne-empty {
+    color: #64748b;
+    margin: 0;
+    font-size: 0.92rem;
+}
+
+/* Consignes EO / CE / CO : mêmes cartes combinaison que EE */
+#eo-consignes-container,
+#ce-consignes-container,
+#co-consignes-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+#eo-consignes-container .combinaison,
+#ce-consignes-container .combinaison,
+#co-consignes-container .combinaison {
+    margin-bottom: 1rem;
+}
+#eo-consignes-container .combinaison:hover,
+#ce-consignes-container .combinaison:hover,
+#co-consignes-container .combinaison:hover {
+    transform: none;
+}
+#eo-consignes-container .combinaison-header,
+#ce-consignes-container .combinaison-header,
+#co-consignes-container .combinaison-header {
+    padding: 0.7rem 1rem;
+}
+#eo-consignes-container .combinaison-header h2,
+#ce-consignes-container .combinaison-header h2,
+#co-consignes-container .combinaison-header h2 {
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+#eo-consignes-container .combinaison-header .ee-consigne-meta,
+#ce-consignes-container .combinaison-header .ee-consigne-meta,
+#co-consignes-container .combinaison-header .ee-consigne-meta {
+    display: block;
+    margin-top: 0.2rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    opacity: 0.92;
+    color: #fff;
+}
+#eo-consignes-container .combinaison-content,
+#ce-consignes-container .combinaison-content,
+#co-consignes-container .combinaison-content {
+    padding: 1rem 1.15rem;
+}
+#eo-consignes-container .ee-consigne-body h4,
+#ce-consignes-container .ee-consigne-body h4,
+#co-consignes-container .ee-consigne-body h4 {
+    margin: 0.85rem 0 0.4rem;
+    color: var(--main-color, #d30d0d);
+    font-size: 0.95rem !important;
+    font-weight: 700;
+}
+#eo-consignes-container .ee-consigne-body h4:first-child,
+#ce-consignes-container .ee-consigne-body h4:first-child,
+#co-consignes-container .ee-consigne-body h4:first-child {
+    margin-top: 0;
+}
+#eo-consignes-container .ee-consigne-body p,
+#eo-consignes-container .ee-consigne-body li,
+#ce-consignes-container .ee-consigne-body p,
+#ce-consignes-container .ee-consigne-body li,
+#co-consignes-container .ee-consigne-body p,
+#co-consignes-container .ee-consigne-body li {
+    font-size: 0.92rem !important;
+    line-height: 1.55 !important;
+    color: #3a4150;
+}
+#eo-consignes-container .ee-consigne-body ul,
+#ce-consignes-container .ee-consigne-body ul,
+#co-consignes-container .ee-consigne-body ul {
+    margin: 0.25rem 0 0.5rem;
+    padding-left: 1.15rem;
+}
+#eo-consignes-container .ee-consigne-body p,
+#ce-consignes-container .ee-consigne-body p,
+#co-consignes-container .ee-consigne-body p {
+    margin: 0 0 0.45rem;
+}
+
+/* EO garde l’ancienne nav pills + cartes simples */
+.tcf-consigne-nav.task-navigation {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    margin: 0.35rem 0 1.25rem;
+    justify-content: center;
+}
+.tcf-consigne-nav .task-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    color: var(--text-color, #141622);
+    border-radius: 999px;
+    padding: 0.55rem 1rem;
+    font-weight: 700;
+    font-size: 0.92rem;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+.tcf-consigne-nav .task-btn:hover {
+    border-color: rgba(211, 13, 13, 0.35);
+    color: var(--main-color, #d30d0d);
+    transform: translateY(-1px);
+}
+.tcf-consigne-nav .task-btn.active {
+    background: var(--main-color, #d30d0d);
+    border-color: var(--main-color, #d30d0d);
+    color: #fff;
+}
+.tcf-consigne-card.task-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.25rem 1.35rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    border-top: 5px solid var(--main-color, #d30d0d);
+    position: relative;
+    overflow: hidden;
+}
+.tcf-consigne-card h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin: 0 0 0.35rem;
+    font-size: 1.2rem;
+    color: var(--text-color, #141622);
+}
+.tcf-consigne-card h3 i {
+    color: var(--main-color, #d30d0d);
+}
+.tcf-consigne-meta {
+    margin: 0 0 1rem;
+    color: #64748b;
+    font-size: 0.95rem !important;
+    line-height: 1.45 !important;
+    font-weight: 600;
+}
+.ee-consigne-body .consigne-section {
+    background: #f8fafc;
+    border: 1px solid #eef2f7;
+    border-radius: 12px;
+    padding: 1rem 1.1rem;
+    margin: 0 0 0.9rem;
+}
+.ee-consigne-body .consigne-section:last-child {
+    margin-bottom: 0;
+}
+.ee-consigne-body .consigne-section h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0 0 0.65rem;
+    font-size: 1.05rem !important;
+    color: var(--text-color, #141622);
+}
+.ee-consigne-body .consigne-section h3 i {
+    color: var(--main-color, #d30d0d);
+}
+.ee-consigne-body .consigne-section ul {
+    margin: 0;
+    padding-left: 1.15rem;
+}
+.ee-consigne-body .consigne-section li {
+    margin: 0.35rem 0;
 }
 
 .tache {
@@ -226,6 +464,129 @@ body {
     box-shadow: 0 6px 16px rgba(20, 22, 34, 0.06);
 }
 
+/* En-tête carte : titre à gauche, détails à droite (pas de favori) */
+#ee-combos-container .ee-tache__head {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin: 0 0 0.75rem;
+}
+
+#ee-combos-container .ee-tache__title {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+    flex-shrink: 0;
+}
+
+#ee-combos-container .ee-tache__num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.65rem;
+    height: 1.65rem;
+    border-radius: 8px;
+    background: var(--primary-color, #d30d0d);
+    color: #fff !important;
+    font-size: 0.85rem !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
+    flex-shrink: 0;
+}
+
+#ee-combos-container .ee-tache__title h3 {
+    margin: 0 !important;
+    color: var(--primary-color, #d30d0d);
+    font-size: 1.05rem !important;
+    font-weight: 700 !important;
+    line-height: 1.2 !important;
+    white-space: nowrap;
+}
+
+#ee-combos-container .ee-tache__meta {
+    display: inline-flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.28rem;
+    margin: 0 !important;
+    padding: 0;
+    min-width: 0;
+    flex: 1 1 auto;
+    font-size: 0.78rem !important;
+    font-weight: 600 !important;
+    line-height: 1.25 !important;
+    color: #64748b !important;
+    text-align: right;
+    white-space: nowrap;
+}
+
+#ee-combos-container .ee-tache__meta span,
+#ee-combos-container .ee-tache__meta i {
+    font-size: inherit !important;
+    line-height: inherit !important;
+    color: inherit !important;
+}
+
+#ee-combos-container .ee-tache__dot {
+    opacity: 0.7;
+}
+
+#ee-combos-container .ee-tache__time {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    white-space: nowrap;
+}
+
+#ee-combos-container .ee-tache__time i {
+    font-size: 0.95em !important;
+}
+
+@media (max-width: 700px) {
+    #ee-combos-container .ee-tache__head {
+        gap: 0.4rem;
+    }
+
+    #ee-combos-container .ee-tache__num {
+        width: 1.4rem;
+        height: 1.4rem;
+        font-size: 0.75rem !important;
+        border-radius: 6px;
+    }
+
+    #ee-combos-container .ee-tache__title h3 {
+        font-size: 1rem !important;
+    }
+
+    #ee-combos-container .ee-tache__meta {
+        font-size: 0.62rem !important;
+        gap: 0.18rem;
+    }
+}
+
+@media (max-width: 420px) {
+    #ee-combos-container .ee-tache__head {
+        align-items: flex-start;
+    }
+
+    #ee-combos-container .ee-tache__title h3 {
+        font-size: 0.92rem !important;
+    }
+
+    #ee-combos-container .ee-tache__meta {
+        flex-wrap: wrap;
+        white-space: normal;
+        font-size: 0.58rem !important;
+        gap: 0.12rem 0.18rem;
+        justify-content: flex-end;
+    }
+}
+
 .tache h3 {
     color: var(--primary-color);
     margin-bottom: 0.5rem;
@@ -236,7 +597,7 @@ body {
     display: block;
     color: var(--success-color);
     margin: 0 0 0.5rem 0;
-    font-size: 1.3rem !important;
+    font-size: 1rem !important;
     font-weight: 700 !important;
     line-height: 1.3;
     letter-spacing: 0;
@@ -255,12 +616,12 @@ body {
 .correction h4 {
     color: var(--success-color);
     margin-bottom: 0.5rem;
-    font-size: 1.3rem !important;
+    font-size: 1rem !important;
 }
 
 .correction p,
 .correction li {
-    font-size: 1.22rem !important;
+    font-size: 0.95rem !important;
 }
 
 .simulator-section {
@@ -569,13 +930,13 @@ body {
 }
 
 .document p {
-    font-size: 1.22rem !important;
+    font-size: 0.95rem !important;
 }
 
 .document h4 {
     color: var(--success-color) !important;
     margin-bottom: 0.5rem;
-    font-size: 1.3rem !important;
+    font-size: 1rem !important;
     font-weight: 700 !important;
     letter-spacing: 0;
     text-transform: none;
@@ -652,7 +1013,7 @@ footer {
     }
 
     .combinaison-header h2 {
-        font-size: 1.2rem;
+        font-size: 0.92rem;
     }
 
     .filter-buttons {

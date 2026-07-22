@@ -30,7 +30,6 @@
         playlistCache: [],
         trace: { map: null, charts: {}, lastTraceability: null },
         subscriptionRevChart: null,
-        chat: { userId: null },
         eeConsignesCache: [],
         eoConsignesCache: [],
         /** 'ce' | 'co' lorsque le modal choix JSON/manuel est ouvert */
@@ -138,28 +137,19 @@
     }
 
     // Sections regroupées sous « Gestion Vidéos » (sidebar)
-    var VIDEO_GROUP_SECTIONS = ['videos', 'channel-posts', 'channel-playlists', 'analytics', 'channel-branding'];
+    var VIDEO_GROUP_SECTIONS = ['videos', 'analytics'];
     var SUBSCRIPTION_GROUP_SECTIONS = ['subscription-plans', 'subscription-payments', 'subscription-revenue'];
     var SITE_MANAGEMENT_GROUP_SECTIONS = ['admins'];
     var SA_IS_SUPER = typeof window.TCF_SA_IS_SUPER === 'boolean'
         ? window.TCF_SA_IS_SUPER
         : ((document.body && document.body.getAttribute('data-sa-role')) === 'super_admin');
+    /* Sections accessibles à un administrateur (hors super_admin) */
     var SA_ADMIN_SECTIONS = {
         dashboard: true,
-        'recent-activity': true,
-        users: true,
-        admins: true,
         videos: true,
-        'channel-posts': true,
-        'channel-playlists': true,
         analytics: true,
-        'channel-branding': true,
-        chat: true,
-        testimonials: true,
-        'subscription-plans': true,
-        'subscription-payments': true,
-        'subscription-revenue': true,
         messages: true,
+        'subscription-revenue': true,
         'topics-section': true,
         'topics-written': true,
         'topics-oral': true,
@@ -416,7 +406,6 @@
         if (sectionId === 'admins') reloadAdmins();
         if (sectionId === 'messages') reloadMessages();
         if (sectionId === 'analytics') initAnalytics();
-        if (sectionId === 'chat') initChatSection();
         if (sectionId === 'topics-section') {
             setTopicContext(state.topicsTarget || 'topics-written');
         }
@@ -425,18 +414,6 @@
             fetchVideosFromServer(function (err, data) {
                 if (!err && data) renderVideosGrid(data);
             });
-        }
-        if (sectionId === 'channel-playlists') {
-            ensureChannelPlaylistsBoot();
-            loadChannelPlaylistsAdmin();
-        }
-        if (sectionId === 'channel-posts') {
-            ensureChannelPostsBoot();
-            loadChannelPostsAdmin();
-        }
-        if (sectionId === 'channel-branding') {
-            ensureChannelBrandingBoot();
-            loadChannelBrandingAdmin();
         }
         if (sectionId === 'testimonials') {
             ensureTestimonialsBoot();
@@ -495,15 +472,7 @@
     }
 
     function initSiteManagementMenu() {
-        var menu = document.getElementById('site-management-menu');
-        var sub = document.getElementById('site-management-submenu');
-        if (menu && sub) {
-            menu.addEventListener('click', function (e) {
-                e.stopPropagation();
-                menu.classList.toggle('is-expanded');
-                sub.classList.toggle('is-open');
-            });
-        }
+        /* Ancien sous-menu « Membres » retiré : entrée directe data-target="admins". */
     }
 
     var subscriptionPlansToolbarBound = false;
@@ -1658,7 +1627,9 @@
             .then(function (j) {
                 if (!j || !j.success || !j.data) return toast((j && j.message) || 'Erreur chargement consignes CE', true);
                 var d = j.data || {};
-                if (document.getElementById('ce-consigne-body')) document.getElementById('ce-consigne-body').value = d.body || '';
+                if (document.getElementById('ce-consigne-structure')) document.getElementById('ce-consigne-structure').value = d.structure || '';
+                if (document.getElementById('ce-consigne-techniques')) document.getElementById('ce-consigne-techniques').value = d.techniques || '';
+                if (document.getElementById('ce-consigne-erreurs')) document.getElementById('ce-consigne-erreurs').value = d.erreurs || '';
                 if (document.getElementById('ce-consigne-status')) document.getElementById('ce-consigne-status').value = Number(d.is_published || 0) === 1 ? '1' : '0';
             })
             .catch(function () { toast('Erreur chargement consignes CE', true); });
@@ -1672,7 +1643,9 @@
             .then(function (j) {
                 if (!j || !j.success || !j.data) return toast((j && j.message) || 'Erreur chargement consignes CO', true);
                 var d = j.data || {};
-                if (document.getElementById('co-consigne-body')) document.getElementById('co-consigne-body').value = d.body || '';
+                if (document.getElementById('co-consigne-structure')) document.getElementById('co-consigne-structure').value = d.structure || '';
+                if (document.getElementById('co-consigne-techniques')) document.getElementById('co-consigne-techniques').value = d.techniques || '';
+                if (document.getElementById('co-consigne-erreurs')) document.getElementById('co-consigne-erreurs').value = d.erreurs || '';
                 if (document.getElementById('co-consigne-status')) document.getElementById('co-consigne-status').value = Number(d.is_published || 0) === 1 ? '1' : '0';
             })
             .catch(function () { toast('Erreur chargement consignes CO', true); });
@@ -1695,11 +1668,15 @@
         refreshLabel();
         form.addEventListener('submit', function (e) {
             e.preventDefault();
-            var body = (document.getElementById('ce-consigne-body').value || '').trim();
-            if (!body) return toast('Renseignez le texte des consignes.', true);
+            var structure = (document.getElementById('ce-consigne-structure').value || '').trim();
+            var techniques = (document.getElementById('ce-consigne-techniques').value || '').trim();
+            var erreurs = (document.getElementById('ce-consigne-erreurs').value || '').trim();
+            if (!structure || !techniques || !erreurs) return toast('Veuillez renseigner les 3 sections de consignes.', true);
             var fd = new FormData();
             fd.append('action', 'save_consignes_bundle');
-            fd.append('body', document.getElementById('ce-consigne-body').value || '');
+            fd.append('structure', document.getElementById('ce-consigne-structure').value || '');
+            fd.append('techniques', document.getElementById('ce-consigne-techniques').value || '');
+            fd.append('erreurs', document.getElementById('ce-consigne-erreurs').value || '');
             fd.append('is_published', document.getElementById('ce-consigne-status').value === '1' ? '1' : '0');
             fetch(CE_ENDPOINT, { method: 'POST', body: fd, credentials: 'same-origin' })
                 .then(function (r) { return r.json(); })
@@ -1732,11 +1709,15 @@
         refreshLabel();
         form.addEventListener('submit', function (e) {
             e.preventDefault();
-            var body = (document.getElementById('co-consigne-body').value || '').trim();
-            if (!body) return toast('Renseignez le texte des consignes.', true);
+            var structure = (document.getElementById('co-consigne-structure').value || '').trim();
+            var techniques = (document.getElementById('co-consigne-techniques').value || '').trim();
+            var erreurs = (document.getElementById('co-consigne-erreurs').value || '').trim();
+            if (!structure || !techniques || !erreurs) return toast('Veuillez renseigner les 3 sections de consignes.', true);
             var fd = new FormData();
             fd.append('action', 'save_consignes_bundle');
-            fd.append('body', document.getElementById('co-consigne-body').value || '');
+            fd.append('structure', document.getElementById('co-consigne-structure').value || '');
+            fd.append('techniques', document.getElementById('co-consigne-techniques').value || '');
+            fd.append('erreurs', document.getElementById('co-consigne-erreurs').value || '');
             fd.append('is_published', document.getElementById('co-consigne-status').value === '1' ? '1' : '0');
             fetch(CO_ENDPOINT, { method: 'POST', body: fd, credentials: 'same-origin' })
                 .then(function (r) { return r.json(); })
@@ -2573,6 +2554,7 @@
                 if (!j || !j.success || !j.data) return toast((j && j.message) || 'Erreur chargement consignes orales', true);
                 state.eoConsignesCache = j.data;
                 var d = j.data || {};
+                if (document.getElementById('eo-consigne-tache1')) document.getElementById('eo-consigne-tache1').value = d.tache1 || '';
                 if (document.getElementById('eo-consigne-tache2')) document.getElementById('eo-consigne-tache2').value = d.tache2 || '';
                 if (document.getElementById('eo-consigne-tache3')) document.getElementById('eo-consigne-tache3').value = d.tache3 || '';
                 if (document.getElementById('eo-consigne-status')) document.getElementById('eo-consigne-status').value = Number(d.is_published || 0) === 1 ? '1' : '0';
@@ -2597,11 +2579,13 @@
         refreshLabel();
         form.addEventListener('submit', function (e) {
             e.preventDefault();
+            var t1 = (document.getElementById('eo-consigne-tache1').value || '').trim();
             var t2 = (document.getElementById('eo-consigne-tache2').value || '').trim();
             var t3 = (document.getElementById('eo-consigne-tache3').value || '').trim();
-            if (!t2 || !t3) return toast('Veuillez renseigner les consignes des tâches 2 et 3.', true);
+            if (!t1 || !t2 || !t3) return toast('Veuillez renseigner les consignes des 3 tâches.', true);
             var fd = new FormData();
             fd.append('action', 'save_consignes_bundle');
+            fd.append('tache1', t1);
             fd.append('tache2', t2);
             fd.append('tache3', t3);
             fd.append('is_published', (document.getElementById('eo-consigne-status').value || '1') === '1' ? '1' : '0');
@@ -2945,56 +2929,58 @@
         var dur = p.duration_days != null ? String(p.duration_days) : '7';
         var price = p.price != null ? String(p.price) : '0';
         var active = p.is_active === 1 || p.is_active === true ? ' checked' : '';
+        var isOn = p.is_active === 1 || p.is_active === true;
         return (
-            '<article class="sa-plan-orbit-card" data-plan-id="' +
+            '<article class="sa-plan-userlike" data-plan-id="' +
             id +
             '">' +
-            '<div class="sa-plan-orbit-card-glow" aria-hidden="true"></div>' +
-            '<header class="sa-plan-orbit-card-head">' +
-            '<span class="sa-plan-key-pill">' +
+            '<div class="sa-plan-userlike__head">' +
+            '<span class="sa-plan-userlike__key" title="Clé interne">' +
             key +
             '</span>' +
-            '<span class="sa-plan-orbit-dur">' +
-            escHtml(dur) +
-            ' jours</span></header>' +
-            '<div class="sa-plan-orbit-fields">' +
-            '<label class="sa-plan-field"><span>Palier (titre carte)</span>' +
-            '<input type="text" class="form-control sa-plan-tier-input" value="' +
+            '<span class="sa-plan-userlike__status' +
+            (isOn ? ' is-on' : '') +
+            '">' +
+            (isOn ? 'Visible' : 'Masqué') +
+            '</span>' +
+            '<input type="text" class="sa-plan-userlike__tier sa-plan-tier-input" value="' +
             escAttr(String(p.tier || '')) +
-            '" autocomplete="off"></label>' +
-            '<label class="sa-plan-field"><span>Durée affichée (badge)</span>' +
-            '<input type="text" class="form-control sa-plan-badge-input" value="' +
+            '" autocomplete="off" aria-label="Titre de la carte">' +
+            '<input type="text" class="sa-plan-userlike__badge sa-plan-badge-input" value="' +
             escAttr(String(p.badge || '')) +
-            '" autocomplete="off"></label>' +
-            '<div class="sa-plan-row2">' +
-            '<label class="sa-plan-field"><span>Prix</span>' +
-            '<input type="number" class="form-control sa-plan-price-input" min="0" step="0.01" value="' +
-            escAttr(price) +
-            '"></label>' +
-            '<label class="sa-plan-field"><span>Devise</span>' +
-            '<input type="text" class="form-control sa-plan-currency-input" maxlength="8" value="' +
+            '" autocomplete="off" aria-label="Badge durée">' +
+            '<div class="sa-plan-userlike__price-row">' +
+            '<input type="text" class="sa-plan-userlike__currency sa-plan-currency-input" maxlength="8" value="' +
             escAttr(String(p.currency || '$')) +
-            '"></label></div>' +
-            '<label class="sa-plan-field"><span>Durée réelle (jours)</span>' +
-            '<input type="number" class="form-control sa-plan-duration-input" min="1" max="730" step="1" value="' +
-            escAttr(dur) +
-            '"></label>' +
-            '<label class="sa-plan-field"><span>Ordre d’affichage</span>' +
-            '<input type="number" class="form-control sa-plan-sort-input" step="1" value="' +
-            escAttr(String(p.sort_order != null ? p.sort_order : 0)) +
-            '"></label>' +
-            '<label class="sa-plan-field sa-plan-field--full"><span>Avantages (une ligne = un point)</span>' +
-            '<textarea class="form-control sa-plan-features-input" rows="5">' +
+            '" aria-label="Devise">' +
+            '<input type="number" class="sa-plan-userlike__price sa-plan-price-input" min="0" step="0.01" value="' +
+            escAttr(price) +
+            '" aria-label="Prix">' +
+            '</div>' +
+            '<div class="sa-plan-userlike__wave" aria-hidden="true">' +
+            '<svg viewBox="0 0 400 40" preserveAspectRatio="none"><path d="M0,20 Q100,0 200,20 T400,20 L400,40 L0,40 Z" fill="#141622"/></svg>' +
+            '</div></div>' +
+            '<div class="sa-plan-userlike__body">' +
+            '<div><span class="sa-plan-userlike__label">Avantages (une ligne = un point)</span>' +
+            '<textarea class="sa-plan-userlike__features sa-plan-features-input" rows="5">' +
             escHtml(feats) +
-            '</textarea></label>' +
-            '<label class="sa-plan-toggle"><input type="checkbox" class="sa-plan-active-input"' +
+            '</textarea></div>' +
+            '<div class="sa-plan-userlike__meta">' +
+            '<div><span class="sa-plan-userlike__label">Durée (jours)</span>' +
+            '<input type="number" class="sa-plan-duration-input" min="1" max="730" step="1" value="' +
+            escAttr(dur) +
+            '"></div>' +
+            '<div><span class="sa-plan-userlike__label">Ordre</span>' +
+            '<input type="number" class="sa-plan-sort-input" step="1" value="' +
+            escAttr(String(p.sort_order != null ? p.sort_order : 0)) +
+            '"></div></div>' +
+            '<label class="sa-plan-userlike__toggle"><input type="checkbox" class="sa-plan-active-input"' +
             active +
-            '> Visible sur la page Abonnement</label></div>' +
-            '<footer class="sa-plan-orbit-card-foot">' +
-            '<div class="sa-plan-card-actions">' +
+            '> Afficher sur Abonnement</label>' +
+            '<div class="sa-plan-userlike__actions">' +
             '<button type="button" class="btn btn-outline btn-sm sa-plan-delete-btn"><i class="bx bx-trash"></i> Supprimer</button>' +
             '<button type="button" class="btn btn-primary sa-plan-save-btn"><i class="bx bx-save"></i> Enregistrer</button>' +
-            '</div></footer></article>'
+            '</div></div></article>'
         );
     }
 
@@ -3116,13 +3102,13 @@
                 grid.innerHTML = list.map(renderSaPlanCatalogCard).join('');
                 $all('.sa-plan-save-btn', grid).forEach(function (btn) {
                     btn.addEventListener('click', function () {
-                        var c = btn.closest('.sa-plan-orbit-card');
+                        var c = btn.closest('.sa-plan-userlike, .sa-plan-pro-card, .sa-plan-orbit-card');
                         if (c) saveSaPlanCard(c);
                     });
                 });
                 $all('.sa-plan-delete-btn', grid).forEach(function (btn) {
                     btn.addEventListener('click', function () {
-                        var c = btn.closest('.sa-plan-orbit-card');
+                        var c = btn.closest('.sa-plan-userlike, .sa-plan-pro-card, .sa-plan-orbit-card');
                         var id = c ? c.getAttribute('data-plan-id') : null;
                         if (!id) return;
                         if (
@@ -3605,7 +3591,7 @@
         }
     }
 
-    // ---------------- Users/Admins/Messages/Chat/Notifications/Analytics ----------------
+    // ---------------- Users/Admins/Messages/Notifications/Analytics ----------------
     // For this implementation step we keep the existing DOM + behaviors by delegating to the legacy module logic
     // that was previously in superAdmin.app.js, but without its own router.
     // To avoid mixing, we re-implement only the needed functions here (CRUD stays functional).
@@ -3847,35 +3833,63 @@
             .catch(function () {});
     }
 
+    function openAdminFormPanel(mode, tr) {
+        var panel = document.getElementById('admin-form-panel');
+        var form = document.getElementById('admin-form-modal');
+        var title = document.getElementById('admin-form-title');
+        if (!panel || !form) return;
+        var isEdit = mode === 'edit' && tr;
+        document.getElementById('admin-edit-id').value = isEdit ? tr.getAttribute('data-id') || '' : '';
+        document.getElementById('admin-name').value = isEdit ? tr.getAttribute('data-admin-name') || '' : '';
+        document.getElementById('admin-email').value = isEdit ? tr.getAttribute('data-admin-email') || '' : '';
+        document.getElementById('admin-role').value = isEdit
+            ? tr.getAttribute('data-admin-role') || 'admin'
+            : 'admin';
+        document.getElementById('admin-status').value = isEdit
+            ? tr.getAttribute('data-admin-status') || 'active'
+            : 'active';
+        var adminPwd = document.getElementById('admin-password');
+        var adminPwdConfirm = document.getElementById('admin-password-confirm');
+        if (adminPwd) {
+            adminPwd.value = '';
+            adminPwd.required = !isEdit;
+        }
+        if (adminPwdConfirm) {
+            adminPwdConfirm.value = '';
+            adminPwdConfirm.required = !isEdit;
+        }
+        $all('.admin-password-fields', form).forEach(function (x) {
+            x.style.display = isEdit ? 'none' : 'block';
+        });
+        if (title) {
+            title.textContent = isEdit ? 'Modifier administrateur' : 'Ajouter un administrateur';
+        }
+        panel.hidden = false;
+        try {
+            panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } catch (e) {}
+    }
+
+    function closeAdminFormPanel() {
+        var panel = document.getElementById('admin-form-panel');
+        if (panel) panel.hidden = true;
+        var form = document.getElementById('admin-form-modal');
+        if (form) form.reset();
+        var editId = document.getElementById('admin-edit-id');
+        if (editId) editId.value = '';
+    }
+
     function initAdminsSection() {
         var addBtn = document.getElementById('add-admin-btn');
-        var modal = document.getElementById('admin-modal');
         var form = document.getElementById('admin-form-modal');
-        if (addBtn && modal) {
+        var cancelBtn = document.getElementById('admin-form-cancel');
+        if (addBtn) {
             addBtn.addEventListener('click', function () {
-                modal.classList.add('is-open');
-                modal.setAttribute('aria-hidden', 'false');
-                document.getElementById('admin-edit-id').value = '';
-                document.getElementById('admin-name').value = '';
-                document.getElementById('admin-email').value = '';
-                document.getElementById('admin-role').value = 'admin';
-                document.getElementById('admin-status').value = 'active';
-                var adminPwd = document.getElementById('admin-password');
-                var adminPwdConfirm = document.getElementById('admin-password-confirm');
-                if (adminPwd) {
-                    adminPwd.value = '';
-                    adminPwd.required = true;
-                }
-                if (adminPwdConfirm) {
-                    adminPwdConfirm.value = '';
-                    adminPwdConfirm.required = true;
-                }
-                $all('.admin-password-fields', modal).forEach(function (x) {
-                    x.style.display = 'block';
-                });
-                var title = modal.querySelector('.modal-title');
-                if (title) title.textContent = 'Ajouter un administrateur';
+                openAdminFormPanel('create');
             });
+        }
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', closeAdminFormPanel);
         }
         document.body.addEventListener('click', function (e) {
             var tr = e.target.closest && e.target.closest('#admins-table tr[data-id]');
@@ -3912,25 +3926,7 @@
                     });
             }
             if (e.target.closest('.sa-admin-edit')) {
-                if (!modal) return;
-                modal.classList.add('is-open');
-                modal.setAttribute('aria-hidden', 'false');
-                document.getElementById('admin-edit-id').value = id;
-                document.getElementById('admin-name').value = tr.getAttribute('data-admin-name') || '';
-                document.getElementById('admin-email').value = tr.getAttribute('data-admin-email') || '';
-                var roleEl = document.getElementById('admin-role');
-                if (roleEl) roleEl.value = tr.getAttribute('data-admin-role') || 'admin';
-                var admSt = document.getElementById('admin-status');
-                if (admSt) admSt.value = tr.getAttribute('data-admin-status') || 'active';
-                var adminPwdEdit = document.getElementById('admin-password');
-                var adminPwdConfirmEdit = document.getElementById('admin-password-confirm');
-                if (adminPwdEdit) adminPwdEdit.required = false;
-                if (adminPwdConfirmEdit) adminPwdConfirmEdit.required = false;
-                $all('.admin-password-fields', modal).forEach(function (x) {
-                    x.style.display = 'none';
-                });
-                var title2 = modal.querySelector('.modal-title');
-                if (title2) title2.textContent = 'Modifier administrateur';
+                openAdminFormPanel('edit', tr);
             }
         });
         if (form) {
@@ -3956,7 +3952,7 @@
                     .then(function (j) {
                         if (j && j.success) {
                             toast(j.message || 'Enregistré');
-                            if (modal) modal.classList.remove('is-open');
+                            closeAdminFormPanel();
                             reloadAdmins();
                         } else {
                             toast((j && j.message) || 'Erreur', true);
@@ -3969,40 +3965,88 @@
         }
     }
 
-    // Messages communautaires
+    // Annonces communautaires (image + texte + likes)
+    var COMMUNITY_API =
+        typeof window.TCF_COMMUNITY_API === 'string' && window.TCF_COMMUNITY_API
+            ? window.TCF_COMMUNITY_API
+            : '../community_api.php';
+
+    function resetCommunityPostForm() {
+        var form = document.getElementById('message-form');
+        if (!form) return;
+        document.getElementById('message-edit-id').value = '';
+        document.getElementById('message-content').value = '';
+        document.getElementById('message-visibility').value = 'registered';
+        document.getElementById('message-published').value = '1';
+        var img = document.getElementById('message-image');
+        if (img) img.value = '';
+        var prev = document.getElementById('message-image-preview');
+        if (prev) {
+            prev.style.display = 'none';
+            prev.removeAttribute('src');
+        }
+        var clear = document.getElementById('message-clear-image');
+        if (clear) clear.checked = false;
+        var clearWrap = document.getElementById('message-clear-image-wrap');
+        if (clearWrap) clearWrap.style.display = 'none';
+    }
+
     function renderMessages(list) {
         var box = document.getElementById('messages-container');
         if (!box) return;
         if (!list || !list.length) {
-            box.innerHTML = '<p style="color:var(--sa-muted);">Aucun message.</p>';
+            box.innerHTML = '<p style="color:var(--sa-muted);">Aucune annonce.</p>';
             return;
         }
         box.innerHTML = list
             .map(function (m) {
+                var body = String(m.body || '');
+                var excerpt = body.length > 220 ? body.substring(0, 220) + '…' : body;
+                var thumb = m.image_href
+                    ? '<img class="sa-msg-thumb" src="' +
+                      escAttr(m.image_href) +
+                      '" alt="" style="width:72px;height:72px;object-fit:cover;border-radius:10px;border:1px solid #e2e8f0;flex-shrink:0;">'
+                    : '';
                 return (
                     '<div class="sa-msg-card" data-msg=\'' +
                     escAttr(JSON.stringify(m)) +
-                    '\'>' +
-                    '<h4 class="sa-msg-subject">' +
-                    escHtml(m.subject || '') +
-                    '</h4>' +
-                    '<p class="sa-msg-body">' +
-                    escHtml((m.content || '').substring(0, 200)) +
-                    (m.content && m.content.length > 200 ? '…' : '') +
+                    '\' style="display:flex;gap:12px;align-items:flex-start;">' +
+                    thumb +
+                    '<div style="flex:1;min-width:0;">' +
+                    '<p class="sa-msg-body" style="margin:0 0 8px;white-space:pre-wrap;">' +
+                    escHtml(excerpt) +
                     '</p>' +
+                    '<div class="sa-msg-stats" style="display:flex;flex-wrap:wrap;gap:0.55rem;margin-bottom:8px;">' +
+                    '<span class="sa-badge" style="background:#f1f5f9;color:#334155;"><i class="bx bx-show"></i> ' +
+                    escHtml(String(m.views_count || 0)) +
+                    ' vues</span>' +
+                    '<span class="sa-badge" style="background:#fef2f2;color:#b91c1c;"><i class="bx bxs-heart"></i> ' +
+                    escHtml(String(m.likes_count || 0)) +
+                    ' likes</span>' +
+                    '</div>' +
                     '<div class="sa-msg-meta">' +
-                    escHtml(m.recipients || '') +
+                    escHtml(m.visibility_label || m.visibility || '') +
+                    ' · ' +
+                    (m.is_published == 1 || m.is_published === true ? 'Publiée' : 'Brouillon') +
                     ' · ' +
                     escHtml(m.created_at || '') +
                     '</div>' +
-                    '<div class="sa-msg-actions sa-msg-actions--end"><button type="button" class="btn btn-outline btn-sm sa-btn-icon sa-msg-edit" aria-label="Modifier"><i class="bx bx-edit-alt" aria-hidden="true"></i></button><button type="button" class="btn btn-outline btn-sm sa-btn-icon btn-danger-outline sa-msg-del" aria-label="Supprimer"><i class="bx bx-trash" aria-hidden="true"></i></button></div></div>'
+                    '<div class="sa-msg-actions sa-msg-actions--end">' +
+                    '<button type="button" class="btn btn-outline btn-sm sa-btn-icon sa-msg-edit" aria-label="Modifier"><i class="bx bx-edit-alt" aria-hidden="true"></i></button>' +
+                    '<button type="button" class="btn btn-outline btn-sm sa-btn-icon btn-danger-outline sa-msg-del" aria-label="Supprimer"><i class="bx bx-trash" aria-hidden="true"></i></button>' +
+                    '</div></div></div>'
                 );
             })
             .join('');
     }
 
     function reloadMessages() {
-        postForm('get_messages', {})
+        var fd = new FormData();
+        fd.append('action', 'admin_list');
+        fetch(COMMUNITY_API, { method: 'POST', body: fd, credentials: 'same-origin' })
+            .then(function (r) {
+                return r.json();
+            })
             .then(function (j) {
                 if (j && j.success && j.data) renderMessages(j.data);
             })
@@ -4013,17 +4057,26 @@
         var form = document.getElementById('message-form');
         var addBtn = document.getElementById('add-message-btn');
         var cancelBtn = document.getElementById('cancel-message-btn');
+        var imgInput = document.getElementById('message-image');
+        if (imgInput) {
+            imgInput.addEventListener('change', function () {
+                var prev = document.getElementById('message-image-preview');
+                if (!prev || !imgInput.files || !imgInput.files[0]) return;
+                var url = URL.createObjectURL(imgInput.files[0]);
+                prev.src = url;
+                prev.style.display = 'block';
+            });
+        }
         if (addBtn && form) {
             addBtn.addEventListener('click', function () {
-                document.getElementById('message-edit-id').value = '';
-                document.getElementById('message-subject').value = '';
-                document.getElementById('message-content').value = '';
+                resetCommunityPostForm();
                 form.style.display = 'block';
             });
         }
         if (cancelBtn && form) {
             cancelBtn.addEventListener('click', function () {
                 form.style.display = 'none';
+                resetCommunityPostForm();
             });
         }
         if (form) {
@@ -4031,12 +4084,17 @@
                 e.preventDefault();
                 var editId = document.getElementById('message-edit-id').value;
                 var fd = new FormData();
-                fd.append('action', editId ? 'update_message' : 'add_message');
+                fd.append('action', 'admin_save');
                 if (editId) fd.append('id', editId);
-                fd.append('subject', document.getElementById('message-subject').value);
-                fd.append('content', document.getElementById('message-content').value);
-                fd.append('recipients', document.getElementById('message-recipients').value);
-                fetch(ENDPOINT, { method: 'POST', body: fd, credentials: 'same-origin' })
+                fd.append('body', document.getElementById('message-content').value);
+                fd.append('visibility', document.getElementById('message-visibility').value);
+                fd.append('is_published', document.getElementById('message-published').value);
+                if (imgInput && imgInput.files && imgInput.files[0]) {
+                    fd.append('image', imgInput.files[0]);
+                }
+                var clear = document.getElementById('message-clear-image');
+                if (clear && clear.checked) fd.append('clear_image', '1');
+                fetch(COMMUNITY_API, { method: 'POST', body: fd, credentials: 'same-origin' })
                     .then(function (r) {
                         return r.json();
                     })
@@ -4044,6 +4102,7 @@
                         if (j && j.success) {
                             toast(j.message || 'OK');
                             form.style.display = 'none';
+                            resetCommunityPostForm();
                             reloadMessages();
                         } else {
                             toast((j && j.message) || 'Erreur', true);
@@ -4063,10 +4122,27 @@
                 try {
                     var m = JSON.parse(raw);
                     document.getElementById('message-edit-id').value = String(m.id);
-                    document.getElementById('message-subject').value = m.subject || '';
-                    document.getElementById('message-content').value = m.content || '';
-                    document.getElementById('message-recipients').value = m.recipients || 'all';
-                    document.getElementById('message-form').style.display = 'block';
+                    document.getElementById('message-content').value = m.body || '';
+                    document.getElementById('message-visibility').value = m.visibility || 'registered';
+                    document.getElementById('message-published').value =
+                        m.is_published == 1 || m.is_published === true ? '1' : '0';
+                    if (imgInput) imgInput.value = '';
+                    var prev = document.getElementById('message-image-preview');
+                    var clearWrap = document.getElementById('message-clear-image-wrap');
+                    var clear = document.getElementById('message-clear-image');
+                    if (prev) {
+                        if (m.image_href) {
+                            prev.src = m.image_href;
+                            prev.style.display = 'block';
+                            if (clearWrap) clearWrap.style.display = 'block';
+                        } else {
+                            prev.style.display = 'none';
+                            prev.removeAttribute('src');
+                            if (clearWrap) clearWrap.style.display = 'none';
+                        }
+                    }
+                    if (clear) clear.checked = false;
+                    form.style.display = 'block';
                 } catch (err) {}
                 return;
             }
@@ -4074,10 +4150,15 @@
             if (del) {
                 var card2 = del.closest('.sa-msg-card');
                 var raw2 = card2 && card2.getAttribute('data-msg');
-                if (!raw2 || !window.confirm('Supprimer ce message ?')) return;
+                if (!raw2 || !window.confirm('Supprimer cette annonce ?')) return;
                 try {
                     var m2 = JSON.parse(raw2);
-                    postForm('delete_message', { id: m2.id }).then(function (j) {
+                    var fd2 = new FormData();
+                    fd2.append('action', 'admin_delete');
+                    fd2.append('id', String(m2.id));
+                    fetch(COMMUNITY_API, { method: 'POST', body: fd2, credentials: 'same-origin' }).then(function (r) {
+                        return r.json();
+                    }).then(function (j) {
                         if (j && j.success) {
                             toast(j.message || 'OK');
                             reloadMessages();
@@ -4088,13 +4169,6 @@
                 } catch (e2) {}
             }
         });
-    }
-
-    // Messagerie équipe (module sa-staff-chat.js)
-    function initChatSection() {
-        if (window.TcfStaffChat && typeof window.TcfStaffChat.init === 'function') {
-            window.TcfStaffChat.init();
-        }
     }
 
     function initNotifications() {
@@ -5107,14 +5181,15 @@
             });
         }
         initVideoForm();
-        loadPlaylistsCache(function () {
-            renderVideoPlaylistCheckboxes([]);
-        });
         initVideoModal();
 
         document.body.addEventListener('click', function (e) {
             var del = e.target.closest && e.target.closest('.js-delete-video');
             if (del) {
+                if (!SA_IS_SUPER) {
+                    toast('Seul le super-administrateur peut supprimer une vidéo.', true);
+                    return;
+                }
                 var card = del.closest('.tcf-admin-video-card');
                 var id = card ? card.getAttribute('data-id') : '';
                 if (!id || !window.confirm('Supprimer cette vidéo ?')) return;
@@ -5123,6 +5198,10 @@
             }
             var edit = e.target.closest && e.target.closest('.js-edit-video');
             if (edit) {
+                if (!SA_IS_SUPER) {
+                    toast('Seul le super-administrateur peut modifier une vidéo.', true);
+                    return;
+                }
                 var card2 = edit.closest('.tcf-admin-video-card');
                 var id2 = card2 ? card2.getAttribute('data-id') : '';
                 if (!id2) return;
@@ -5180,10 +5259,9 @@
                     ? '<img src="' + escAttr(th) + '" alt="" loading="lazy">'
                     : '<div class="tcf-admin-video-thumb-placeholder"></div>';
                 return (
-                    '<article class="tcf-admin-video-card sa-videos-3d-card" data-id="' +
+                    '<article class="tcf-admin-video-card" data-id="' +
                     escAttr(String(v.id)) +
                     '">' +
-                    '<div class="sa-videos-card-glow" aria-hidden="true"></div>' +
                     '<button type="button" class="tcf-admin-video-thumb js-admin-play-video" data-video-src="' +
                     escAttr(vurl) +
                     '" data-video-title="' +
@@ -5207,8 +5285,10 @@
                     '<div class="tcf-admin-video-actions">' +
                     '<button type="button" class="btn btn-outline btn-sm sa-btn-icon js-admin-video-comments" aria-label="Commentaires" title="Commentaires"><i class="bx bx-message-dots" aria-hidden="true"></i></button>' +
                     '<button type="button" class="btn btn-outline btn-sm sa-btn-icon js-admin-video-analytics" aria-label="Analyse" title="Analyse de la vidéo"><i class="bx bx-bar-chart-alt-2" aria-hidden="true"></i></button>' +
-                    '<button type="button" class="btn btn-outline btn-sm sa-btn-icon js-edit-video" aria-label="Modifier"><i class="bx bx-edit-alt" aria-hidden="true"></i></button>' +
-                    '<button type="button" class="btn btn-outline btn-sm sa-btn-icon btn-danger-outline js-delete-video" aria-label="Supprimer"><i class="bx bx-trash" aria-hidden="true"></i></button>' +
+                    (SA_IS_SUPER
+                        ? '<button type="button" class="btn btn-outline btn-sm sa-btn-icon js-edit-video" aria-label="Modifier"><i class="bx bx-edit-alt" aria-hidden="true"></i></button>' +
+                          '<button type="button" class="btn btn-outline btn-sm sa-btn-icon btn-danger-outline js-delete-video" aria-label="Supprimer"><i class="bx bx-trash" aria-hidden="true"></i></button>'
+                        : '') +
                     '</div></div></article>'
                 );
             })
@@ -6320,7 +6400,6 @@
         initTraceListeners();
         initActivityFeedControls();
         initAnalyticsPeriodListener();
-        bindChannelPostFormOnce();
 
         if (typeof Chart !== 'undefined') {
             Chart.defaults.color = chartTextColor();

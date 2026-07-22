@@ -22,7 +22,8 @@
     var nextBtn;
     var finishBtn;
     var restartBtn;
-    var backToStartBtn;
+    var showCorrectionBtn;
+    var correctionPanel;
     var questionNumber;
     var questionPoints;
     var coQuestionText;
@@ -42,9 +43,27 @@
     var answersReview;
     var resultsIndicators;
     var scoreCircle;
+    var correctionNav;
+    var correctionPrevBtn;
+    var correctionNextBtn;
+    var correctionRestartBtn;
+    var correctionPos;
 
     function $(id) {
         return document.getElementById(id);
+    }
+
+    /** Disponible pour la correction résultats — ne pas imbriquer dans loadQuestion. */
+    function convertNewlinesToBr(text) {
+        if (text == null || text === '') return '';
+        var t = String(text);
+        if (/&lt;\/?[a-z]/i.test(t) && !/<[a-z]/i.test(t)) {
+            var ta = document.createElement('textarea');
+            ta.innerHTML = t;
+            t = ta.value;
+        }
+        if (/<[a-z][\s\S]*>/i.test(t)) return t;
+        return t.replace(/\n/g, '<br>');
     }
 
     function initRefs() {
@@ -57,7 +76,8 @@
         nextBtn = $('next-btn');
         finishBtn = $('finish-btn');
         restartBtn = $('restart-btn');
-        backToStartBtn = $('back-to-start-btn');
+        showCorrectionBtn = $('show-correction-btn');
+        correctionPanel = $('correction-panel');
         questionNumber = $('question-number');
         questionPoints = $('question-points');
         coQuestionText = $('co-question-text');
@@ -77,6 +97,11 @@
         answersReview = $('answers-review');
         resultsIndicators = $('results-indicators');
         scoreCircle = $('score-circle');
+        correctionNav = $('correction-nav');
+        correctionPrevBtn = $('correction-prev-btn');
+        correctionNextBtn = $('correction-next-btn');
+        correctionRestartBtn = $('correction-restart-btn');
+        correctionPos = $('correction-pos');
     }
 
     function updateTimerDisplay() {
@@ -143,12 +168,6 @@
             questionPoints.textContent =
                 question.points + ' point' + (question.points > 1 ? 's' : '');
         }
-        // Fonction pour convertir les retours à la ligne en <br>
-        function convertNewlinesToBr(text) {
-            if (!text) return text;
-            return text.replace(/\n/g, '<br>');
-        }
-
         if (coQuestionText) {
             coQuestionText.innerHTML = convertNewlinesToBr(question.question || '');
         }
@@ -217,16 +236,17 @@
             }
         }
 
-        if (prevBtn) prevBtn.disabled = currentQuestion === 0;
-        if (nextBtn) nextBtn.disabled = currentQuestion === quizData.length - 1;
-
-        if (currentQuestion === quizData.length - 1) {
-            if (nextBtn) nextBtn.classList.add('hidden');
-            if (finishBtn) finishBtn.classList.remove('hidden');
-        } else {
-            if (nextBtn) nextBtn.classList.remove('hidden');
-            if (finishBtn) finishBtn.classList.add('hidden');
+        var isLast = currentQuestion >= quizData.length - 1;
+        if (prevBtn) {
+            prevBtn.classList.remove('hidden');
+            prevBtn.disabled = currentQuestion === 0;
         }
+        if (nextBtn) {
+            nextBtn.classList.toggle('hidden', isLast);
+            nextBtn.disabled = isLast;
+        }
+        // Terminer uniquement à la dernière question
+        if (finishBtn) finishBtn.classList.toggle('hidden', !isLast);
 
         updateQuestionIndicators();
     }
@@ -259,11 +279,248 @@
         return minutes + ':' + seconds.toString().padStart(2, '0');
     }
 
+    var focusedReviewIndex = 0;
+
+    function setCorrectionBtnLabel(open) {
+        if (!showCorrectionBtn) return;
+        if (open) {
+            showCorrectionBtn.innerHTML =
+                '<i class="bx bx-hide"></i>' +
+                '<span class="btn-txt btn-txt--full">Masquer la correction</span>' +
+                '<span class="btn-txt btn-txt--short">Masquer</span>';
+            showCorrectionBtn.setAttribute('aria-expanded', 'true');
+        } else {
+            showCorrectionBtn.innerHTML =
+                '<i class="bx bx-check-shield"></i>' +
+                '<span class="btn-txt btn-txt--full">Voir la correction</span>' +
+                '<span class="btn-txt btn-txt--short">Correction</span>';
+            showCorrectionBtn.setAttribute('aria-expanded', 'false');
+        }
+    }
+
+    function hideCorrectionPanel() {
+        if (correctionPanel) {
+            correctionPanel.classList.add('hidden');
+            correctionPanel.classList.remove('is-open');
+            correctionPanel.setAttribute('hidden', '');
+            correctionPanel.setAttribute('aria-hidden', 'true');
+        }
+        if (correctionNav) correctionNav.hidden = true;
+        setCorrectionBtnLabel(false);
+    }
+
+    function updateCorrectionNav() {
+        var total = quizData.length;
+        var isLast = focusedReviewIndex >= total - 1;
+        var isFirst = focusedReviewIndex <= 0;
+
+        if (correctionPos) {
+            correctionPos.textContent =
+                total > 0 ? focusedReviewIndex + 1 + ' / ' + total : '0 / 0';
+        }
+        if (correctionPrevBtn) correctionPrevBtn.disabled = isFirst;
+        if (correctionNextBtn) correctionNextBtn.hidden = isLast || total === 0;
+        if (correctionRestartBtn) correctionRestartBtn.hidden = !isLast || total === 0;
+        if (correctionNav) {
+            var panelOpen =
+                correctionPanel &&
+                correctionPanel.classList.contains('is-open') &&
+                !correctionPanel.hasAttribute('hidden');
+            correctionNav.hidden = !panelOpen || total === 0;
+        }
+    }
+
+    function focusReviewQuestion(index) {
+        if (!quizData.length) return;
+        focusedReviewIndex = Math.max(0, Math.min(index, quizData.length - 1));
+
+        if (answersReview) {
+            answersReview.querySelectorAll('.tcf-qpro-review-card').forEach(function (card, i) {
+                card.classList.toggle('is-focused', i === focusedReviewIndex);
+            });
+        }
+        if (resultsIndicators) {
+            resultsIndicators.querySelectorAll('.indicator').forEach(function (ind, i) {
+                ind.classList.toggle('is-active', i === focusedReviewIndex);
+                ind.setAttribute('aria-current', i === focusedReviewIndex ? 'true' : 'false');
+            });
+        }
+
+        updateCorrectionNav();
+
+        var card = document.getElementById('co-review-q-' + (focusedReviewIndex + 1));
+        if (card && correctionPanel && correctionPanel.classList.contains('is-open')) {
+            window.requestAnimationFrame(function () {
+                try {
+                    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                } catch (e) {
+                    /* ignore */
+                }
+            });
+        }
+    }
+
+    function appendReviewChoice(container, answer, opts) {
+        var isUser = !!(opts && opts.isUser);
+        var isCorrect = !!(opts && opts.isCorrect);
+        var rowClass = 'review-answer';
+        if (isCorrect) rowClass += ' correct';
+        else if (isUser) rowClass += ' incorrect selected';
+        else rowClass += ' is-other';
+
+        var answerElement = document.createElement('div');
+        answerElement.className = rowClass;
+
+        var icon = document.createElement('i');
+        if (isCorrect) icon.className = 'bx bx-check';
+        else if (isUser) icon.className = 'bx bx-x';
+        else icon.className = 'bx bx-circle';
+        answerElement.appendChild(icon);
+
+        var textSpan = document.createElement('span');
+        textSpan.innerHTML = convertNewlinesToBr(answer.text);
+        answerElement.appendChild(textSpan);
+
+        /* Badge uniquement pour la bonne réponse — pas de « Votre choix » */
+        if (isCorrect) {
+            var meta = document.createElement('div');
+            meta.className = 'review-answer-meta';
+            var good = document.createElement('span');
+            good.className = 'review-badge good';
+            good.textContent = 'Bonne réponse';
+            meta.appendChild(good);
+            answerElement.appendChild(meta);
+        }
+
+        container.appendChild(answerElement);
+    }
+
+    function createAnswersReview() {
+        if (!answersReview) return;
+        answersReview.innerHTML = '';
+        if (!quizData.length) {
+            answersReview.innerHTML =
+                '<p class="tcf-qpro-review-empty">Aucune question à corriger.</p>';
+            return;
+        }
+        quizData.forEach(function (question, index) {
+            var reviewItem = document.createElement('article');
+            reviewItem.className = 'review-item tcf-qpro-review-card';
+            reviewItem.id = 'co-review-q-' + (index + 1);
+
+            var ua = userAnswers[index];
+            var selectedIdx = ua && typeof ua.index === 'number' ? ua.index : -1;
+            var answers = question.answers || [];
+            var qOk = !!(ua && ua.correct);
+            var statusClass =
+                ua === null || ua === undefined
+                    ? 'is-unanswered'
+                    : qOk
+                      ? 'is-correct'
+                      : 'is-wrong';
+
+            var head = document.createElement('div');
+            head.className = 'tcf-qpro-review-card__head ' + statusClass;
+            head.innerHTML =
+                '<span class="tcf-qpro-review-card__num">Question ' +
+                (index + 1) +
+                '</span>' +
+                '<span class="tcf-qpro-review-card__status">' +
+                (ua === null || ua === undefined
+                    ? 'Sans réponse'
+                    : qOk
+                      ? 'Correct'
+                      : 'Incorrect') +
+                '</span>';
+            reviewItem.appendChild(head);
+
+            var questionTextEl = document.createElement('div');
+            questionTextEl.className = 'review-question';
+            questionTextEl.innerHTML = convertNewlinesToBr(question.question || '');
+            reviewItem.appendChild(questionTextEl);
+
+            if (question.audio) {
+                var audioReview = document.createElement('div');
+                audioReview.className = 'review-audio';
+                var audioElement = document.createElement('audio');
+                audioElement.src = question.audio;
+                audioElement.controls = true;
+                audioElement.className = 'audio-player';
+                audioReview.appendChild(audioElement);
+                reviewItem.appendChild(audioReview);
+            }
+
+            var choices = document.createElement('div');
+            choices.className = 'tcf-qpro-review-choices';
+
+            if (!answers.length) {
+                choices.innerHTML =
+                    '<p class="tcf-qpro-review-empty">Aucune proposition en base pour cette question.</p>';
+            } else {
+                answers.forEach(function (answer, answerIndex) {
+                    appendReviewChoice(choices, answer, {
+                        isUser: selectedIdx === answerIndex,
+                        isCorrect: !!answer.correct,
+                    });
+                });
+            }
+
+            reviewItem.appendChild(choices);
+            answersReview.appendChild(reviewItem);
+        });
+
+        focusReviewQuestion(focusedReviewIndex);
+    }
+
+    function showCorrectionPanel(focusIndex) {
+        if (!correctionPanel) return;
+        try {
+            initResultsIndicators();
+            createAnswersReview();
+        } catch (err) {
+            console.error('CO correction build error', err);
+        }
+        correctionPanel.classList.remove('hidden');
+        correctionPanel.classList.add('is-open');
+        correctionPanel.removeAttribute('hidden');
+        correctionPanel.setAttribute('aria-hidden', 'false');
+        setCorrectionBtnLabel(true);
+
+        var idx =
+            typeof focusIndex === 'number' && !isNaN(focusIndex)
+                ? focusIndex
+                : focusedReviewIndex;
+        focusReviewQuestion(idx);
+
+        window.requestAnimationFrame(function () {
+            try {
+                if (resultsIndicators) {
+                    resultsIndicators.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            } catch (e) {
+                /* ignore */
+            }
+        });
+    }
+
+    function toggleCorrectionPanel() {
+        if (!correctionPanel) return;
+        var isHidden =
+            correctionPanel.classList.contains('hidden') ||
+            correctionPanel.hasAttribute('hidden') ||
+            !correctionPanel.classList.contains('is-open');
+        if (isHidden) showCorrectionPanel();
+        else hideCorrectionPanel();
+    }
+
     function finishQuiz() {
         clearInterval(timerInterval);
 
         var correctCount = userAnswers.filter(function (a) {
             return a !== null && a.correct;
+        }).length;
+        var wrongCount = userAnswers.filter(function (a) {
+            return a !== null && !a.correct;
         }).length;
 
         var totalPointsEarned = userAnswers.reduce(function (total, answer, index) {
@@ -285,7 +542,7 @@
         if (percentageText) percentageText.textContent = pct + '%';
         if (levelText) levelText.textContent = level;
         if (correctAnswers) correctAnswers.textContent = String(correctCount);
-        if (incorrectAnswers) incorrectAnswers.textContent = String(quizData.length - correctCount);
+        if (incorrectAnswers) incorrectAnswers.textContent = String(wrongCount);
         if (timeTaken) timeTaken.textContent = getTimeTaken();
         if (totalPoints) totalPoints.textContent = String(totalPointsEarned);
 
@@ -293,75 +550,25 @@
         var dashArray = (pct / 100) * circumference;
         if (scoreCircle) scoreCircle.style.strokeDasharray = dashArray + ' ' + circumference;
 
-        if (answersReview) {
-            answersReview.innerHTML = '';
-            quizData.forEach(function (question, index) {
-                var reviewItem = document.createElement('div');
-                reviewItem.className = 'review-item';
-
-                var questionText = document.createElement('div');
-                questionText.className = 'review-question';
-                questionText.innerHTML = index + 1 + '. ' + convertNewlinesToBr(question.question || '');
-
-                reviewItem.appendChild(questionText);
-
-                if (question.audio) {
-                    var audioReview = document.createElement('div');
-                    audioReview.className = 'review-audio';
-                    var audioElement = document.createElement('audio');
-                    audioElement.src = question.audio;
-                    audioElement.controls = true;
-                    audioElement.className = 'audio-player';
-                    audioReview.appendChild(audioElement);
-                    reviewItem.appendChild(audioReview);
-                }
-
-                question.answers.forEach(function (answer, answerIndex) {
-                    var answerElement = document.createElement('div');
-                    var answerClass = 'review-answer';
-                    if (answer.correct) answerClass += ' correct';
-                    else if (
-                        userAnswers[index] !== null &&
-                        userAnswers[index].index === answerIndex &&
-                        !answer.correct
-                    ) {
-                        answerClass += ' incorrect';
-                    }
-                    if (userAnswers[index] !== null && userAnswers[index].index === answerIndex) {
-                        answerClass += ' selected';
-                    }
-                    answerElement.className = answerClass;
-
-                    var icon = document.createElement('i');
-                    if (answer.correct) {
-                        icon.className = 'bx bx-check';
-                        answerElement.appendChild(icon);
-                    } else if (
-                        userAnswers[index] !== null &&
-                        userAnswers[index].index === answerIndex &&
-                        !answer.correct
-                    ) {
-                        icon.className = 'bx bx-x';
-                        answerElement.appendChild(icon);
-                    } else {
-                        var emptyIcon = document.createElement('span');
-                        emptyIcon.style.width = '20px';
-                        emptyIcon.style.marginRight = 'var(--space-xs)';
-                        answerElement.appendChild(emptyIcon);
-                    }
-
-                    answerElement.innerHTML += convertNewlinesToBr(answer.text);
-                    reviewItem.appendChild(answerElement);
-                });
-
-                answersReview.appendChild(reviewItem);
-            });
+        try {
+            createAnswersReview();
+            initResultsIndicators();
+        } catch (err) {
+            console.error('CO results review error', err);
         }
 
-        initResultsIndicators();
+        hideCorrectionPanel();
 
+        if (startScreen) startScreen.classList.add('hidden');
         if (quizScreen) quizScreen.classList.add('hidden');
-        if (resultsScreen) resultsScreen.classList.remove('hidden');
+        if (resultsScreen) {
+            resultsScreen.classList.remove('hidden');
+            try {
+                resultsScreen.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } catch (e) {
+                window.scrollTo(0, 0);
+            }
+        }
     }
 
     function initResultsIndicators() {
@@ -379,6 +586,18 @@
             }
             indicator.className = indicatorClass;
             indicator.textContent = String(index + 1);
+            indicator.setAttribute('role', 'button');
+            indicator.setAttribute('tabindex', '0');
+            indicator.title = 'Voir la question ' + (index + 1);
+            indicator.addEventListener('click', function () {
+                showCorrectionPanel(index);
+            });
+            indicator.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    showCorrectionPanel(index);
+                }
+            });
             resultsIndicators.appendChild(indicator);
         });
     }
@@ -388,6 +607,7 @@
         currentQuestion = 0;
         timeLeft = initialDurationSeconds;
         userAnswers = Array(quizData.length).fill(null);
+        hideCorrectionPanel();
         if (resultsScreen) resultsScreen.classList.add('hidden');
         if (quizScreen) quizScreen.classList.add('hidden');
         if (startScreen) startScreen.classList.remove('hidden');
@@ -395,6 +615,7 @@
 
     function startQuiz() {
         if (!quizData.length) return;
+        hideCorrectionPanel();
         if (resultsScreen) resultsScreen.classList.add('hidden');
         if (startScreen) startScreen.classList.add('hidden');
         if (quizScreen) quizScreen.classList.remove('hidden');
@@ -411,7 +632,37 @@
         if (eventsBound) return;
         eventsBound = true;
         if (startBtn) startBtn.addEventListener('click', startQuiz);
-        if (quitBtn) quitBtn.addEventListener('click', resetToStart);
+        function askConfirm(opts) {
+            if (typeof window.tcfQuizConfirm === 'function') {
+                return window.tcfQuizConfirm(opts);
+            }
+            return Promise.resolve(window.confirm(opts.message || 'Confirmer ?'));
+        }
+        if (quitBtn)
+            quitBtn.addEventListener('click', function () {
+                clearInterval(timerInterval);
+                askConfirm({
+                    title: 'Terminer l’épreuve ?',
+                    message: 'Voulez-vous terminer maintenant et afficher votre score ?',
+                    confirmLabel: 'Oui, terminer',
+                    cancelLabel: 'Continuer',
+                }).then(function (ok) {
+                    if (ok) {
+                        finishQuiz();
+                        return;
+                    }
+                    askConfirm({
+                        title: 'Quitter sans résultats ?',
+                        message:
+                            'Votre progression sera perdue. Confirmez pour quitter sans voir vos résultats.',
+                        confirmLabel: 'Quitter',
+                        cancelLabel: 'Reprendre',
+                    }).then(function (leave) {
+                        if (leave) resetToStart();
+                        else startTimer();
+                    });
+                });
+            });
         if (prevBtn)
             prevBtn.addEventListener('click', function () {
                 navigateToQuestion(currentQuestion - 1);
@@ -420,9 +671,38 @@
             nextBtn.addEventListener('click', function () {
                 navigateToQuestion(currentQuestion + 1);
             });
-        if (finishBtn) finishBtn.addEventListener('click', finishQuiz);
+        if (finishBtn)
+            finishBtn.addEventListener('click', function () {
+                askConfirm({
+                    title: 'Terminer l’épreuve ?',
+                    message:
+                        'Afficher votre score ? Vous pourrez ensuite choisir de voir la correction.',
+                    confirmLabel: 'Oui, terminer',
+                    cancelLabel: 'Continuer',
+                }).then(function (ok) {
+                    if (ok) finishQuiz();
+                });
+            });
         if (restartBtn) restartBtn.addEventListener('click', startQuiz);
-        if (backToStartBtn) backToStartBtn.addEventListener('click', resetToStart);
+        if (showCorrectionBtn)
+            showCorrectionBtn.addEventListener('click', toggleCorrectionPanel);
+        if (correctionPrevBtn) {
+            correctionPrevBtn.addEventListener('click', function () {
+                if (focusedReviewIndex > 0) focusReviewQuestion(focusedReviewIndex - 1);
+            });
+        }
+        if (correctionNextBtn) {
+            correctionNextBtn.addEventListener('click', function () {
+                if (focusedReviewIndex < quizData.length - 1) {
+                    focusReviewQuestion(focusedReviewIndex + 1);
+                }
+            });
+        }
+        if (correctionRestartBtn) {
+            correctionRestartBtn.addEventListener('click', function () {
+                startQuiz();
+            });
+        }
         if (playBtn && questionAudio) {
             playBtn.addEventListener('click', function () {
                 questionAudio.play();
@@ -472,6 +752,18 @@
             })
             .then(function (j) {
                 if (!j || !j.success) {
+                    if (j && j.locked) {
+                        if (j.reason === 'login') {
+                            var loginBase = window.TCF_LOGIN_URL || 'login.php';
+                            var next = encodeURIComponent('comprehension_orale_quiz.php?exam_id=' + encodeURIComponent(String(examId || '')));
+                            window.location.href = loginBase + (loginBase.indexOf('?') >= 0 ? '&' : '?') + 'next=' + next;
+                            return;
+                        }
+                        if (j.reason === 'subscription') {
+                            window.location.href = window.TCF_ABO_URL || 'abonnement.php';
+                            return;
+                        }
+                    }
                     var msg = (j && j.message) ? j.message : 'Épreuve indisponible.';
                     if (desc) desc.textContent = msg;
                     return;
@@ -487,6 +779,11 @@
                     var t = (exam.subtitle || '').trim();
                     desc.textContent = t || 'Écoutez les extraits et répondez aux questions.';
                 }
+                var metaQ = $('quiz-meta-questions');
+                var metaD = $('quiz-meta-duration');
+                var durSec = Math.max(60, Number(exam.duration_seconds || 1800));
+                if (metaQ) metaQ.textContent = String(questions.length) + ' questions';
+                if (metaD) metaD.textContent = Math.max(1, Math.round(durSec / 60)) + ' min';
 
                 initCoQuizRuntime();
                 if (btn) btn.disabled = questions.length === 0;

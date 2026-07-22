@@ -75,7 +75,7 @@ function tcf_video_duration_label(array $v): string
     <h1 class="tcf-videos-simple__title">Vidéos</h1>
 
     <?php if (count($videosList) === 0): ?>
-        <p class="tcf-videos-simple__empty">Aucune vidéo publique pour le moment. Les vidéos en « Privé » ne s’affichent pas ici — publiez-les en Public ou Premium depuis l’admin.</p>
+        <p class="tcf-videos-simple__empty">Aucune vidéo publique pour le moment.</p>
     <?php else: ?>
         <div class="tcf-videos-simple__grid">
             <?php foreach ($videosList as $v): ?>

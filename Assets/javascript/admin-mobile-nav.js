@@ -6,7 +6,7 @@
 
     var MOBILE_MQ = window.matchMedia('(max-width: 900px)');
 
-    var VIDEO_GROUP = ['videos', 'channel-posts', 'channel-playlists', 'analytics', 'channel-branding'];
+    var VIDEO_GROUP = ['videos', 'analytics'];
     var SUB_GROUP = ['subscription-plans', 'subscription-payments', 'subscription-revenue'];
 
     var SUBMENU_CONFIG = {
@@ -30,16 +30,12 @@
         users: 'Gestion utilisateurs',
         admins: 'Membres administrateurs',
         videos: 'Gestion vidéos',
-        'channel-posts': 'Publications chaîne',
-        'channel-playlists': 'Playlists chaîne',
         analytics: 'Analyse vidéo',
-        'channel-branding': 'Paramètres chaîne',
         testimonials: 'Témoignages',
         'subscription-plans': 'Forfaits',
         'subscription-payments': 'Historique paiements',
         'subscription-revenue': 'Revenus & budget',
-        messages: 'Annonces',
-        chat: 'Messagerie',
+        messages: 'Annonces communautaires',
         'topics-section': 'Gestion des sujets',
         'topics-written': 'Compréhension écrite',
         'topics-oral': 'Compréhension orale',

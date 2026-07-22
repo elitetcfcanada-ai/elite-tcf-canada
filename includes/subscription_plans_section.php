@@ -110,7 +110,6 @@ $__tcf_sub_active_until = '';
         
         <div class="payment-modal-header">
             <h3 class="payment-modal-title">Paiement de l'abonnement</h3>
-            <p class="payment-modal-subtitle">Entrez votre numéro Mobile Money, puis vous serez redirigé vers la page sécurisée Notch Pay (MTN / Orange).</p>
         </div>
         
         <div class="payment-modal-body">
@@ -122,19 +121,6 @@ $__tcf_sub_active_until = '';
             
             <form id="payment-form" class="payment-form">
                 <div class="form-group">
-                    <label for="payment-provider" class="form-label">Fournisseur de paiement</label>
-                    <select 
-                        id="payment-provider" 
-                        name="provider" 
-                        class="form-input" 
-                        required
-                    >
-                        <option value="orange_money">Orange Money</option>
-                        <option value="mtn_momo">MTN Mobile Money</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
                     <label for="payment-phone" class="form-label">Numéro de téléphone</label>
                     <input 
                         type="tel" 
@@ -144,8 +130,8 @@ $__tcf_sub_active_until = '';
                         placeholder="+237 6XX XXX XXX"
                         required
                         autocomplete="tel"
+                        inputmode="tel"
                     >
-                    <small class="form-hint">Format : +237 6XX XXX XXX</small>
                 </div>
                 
                 <div class="payment-modal-actions">

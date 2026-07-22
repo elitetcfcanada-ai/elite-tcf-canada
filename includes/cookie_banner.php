@@ -1,61 +1,116 @@
 <?php
-// Prérequis : includes/config.php déjà chargé (fonction site_href).
-$cookiePolicy = site_href('politique-cookies.php');
-$privacyPolicy = site_href('politique-confidentialite.php');
+// Prérequis : includes/config.php déjà chargé.
 ?>
-<div id="tcf-cookie-banner" class="tcf-cookie-banner" role="dialog" aria-label="Cookies" hidden>
-    <div class="tcf-cookie-inner">
-        <p>
-            Nous utilisons des cookies pour mesurer l’audience et améliorer votre expérience sur ce site de préparation au TCF Canada.
-            Consultez notre <a href="<?php echo htmlspecialchars($cookiePolicy); ?>">politique de cookies</a> et notre
-            <a href="<?php echo htmlspecialchars($privacyPolicy); ?>">politique de confidentialité</a>.
-        </p>
-        <div class="tcf-cookie-actions">
-            <button type="button" class="tcf-cookie-btn tcf-cookie-essential" id="tcf-cookie-essential">Essentiels uniquement</button>
-            <button type="button" class="tcf-cookie-btn tcf-cookie-all" id="tcf-cookie-all">Tout accepter</button>
+<div id="tcf-cookie-banner" class="tcf-cookie-banner" role="dialog" aria-modal="true" aria-labelledby="tcf-cookie-title" hidden>
+    <div class="tcf-cookie-card">
+        <div class="tcf-cookie-card__icon" aria-hidden="true">
+            <i class="bx bxs-cookie"></i>
+        </div>
+        <div class="tcf-cookie-card__body">
+            <h2 id="tcf-cookie-title" class="tcf-cookie-card__title">Cookies</h2>
+            <p class="tcf-cookie-card__text">
+                Nous utilisons des cookies pour améliorer votre expérience sur ELITE TCF CANADA.
+            </p>
+            <div class="tcf-cookie-card__actions">
+                <button type="button" class="tcf-cookie-btn tcf-cookie-btn--refuse" id="tcf-cookie-refuse">Refuser</button>
+                <button type="button" class="tcf-cookie-btn tcf-cookie-btn--accept" id="tcf-cookie-accept">Accepter</button>
+            </div>
         </div>
     </div>
 </div>
 <style>
 .tcf-cookie-banner {
     position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    inset: auto 0 0 0;
     z-index: 100000;
-    padding: 1rem 1.25rem;
-    background: var(--tcf-footer-bg, #141622);
-    color: var(--tcf-text-on-dark, #fff);
-    box-shadow: 0 -4px 24px rgba(0,0,0,.2);
-    font-size: 1.4rem;
-}
-.tcf-cookie-inner {
-    max-width: 1100px;
-    margin: 0 auto;
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 1rem;
-    justify-content: space-between;
+    justify-content: center;
+    align-items: flex-end;
+    padding: 0.85rem 1rem calc(0.85rem + env(safe-area-inset-bottom, 0px));
+    pointer-events: none;
+    background: transparent;
 }
-.tcf-cookie-banner a { color: var(--tcf-accent-light, #ff8a8a); }
-.tcf-cookie-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.tcf-cookie-banner[hidden] { display: none !important; }
+.tcf-cookie-card {
+    pointer-events: auto;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    width: min(100%, 26.5rem);
+    padding: 0.9rem 1rem;
+    border-radius: 12px;
+    background: #141622;
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+}
+.tcf-cookie-card__icon {
+    flex: 0 0 auto;
+    width: 2.1rem;
+    height: 2.1rem;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(211, 13, 13, 0.16);
+    color: #d30d0d;
+    font-size: 1.25rem;
+}
+.tcf-cookie-card__body { min-width: 0; flex: 1 1 auto; }
+.tcf-cookie-card__title {
+    margin: 0 0 0.25rem;
+    font-size: 0.92rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #fff;
+}
+.tcf-cookie-card__text {
+    margin: 0 0 0.7rem;
+    font-size: 0.78rem;
+    line-height: 1.4;
+    color: rgba(255, 255, 255, 0.78);
+}
+.tcf-cookie-card__actions {
+    display: flex;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+}
 .tcf-cookie-btn {
     border: none;
-    padding: 0.65rem 1.2rem;
-    border-radius: 6px;
+    border-radius: 7px;
+    padding: 0.42rem 0.85rem;
+    font-size: 0.78rem;
+    font-weight: 650;
     cursor: pointer;
-    font-weight: 600;
-    font-size: 1.3rem;
+    line-height: 1.2;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
-.tcf-cookie-essential {
+.tcf-cookie-btn--refuse {
     background: transparent;
-    color: var(--tcf-text-on-dark, #fff);
-    border: 2px solid rgba(255,255,255,.35);
+    color: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.28);
 }
-.tcf-cookie-all {
-    background: var(--tcf-primary, #d30d0d);
+.tcf-cookie-btn--refuse:hover {
+    border-color: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.06);
+}
+.tcf-cookie-btn--accept {
+    background: #d30d0d;
     color: #fff;
+    border: 1px solid #d30d0d;
+}
+.tcf-cookie-btn--accept:hover {
+    background: #b80b0b;
+    border-color: #b80b0b;
+}
+@media (max-width: 480px) {
+    .tcf-cookie-card {
+        width: 100%;
+        gap: 0.65rem;
+        padding: 0.8rem 0.85rem;
+    }
+    .tcf-cookie-card__actions { width: 100%; }
+    .tcf-cookie-btn { flex: 1 1 auto; text-align: center; }
 }
 </style>
 <script>
@@ -71,7 +126,9 @@ $privacyPolicy = site_href('politique-confidentialite.php');
         b.hidden = true;
         if (v === 'all') location.reload();
     }
-    document.getElementById('tcf-cookie-essential').addEventListener('click', function () { setConsent('essential'); });
-    document.getElementById('tcf-cookie-all').addEventListener('click', function () { setConsent('all'); });
+    var refuse = document.getElementById('tcf-cookie-refuse');
+    var accept = document.getElementById('tcf-cookie-accept');
+    if (refuse) refuse.addEventListener('click', function () { setConsent('essential'); });
+    if (accept) accept.addEventListener('click', function () { setConsent('all'); });
 })();
 </script>

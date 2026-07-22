@@ -27,17 +27,18 @@ if (!empty($_SESSION['user_id'])) {
     <link rel="stylesheet" href="Assets/css/header_footer.css">
     <link rel="stylesheet" href="Assets/css/style_tcf.css">
     <link rel="stylesheet" href="Assets/css/style_sujets.css">
-    <link rel="stylesheet" href="Assets/css/style_Expresion_Ecrite.css">
-    <link rel="stylesheet" href="Assets/css/expression_orale.css">
+    <link rel="stylesheet" href="Assets/css/style_Expresion_Ecrite.css?v=eo-consigne-combo">
+    <link rel="stylesheet" href="Assets/css/expression_orale.css?v=eo-consigne-combo">
 </head>
 <body>
 <?php include __DIR__ . '/includes/header.php'; ?>
 
 <section class="hero-banner">
     <div class="hero-content">
-        <h4><i class='bx bxs-school'></i> Épreuves Expression Orale</h4>
-        <h1>Bonne <span>Préparation</span> !</h1>
-        <p>Maîtrisez l'expression orale du TCF Canada avec nos sujets d'entraînement.</p>
+        <p class="hero-kicker"><i class='bx bxs-school'></i> Épreuves</p>
+        <h1 class="hero-skill-title" style="color:#d30d0d!important;-webkit-text-fill-color:#d30d0d!important;">Expression orale</h1>
+        <p class="hero-motto">Bonne <span>préparation</span></p>
+        <p class="hero-lead">Ouvrez une épreuve pour vous entraîner. Les corrections restent masquées jusqu’à votre clic.</p>
     </div>
 </section>
 
@@ -54,35 +55,12 @@ if (!empty($_SESSION['user_id'])) {
     <header class="eo-exam-page-header">
         <div class="header-content">
             <h1>Consignes Expression Orale</h1>
-            <p class="subtitle">Cliquez sur une tâche pour afficher la consigne</p>
+            <p class="subtitle">Cliquez sur une tâche pour dérouler la consigne</p>
         </div>
     </header>
     <div class="container"><div id="eo-consignes-container"></div></div>
 </section>
 
-<section class="container" id="eo-detail-root" style="display:none;">
-    <header class="eo-exam-page-header">
-        <div class="header-content">
-            <h1 id="eo-detail-title"><i class="bx bx-microphone"></i> Expression Orale</h1>
-            <p class="subtitle" id="eo-detail-subtitle"></p>
-        </div>
-    </header>
-    <div class="container" id="eo-detail-container"></div>
-</section>
-
-<div id="eo-lock-msg" style="display:none;max-width:860px;margin:0 auto 1rem;padding:1rem 1.2rem;border-radius:12px;background:#fff3f3;border:1px solid rgba(211,13,13,.35);">
-    <strong>Accès premium requis.</strong>
-    <p style="margin:.4rem 0 0;">
-        <?php if (empty($_SESSION['user_id'])): ?>
-            Connectez-vous puis activez un abonnement pour ouvrir cette épreuve.
-            <a href="<?php echo htmlspecialchars(site_href('login.php')); ?>">Connexion</a> ·
-            <a href="<?php echo htmlspecialchars(site_href('abonnement.php')); ?>">Abonnement</a>
-        <?php else: ?>
-            Votre abonnement n’est pas actif. Activez votre formule pour accéder à cette épreuve.
-            <a href="<?php echo htmlspecialchars(site_href('abonnement.php')); ?>">Voir les formules</a>
-        <?php endif; ?>
-    </p>
-</div>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>
 <?php include __DIR__ . '/includes/cookie_banner.php'; ?>
@@ -96,11 +74,11 @@ if (!empty($_SESSION['user_id'])) {
     var consigneBtn = document.getElementById('consigneBtn');
     var examsSection = document.getElementById('eo-exams-section');
     var consigneSection = document.getElementById('eo-consignes');
-    var detailRoot = document.getElementById('eo-detail-root');
-    var detailContainer = document.getElementById('eo-detail-container');
-    var lockMsg = document.getElementById('eo-lock-msg');
     var examsList = document.getElementById('eo-exams-list');
     var consignesRoot = document.getElementById('eo-consignes-container');
+    var loginBase = <?php echo json_encode(site_href('login.php')); ?>;
+    var abonnementUrl = <?php echo json_encode(site_href('abonnement.php')); ?>;
+    var readBase = <?php echo json_encode(site_href('epreuve_eo.php')); ?>;
 
     function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (m) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]; }); }
     function post(action, fields) {
@@ -116,8 +94,6 @@ if (!empty($_SESSION['user_id'])) {
     function showOnly(target) {
         if (examsSection) examsSection.style.display = target === 'epreuve' ? 'block' : 'none';
         if (consigneSection) consigneSection.style.display = target === 'consigne' ? 'block' : 'none';
-        if (detailRoot) detailRoot.style.display = target === 'epreuve' && detailRoot.dataset.loaded === '1' ? 'block' : 'none';
-        if (lockMsg && target !== 'epreuve') lockMsg.style.display = 'none';
         setTopActionActive(target);
     }
     function bindComboUi(root) {
@@ -125,148 +101,64 @@ if (!empty($_SESSION['user_id'])) {
             h.addEventListener('click', function () {
                 var combo = this.parentElement;
                 if (!combo) return;
-                combo.classList.toggle('active');
-                var content = combo.querySelector('.combinaison-content');
-                if (content) content.style.display = combo.classList.contains('active') ? 'block' : 'none';
-            });
-        });
-    }
-    function bindCorrectionToggles(root) {
-        (root || document).querySelectorAll('.eo-correction-toggle-btn').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                var panel = btn.parentElement && btn.parentElement.querySelector('.eo-correction-panel');
-                if (!panel) return;
-                var open = btn.getAttribute('aria-expanded') === 'true';
-                open = !open;
-                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-                btn.textContent = open ? 'Masquer la correction' : 'Voir la correction';
-                panel.hidden = !open;
-                panel.style.display = open ? 'block' : 'none';
-            });
-        });
-    }
-    function formatRichText(text) {
-        var t = String(text || '').trim();
-        if (!t) return '';
-        if (/<[a-z][\s\S]*>/i.test(t)) return t;
-        return esc(t).replace(/\n/g, '<br>');
-    }
-    function subjectCardHtml(s) {
-        var corr = String(s.correction || '').trim();
-        var hasCorr = corr.length > 0;
-        var html = '<div class="task-card eo-subject-card">' +
-            '<div class="card-number">' + esc(s.subject_number || '') + '</div>' +
-            '<h3><i class="' + esc(s.icon_class || 'bx bx-message-detail') + '"></i> ' + esc(s.title || '') + '</h3>';
-        if (s.role_label) {
-            html += '<p class="eo-role-label">' + esc(s.role_label) + '</p>';
-        }
-        html += '<div class="eo-prompt"><h4 class="enonce-label">Énoncé</h4><p>' + esc(s.prompt || '') + '</p></div>';
-        if (hasCorr) {
-            html += '<button type="button" class="eo-correction-toggle-btn" aria-expanded="false">Voir la correction</button>' +
-                '<div class="eo-correction-panel correction" hidden style="display:none">' +
-                '<h4>Correction</h4><div class="eo-correction-body">' + formatRichText(corr) + '</div></div>';
-        }
-        html += '</div>';
-        return html;
-    }
-
-    function renderConsignes(rows) {
-        var tasks = ['tache2', 'tache3'];
-        var labels = { tache2: 'Tâche 2', tache3: 'Tâche 3' };
-        var nav = '<div class="task-navigation" style="margin:10px 0 16px;">' +
-            '<button class="task-btn active" data-consigne-target="tache2"><i class="bx bx-task"></i> Tâche 2</button>' +
-            '<button class="task-btn" data-consigne-target="tache3"><i class="bx bx-task"></i> Tâche 3</button>' +
-            '</div>';
-        var panels = '';
-        tasks.forEach(function (taskKey, idx) {
-            var list = (rows || []).filter(function (r) { return r.task_key === taskKey; });
-            var body = list.length
-                ? list.map(function (c) {
-                    return '<div class="task-card" style="border-top:5px solid var(--main-color);margin-bottom:12px;">' +
-                        '<h3><i class="bx bx-info-circle"></i> ' + labels[taskKey] + '</h3>' +
-                        '<div class="ee-consigne-body">' + String(c.body || '') + '</div>' +
-                        '</div>';
-                }).join('')
-                : '<p>Aucune consigne publiée.</p>';
-            panels += '<div class="combinaison' + (idx === 0 ? ' active' : '') + '" id="consigne-' + taskKey + '">' +
-                '<div class="combinaison-header"><h2>' + labels[taskKey] + '</h2><span class="icon">▼</span></div>' +
-                '<div class="combinaison-content"' + (idx === 0 ? ' style="display:block;"' : '') + '>' + body + '</div></div>';
-        });
-        consignesRoot.innerHTML = nav + panels;
-        bindComboUi(consignesRoot);
-        consignesRoot.querySelectorAll('[data-consigne-target]').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                var target = btn.getAttribute('data-consigne-target');
-                consignesRoot.querySelectorAll('[data-consigne-target]').forEach(function (b) { b.classList.toggle('active', b === btn); });
-                consignesRoot.querySelectorAll('.task-section').forEach(function (sec) { sec.classList.toggle('active', sec.id === 'consigne-' + target); });
-            });
-        });
-    }
-
-    function renderExamDetail(exam) {
-        if (!detailContainer) return;
-        var byTask = { tache2: [], tache3: [] };
-        (exam.parts || []).forEach(function (p) {
-            var k = (p.task_key || '').toLowerCase();
-            if (!byTask[k]) byTask[k] = [];
-            byTask[k].push(p);
-        });
-        Object.keys(byTask).forEach(function (k) {
-            byTask[k].sort(function (a, b) { return Number(a.part_number || 0) - Number(b.part_number || 0); });
-        });
-        function section(taskKey) {
-            var parts = byTask[taskKey] || [];
-            if (!parts.length) return '';
-            var sectionHtml = '<div class="task-section' + (taskKey === 'tache2' ? ' active' : '') + '" id="section-' + taskKey + '">';
-            parts.forEach(function (p, idx) {
-                var partTitle = esc(p.part_title || ('Partie ' + (p.part_number || '')));
-                sectionHtml += '<div class="combinaison eo-partie' + (idx === 0 ? ' active' : '') + '" data-part="' + esc(p.part_number || '') + '">' +
-                    '<div class="combinaison-header"><h2>' + partTitle + '</h2>' +
-                    '<span class="icon">▼</span></div>' +
-                    '<div class="combinaison-content"' + (idx === 0 ? ' style="display:block;"' : '') + '>' +
-                    '<div class="task-container">';
-                (p.subjects || []).forEach(function (s) {
-                    sectionHtml += subjectCardHtml(s);
+                var willOpen = !combo.classList.contains('active');
+                (root || document).querySelectorAll('.combinaison').forEach(function (c) {
+                    c.classList.remove('active');
+                    var content = c.querySelector('.combinaison-content');
+                    if (content) content.style.display = 'none';
                 });
-                sectionHtml += '</div></div></div>';
-            });
-            sectionHtml += '</div>';
-            return sectionHtml;
-        }
-        var titleEl = document.getElementById('eo-detail-title');
-        var subtitleEl = document.getElementById('eo-detail-subtitle');
-        if (titleEl) {
-            titleEl.innerHTML = '<i class="bx bx-microphone"></i> ' + esc(exam.title || 'Expression Orale');
-        }
-        if (subtitleEl) {
-            subtitleEl.textContent = exam.subtitle || "Découvrez les nouveaux sujets de l'expression orale qui se répètent. Pratiquez sur ces thèmes afin d'obtenir de bonnes notes.";
-        }
-        detailContainer.innerHTML =
-            '<div class="task-navigation">' +
-            '<button class="task-btn active" data-target="tache2"><i class="bx bx-task"></i> Tâche 2</button>' +
-            '<button class="task-btn" data-target="tache3"><i class="bx bx-task"></i> Tâche 3</button>' +
-            '</div>' +
-            section('tache2') +
-            section('tache3');
-        detailRoot.dataset.loaded = '1';
-        detailRoot.style.display = 'block';
-        lockMsg.style.display = 'none';
-        bindComboUi(detailContainer);
-        bindCorrectionToggles(detailContainer);
-        detailContainer.querySelectorAll('.task-btn').forEach(function (b) {
-            b.addEventListener('click', function () {
-                var target = b.getAttribute('data-target');
-                detailContainer.querySelectorAll('.task-btn').forEach(function (x) { x.classList.toggle('active', x === b); });
-                detailContainer.querySelectorAll('.task-section').forEach(function (sec) { sec.classList.toggle('active', sec.id === 'section-' + target); });
+                if (willOpen) {
+                    combo.classList.add('active');
+                    var openContent = combo.querySelector('.combinaison-content');
+                    if (openContent) openContent.style.display = 'block';
+                }
             });
         });
     }
+    function renderConsignes(rows) {
+        if (!consignesRoot) return;
+        var tasks = [
+            { key: 'tache1', title: 'Tâche 1 : Présentation (entretien dirigé)', meta: '2 minutes • 3/20 points' },
+            { key: 'tache2', title: 'Tâche 2 : Exercice en interaction', meta: '2 min préparation + 3 min 30 dialogue • 7/20 points' },
+            { key: 'tache3', title: 'Tâche 3 : Expression d’un point de vue', meta: '4 min 30 • 10/20 points' }
+        ];
+        var byKey = {};
+        (rows || []).forEach(function (r) {
+            if (r && r.task_key) byKey[r.task_key] = r;
+        });
+        var html = tasks.map(function (t, idx) {
+            var c = byKey[t.key];
+            var title = (c && c.title) ? String(c.title) : t.title;
+            var body = (c && c.body)
+                ? String(c.body)
+                : '<p class="tcf-consigne-empty">Aucune consigne publiée pour cette tâche.</p>';
+            return '<div class="combinaison' + (idx === 0 ? ' active' : '') + '" id="consigne-' + t.key + '" data-task="' + t.key + '">' +
+                '<div class="combinaison-header" role="button" tabindex="0">' +
+                '<div><h2>' + esc(title) + '</h2><span class="ee-consigne-meta">' + esc(t.meta) + '</span></div>' +
+                '<span class="icon">▼</span></div>' +
+                '<div class="combinaison-content"' + (idx === 0 ? ' style="display:block;"' : '') + '>' + body + '</div></div>';
+        }).join('');
 
-    function loadExam(examId) {
-        post('get_exam_public', { exam_id: String(examId) }).then(function (j) {
-            if (!j || !j.success || !j.data) return;
-            renderExamDetail(j.data);
-            window.scrollTo({ top: detailRoot.offsetTop - 90, behavior: 'smooth' });
+        html += '<div class="combinaison" id="consigne-criteres">' +
+            '<div class="combinaison-header" role="button" tabindex="0">' +
+            '<div><h2>Critères d’évaluation & conseils</h2></div>' +
+            '<span class="icon">▼</span></div>' +
+            '<div class="combinaison-content">' +
+            <?php
+            require_once __DIR__ . '/includes/tcf_consignes_defaults.php';
+            echo json_encode(tcf_consigne_eo_criteria_html(), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP);
+            ?> +
+            '</div></div>';
+
+        consignesRoot.innerHTML = html;
+        bindComboUi(consignesRoot);
+        consignesRoot.querySelectorAll('.combinaison-header').forEach(function (h) {
+            h.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    h.click();
+                }
+            });
         });
     }
 
@@ -280,18 +172,22 @@ if (!empty($_SESSION['user_id'])) {
             examsList.innerHTML = rows.map(function (r) {
                 var isPremiumExam = String(r.visibility || 'gratuit') === 'premium';
                 var locked = isPremiumExam && (!viewer || !premiumOk);
-                return '<button type="button" class="column_arrangement ee-exam-item' + (locked ? ' non_valide' : '') + '" data-id="' + esc(r.id) + '" data-locked="' + (locked ? '1' : '0') + '">' +
+                var id = Number(r.id || 0);
+                return '<button type="button" class="column_arrangement ee-exam-item' + (locked ? ' non_valide' : '') + '" data-id="' + esc(id) + '" data-locked="' + (locked ? '1' : '0') + '">' +
                     '<h5 class="ee-exam-title">' + esc(r.title || 'Épreuve') + '</h5>' +
                     '<i class="bx ' + (locked ? 'bx-lock' : 'bx-lock-open') + '"></i></button>';
             }).join('');
             examsList.querySelectorAll('.ee-exam-item').forEach(function (btn) {
                 btn.addEventListener('click', function () {
-                    if ((btn.getAttribute('data-locked') || '') === '1') {
-                        lockMsg.style.display = 'block';
-                        detailRoot.style.display = 'none';
+                    var id = Number(btn.getAttribute('data-id') || 0);
+                    var locked = (btn.getAttribute('data-locked') || '') === '1';
+                    if (locked) {
+                        window.location.href = viewer
+                            ? abonnementUrl
+                            : (loginBase + (loginBase.indexOf('?') >= 0 ? '&' : '?') + 'next=' + encodeURIComponent('epreuve_eo.php?id=' + id));
                         return;
                     }
-                    loadExam(Number(btn.getAttribute('data-id') || 0));
+                    window.location.href = readBase + (readBase.indexOf('?') >= 0 ? '&' : '?') + 'id=' + id;
                 });
             });
         });

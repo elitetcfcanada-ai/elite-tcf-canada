@@ -11,7 +11,6 @@
         var paymentCancel = document.getElementById('payment-cancel');
         var paymentForm = document.getElementById('payment-form');
         var paymentPhone = document.getElementById('payment-phone');
-        var paymentProvider = document.getElementById('payment-provider');
         var paymentSubmit = document.getElementById('payment-submit');
         var paymentStatus = document.getElementById('payment-status');
         var paymentStatusMessage = document.getElementById('payment-status-message');
@@ -112,18 +111,57 @@
             }
         }
 
-        function validatePhone(phone) {
-            if (!phone) return false;
-            var cleanPhone = phone.replace(/[\s\-]/g, '');
-            return /^\+[0-9]{10,15}$/.test(cleanPhone);
+        function formatPhone(phone) {
+            var digits = String(phone || '').replace(/\D+/g, '');
+            if (!digits) {
+                return '';
+            }
+            if (digits.indexOf('00') === 0) {
+                digits = digits.slice(2);
+            }
+            while (digits.indexOf('237237') === 0) {
+                digits = digits.slice(3);
+            }
+            if (/^2370\d{9}$/.test(digits)) {
+                digits = '237' + digits.slice(4);
+            }
+            if (/^2376\d{8}$/.test(digits)) {
+                return '+' + digits;
+            }
+            if (/^06\d{8}$/.test(digits)) {
+                return '+237' + digits.slice(1);
+            }
+            if (/^6\d{8}$/.test(digits)) {
+                return '+237' + digits;
+            }
+            if (digits.charAt(0) === '0' && digits.length === 10) {
+                digits = digits.slice(1);
+            }
+            if (/^6\d{8}$/.test(digits)) {
+                return '+237' + digits;
+            }
+            return digits.indexOf('237') === 0 ? '+' + digits : '+237' + digits.replace(/^0+/, '');
         }
 
-        function formatPhone(phone) {
-            var cleanPhone = phone.replace(/[\s\-]/g, '');
-            if (!cleanPhone.startsWith('+')) {
-                cleanPhone = '+237' + cleanPhone.replace(/^0+/, '');
+        function validatePhone(phone) {
+            return /^\+2376\d{8}$/.test(String(phone || ''));
+        }
+
+        function detectProviderFromPhone(formatted) {
+            var local = String(formatted || '').replace(/^\+237/, '');
+            if (/^(67|68|650|651|652|653|654)/.test(local)) {
+                return 'mtn_momo';
             }
-            return cleanPhone;
+            if (/^(69|655|656|657|658|659)/.test(local)) {
+                return 'orange_money';
+            }
+            return 'auto';
+        }
+
+        function providerLabel(provider) {
+            if (provider === 'orange_money') return 'Orange Money';
+            if (provider === 'mtn_momo') return 'MTN Mobile Money';
+            return 'Mobile Money (MTN / Orange)';
         }
 
         function postJson(body) {
@@ -246,7 +284,7 @@
                 }
 
                 var phone = paymentPhone ? paymentPhone.value.trim() : '';
-                var provider = paymentProvider ? paymentProvider.value : 'orange_money';
+                var provider = 'auto';
 
                 if (!phone) {
                     showStatus('error', 'Veuillez entrer votre numéro de téléphone.');
@@ -254,17 +292,21 @@
                     return;
                 }
 
-                if (!validatePhone(formatPhone(phone))) {
-                    showStatus('error', 'Format invalide. Exemple : +237 6XX XXX XXX');
+                var formattedPhone = formatPhone(phone);
+                if (!validatePhone(formattedPhone)) {
+                    showStatus('error', 'Numéro Cameroun invalide. Exemple : +237 670 000 000');
                     if (paymentPhone) paymentPhone.focus();
                     return;
                 }
 
-                var formattedPhone = formatPhone(phone);
+                var detected = detectProviderFromPhone(formattedPhone);
+                if (detected === 'mtn_momo' || detected === 'orange_money') {
+                    provider = detected;
+                }
 
                 setSubmitButtonLoading(true);
                 hideStatus();
-                showStatus('loading', 'Initialisation du paiement avec ' + (provider === 'orange_money' ? 'Orange Money' : 'MTN Mobile Money') + '…');
+                showStatus('loading', 'Initialisation du paiement avec ' + providerLabel(provider) + '…');
 
                 postJson({
                     action: 'init',

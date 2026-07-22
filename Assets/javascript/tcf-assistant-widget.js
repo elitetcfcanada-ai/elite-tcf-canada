@@ -148,7 +148,7 @@
             return;
         }
         addMessage(question, 'user');
-        var history = pushHistory('user', question);
+        var priorHistory = loadHistory();
         input.value = '';
         setLoading(true);
 
@@ -156,13 +156,15 @@
             var response = await fetch(window.TCF_ASSISTANT_API, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: question, history: history })
+                credentials: 'same-origin',
+                body: JSON.stringify({ message: question, history: priorHistory })
             });
             var data = await response.json();
             if (!response.ok || !data.ok) {
                 throw new Error((data && data.message) ? data.message : 'Assistant indisponible.');
             }
             var reply = data.reply || 'Je n\u2019ai pas de réponse pour le moment.';
+            pushHistory('user', question);
             addMessage(reply, 'bot');
             pushHistory('bot', reply);
         } catch (err) {

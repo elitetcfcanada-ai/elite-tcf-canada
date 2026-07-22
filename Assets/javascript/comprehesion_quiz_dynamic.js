@@ -9,6 +9,66 @@ let quizStarted = false;
 let ceEventsBound = false;
 let startTime = null;
 
+/** Disponible partout (correction résultats incluse) — ne pas imbriquer. */
+function convertNewlinesToBr(text) {
+  if (text == null || text === "") return "";
+  var t = String(text);
+  if (/&lt;\/?[a-z]/i.test(t) && !/<[a-z]/i.test(t)) {
+    var ta = document.createElement("textarea");
+    ta.innerHTML = t;
+    t = ta.value;
+  }
+  if (/<[a-z][\s\S]*>/i.test(t)) return t;
+  return t.replace(/\n/g, "<br>");
+}
+
+function answerIdKey(id) {
+  return String(id == null ? "" : id);
+}
+
+/** Réponse utilisateur : { id, index } (index = source de vérité). */
+function getUserAnswerMeta(questionId) {
+  var raw = userAnswers[questionId];
+  if (raw == null || raw === "") {
+    return { id: "", index: -1 };
+  }
+  if (typeof raw === "object") {
+    return {
+      id: answerIdKey(raw.id),
+      index: typeof raw.index === "number" ? raw.index : -1,
+    };
+  }
+  return { id: answerIdKey(raw), index: -1 };
+}
+
+function setUserAnswer(questionId, answerId, answerIndex) {
+  userAnswers[questionId] = {
+    id: answerIdKey(answerId),
+    index: typeof answerIndex === "number" ? answerIndex : -1,
+  };
+}
+
+function hasUserAnswer(questionId) {
+  var meta = getUserAnswerMeta(questionId);
+  return meta.index >= 0 || !!meta.id;
+}
+
+function getSelectedAnswer(question) {
+  var meta = getUserAnswerMeta(question.id);
+  var answers = question.answers || [];
+  if (meta.index >= 0 && answers[meta.index]) {
+    return { answer: answers[meta.index], index: meta.index };
+  }
+  if (meta.id) {
+    for (var i = 0; i < answers.length; i++) {
+      if (answerIdKey(answers[i].id) === meta.id) {
+        return { answer: answers[i], index: i };
+      }
+    }
+  }
+  return null;
+}
+
 // Elements DOM
 const startScreen = document.getElementById("start-screen");
 const quizScreen = document.getElementById("quiz-screen");
@@ -20,7 +80,13 @@ const prevBtn = document.getElementById("prev-btn");
 const nextBtn = document.getElementById("next-btn");
 const finishBtn = document.getElementById("finish-btn");
 const restartBtn = document.getElementById("restart-btn");
-const backToStartBtn = document.getElementById("back-to-start-btn");
+const showCorrectionBtn = document.getElementById("show-correction-btn");
+const correctionPanel = document.getElementById("correction-panel");
+const correctionNav = document.getElementById("correction-nav");
+const correctionPrevBtn = document.getElementById("correction-prev-btn");
+const correctionNextBtn = document.getElementById("correction-next-btn");
+const correctionRestartBtn = document.getElementById("correction-restart-btn");
+const correctionPos = document.getElementById("correction-pos");
 
 const timerDisplay = document.getElementById("timer-display");
 const timeProgress = document.getElementById("time-progress");
@@ -34,8 +100,174 @@ const questionIndicators = document.getElementById("question-indicators");
 const resultsIndicators = document.getElementById("results-indicators");
 const answersReview = document.getElementById("answers-review");
 
+let focusedReviewIndex = 0;
+
+function setCorrectionBtnLabel(open) {
+  if (!showCorrectionBtn) return;
+  if (open) {
+    showCorrectionBtn.innerHTML =
+      "<i class='bx bx-hide'></i>" +
+      "<span class='btn-txt btn-txt--full'>Masquer la correction</span>" +
+      "<span class='btn-txt btn-txt--short'>Masquer</span>";
+    showCorrectionBtn.setAttribute("aria-expanded", "true");
+  } else {
+    showCorrectionBtn.innerHTML =
+      "<i class='bx bx-check-shield'></i>" +
+      "<span class='btn-txt btn-txt--full'>Voir la correction</span>" +
+      "<span class='btn-txt btn-txt--short'>Correction</span>";
+    showCorrectionBtn.setAttribute("aria-expanded", "false");
+  }
+}
+
+function hideCorrectionPanel() {
+  if (correctionPanel) {
+    correctionPanel.classList.add("hidden");
+    correctionPanel.classList.remove("is-open");
+    correctionPanel.setAttribute("hidden", "");
+    correctionPanel.setAttribute("aria-hidden", "true");
+  }
+  if (correctionNav) {
+    correctionNav.hidden = true;
+  }
+  setCorrectionBtnLabel(false);
+}
+
+function updateCorrectionNav() {
+  var total = questions.length;
+  var isLast = focusedReviewIndex >= total - 1;
+  var isFirst = focusedReviewIndex <= 0;
+
+  if (correctionPos) {
+    correctionPos.textContent =
+      total > 0 ? focusedReviewIndex + 1 + " / " + total : "0 / 0";
+  }
+  if (correctionPrevBtn) {
+    correctionPrevBtn.disabled = isFirst;
+  }
+  if (correctionNextBtn) {
+    correctionNextBtn.hidden = isLast || total === 0;
+  }
+  if (correctionRestartBtn) {
+    correctionRestartBtn.hidden = !isLast || total === 0;
+  }
+  if (correctionNav) {
+    var panelOpen =
+      correctionPanel &&
+      correctionPanel.classList.contains("is-open") &&
+      !correctionPanel.hasAttribute("hidden");
+    correctionNav.hidden = !panelOpen || total === 0;
+  }
+}
+
+function focusReviewQuestion(index) {
+  if (!questions.length) return;
+  focusedReviewIndex = Math.max(0, Math.min(index, questions.length - 1));
+
+  if (answersReview) {
+    answersReview.querySelectorAll(".tcf-qpro-review-card").forEach(function (card, i) {
+      card.classList.toggle("is-focused", i === focusedReviewIndex);
+    });
+  }
+  if (resultsIndicators) {
+    resultsIndicators.querySelectorAll(".indicator").forEach(function (ind, i) {
+      ind.classList.toggle("is-active", i === focusedReviewIndex);
+      ind.setAttribute("aria-current", i === focusedReviewIndex ? "true" : "false");
+    });
+  }
+
+  updateCorrectionNav();
+
+  var card = document.getElementById("ce-review-q-" + (focusedReviewIndex + 1));
+  if (card && correctionPanel && correctionPanel.classList.contains("is-open")) {
+    window.requestAnimationFrame(function () {
+      try {
+        card.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      } catch (e) {
+        /* ignore */
+      }
+    });
+  }
+}
+
+function appendReviewChoice(container, answer, opts) {
+  var isUser = !!(opts && opts.isUser);
+  var isCorrect = !!(opts && opts.isCorrect);
+  var rowClass = "review-answer";
+  if (isCorrect) rowClass += " correct";
+  else if (isUser) rowClass += " incorrect selected";
+  else rowClass += " is-other";
+
+  var answerElement = document.createElement("div");
+  answerElement.className = rowClass;
+
+  var icon = document.createElement("i");
+  if (isCorrect) icon.className = "bx bx-check";
+  else if (isUser) icon.className = "bx bx-x";
+  else icon.className = "bx bx-circle";
+  answerElement.appendChild(icon);
+
+  var textSpan = document.createElement("span");
+  textSpan.innerHTML = convertNewlinesToBr(answer.text);
+  answerElement.appendChild(textSpan);
+
+  /* Badge uniquement pour la bonne réponse — pas de « Votre choix » */
+  if (isCorrect) {
+    var meta = document.createElement("div");
+    meta.className = "review-answer-meta";
+    var good = document.createElement("span");
+    good.className = "review-badge good";
+    good.textContent = "Bonne réponse";
+    meta.appendChild(good);
+    answerElement.appendChild(meta);
+  }
+
+  container.appendChild(answerElement);
+}
+
+function showCorrectionPanel(focusIndex) {
+  if (!correctionPanel) return;
+  try {
+    createResultsIndicators();
+    createAnswersReview();
+  } catch (err) {
+    console.error("CE correction build error", err);
+  }
+  correctionPanel.classList.remove("hidden");
+  correctionPanel.classList.add("is-open");
+  correctionPanel.removeAttribute("hidden");
+  correctionPanel.setAttribute("aria-hidden", "false");
+  setCorrectionBtnLabel(true);
+
+  var idx =
+    typeof focusIndex === "number" && !isNaN(focusIndex)
+      ? focusIndex
+      : focusedReviewIndex;
+  focusReviewQuestion(idx);
+
+  window.requestAnimationFrame(function () {
+    try {
+      if (resultsIndicators) {
+        resultsIndicators.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    } catch (e) {
+      /* ignore */
+    }
+  });
+}
+
+function toggleCorrectionPanel() {
+  if (!correctionPanel) return;
+  var isHidden =
+    correctionPanel.classList.contains("hidden") ||
+    correctionPanel.hasAttribute("hidden") ||
+    !correctionPanel.classList.contains("is-open");
+  if (isHidden) showCorrectionPanel();
+  else hideCorrectionPanel();
+}
+
 function startQuiz() {
   if (!questions.length) return;
+  hideCorrectionPanel();
   if (resultsScreen) resultsScreen.classList.add("hidden");
   startScreen.classList.add("hidden");
   quizScreen.classList.remove("hidden");
@@ -46,6 +278,7 @@ function startQuiz() {
 function resetToStart() {
   clearInterval(timerInterval);
   quizStarted = false;
+  hideCorrectionPanel();
   if (resultsScreen) resultsScreen.classList.add("hidden");
   quizScreen.classList.add("hidden");
   startScreen.classList.remove("hidden");
@@ -104,12 +337,6 @@ function updateQuestion() {
     question.points > 1 ? "s" : ""
   }</span>`;
 
-  // Fonction pour convertir les retours à la ligne en <br>
-  function convertNewlinesToBr(text) {
-    if (!text) return text;
-    return text.replace(/\n/g, '<br>');
-  }
-
   // Afficher ou masquer la situation
   if (question.situation) {
     situationContainer.classList.remove("hidden");
@@ -121,29 +348,35 @@ function updateQuestion() {
   // Mettre Ã  jour le texte de la question
   questionText.innerHTML = convertNewlinesToBr(question.text);
 
-  // GÃ©nÃ©rer les rÃ©ponses
+  // Générer les réponses
   answersContainer.innerHTML = "";
-  question.answers.forEach((answer) => {
+  const userMeta = getUserAnswerMeta(question.id);
+  (question.answers || []).forEach((answer, answerIndex) => {
     const answerElement = document.createElement("div");
     answerElement.className = "answer";
+    const aid = answerIdKey(answer.id) || String(answerIndex);
+    const inputId = "ce-answer-" + question.id + "-" + answerIndex;
 
     const input = document.createElement("input");
     input.type = "radio";
     input.name = "answer";
-    input.value = answer.id;
-    input.id = `answer-${answer.id}`;
+    input.value = aid;
+    input.id = inputId;
+    input.dataset.answerIndex = String(answerIndex);
 
-    // VÃ©rifier si cette rÃ©ponse a dÃ©jÃ  Ã©tÃ© sÃ©lectionnÃ©e
-    if (userAnswers[question.id] === answer.id) {
+    if (
+      userMeta.index === answerIndex ||
+      (userMeta.index < 0 && userMeta.id && userMeta.id === aid)
+    ) {
       input.checked = true;
     }
 
     const label = document.createElement("label");
-    label.htmlFor = `answer-${answer.id}`;
+    label.htmlFor = inputId;
     label.innerHTML = convertNewlinesToBr(answer.text);
 
     input.addEventListener("change", () => {
-      userAnswers[question.id] = answer.id;
+      setUserAnswer(question.id, aid, answerIndex);
       updateIndicators();
     });
 
@@ -155,7 +388,7 @@ function updateQuestion() {
         return;
       }
       input.checked = true;
-      userAnswers[question.id] = answer.id;
+      setUserAnswer(question.id, aid, answerIndex);
       updateIndicators();
     });
 
@@ -164,18 +397,19 @@ function updateQuestion() {
     answersContainer.appendChild(answerElement);
   });
 
-  // Mettre Ã  jour les boutons de navigation
-  prevBtn.classList.toggle("hidden", currentQuestionIndex === 0);
-  nextBtn.classList.toggle(
-    "hidden",
-    currentQuestionIndex === questions.length - 1
-  );
-  finishBtn.classList.toggle(
-    "hidden",
-    currentQuestionIndex !== questions.length - 1
-  );
+  var isLast = currentQuestionIndex >= questions.length - 1;
+  if (prevBtn) {
+    prevBtn.classList.remove("hidden");
+    prevBtn.disabled = currentQuestionIndex === 0;
+  }
+  if (nextBtn) {
+    nextBtn.classList.toggle("hidden", isLast);
+    nextBtn.disabled = isLast;
+  }
+  // Terminer uniquement à la dernière question
+  if (finishBtn) finishBtn.classList.toggle("hidden", !isLast);
 
-  // Mettre Ã  jour les indicateurs
+  // Mettre à jour les indicateurs
   updateIndicators();
 }
 
@@ -210,7 +444,7 @@ function updateIndicators() {
     }
 
     const questionId = questions[index].id;
-    if (userAnswers[questionId]) {
+    if (hasUserAnswer(questionId)) {
       indicator.classList.add("answered");
     } else {
       indicator.classList.add("unanswered");
@@ -238,16 +472,16 @@ function finishQuiz() {
 
 function showResults() {
   let correctCount = 0;
+  let wrongCount = 0;
   let totalPointsEarned = 0;
   questions.forEach((question) => {
-    const userAnswerId = userAnswers[question.id];
-    if (userAnswerId) {
-      const selectedAnswer = question.answers.find(
-        (answer) => answer.id === userAnswerId
-      );
-      if (selectedAnswer && selectedAnswer.correct) {
+    const picked = getSelectedAnswer(question);
+    if (picked && picked.answer) {
+      if (picked.answer.correct) {
         correctCount++;
-        totalPointsEarned += question.points;
+        totalPointsEarned += question.points || 0;
+      } else {
+        wrongCount++;
       }
     }
   });
@@ -274,8 +508,7 @@ function showResults() {
   if (pctEl) pctEl.textContent = pct + "%";
   if (levelEl) levelEl.textContent = levelLabel;
   if (correctEl) correctEl.textContent = String(correctCount);
-  if (incorrectEl)
-    incorrectEl.textContent = String(questions.length - correctCount);
+  if (incorrectEl) incorrectEl.textContent = String(wrongCount);
   if (timeTakenEl) timeTakenEl.textContent = getTimeTaken();
   if (totalPointsEl) totalPointsEl.textContent = String(totalPointsEarned);
 
@@ -284,31 +517,39 @@ function showResults() {
   if (circle)
     circle.style.strokeDasharray = dashArray + " " + circumference;
 
-  createResultsIndicators();
-  createAnswersReview();
+  try {
+    createResultsIndicators();
+    createAnswersReview();
+  } catch (err) {
+    console.error("CE results review error", err);
+  }
 
-  quizScreen.classList.add("hidden");
-  resultsScreen.classList.remove("hidden");
+  hideCorrectionPanel();
+
+  if (startScreen) startScreen.classList.add("hidden");
+  if (quizScreen) quizScreen.classList.add("hidden");
+  if (resultsScreen) {
+    resultsScreen.classList.remove("hidden");
+    try {
+      resultsScreen.scrollIntoView({ behavior: "smooth", block: "start" });
+    } catch (e) {
+      window.scrollTo(0, 0);
+    }
+  }
 }
 
 // CrÃ©er les indicateurs de rÃ©sultats
 function createResultsIndicators() {
+  if (!resultsIndicators) return;
   resultsIndicators.innerHTML = "";
   questions.forEach((question, index) => {
     const indicator = document.createElement("div");
     indicator.className = "indicator";
 
-    const userAnswerId = userAnswers[question.id];
-    let isCorrect = false;
+    const picked = getSelectedAnswer(question);
+    const isCorrect = !!(picked && picked.answer && picked.answer.correct);
 
-    if (userAnswerId) {
-      const selectedAnswer = question.answers.find(
-        (answer) => answer.id === userAnswerId
-      );
-      isCorrect = selectedAnswer && selectedAnswer.correct;
-    }
-
-    if (!userAnswerId) {
+    if (!picked) {
       indicator.classList.add("unanswered");
     } else if (isCorrect) {
       indicator.classList.add("correct");
@@ -317,62 +558,97 @@ function createResultsIndicators() {
     }
 
     indicator.textContent = index + 1;
+    indicator.setAttribute("role", "button");
+    indicator.setAttribute("tabindex", "0");
+    indicator.title = "Voir la question " + (index + 1);
+    indicator.addEventListener("click", function () {
+      showCorrectionPanel(index);
+    });
+    indicator.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        showCorrectionPanel(index);
+      }
+    });
     resultsIndicators.appendChild(indicator);
   });
 }
 
-// CrÃ©er la revue des rÃ©ponses
+// Créer la revue des réponses
 function createAnswersReview() {
+  if (!answersReview) return;
   answersReview.innerHTML = "";
 
-  questions.forEach((question, index) => {
-    const reviewItem = document.createElement("div");
-    reviewItem.className = "review-item";
+  if (!questions.length) {
+    answersReview.innerHTML =
+      '<p class="tcf-qpro-review-empty">Aucune question à corriger.</p>';
+    return;
+  }
 
-    // Ajouter la question
+  questions.forEach((question, index) => {
+    const reviewItem = document.createElement("article");
+    reviewItem.className = "review-item tcf-qpro-review-card";
+    reviewItem.id = "ce-review-q-" + (index + 1);
+
+    const answers = question.answers || [];
+    const picked = getSelectedAnswer(question);
+    const selectedIndex = picked ? picked.index : -1;
+    const qOk = !!(picked && picked.answer && picked.answer.correct);
+    const statusClass = !picked
+      ? "is-unanswered"
+      : qOk
+        ? "is-correct"
+        : "is-wrong";
+
+    const head = document.createElement("div");
+    head.className = "tcf-qpro-review-card__head " + statusClass;
+    head.innerHTML =
+      '<span class="tcf-qpro-review-card__num">Question ' +
+      (index + 1) +
+      "</span>" +
+      '<span class="tcf-qpro-review-card__status">' +
+      (!picked
+        ? "Sans réponse"
+        : qOk
+          ? "Correct"
+          : "Incorrect") +
+      "</span>";
+    reviewItem.appendChild(head);
+
     const questionElement = document.createElement("div");
     questionElement.className = "review-question";
-    questionElement.innerHTML = `<strong>Question ${index + 1}:</strong> ${
-      convertNewlinesToBr(question.text)
-    }`;
+    questionElement.innerHTML = convertNewlinesToBr(question.text);
     reviewItem.appendChild(questionElement);
 
-    // Ajouter la situation si elle existe
     if (question.situation) {
       const situationElement = document.createElement("div");
       situationElement.className = "review-situation";
-      situationElement.innerHTML = `<strong>Situation:</strong> ${convertNewlinesToBr(question.situation)}`;
+      situationElement.innerHTML =
+        "<strong>Situation</strong> " +
+        convertNewlinesToBr(question.situation);
       reviewItem.appendChild(situationElement);
     }
 
-    // Ajouter les rÃ©ponses
-    question.answers.forEach((answer) => {
-      const answerElement = document.createElement("div");
-      answerElement.className = "review-answer";
+    const choices = document.createElement("div");
+    choices.className = "tcf-qpro-review-choices";
 
-      // VÃ©rifier si c'est la rÃ©ponse de l'utilisateur
-      const isUserAnswer = userAnswers[question.id] === answer.id;
+    if (!answers.length) {
+      choices.innerHTML =
+        '<p class="tcf-qpro-review-empty">Aucune proposition en base pour cette question.</p>';
+    } else {
+      answers.forEach(function (answer, answerIndex) {
+        appendReviewChoice(choices, answer, {
+          isUser: selectedIndex === answerIndex,
+          isCorrect: !!answer.correct,
+        });
+      });
+    }
 
-      // VÃ©rifier si c'est la bonne rÃ©ponse
-      if (answer.correct) {
-        answerElement.classList.add("correct");
-        answerElement.innerHTML = `<i class='bx bx-check'></i> ${convertNewlinesToBr(answer.text)}`;
-      } else if (isUserAnswer && !answer.correct) {
-        answerElement.classList.add("incorrect");
-        answerElement.innerHTML = `<i class='bx bx-x'></i> ${convertNewlinesToBr(answer.text)}`;
-      } else {
-        answerElement.innerHTML = `<i class='bx bx-circle'></i> ${convertNewlinesToBr(answer.text)}`;
-      }
-
-      if (isUserAnswer) {
-        answerElement.classList.add("selected");
-      }
-
-      reviewItem.appendChild(answerElement);
-    });
-
+    reviewItem.appendChild(choices);
     answersReview.appendChild(reviewItem);
   });
+
+  focusReviewQuestion(focusedReviewIndex);
 }
 
 function bindCeEvents() {
@@ -383,18 +659,40 @@ function bindCeEvents() {
 
   quitBtn.addEventListener("click", () => {
     clearInterval(timerInterval);
-    if (
-      confirm(
-        "Quitter le quiz ? Votre progression sera perdue."
-      )
-    ) {
-      quizScreen.classList.add("hidden");
-      startScreen.classList.remove("hidden");
-      if (resultsScreen) resultsScreen.classList.add("hidden");
-      quizStarted = false;
-    } else {
-      startTimer();
-    }
+    var ask =
+      typeof window.tcfQuizConfirm === "function"
+        ? window.tcfQuizConfirm
+        : function (o) {
+            return Promise.resolve(window.confirm(o.message));
+          };
+    ask({
+      title: "Terminer l’épreuve ?",
+      message: "Voulez-vous terminer maintenant et afficher votre score ?",
+      confirmLabel: "Oui, terminer",
+      cancelLabel: "Continuer",
+    }).then(function (ok) {
+      if (ok) {
+        finishQuiz();
+        return;
+      }
+      ask({
+        title: "Quitter sans résultats ?",
+        message:
+          "Votre progression sera perdue. Confirmez pour quitter sans voir vos résultats.",
+        confirmLabel: "Quitter",
+        cancelLabel: "Reprendre",
+      }).then(function (leave) {
+        if (leave) {
+          quizScreen.classList.add("hidden");
+          startScreen.classList.remove("hidden");
+          if (resultsScreen) resultsScreen.classList.add("hidden");
+          hideCorrectionPanel();
+          quizStarted = false;
+        } else {
+          startTimer();
+        }
+      });
+    });
   });
 
   prevBtn.addEventListener("click", () => {
@@ -412,14 +710,44 @@ function bindCeEvents() {
   });
 
   finishBtn.addEventListener("click", () => {
-    if (confirm("Terminer le quiz maintenant ?")) {
-      finishQuiz();
-    }
+    var ask =
+      typeof window.tcfQuizConfirm === "function"
+        ? window.tcfQuizConfirm
+        : function (o) {
+            return Promise.resolve(window.confirm(o.message));
+          };
+    ask({
+      title: "Terminer l’épreuve ?",
+      message:
+        "Afficher votre score ? Vous pourrez ensuite choisir de voir la correction.",
+      confirmLabel: "Oui, terminer",
+      cancelLabel: "Continuer",
+    }).then(function (ok) {
+      if (ok) finishQuiz();
+    });
   });
 
-  restartBtn.addEventListener("click", startQuiz);
+  if (restartBtn) restartBtn.addEventListener("click", startQuiz);
 
-  backToStartBtn.addEventListener("click", resetToStart);
+  if (correctionPrevBtn) {
+    correctionPrevBtn.addEventListener("click", function () {
+      if (focusedReviewIndex > 0) focusReviewQuestion(focusedReviewIndex - 1);
+    });
+  }
+  if (correctionNextBtn) {
+    correctionNextBtn.addEventListener("click", function () {
+      if (focusedReviewIndex < questions.length - 1) {
+        focusReviewQuestion(focusedReviewIndex + 1);
+      }
+    });
+  }
+  if (correctionRestartBtn) {
+    correctionRestartBtn.addEventListener("click", function () {
+      startQuiz();
+    });
+  }
+  if (showCorrectionBtn)
+    showCorrectionBtn.addEventListener("click", toggleCorrectionPanel);
 }
 
 function showCeLoadError(msg) {
@@ -463,6 +791,19 @@ async function ceBoot() {
         (j && j.message) ||
         "Épreuve indisponible.";
       if (j && j.locked) {
+        if (j.reason === "login") {
+          var loginBase = window.TCF_LOGIN_URL || "login.php";
+          var next = encodeURIComponent(
+            "comprehesion_ecrite_quiz.php?exam_id=" + encodeURIComponent(String(id || ""))
+          );
+          window.location.href =
+            loginBase + (loginBase.indexOf("?") >= 0 ? "&" : "?") + "next=" + next;
+          return;
+        }
+        if (j.reason === "subscription") {
+          window.location.href = window.TCF_ABO_URL || "abonnement.php";
+          return;
+        }
         m +=
           " Connectez-vous ou souscrivez à une offre premium si nécessaire.";
       }
@@ -484,6 +825,13 @@ async function ceBoot() {
     if (qd && examMeta) {
       var sub = (examMeta.subtitle || "").trim();
       qd.textContent = sub || "Lisez les textes et répondez aux questions.";
+    }
+    var metaQ = document.getElementById("quiz-meta-questions");
+    var metaD = document.getElementById("quiz-meta-duration");
+    if (metaQ) metaQ.textContent = String(questions.length) + " questions";
+    if (metaD) {
+      var mins = Math.max(1, Math.round(initialDurationSeconds / 60));
+      metaD.textContent = mins + " min";
     }
 
     updateTimerDisplay();

@@ -31,6 +31,7 @@ $aboUrl = site_href('abonnement.php');
     <link rel="stylesheet" href="Assets/css/header_footer.css">
     <link rel="stylesheet" href="Assets/css/style_tcf.css">
     <link rel="stylesheet" href="Assets/css/style_sujets.css">
+    <link rel="stylesheet" href="Assets/css/style_Expresion_Ecrite.css?v=ce-consigne-combo">
 </head>
 <body>
 
@@ -38,9 +39,10 @@ $aboUrl = site_href('abonnement.php');
 
 <section class="hero-banner">
     <div class="hero-content">
-        <h4><i class='bx bxs-school'></i> Épreuves Compréhension Écrite</h4>
-        <h1>Bonne <span>Préparation</span> !</h1>
-        <p>Entraînez-vous à la lecture et aux QCM sur des textes variés.</p>
+        <p class="hero-kicker"><i class='bx bxs-school'></i> Épreuves</p>
+        <h1 class="hero-skill-title" style="color:#d30d0d!important;-webkit-text-fill-color:#d30d0d!important;">Compréhension écrite</h1>
+        <p class="hero-motto">Bonne <span>préparation</span></p>
+        <p class="hero-lead">Entraînez-vous à la lecture et aux QCM sur des textes variés.</p>
     </div>
 </section>
 
@@ -70,8 +72,13 @@ $aboUrl = site_href('abonnement.php');
 </section>
 
 <section class="container" id="ce-consignes-section" style="display:none;">
-    <header><div class="header-content"><h1>Consignes Compréhension Écrite</h1></div></header>
-    <div class="container"><div id="ce-consignes-root"></div></div>
+    <header>
+        <div class="header-content">
+            <h1>Consignes Compréhension Écrite</h1>
+            <p class="subtitle">Astuces et techniques pour maximiser votre score</p>
+        </div>
+    </header>
+    <div class="container"><div id="ce-consignes-container"></div></div>
 </section>
 
 <a href="#" class="scrollbtn"><i class="bx bxs-chevrons-up"></i></a>
@@ -85,6 +92,8 @@ $aboUrl = site_href('abonnement.php');
 (function () {
     var api = <?php echo json_encode($ceApi); ?>;
     var quizBase = <?php echo json_encode($quizBase); ?>;
+    var loginUrl = <?php echo json_encode($loginUrl); ?>;
+    var aboUrl = <?php echo json_encode($aboUrl); ?>;
     var viewer = <?php echo $viewer ? 'true' : 'false'; ?>;
     var premiumOk = <?php echo $premiumOk ? 'true' : 'false'; ?>;
     var listEl = document.getElementById('ce-exams-list');
@@ -93,7 +102,7 @@ $aboUrl = site_href('abonnement.php');
     var consigneBtn = document.getElementById('ce-consigne-btn');
     var examsSection = document.getElementById('ce-exams-section');
     var consigneSection = document.getElementById('ce-consignes-section');
-    var consignesRoot = document.getElementById('ce-consignes-root');
+    var consignesRoot = document.getElementById('ce-consignes-container');
 
     function esc(s) {
         return String(s == null ? '' : s).replace(/[&<>"']/g, function (m) {
@@ -122,14 +131,59 @@ $aboUrl = site_href('abonnement.php');
         setTopActionActive(target);
     }
 
-    function renderConsignes(rows) {
-        var html = '';
-        (rows || []).forEach(function (r) {
-            html += '<div class="task-card" style="border-top:5px solid var(--main-color);margin-bottom:12px;padding:12px;">' +
-                '<div class="ee-consigne-body">' + String(r.body || '') + '</div></div>';
+    function bindComboUi(root) {
+        (root || document).querySelectorAll('.combinaison-header').forEach(function (h) {
+            h.addEventListener('click', function () {
+                var combo = this.parentElement;
+                if (!combo) return;
+                var willOpen = !combo.classList.contains('active');
+                (root || document).querySelectorAll('.combinaison').forEach(function (c) {
+                    c.classList.remove('active');
+                    var content = c.querySelector('.combinaison-content');
+                    if (content) content.style.display = 'none';
+                });
+                if (willOpen) {
+                    combo.classList.add('active');
+                    var openContent = combo.querySelector('.combinaison-content');
+                    if (openContent) openContent.style.display = 'block';
+                }
+            });
         });
-        if (!html) html = '<p>Aucune consigne publiée pour le moment.</p>';
-        if (consignesRoot) consignesRoot.innerHTML = html;
+    }
+
+    function renderConsignes(rows) {
+        if (!consignesRoot) return;
+        var sections = [
+            { key: 'structure', title: 'Structure de l’épreuve et stratégie de scoring', meta: '39 questions • 60 min • 699 points' },
+            { key: 'techniques', title: 'Les 5 techniques essentielles', meta: 'Lecture, temps, structure, inférence, élimination' },
+            { key: 'erreurs', title: 'Erreurs courantes à éviter', meta: 'Pièges fréquents le jour de l’examen' }
+        ];
+        var byKey = {};
+        (rows || []).forEach(function (r) {
+            var k = (r && (r.section_key || r.task_key)) ? String(r.section_key || r.task_key) : '';
+            if (k) byKey[k] = r;
+        });
+        consignesRoot.innerHTML = sections.map(function (t, idx) {
+            var c = byKey[t.key];
+            var title = (c && c.title) ? String(c.title) : t.title;
+            var body = (c && c.body)
+                ? String(c.body)
+                : '<p class="tcf-consigne-empty">Aucune consigne publiée pour cette section.</p>';
+            return '<div class="combinaison' + (idx === 0 ? ' active' : '') + '" id="consigne-' + t.key + '" data-task="' + t.key + '">' +
+                '<div class="combinaison-header" role="button" tabindex="0">' +
+                '<div><h2>' + esc(title) + '</h2><span class="ee-consigne-meta">' + esc(t.meta) + '</span></div>' +
+                '<span class="icon">▼</span></div>' +
+                '<div class="combinaison-content"' + (idx === 0 ? ' style="display:block;"' : '') + '>' + body + '</div></div>';
+        }).join('');
+        bindComboUi(consignesRoot);
+        consignesRoot.querySelectorAll('.combinaison-header').forEach(function (h) {
+            h.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    h.click();
+                }
+            });
+        });
     }
 
     function loadExams() {
@@ -145,26 +199,17 @@ $aboUrl = site_href('abonnement.php');
                 var locked = isPremiumExam && !alwaysFree && (!viewer || !premiumOk);
                 var sep = quizBase.indexOf('?') >= 0 ? '&' : '?';
                 var href = quizBase + sep + 'exam_id=' + encodeURIComponent(String(r.id));
+                var nextPath = 'comprehesion_ecrite_quiz.php?exam_id=' + encodeURIComponent(String(r.id));
+                var lockedHref = viewer
+                    ? aboUrl
+                    : (loginUrl + (loginUrl.indexOf('?') >= 0 ? '&' : '?') + 'next=' + encodeURIComponent(nextPath));
                 return '<div class="column_arrangement' + (locked ? ' non_valide' : '') + '">' +
                     (locked
-                        ? '<a href="#" class="ce-locked-link" data-locked="1" style="cursor:pointer;">' +
+                        ? '<a href="' + esc(lockedHref) + '" class="ce-locked-link" data-locked="1">' +
                             '<h5>' + esc(r.title || 'Épreuve') + '</h5></a>'
                         : '<a href="' + esc(href) + '"><h5>' + esc(r.title || 'Épreuve') + '</h5></a>') +
                     '<i class="bx ' + (locked ? 'bx-lock' : 'bx-lock-open') + '"></i></div>';
             }).join('');
-
-            listEl.querySelectorAll('.ce-locked-link').forEach(function (a) {
-                a.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    if (lockMsg) lockMsg.style.display = 'block';
-                    try {
-                        window.scrollTo({
-                            top: (lockMsg && lockMsg.offsetTop) ? lockMsg.offsetTop - 100 : 0,
-                            behavior: 'smooth'
-                        });
-                    } catch (x) {}
-                });
-            });
         }).catch(function () {
             if (listEl) {
                 listEl.innerHTML = "<div class='column_arrangement'><h5>Impossible de charger les épreuves.</h5><i class='bx bx-error'></i></div>";

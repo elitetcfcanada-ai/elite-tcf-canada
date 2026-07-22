@@ -14,6 +14,7 @@ uploads/co_media/demo1/image/*.jpg
 __pycache__/
 includes/payment_config.local.php
 includes/config.local.php
+includes/gemini_key.php
 # Dump complet local (utiliser seeds_ee_eo_data.sql pour le déploiement)
 database/epreuve.sql
 *.zip

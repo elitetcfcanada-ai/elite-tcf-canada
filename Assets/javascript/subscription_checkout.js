@@ -1,6 +1,62 @@
 (function () {
     'use strict';
 
+    function loginUrl() {
+        return window.TCF_LOGIN_URL || 'login.php';
+    }
+
+    function onOpenClick(ev) {
+        var btn = ev.target.closest('.js-tcf-open-checkout');
+        if (!btn) return;
+        ev.preventDefault();
+        if (!window.TCF_SUBSCRIBE_LOGGED_IN) {
+            var planKeyPending = btn.getAttribute('data-plan-key') || '';
+            var returnPath = window.TCF_SUBSCRIBE_RETURN_PATH || 'abonnement.php';
+            if (planKeyPending) {
+                returnPath += (returnPath.indexOf('?') >= 0 ? '&' : '?') + 'subscribe=' + encodeURIComponent(planKeyPending);
+            }
+            var next = encodeURIComponent(returnPath);
+            window.location.href = loginUrl() + (loginUrl().indexOf('?') >= 0 ? '&' : '?') + 'next=' + next;
+            return;
+        }
+
+        var planKey = btn.getAttribute('data-plan-key') || '';
+        var planLabel = btn.getAttribute('data-plan-label') || '';
+        var planPrice = btn.getAttribute('data-plan-price') || '';
+        var planCurrency = btn.getAttribute('data-plan-currency') || '$';
+
+        if (window.openPaymentModal && typeof window.openPaymentModal === 'function') {
+            window.openPaymentModal({
+                key: planKey,
+                label: planLabel,
+                price: planPrice,
+                currency: planCurrency
+            });
+            return;
+        }
+
+        // Ancienne modale (si présente)
+        if (!overlay) return;
+        state.planKey = planKey;
+        state.planLabel = planLabel;
+        state.price = planPrice;
+        state.currency = planCurrency;
+        state.paymentXaf = parseInt(btn.getAttribute('data-plan-xaf') || '100', 10) || 100;
+        if (summaryEl) summaryEl.textContent = state.planLabel || 'Formule sélectionnée';
+        if (amountEl) {
+            var p = parseFloat(state.price);
+            var disp = isNaN(p) ? state.price : (p % 1 === 0 ? String(p) : p.toFixed(2));
+            amountEl.textContent = state.price ? state.currency + disp : '—';
+        }
+        if (xafNoteEl) {
+            xafNoteEl.textContent = 'Prélèvement : ' + state.paymentXaf + ' FCFA via Mobile Money';
+        }
+        openModal();
+    }
+
+    // Toujours écouter les clics (même sans ancienne overlay) pour rediriger vers login
+    document.addEventListener('click', onOpenClick);
+
     var overlay = document.getElementById('tcf-checkout-overlay');
     if (!overlay) return;
 
@@ -26,10 +82,6 @@
 
     function paymentEndpoint() {
         return window.TCF_PAYMENT_ENDPOINT || '';
-    }
-
-    function loginUrl() {
-        return window.TCF_LOGIN_URL || 'login.php';
     }
 
     function clearPoll() {
@@ -181,53 +233,6 @@
                 setStatus(err && err.message ? err.message : 'Erreur de paiement.', true);
             });
     }
-
-    function onOpenClick(ev) {
-        var btn = ev.target.closest('.js-tcf-open-checkout');
-        if (!btn) return;
-        ev.preventDefault();
-        if (!window.TCF_SUBSCRIBE_LOGGED_IN) {
-            var next = encodeURIComponent(window.TCF_SUBSCRIBE_RETURN_PATH || 'abonnement.php');
-            window.location.href = loginUrl() + (loginUrl().indexOf('?') >= 0 ? '&' : '?') + 'next=' + next;
-            return;
-        }
-        
-        // Utiliser la nouvelle modale de paiement simple
-        var planKey = btn.getAttribute('data-plan-key') || '';
-        var planLabel = btn.getAttribute('data-plan-label') || '';
-        var planPrice = btn.getAttribute('data-plan-price') || '';
-        var planCurrency = btn.getAttribute('data-plan-currency') || '$';
-        
-        // Appeler la fonction de la nouvelle modale si elle existe
-        if (window.openPaymentModal && typeof window.openPaymentModal === 'function') {
-            window.openPaymentModal({
-                key: planKey,
-                label: planLabel,
-                price: planPrice,
-                currency: planCurrency
-            });
-            return;
-        }
-        
-        // Sinon utiliser l'ancienne modale
-        state.planKey = planKey;
-        state.planLabel = planLabel;
-        state.price = planPrice;
-        state.currency = planCurrency;
-        state.paymentXaf = parseInt(btn.getAttribute('data-plan-xaf') || '100', 10) || 100;
-        if (summaryEl) summaryEl.textContent = state.planLabel || 'Formule sélectionnée';
-        if (amountEl) {
-            var p = parseFloat(state.price);
-            var disp = isNaN(p) ? state.price : (p % 1 === 0 ? String(p) : p.toFixed(2));
-            amountEl.textContent = state.price ? state.currency + disp : '—';
-        }
-        if (xafNoteEl) {
-            xafNoteEl.textContent = 'Prélèvement : ' + state.paymentXaf + ' FCFA via Mobile Money';
-        }
-        openModal();
-    }
-
-    document.addEventListener('click', onOpenClick);
 
     overlay.querySelectorAll('.js-tcf-checkout-close').forEach(function (el) {
         el.addEventListener('click', closeModal);

@@ -1,5 +1,30 @@
 @import url('theme-vars.css');
 
+/* Isolation forte : même rendu partout (index, quiz, vidéos…) */
+footer.site-footer.footer,
+.site-footer.footer,
+footer.site-footer {
+    display: block !important;
+    background-color: var(--tcf-footer-bg, #141622) !important;
+    color: var(--tcf-text-on-dark, #f8fafc) !important;
+    padding: 4rem 0 0 !important;
+    position: relative !important;
+    margin-top: 4rem !important;
+    width: 100% !important;
+    max-width: none !important;
+    box-sizing: border-box !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    float: none !important;
+    clear: both !important;
+    font-family: inherit !important;
+    line-height: 1.5 !important;
+    text-align: left !important;
+    overflow: visible !important;
+    z-index: 1 !important;
+}
+
 .site-footer {
     background-color: var(--tcf-footer-bg);
     color: var(--tcf-text-on-dark);
@@ -26,13 +51,27 @@
 }
 
 .site-footer .footer-col.footer-about {
-    overflow: hidden;
+    overflow: visible;
 }
 
 @media (max-width: 991px) {
     .site-footer .footer-row {
         grid-template-columns: 1fr;
         gap: 2rem;
+    }
+
+    .site-footer .footer-bottom {
+        padding: 1.5rem 0 calc(1.5rem + var(--tcf-mobile-nav-h, 4.6rem) + env(safe-area-inset-bottom, 0px));
+    }
+
+    .site-footer .scroll-top-footer,
+    .site-footer .scroll-top-footer.show {
+        bottom: calc(var(--tcf-mobile-nav-h, 4.6rem) + 1rem + env(safe-area-inset-bottom, 0px)) !important;
+        right: 0.85rem !important;
+        left: auto !important;
+        width: 46px;
+        height: 46px;
+        z-index: 1185 !important;
     }
 }
 
@@ -56,50 +95,35 @@
     border-radius: 3px;
 }
 
+/* Logo + nom toujours côte à côte, rapprochés */
 .site-footer .footer-logo {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     flex-wrap: nowrap;
-    gap: 0.45rem;
-    width: 100%;
+    gap: 0.3rem;
+    width: auto;
     max-width: 100%;
     margin-bottom: 1.2rem;
-    overflow: hidden;
 }
 
 .site-footer .footer-logo .footer-logo-text {
-    display: block;
-    flex: 1 1 auto;
+    display: inline-block;
+    flex: 0 1 auto;
     min-width: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    font-size: 0.72rem;
+    font-size: clamp(0.82rem, 2.2vw, 0.98rem);
     font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.02em;
     line-height: 1.15;
-    background: var(--tcf-gradient);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    color: #ffffff;
 }
 
-@media (min-width: 768px) {
-    .site-footer .footer-logo .footer-logo-text {
-        font-size: 0.82rem;
-    }
-}
-
-@media (min-width: 1100px) {
-    .site-footer .footer-logo .footer-logo-text {
-        font-size: 0.9rem;
-        letter-spacing: 0.04em;
-    }
-}
-
-.site-footer .footer-logo .tcf-brand-logo {
-    margin-right: 0.45rem;
+.site-footer .footer-logo .tcf-brand-logo,
+.site-footer .footer-logo .tcf-brand-logo--footer {
+    margin-right: 0 !important;
     flex-shrink: 0;
 }
 
@@ -114,6 +138,33 @@
     display: flex;
     align-items: center;
     margin-bottom: 1rem;
+    color: #ffffff;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    min-width: 0;
+}
+
+.site-footer .footer-contact .contact-item span,
+.site-footer .footer-contact .contact-item a,
+.site-footer .footer-contact .contact-item a:any-link,
+.site-footer .footer-contact .contact-item a:link,
+.site-footer .footer-contact .contact-item a:visited,
+.site-footer .footer-contact .contact-item a:hover,
+.site-footer .footer-contact .contact-item a:active,
+.site-footer .footer-contact .contact-item a:focus,
+.site-footer .footer-contact a[href^="tel"],
+.site-footer .footer-contact a[href^="mailto"] {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    text-decoration: none !important;
+    word-break: break-word;
+}
+
+.site-footer .footer-contact .contact-item a:hover,
+.site-footer .footer-contact .contact-item a:focus-visible {
+    text-decoration: underline !important;
+    text-underline-offset: 3px;
+    text-decoration-color: rgba(255, 255, 255, 0.55) !important;
 }
 
 .site-footer .contact-item i {
@@ -126,6 +177,8 @@
     justify-content: center;
     margin-right: 0.8rem;
     font-size: 1.2rem;
+    flex-shrink: 0;
+    color: #fff;
 }
 
 .site-footer .footer-links {
@@ -255,17 +308,33 @@
         flex-direction: column;
         text-align: center;
     }
+
+    footer.site-footer.footer,
+    .site-footer.footer,
+    footer.site-footer {
+        padding-top: 3rem !important;
+        margin-top: 2.5rem !important;
+    }
+
+    .site-footer .footer-container {
+        padding: 0 1rem;
+    }
+
+    .site-footer .footer-col h5 {
+        font-size: 1.2rem;
+        margin-bottom: 1.1rem;
+    }
+
+    .site-footer .footer-description,
+    .site-footer .newsletter-desc {
+        font-size: 0.95rem;
+    }
 }
 
-/* Au-dessus de la barre mobile — ne pas masquer le menu du bas */
-@media (max-width: 991px) {
-    .site-footer .scroll-top-footer,
-    .site-footer .scroll-top-footer.show {
-        bottom: calc(var(--tcf-mobile-nav-h, 4.6rem) + 1rem + env(safe-area-inset-bottom, 0px)) !important;
-        right: 0.85rem !important;
-        left: auto !important;
-        width: 46px;
-        height: 46px;
-        z-index: 1185 !important;
-    }
+/* Quiz / pages à fond gris : le footer garde son fond sombre */
+body.tcf-quiz-with-site-nav > footer.site-footer,
+body.tcf-page-abonnement > footer.site-footer,
+body.tcf-posts-page > footer.site-footer {
+    background-color: var(--tcf-footer-bg, #141622) !important;
+    color: var(--tcf-text-on-dark, #f8fafc) !important;
 }

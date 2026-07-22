@@ -76,13 +76,13 @@ if ($action === 'mark_read') {
         echo json_encode(['success' => false, 'message' => 'ID de notification invalide.']);
         exit;
     }
-    
+
     try {
         $stmt = $pdo->prepare(
-            'UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?'
+            'UPDATE notifications SET is_read = 1 WHERE id = ? AND (user_id IS NULL OR user_id = ?)'
         );
         $stmt->execute([$notificationId, $uid]);
-        
+
         echo json_encode(['success' => true, 'message' => 'Notification marquée comme lue.']);
         exit;
     } catch (Throwable $e) {
@@ -93,11 +93,32 @@ if ($action === 'mark_read') {
 
 if ($action === 'mark_all_read') {
     try {
-        $stmt = $pdo->prepare(
-            'UPDATE notifications SET is_read = 1 WHERE user_id = ? AND is_read = 0'
-        );
-        $stmt->execute([$uid]);
-        
+        $role = (string) ($_SESSION['role'] ?? 'user');
+        if (in_array($role, ['admin', 'super_admin'], true)) {
+            $stmt = $pdo->prepare(
+                "UPDATE notifications SET is_read = 1
+                 WHERE type IN ('video','topic','message','user','update','video_comment','testimonial','subscription','subscription_staff','exam')
+                   AND (user_id IS NULL OR user_id = ?)"
+            );
+            $stmt->execute([$uid]);
+        } else {
+            $stmt = $pdo->prepare(
+                "UPDATE notifications n
+                 INNER JOIN users u ON u.id = ?
+                 SET n.is_read = 1
+                 WHERE n.type IN ('video','topic','message','user','update','subscription','exam')
+                   AND (
+                     n.user_id = ?
+                     OR (
+                       n.user_id IS NULL
+                       AND n.created_at >= u.created_at
+                       AND NOT (n.type = 'subscription' AND n.user_id IS NULL)
+                     )
+                   )"
+            );
+            $stmt->execute([$uid, $uid]);
+        }
+
         echo json_encode(['success' => true, 'message' => 'Toutes les notifications marquées comme lues.']);
         exit;
     } catch (Throwable $e) {

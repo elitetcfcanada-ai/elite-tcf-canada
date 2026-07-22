@@ -1,12 +1,15 @@
 <?php
 /*
 Copiez vers includes/payment_config.local.php (non versionné).
+Utilisé UNIQUEMENT sur localhost — ignoré automatiquement sur Hostinger.
 
 $tcf_notchpay_public_key = 'pk....';
 $tcf_notchpay_secret_key = 'sk....';
+$tcf_notchpay_webhook_hash = ''; // optionnel : Hash Key dashboard Notch Pay
 $tcf_payment_public_base_url = ''; // laisser vide en local
 */
 
 $tcf_notchpay_public_key = '';
 $tcf_notchpay_secret_key = '';
+$tcf_notchpay_webhook_hash = '';
 $tcf_payment_public_base_url = '';
