@@ -4,8 +4,13 @@
 
 1. Démarrez **Apache** et **MySQL** dans le panneau XAMPP.
 2. Créez la base `TCF` dans phpMyAdmin (`http://localhost/phpmyadmin`).
-3. Importez `database/tcf.sql`.
-4. Vérifiez que `includes/config.local.php` existe (non versionné) avec :
+3. Importez `database/tcf.sql` (**structure seule** — pas les sujets EE/EO).
+4. Importez les sujets Expression écrite / orale (au choix) :
+   - **phpMyAdmin** : importer aussi `database/seeds_ee_eo_data.sql`
+   - **ou CLI** : `php scripts/seed_all_ee_eo.php`
+   - **ou navigateur** : `…/scripts/seed_all_ee_eo.php?key=REPAIR_TCF_2026`
+
+5. Vérifiez que `includes/config.local.php` existe (non versionné) avec :
 
 ```php
 $host = 'localhost';
@@ -15,8 +20,10 @@ $password = '';
 $port = '';
 ```
 
-5. Ouvrez `http://localhost/elite-TCFCanada/` (ou le dossier du projet).
-6. Développez et testez **en local**. Ne poussez (`git push`) que lorsque c’est validé.
+6. Ouvrez `http://localhost/elite-TCFCanada/` (HTTP, pas HTTPS).
+7. Développez et testez **en local**. Ne poussez (`git push`) que lorsque c’est validé.
+
+> `database/tcf.sql` ne contient pas les sujets. Sans l’étape `seed_all_ee_eo.php`, Expression écrite / orale restent vides.
 
 > `config.local.php` a priorité sur `config.hostinger.php`. Ainsi le local ne pointe plus vers la prod.
 

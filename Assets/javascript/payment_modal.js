@@ -307,7 +307,12 @@
 
             if (!window.TCF_SUBSCRIBE_LOGGED_IN) {
                 var loginUrl = window.TCF_LOGIN_URL || 'login.php';
-                var next = encodeURIComponent(window.TCF_SUBSCRIBE_RETURN_PATH || 'abonnement.php');
+                var planKeyPending = btn.getAttribute('data-plan-key') || '';
+                var returnPath = window.TCF_SUBSCRIBE_RETURN_PATH || 'abonnement.php';
+                if (planKeyPending) {
+                    returnPath += (returnPath.indexOf('?') >= 0 ? '&' : '?') + 'subscribe=' + encodeURIComponent(planKeyPending);
+                }
+                var next = encodeURIComponent(returnPath);
                 window.location.href = loginUrl + (loginUrl.indexOf('?') >= 0 ? '&' : '?') + 'next=' + next;
                 return;
             }

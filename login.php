@@ -71,7 +71,8 @@ if (isset($_POST['register_start'])) {
     $err = tcf_validate_registration_name_email_password($name, $email, $password, $confirmPassword, $pdo);
     if ($err !== null) {
         $_SESSION['error'] = $err;
-        header('Location: login.php');
+        $q = tcf_login_safe_next(isset($_POST['register_next']) ? (string) $_POST['register_next'] : null);
+        header('Location: login.php' . ($q !== null ? ('?next=' . rawurlencode($q)) : ''));
         exit;
     }
 
@@ -123,12 +124,14 @@ if (isset($_POST['register_start'])) {
             error_log('TCF inscription PDO: ' . $e->getMessage());
             $_SESSION['error'] = "Erreur technique lors de l'inscription. Code: $code";
         }
-        header('Location: login.php');
+        $q = tcf_login_safe_next(isset($_POST['register_next']) ? (string) $_POST['register_next'] : null);
+        header('Location: login.php' . ($q !== null ? ('?next=' . rawurlencode($q)) : ''));
         exit;
     } catch (Throwable $e) {
         error_log('TCF inscription: ' . $e->getMessage());
         $_SESSION['error'] = "Impossible de finaliser l'inscription: " . $e->getMessage();
-        header('Location: login.php');
+        $q = tcf_login_safe_next(isset($_POST['register_next']) ? (string) $_POST['register_next'] : null);
+        header('Location: login.php' . ($q !== null ? ('?next=' . rawurlencode($q)) : ''));
         exit;
     }
 }
@@ -138,9 +141,12 @@ if (isset($_POST['login_start'])) {
     $email = trim((string) ($_POST['email'] ?? ''));
     $password = (string) ($_POST['password'] ?? '');
     
+    $loginNextKeep = tcf_login_safe_next(isset($_POST['login_next']) ? (string) $_POST['login_next'] : null);
+    $loginBack = 'login.php' . ($loginNextKeep !== null ? ('?next=' . rawurlencode($loginNextKeep)) : '');
+
     if ($email === '' || $password === '') {
         $_SESSION['error'] = 'Tous les champs sont obligatoires.';
-        header('Location: login.php');
+        header('Location: ' . $loginBack);
         exit;
     }
     
@@ -151,20 +157,20 @@ if (isset($_POST['login_start'])) {
         
         if (!$user) {
             $_SESSION['error'] = 'Email ou mot de passe incorrect.';
-            header('Location: login.php');
+            header('Location: ' . $loginBack);
             exit;
         }
         
         if (!password_verify($password, $user['password'])) {
             $_SESSION['error'] = 'Email ou mot de passe incorrect.';
-            header('Location: login.php');
+            header('Location: ' . $loginBack);
             exit;
         }
         
         // Vérifier le statut du compte si la colonne existe
         if (isset($user['status']) && $user['status'] === 'inactive') {
             $_SESSION['error'] = 'Ce compte est désactivé. Contactez l\'administrateur.';
-            header('Location: login.php');
+            header('Location: ' . $loginBack);
             exit;
         }
 
@@ -174,7 +180,7 @@ if (isset($_POST['login_start'])) {
     } catch (PDOException $e) {
         error_log('TCF connexion PDO: ' . $e->getMessage());
         $_SESSION['error'] = 'Erreur technique lors de la connexion. Veuillez réessayer.';
-        header('Location: login.php');
+        header('Location: ' . $loginBack);
         exit;
     }
 }

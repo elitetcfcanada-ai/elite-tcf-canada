@@ -92,6 +92,28 @@ require_once __DIR__ . '/includes/config.php';
                 updateCardsLayout();
                 window.addEventListener('resize', updateCardsLayout);
             }
+
+            // Après login/inscription avec ?subscribe=plan_xxx → ouvrir la modale paiement
+            try {
+                var params = new URLSearchParams(window.location.search || '');
+                var subscribeKey = params.get('subscribe') || '';
+                if (subscribeKey && window.TCF_SUBSCRIBE_LOGGED_IN && typeof window.openPaymentModal === 'function') {
+                    var btn = document.querySelector('.js-tcf-open-checkout[data-plan-key="' + subscribeKey.replace(/"/g, '') + '"]');
+                    if (btn) {
+                        window.openPaymentModal({
+                            key: subscribeKey,
+                            label: btn.getAttribute('data-plan-label') || 'Abonnement',
+                            price: btn.getAttribute('data-plan-price') || '0',
+                            currency: btn.getAttribute('data-plan-currency') || '$'
+                        });
+                    }
+                    if (window.history && window.history.replaceState) {
+                        params.delete('subscribe');
+                        var clean = window.location.pathname + (params.toString() ? ('?' + params.toString()) : '');
+                        window.history.replaceState({}, '', clean);
+                    }
+                }
+            } catch (e) {}
         })();
     </script>
 </body>
