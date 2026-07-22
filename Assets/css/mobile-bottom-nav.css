@@ -263,17 +263,20 @@
         bottom: var(--tcf-mobile-nav-reserve) !important;
     }
 
-    /* Notifications / profil : panneaux internes, barre du bas toujours visible */
+    /* Notifications / profil : sous la barre (détails renforcés dans tcf-ui-layers.css) */
     body.tcf-has-mobile-nav > .notification-overlay,
+    body.tcf-has-mobile-nav > .notification-overlay.profile-overlay-v2,
     body.tcf-has-mobile-nav > .profile-overlay.profile-overlay-v2 {
         bottom: var(--tcf-mobile-nav-reserve) !important;
         height: auto !important;
+        max-height: none !important;
         z-index: 4600 !important;
     }
 
     body.tcf-has-mobile-nav > .notification-page,
+    body.tcf-has-mobile-nav > .notification-page.notification-drawer-v2.profile-drawer-v2,
     body.tcf-has-mobile-nav > .profile-page.profile-drawer-v2 {
-        top: 0 !important;
+        top: var(--tcf-header-h, 4rem) !important;
         bottom: var(--tcf-mobile-nav-reserve) !important;
         height: auto !important;
         max-height: none !important;

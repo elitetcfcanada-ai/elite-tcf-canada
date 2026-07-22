@@ -1455,6 +1455,20 @@ nav .others.nav-others--user .nav-avatar-fallback {
     display: none !important;
 }
 
+.notif-mark-label--short {
+    display: none;
+}
+
+@media (max-width: 991px) {
+    .notif-mark-label--full {
+        display: none;
+    }
+
+    .notif-mark-label--short {
+        display: inline;
+    }
+}
+
 /* Feed cartes — ultra compact pro */
 #notificationPage .notif-feed,
 .notification-drawer-v2 .notif-feed {

@@ -262,11 +262,15 @@ $tcf_notif_relative = static function (string $createdAt): string {
         <button type="button" class="tcf-btn tcf-btn--ghost" id="notifDrawerCloseBtn">Fermer</button>
         <?php if (count($notifications) > 0): ?>
             <button type="button" class="tcf-btn tcf-btn--primary" id="notifMarkAllReadBtn"<?php echo $tcf_notif_unread > 0 ? '' : ' hidden'; ?>>
-                <i class="bx bx-check-double"></i> Tout marquer comme lu
+                <i class="bx bx-check-double" aria-hidden="true"></i>
+                <span class="notif-mark-label notif-mark-label--full">Tout marquer comme lu</span>
+                <span class="notif-mark-label notif-mark-label--short">Tout lu</span>
             </button>
         <?php else: ?>
             <button type="button" class="tcf-btn tcf-btn--primary" id="notifMarkAllReadBtn" hidden>
-                <i class="bx bx-check-double"></i> Tout marquer comme lu
+                <i class="bx bx-check-double" aria-hidden="true"></i>
+                <span class="notif-mark-label notif-mark-label--full">Tout marquer comme lu</span>
+                <span class="notif-mark-label notif-mark-label--short">Tout lu</span>
             </button>
         <?php endif; ?>
     </div>
@@ -699,7 +703,7 @@ $tcf_notif_relative = static function (string $createdAt): string {
 
 <?php if (empty($tcf_profile_panel_skip_assets)) { ?>
 <?php /* Rechargement en fin de page : gagne sur style_tcf / legacy notifications. */ ?>
-<link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/profile_panel.css')); ?>?v=profile-cal-month-11">
+<link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/profile_panel.css')); ?>?v=notif-footer-short-12">
 <link rel="stylesheet" href="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.css">
 <script src="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.js"></script>
 <script src="<?php echo htmlspecialchars(site_href('Assets/javascript/profile_panel.js')); ?>?v=notif-ui-3"></script>
