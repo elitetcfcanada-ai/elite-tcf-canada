@@ -53,6 +53,7 @@ $port = '';
 
 | Action | Détail |
 |--------|--------|
+| Textes FR (mojibake ├®) | Ouvrir une fois `https://elitetcfcanada.online/scripts/repair_ee_eo_mojibake.php?key=REPAIR_TCF_2026` puis Ctrl+F5 |
 | Clé Gemini | Créer `includes/gemini_key.php` avec `return 'VOTRE_CLE';` (non versionné) |
 | Webhook paiement | Dashboard Notch Pay → `https://elitetcfcanada.online/payment_webhook.php` |
 | Base chat | Les tables messagerie sont déjà à supprimer en prod si encore présentes |

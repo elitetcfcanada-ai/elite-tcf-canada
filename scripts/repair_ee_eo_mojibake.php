@@ -70,12 +70,12 @@ function tcf_repair_cp850_mojibake(string $text): string
 
 $tables = [
     'tcf_ee_exams' => ['title', 'subtitle'],
-    'tcf_ee_combinations' => ['title', 'subtitle'],
+    'tcf_ee_combinations' => ['title', 'label', 'name', 'combination_label'],
     'tcf_ee_tasks' => ['prompt', 'correction'],
     'tcf_ee_task_documents' => ['title', 'content'],
     'tcf_ee_consignes' => ['title', 'body'],
     'tcf_eo_exams' => ['title', 'subtitle'],
-    'tcf_eo_parts' => ['title', 'subtitle'],
+    'tcf_eo_parts' => ['part_title'],
     'tcf_eo_subjects' => ['title', 'prompt', 'correction', 'role_label'],
     'tcf_eo_consignes' => ['title', 'body'],
 ];
@@ -89,6 +89,21 @@ try {
         $exists = $pdo->query("SHOW TABLES LIKE " . $pdo->quote($table))->fetchColumn();
         if (!$exists) {
             echo "SKIP missing table {$table}\n";
+            continue;
+        }
+        $present = [];
+        foreach ($pdo->query('SHOW COLUMNS FROM `' . $table . '`')->fetchAll(PDO::FETCH_ASSOC) as $c) {
+            $present[strtolower((string) $c['Field'])] = (string) $c['Field'];
+        }
+        if (!isset($present['id'])) {
+            echo "SKIP {$table}: no id column\n";
+            continue;
+        }
+        $cols = array_values(array_filter($cols, static function (string $col) use ($present): bool {
+            return isset($present[strtolower($col)]);
+        }));
+        if ($cols === []) {
+            echo "SKIP {$table}: no text columns\n";
             continue;
         }
         $colList = array_merge(['id'], $cols);
