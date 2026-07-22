@@ -305,7 +305,7 @@ function initQuiz() {
   startTimer();
 }
 
-// Mettre Ã  jour l'affichage du timer
+// Mettre à jour l'affichage du timer
 function updateTimerDisplay() {
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
@@ -313,13 +313,13 @@ function updateTimerDisplay() {
     .toString()
     .padStart(2, "0")}`;
 
-  // Mettre Ã  jour la barre de progression
+  // Mettre à jour la barre de progression
   const progressPercentage =
     initialDurationSeconds > 0 ? (timeLeft / initialDurationSeconds) * 100 : 0;
   timeProgress.style.width = `${progressPercentage}%`;
 }
 
-// DÃ©marrer le timer
+// Démarrer le timer
 function startTimer() {
   clearInterval(timerInterval);
   timerInterval = setInterval(() => {
@@ -333,11 +333,11 @@ function startTimer() {
   }, 1000);
 }
 
-// Mettre Ã  jour l'affichage de la question actuelle
+// Mettre à jour l'affichage de la question actuelle
 function updateQuestion() {
   const question = questions[currentQuestionIndex];
 
-  // Mettre Ã  jour le numÃ©ro de question et les points
+  // Mettre à jour le numéro de question et les points
   questionNumber.innerHTML = `<span>Question ${currentQuestionIndex + 1}/${
     questions.length
   }</span><span class="question-points">${question.points} point${
@@ -352,7 +352,7 @@ function updateQuestion() {
     situationContainer.classList.add("hidden");
   }
 
-  // Mettre Ã  jour le texte de la question
+  // Mettre à jour le texte de la question
   questionText.innerHTML = convertNewlinesToBr(question.text);
 
   // Générer les réponses
@@ -420,7 +420,7 @@ function updateQuestion() {
   updateIndicators();
 }
 
-// CrÃ©er les indicateurs de questions
+// Créer les indicateurs de questions
 function createIndicators() {
   questionIndicators.innerHTML = "";
   questions.forEach((question, index) => {
@@ -440,7 +440,7 @@ function createIndicators() {
   });
 }
 
-// Mettre Ã  jour les indicateurs de questions
+// Mettre à jour les indicateurs de questions
 function updateIndicators() {
   const indicators = questionIndicators.querySelectorAll(".indicator");
   indicators.forEach((indicator, index) => {
@@ -545,7 +545,7 @@ function showResults() {
   }
 }
 
-// CrÃ©er les indicateurs de rÃ©sultats
+// Créer les indicateurs de résultats
 function createResultsIndicators() {
   if (!resultsIndicators) return;
   resultsIndicators.innerHTML = "";
