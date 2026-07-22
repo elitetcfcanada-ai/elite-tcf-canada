@@ -77,6 +77,8 @@ $pageTitle = (string) ($exam['title'] ?? 'Expression Écrite');
 $subtitle = (string) ($exam['subtitle'] ?? 'Sujets et corrections');
 $backHref = site_href('Expresion_ecrite.php');
 $apiHref = site_href('ee_api.php');
+$loginHref = site_href('login.php?next=' . rawurlencode($returnPath));
+$simLocked = !$loggedIn;
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -94,7 +96,7 @@ $apiHref = site_href('ee_api.php');
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/style_tcf.css')); ?>">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/style_sujets.css')); ?>?v=no-glow-1">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/style_Expresion_Ecrite.css')); ?>?v=ee-type-sm">
-    <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/epreuve_reader.css')); ?>?v=ee-type-sm">
+    <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/epreuve_reader.css')); ?>?v=sim-login-2">
 </head>
 <body class="tcf-page-epreuve-reader">
 <?php include __DIR__ . '/includes/header.php'; ?>
@@ -128,7 +130,12 @@ $apiHref = site_href('ee_api.php');
                             <h2><?php echo htmlspecialchars($comboTitle); ?></h2>
                         </div>
                         <div class="tcf-combo-bar__right">
-                            <button type="button" class="tcf-combo-sim-btn ee-combo-sim-toggle" aria-expanded="false" aria-label="Ouvrir le simulateur">
+                            <button type="button"
+                                class="tcf-combo-sim-btn ee-combo-sim-toggle<?php echo $simLocked ? ' is-disabled' : ''; ?>"
+                                aria-expanded="false"
+                                aria-label="<?php echo $simLocked ? 'Connectez-vous pour utiliser le simulateur' : 'Ouvrir le simulateur'; ?>"
+                                title="<?php echo $simLocked ? 'Connectez-vous pour utiliser le simulateur' : 'Simulateur IA'; ?>"
+                                <?php echo $simLocked ? 'aria-disabled="true"' : ''; ?>>
                                 <i class="bx bx-play"></i>
                                 <span>Simulateur</span>
                             </button>
@@ -196,8 +203,10 @@ $apiHref = site_href('ee_api.php');
                                     <div class="tcf-task-actions">
                                         <button
                                             type="button"
-                                            class="tcf-sim-pill ee-task-sim-toggle"
+                                            class="tcf-sim-pill ee-task-sim-toggle<?php echo $simLocked ? ' is-disabled' : ''; ?>"
                                             aria-expanded="false"
+                                            title="<?php echo $simLocked ? 'Connectez-vous pour utiliser le simulateur' : 'Simulateur IA'; ?>"
+                                            <?php echo $simLocked ? 'aria-disabled="true"' : ''; ?>
                                             data-task-id="<?php echo $taskId; ?>"
                                             data-task-number="<?php echo htmlspecialchars($taskNum); ?>"
                                             data-exam-id="<?php echo (int) $examId; ?>"
@@ -276,11 +285,18 @@ $apiHref = site_href('ee_api.php');
 <script>
 (function () {
     var api = <?php echo json_encode($apiHref); ?>;
+    var loggedIn = <?php echo $loggedIn ? 'true' : 'false'; ?>;
+    var loginHref = <?php echo json_encode($loginHref); ?>;
 
     function esc(s) {
         return String(s == null ? '' : s).replace(/[&<>"']/g, function (m) {
             return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m];
         });
+    }
+    function requireSimLogin() {
+        if (loggedIn) return true;
+        window.location.href = loginHref;
+        return false;
     }
     function post(action, fields) {
         var fd = new FormData();
@@ -384,6 +400,7 @@ $apiHref = site_href('ee_api.php');
         var sendBtn = panel.querySelector('.ee-ai-correct-btn');
         if (!sendBtn || !ta || !out) return;
         sendBtn.addEventListener('click', function () {
+            if (!requireSimLogin()) return;
             var meta = getActiveMeta();
             if (!meta) return;
             var text = (ta.value || '').trim();
@@ -402,6 +419,10 @@ $apiHref = site_href('ee_api.php');
                 word_max: meta.wordMax || '',
                 task_prompt: meta.prompt || ''
             }).then(function (j) {
+                if (j && j.reason === 'login') {
+                    window.location.href = loginHref;
+                    return;
+                }
                 if (!j || !j.success || !j.feedback) {
                     out.innerHTML = '<p style="color:#b91c1c;">' + esc((j && j.message) || 'Erreur de correction simulation.') + '</p>';
                     return;
@@ -456,6 +477,7 @@ $apiHref = site_href('ee_api.php');
         btn.addEventListener('click', function (e) {
             e.preventDefault();
             e.stopPropagation();
+            if (btn.disabled || btn.classList.contains('is-disabled') || !requireSimLogin()) return;
             var task = btn.closest('.tache');
             if (!task) return;
             var open = btn.getAttribute('aria-expanded') === 'true';
@@ -501,6 +523,7 @@ $apiHref = site_href('ee_api.php');
         btn.addEventListener('click', function (e) {
             e.preventDefault();
             e.stopPropagation();
+            if (btn.disabled || btn.classList.contains('is-disabled') || !requireSimLogin()) return;
             var combo = btn.closest('.combinaison');
             if (!combo) return;
             var panel = combo.querySelector('.tcf-combo-sim-panel');

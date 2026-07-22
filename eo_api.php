@@ -6,6 +6,7 @@ require_once __DIR__ . '/includes/subscription_access.php';
 require_once __DIR__ . '/includes/tcf_notifications_helper.php';
 require_once __DIR__ . '/includes/rich_text.php';
 require_once __DIR__ . '/includes/admin_roles.php';
+require_once __DIR__ . '/includes/gemini_client.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -210,14 +211,7 @@ function eo_fetch_exam(PDO $pdo, int $examId): ?array
 
 function eo_api_key(): string
 {
-    $k = '';
-    $f = __DIR__ . '/includes/gemini_key.php';
-    if (is_file($f)) {
-        $v = include $f;
-        if (is_string($v) && trim($v) !== '') $k = trim($v);
-    }
-    if ($k === '') $k = trim((string) getenv('GEMINI_API_KEY'));
-    return $k;
+    return tcf_gemini_api_key();
 }
 
 function eo_gemini_text(string $prompt, string $apiKey): ?string
@@ -227,30 +221,13 @@ function eo_gemini_text(string $prompt, string $apiKey): ?string
         'contents' => [['role' => 'user', 'parts' => [['text' => $prompt]]]],
         'generationConfig' => ['temperature' => 0.5, 'topP' => 0.9, 'maxOutputTokens' => 600],
     ];
-    $models = ['gemini-2.5-flash', 'gemini-2.0-flash-001', 'gemini-2.0-flash', 'gemini-flash-latest'];
-    foreach ($models as $m) {
-        $url = 'https://generativelanguage.googleapis.com/v1beta/models/' . rawurlencode($m) . ':generateContent?key=' . rawurlencode($apiKey);
-        $ch = curl_init($url);
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST => true,
-            CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
-            CURLOPT_POSTFIELDS => json_encode($body, JSON_UNESCAPED_UNICODE),
-            CURLOPT_TIMEOUT => 20,
-        ]);
-        $resp = curl_exec($ch);
-        $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        if ($resp === false || $code >= 400) continue;
-        $j = json_decode($resp, true);
-        if (!is_array($j)) continue;
-        $txt = '';
-        foreach (($j['candidates'][0]['content']['parts'] ?? []) as $p) $txt .= trim((string) ($p['text'] ?? ''));
-        $txt = trim((string) preg_replace('/^```[a-z]*\s*/i', '', $txt));
-        $txt = trim((string) preg_replace('/```$/', '', $txt));
-        if ($txt !== '') return $txt;
-    }
-    return null;
+    $err = '';
+    $j = tcf_gemini_generate($body, $apiKey, $err, 20);
+    if (!is_array($j)) return null;
+    $txt = tcf_gemini_extract_text($j);
+    $txt = trim((string) preg_replace('/^```[a-z]*\s*/i', '', $txt));
+    $txt = trim((string) preg_replace('/```$/', '', $txt));
+    return $txt !== '' ? $txt : null;
 }
 
 function eo_exam_rank_from_title(string $title): int
@@ -564,6 +541,9 @@ try {
             eo_json(['success' => true, 'message' => $isPublished ? 'Consignes publiées.' : 'Consignes enregistrées en brouillon.']);
         }
         case 'get_simulator_subject': {
+            if (empty($_SESSION['user_id'])) {
+                eo_json(['success' => false, 'reason' => 'login', 'message' => 'Connectez-vous pour utiliser le simulateur.'], 401);
+            }
             $taskKey = (string) ($_POST['task_key'] ?? 'tache2');
             if (!in_array($taskKey, ['tache1', 'tache2', 'tache3'], true)) $taskKey = 'tache2';
             $consigneSt = $pdo->prepare("SELECT body FROM tcf_eo_consignes WHERE is_published=1 AND task_key=? ORDER BY sort_order ASC,id ASC LIMIT 1");
@@ -590,6 +570,9 @@ try {
             ]]);
         }
         case 'simulator_reply': {
+            if (empty($_SESSION['user_id'])) {
+                eo_json(['success' => false, 'reason' => 'login', 'message' => 'Connectez-vous pour utiliser le simulateur IA.'], 401);
+            }
             $taskKey = (string) ($_POST['task_key'] ?? 'tache2');
             if (!in_array($taskKey, ['tache1', 'tache2', 'tache3'], true)) $taskKey = 'tache2';
             $msg = trim((string) ($_POST['message'] ?? ''));

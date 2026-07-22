@@ -263,13 +263,31 @@ body.tcf-page-epreuve-reader .hero-banner p {
 }
 
 .tcf-corr-pill.is-disabled,
-.tcf-corr-pill:disabled {
+.tcf-corr-pill:disabled,
+.tcf-sim-pill.is-disabled,
+.tcf-sim-pill:disabled,
+.tcf-combo-sim-btn.is-disabled,
+.tcf-combo-sim-btn:disabled {
     opacity: 0.45;
     cursor: not-allowed;
     background: #f1f5f9 !important;
     color: #94a3b8 !important;
     border-color: #cbd5e1 !important;
     box-shadow: none;
+    transform: none;
+}
+
+.tcf-combo-sim-btn.is-disabled i,
+.tcf-combo-sim-btn:disabled i,
+.tcf-sim-pill.is-disabled i,
+.tcf-sim-pill:disabled i {
+    color: #94a3b8 !important;
+}
+
+.tcf-sim-pill.is-disabled:hover,
+.tcf-combo-sim-btn.is-disabled:hover {
+    background: #f1f5f9 !important;
+    color: #94a3b8 !important;
     transform: none;
 }
 

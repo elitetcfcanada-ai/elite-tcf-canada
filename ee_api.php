@@ -6,6 +6,7 @@ require_once __DIR__ . '/includes/subscription_access.php';
 require_once __DIR__ . '/includes/tcf_notifications_helper.php';
 require_once __DIR__ . '/includes/rich_text.php';
 require_once __DIR__ . '/includes/admin_roles.php';
+require_once __DIR__ . '/includes/gemini_client.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -301,18 +302,7 @@ function ee_simulator_task_defaults(string $taskKey): array
 
 function ee_get_api_key(): string
 {
-    $apiKey = '';
-    $keyFile = __DIR__ . '/includes/gemini_key.php';
-    if (is_file($keyFile)) {
-        $fromFile = include $keyFile;
-        if (is_string($fromFile) && trim($fromFile) !== '') {
-            $apiKey = trim($fromFile);
-        }
-    }
-    if ($apiKey === '') {
-        $apiKey = trim((string) getenv('GEMINI_API_KEY'));
-    }
-    return $apiKey;
+    return tcf_gemini_api_key();
 }
 
 function ee_call_gemini_text(string $prompt, string $apiKey): ?string
@@ -326,38 +316,15 @@ function ee_call_gemini_text(string $prompt, string $apiKey): ?string
         ],
         'generationConfig' => ['temperature' => 0.7, 'topP' => 0.95, 'maxOutputTokens' => 512],
     ];
-    $models = ['gemini-2.5-flash', 'gemini-2.0-flash-001', 'gemini-2.0-flash', 'gemini-flash-latest'];
-    foreach ($models as $model) {
-        $url = 'https://generativelanguage.googleapis.com/v1beta/models/' . rawurlencode($model) . ':generateContent?key=' . rawurlencode($apiKey);
-        $ch = curl_init($url);
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST => true,
-            CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
-            CURLOPT_POSTFIELDS => json_encode($body, JSON_UNESCAPED_UNICODE),
-            CURLOPT_TIMEOUT => 30,
-        ]);
-        $resp = curl_exec($ch);
-        $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        if ($resp === false || $httpCode >= 400) {
-            continue;
-        }
-        $decoded = json_decode($resp, true);
-        if (!is_array($decoded)) {
-            continue;
-        }
-        $raw = '';
-        foreach (($decoded['candidates'][0]['content']['parts'] ?? []) as $p) {
-            $raw .= trim((string) ($p['text'] ?? ''));
-        }
-        $raw = trim((string) preg_replace('/^```[a-z]*\s*/i', '', $raw));
-        $raw = trim((string) preg_replace('/```$/', '', $raw));
-        if ($raw !== '') {
-            return $raw;
-        }
+    $err = '';
+    $decoded = tcf_gemini_generate($body, $apiKey, $err, 30);
+    if (!is_array($decoded)) {
+        return null;
     }
-    return null;
+    $raw = tcf_gemini_extract_text($decoded);
+    $raw = trim((string) preg_replace('/^```[a-z]*\s*/i', '', $raw));
+    $raw = trim((string) preg_replace('/```$/', '', $raw));
+    return $raw !== '' ? $raw : null;
 }
 
 function ee_try_decode_feedback(string $rawText): ?array
@@ -635,6 +602,13 @@ switch ($action) {
         break;
 
     case 'get_simulator_subject':
+        if (!ee_is_logged()) {
+            ee_json([
+                'success' => false,
+                'reason' => 'login',
+                'message' => 'Connectez-vous pour utiliser le simulateur.',
+            ], 401);
+        }
         $taskKey = trim((string) ($_POST['task_key'] ?? 'tache1'));
         if (!in_array($taskKey, ['tache1', 'tache2', 'tache3'], true)) {
             $taskKey = 'tache1';
@@ -1025,6 +999,14 @@ switch ($action) {
         break;
 
     case 'ai_correct':
+        if (!ee_is_logged()) {
+            ee_json([
+                'success' => false,
+                'reason' => 'login',
+                'message' => 'Connectez-vous pour utiliser le simulateur IA.',
+            ], 401);
+        }
+
         $taskId = (int) ($_POST['task_id'] ?? 0);
         $examId = (int) ($_POST['exam_id'] ?? 0);
         $comboId = (int) ($_POST['combo_id'] ?? 0);
@@ -1040,7 +1022,7 @@ switch ($action) {
         $wordCount = str_word_count(strip_tags($userText), 0, "àáâãäåæçèéêëìíîïðñòóôõöùúûüýÿÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖÙÚÛÜÝ");
 
         $submissionId = 0;
-        $currentUserId = ee_is_logged() ? (int) ($_SESSION['user_id'] ?? 0) : 0;
+        $currentUserId = (int) ($_SESSION['user_id'] ?? 0);
         if ($currentUserId > 0) {
             try {
                 $pdo->prepare('INSERT INTO tcf_ee_submissions (user_id, exam_id, combination_id, task_id, user_text, word_count) VALUES (?, ?, ?, ?, ?, ?)')
@@ -1050,19 +1032,9 @@ switch ($action) {
             }
         }
 
-        $apiKey = '';
-        $keyFile = __DIR__ . '/includes/gemini_key.php';
-        if (is_file($keyFile)) {
-            $fromFile = include $keyFile;
-            if (is_string($fromFile) && trim($fromFile) !== '') {
-                $apiKey = trim($fromFile);
-            }
-        }
+        $apiKey = ee_get_api_key();
         if ($apiKey === '') {
-            $apiKey = trim((string) getenv('GEMINI_API_KEY'));
-        }
-        if ($apiKey === '') {
-            ee_json(['success' => false, 'message' => 'Clé Gemini non configurée.'], 500);
+            ee_json(['success' => false, 'message' => 'Clé Gemini non configurée sur le serveur.'], 500);
         }
 
         $wordConstraint = '';
@@ -1089,38 +1061,16 @@ switch ($action) {
             'generationConfig' => ['temperature' => 0.2, 'topP' => 0.9, 'maxOutputTokens' => 2048],
         ];
 
-        $models = ['gemini-2.5-flash', 'gemini-2.0-flash-001', 'gemini-2.0-flash', 'gemini-flash-latest'];
-        $decoded = null;
-        foreach ($models as $model) {
-            $url = 'https://generativelanguage.googleapis.com/v1beta/models/' . rawurlencode($model) . ':generateContent?key=' . rawurlencode($apiKey);
-            $ch = curl_init($url);
-            curl_setopt_array($ch, [
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_POST => true,
-                CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
-                CURLOPT_POSTFIELDS => json_encode($body, JSON_UNESCAPED_UNICODE),
-                CURLOPT_TIMEOUT => 40,
-            ]);
-            $resp = curl_exec($ch);
-            $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close($ch);
-            if ($resp !== false) {
-                $dec = json_decode($resp, true);
-                if (is_array($dec) && $httpCode < 400) {
-                    $decoded = $dec;
-                    break;
-                }
-            }
-        }
-
+        $geminiErr = '';
+        $decoded = tcf_gemini_generate($body, $apiKey, $geminiErr, 40);
         if (!$decoded) {
-            ee_json(['success' => false, 'message' => "Erreur de connexion à l'IA."], 502);
+            ee_json([
+                'success' => false,
+                'message' => $geminiErr !== '' ? $geminiErr : "Impossible de joindre l'IA pour le moment.",
+            ], 502);
         }
 
-        $rawText = '';
-        foreach (($decoded['candidates'][0]['content']['parts'] ?? []) as $part) {
-            $rawText .= trim((string) ($part['text'] ?? ''));
-        }
+        $rawText = tcf_gemini_extract_text($decoded);
         $feedback = ee_try_decode_feedback($rawText);
         if (!is_array($feedback)) {
             // tentative de réparation via second prompt court
