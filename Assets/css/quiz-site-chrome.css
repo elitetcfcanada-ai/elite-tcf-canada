@@ -148,21 +148,62 @@ body.tcf-quiz-with-site-nav .tcf-mobile-sheet {
     z-index: 5100 !important;
 }
 
-/* Header site (logo + menu) : reste collé en haut pendant l’épreuve */
+/* Header site (logo + menu) : fixe en haut pendant l’épreuve */
 body.tcf-quiz-with-site-nav > .top-header {
     position: relative;
     z-index: 4200;
 }
 
-body.tcf-quiz-with-site-nav > header.header {
-    position: sticky !important;
-    top: 0 !important;
-    z-index: 4200 !important;
-    background: #fff !important;
-    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08);
-    display: flex !important;
-    visibility: visible !important;
-    opacity: 1 !important;
+/*
+ * Mobile : ne PAS forcer sticky ici.
+ * Le site met déjà header en position:fixed + padding-top sur body
+ * (--tcf-header-offset). Un sticky !important laissait un vide au-dessus
+ * (padding réservé) et faisait « bouger » la barre au scroll.
+ */
+@media (max-width: 991px) {
+    body.tcf-quiz-with-site-nav > header.header {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        z-index: 4200 !important;
+        background: #fff !important;
+        box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08);
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        margin: 0 !important;
+        transform: none !important;
+    }
+
+    html.tcf-has-fixed-header body.tcf-quiz-with-site-nav {
+        padding-top: var(--tcf-header-offset, 56px) !important;
+    }
+
+    body.tcf-quiz-with-site-nav .tcf-mobile-nav {
+        position: fixed !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        margin: 0 !important;
+        transform: none !important;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+}
+
+@media (min-width: 992px) {
+    body.tcf-quiz-with-site-nav > header.header {
+        position: sticky !important;
+        top: 0 !important;
+        z-index: 4200 !important;
+        background: #fff !important;
+        box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08);
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
 }
 
 /* Espace sous le bas de page — la barre quiz est fixed, pas besoin d’extra */

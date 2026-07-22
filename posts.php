@@ -29,7 +29,7 @@ $loginUrl = site_href('login.php?next=' . rawurlencode('posts.php'));
     <link rel="stylesheet" href="Assets/css/theme-vars.css">
     <link rel="stylesheet" href="Assets/css/header_footer.css">
     <link rel="stylesheet" href="Assets/css/style_tcf.css">
-    <link rel="stylesheet" href="Assets/css/community_posts.css?v=annonce-fb-4">
+    <link rel="stylesheet" href="Assets/css/community_posts.css?v=annonce-fb-5">
 </head>
 <body class="tcf-posts-page">
 <?php include __DIR__ . '/includes/header.php'; ?>

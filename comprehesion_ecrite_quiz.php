@@ -51,8 +51,8 @@ $aboUrl = site_href('abonnement.php');
     <link rel="stylesheet" href="Assets/css/comprehesion_Ecrite.css?v=7">
     <link rel="stylesheet" href="Assets/css/header_footer.css">
     <link rel="stylesheet" href="Assets/css/tcf-responsive-pills.css">
-    <link rel="stylesheet" href="Assets/css/quiz-site-chrome.css?v=16">
-    <link rel="stylesheet" href="Assets/css/tcf-quiz-pro.css?v=5">
+    <link rel="stylesheet" href="Assets/css/quiz-site-chrome.css?v=17">
+    <link rel="stylesheet" href="Assets/css/tcf-quiz-pro.css?v=start-results-7">
 </head>
 
 <body class="tcf-quiz-with-site-nav">
@@ -163,28 +163,28 @@ $aboUrl = site_href('abonnement.php');
                         <span id="level-text">Niveau A1</span>
                     </div>
                 </div>
-            </div>
 
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon"><i class='bx bx-check-circle'></i></div>
-                    <span class="stat-value" id="correct-answers">0</span>
-                    <span class="stat-label">Bonnes réponses</span>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon"><i class='bx bx-x-circle'></i></div>
-                    <span class="stat-value" id="incorrect-answers">0</span>
-                    <span class="stat-label">Mauvaises réponses</span>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon"><i class='bx bx-time-five'></i></div>
-                    <span class="stat-value" id="time-taken">0:00</span>
-                    <span class="stat-label">Temps écoulé</span>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon"><i class='bx bx-trophy'></i></div>
-                    <span class="stat-value" id="total-points">0</span>
-                    <span class="stat-label">Points obtenus</span>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class='bx bx-check-circle'></i></div>
+                        <span class="stat-value" id="correct-answers">0</span>
+                        <span class="stat-label">Bonnes</span>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class='bx bx-x-circle'></i></div>
+                        <span class="stat-value" id="incorrect-answers">0</span>
+                        <span class="stat-label">Mauvaises</span>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class='bx bx-time-five'></i></div>
+                        <span class="stat-value" id="time-taken">0:00</span>
+                        <span class="stat-label">Temps</span>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class='bx bx-trophy'></i></div>
+                        <span class="stat-value" id="total-points">0</span>
+                        <span class="stat-label">Points</span>
+                    </div>
                 </div>
             </div>
 
