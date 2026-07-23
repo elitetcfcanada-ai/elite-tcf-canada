@@ -51,7 +51,7 @@ $aboUrl = site_href('abonnement.php');
     <link rel="stylesheet" href="Assets/css/header_footer.css">
     <link rel="stylesheet" href="Assets/css/tcf-responsive-pills.css">
     <link rel="stylesheet" href="Assets/css/quiz-site-chrome.css?v=17">
-    <link rel="stylesheet" href="Assets/css/tcf-quiz-pro.css?v=results-taller-vert-12">
+    <link rel="stylesheet" href="Assets/css/tcf-quiz-pro.css?v=results-board-pro-13">
 </head>
 <body class="tcf-quiz-with-site-nav">
 <?php include __DIR__ . '/includes/header.php'; ?>
@@ -195,41 +195,43 @@ $aboUrl = site_href('abonnement.php');
             <h2><i class='bx bx-bar-chart-alt-2'></i> Vos résultats</h2>
         </div>
         <main class="results-main">
-            <div class="score-display tcf-qpro-score-wrap">
-                <div class="score-circle">
-                    <svg viewBox="0 0 36 36">
-                        <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        <path class="circle-fill" id="score-circle" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                    </svg>
-                    <div class="score-text">
-                        <span id="percentage-text">0%</span>
-                        <span id="level-text">Niveau A1</span>
+            <div class="tcf-qpro-board">
+                <section class="score-display tcf-qpro-score-card" aria-label="Score global">
+                    <div class="score-circle">
+                        <svg viewBox="0 0 36 36" aria-hidden="true">
+                            <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            <path class="circle-fill" id="score-circle" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        </svg>
+                        <div class="score-text">
+                            <span id="percentage-text">0%</span>
+                            <span id="level-text">Niveau A1</span>
+                        </div>
                     </div>
-                </div>
+                </section>
 
                 <div class="stats-grid tcf-qpro-metrics" role="list">
-                    <div class="stat-card tcf-qpro-metric" role="listitem">
+                    <div class="stat-card tcf-qpro-metric tcf-qpro-metric--ok" role="listitem">
                         <div class="stat-icon tcf-qpro-metric__icon"><i class='bx bx-check-circle'></i></div>
                         <div class="tcf-qpro-metric__body">
                             <span class="stat-value tcf-qpro-metric__value" id="correct-answers">0</span>
                             <span class="stat-label tcf-qpro-metric__label">Bonnes réponses</span>
                         </div>
                     </div>
-                    <div class="stat-card tcf-qpro-metric" role="listitem">
+                    <div class="stat-card tcf-qpro-metric tcf-qpro-metric--bad" role="listitem">
                         <div class="stat-icon tcf-qpro-metric__icon"><i class='bx bx-x-circle'></i></div>
                         <div class="tcf-qpro-metric__body">
                             <span class="stat-value tcf-qpro-metric__value" id="incorrect-answers">0</span>
                             <span class="stat-label tcf-qpro-metric__label">Mauvaises réponses</span>
                         </div>
                     </div>
-                    <div class="stat-card tcf-qpro-metric" role="listitem">
+                    <div class="stat-card tcf-qpro-metric tcf-qpro-metric--time" role="listitem">
                         <div class="stat-icon tcf-qpro-metric__icon"><i class='bx bx-time-five'></i></div>
                         <div class="tcf-qpro-metric__body">
                             <span class="stat-value tcf-qpro-metric__value" id="time-taken">0:00</span>
                             <span class="stat-label tcf-qpro-metric__label">Temps écoulé</span>
                         </div>
                     </div>
-                    <div class="stat-card tcf-qpro-metric" role="listitem">
+                    <div class="stat-card tcf-qpro-metric tcf-qpro-metric--pts" role="listitem">
                         <div class="stat-icon tcf-qpro-metric__icon"><i class='bx bx-trophy'></i></div>
                         <div class="tcf-qpro-metric__body">
                             <span class="stat-value tcf-qpro-metric__value" id="total-points">0</span>

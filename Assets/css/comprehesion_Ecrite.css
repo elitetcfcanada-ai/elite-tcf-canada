@@ -696,7 +696,8 @@
 
         .score-display {
             margin: var(--space-md) auto;
-            max-width: 250px; /* Largeur réduite */
+            max-width: 100%;
+            width: 100%;
         }
 
         .score-circle {

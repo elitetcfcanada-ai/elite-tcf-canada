@@ -34,23 +34,24 @@ body.tcf-quiz-with-site-nav .tcf-quiz-standalone-wrap .app-container {
     min-height: auto;
 }
 
-/* Résultats : quasi pleine largeur, bien visible partout */
+/* Résultats : largeur confortable, padding régulier */
 body.tcf-quiz-with-site-nav .tcf-quiz-standalone-wrap .app-container.tcf-qpro-results {
-    max-width: 1100px;
+    max-width: 920px;
     width: 100%;
-    padding: 0.85rem 0.45rem 2rem;
+    padding: 1rem 0.85rem 2rem;
 }
 
-@media (min-width: 640px) {
+@media (min-width: 700px) {
     body.tcf-quiz-with-site-nav .tcf-quiz-standalone-wrap .app-container.tcf-qpro-results {
-        padding: 1.15rem 0.75rem 2.25rem;
+        max-width: 980px;
+        padding: 1.25rem 1.15rem 2.25rem;
     }
 }
 
-@media (min-width: 960px) {
+@media (min-width: 1100px) {
     body.tcf-quiz-with-site-nav .tcf-quiz-standalone-wrap .app-container.tcf-qpro-results {
-        max-width: 1140px;
-        padding: 1.5rem 1rem 2.75rem;
+        max-width: 1080px;
+        padding: 1.5rem 1.25rem 2.5rem;
     }
 }
 
@@ -200,93 +201,100 @@ body.tcf-quiz-with-site-nav .tcf-quiz-standalone-wrap .app-container.tcf-qpro-re
     display: none !important;
 }
 
-/* —— Résultats bien visibles (mobile / tablette / iPad / desktop) —— */
+/* —— Résultats : board pro (score + cartes), téléphone / tablette / desktop —— */
 .tcf-qpro-results {
-    gap: 1.15rem;
+    gap: 1rem;
     width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .tcf-qpro-results .results-header {
     text-align: center;
+    padding: 0.15rem 0 0.25rem;
 }
 
 .tcf-qpro-results .results-header h2 {
     margin: 0;
-    font-size: clamp(1.55rem, 4vw, 2rem);
+    font-size: clamp(1.35rem, 3.5vw, 1.75rem);
     color: var(--qpro-ink);
     font-weight: 800;
     letter-spacing: -0.02em;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
+    gap: 0.45rem;
 }
 
 .tcf-qpro-results .results-header h2 i {
     color: var(--qpro-accent);
-    font-size: 1.25em;
+    font-size: 1.15em;
 }
 
 .tcf-qpro-results .results-main {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.9rem;
     width: 100%;
+    max-width: 100%;
 }
 
-.tcf-qpro-score-wrap {
-    background: linear-gradient(180deg, #ffffff 0%, #f8f9fb 100%);
+/* Annule l’ancien max-width: 250px de .score-display (CE/CO) */
+.tcf-qpro-results .score-display,
+.tcf-qpro-results .tcf-qpro-score-card,
+.tcf-qpro-results .tcf-qpro-score-wrap {
+    max-width: none !important;
+    width: 100% !important;
+    margin: 0 !important;
+}
+
+.tcf-qpro-board {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    width: 100%;
+    align-items: stretch;
+}
+
+.tcf-qpro-score-card {
+    background: #fff;
     border: 1px solid var(--qpro-line);
     border-radius: 18px;
-    box-shadow: 0 10px 28px rgba(18, 24, 38, 0.07);
-    padding: 2rem 0.75rem 1.75rem;
+    box-shadow: 0 8px 24px rgba(18, 24, 38, 0.06);
+    padding: 1.25rem 1rem;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 1.5rem;
-    width: 100%;
-    min-height: 24rem; /* allonger le bloc (hauteur), pas la largeur */
     box-sizing: border-box;
-}
-
-.tcf-qpro-score-wrap .stats-grid,
-.tcf-qpro-score-wrap .tcf-qpro-metrics {
-    padding-top: 1.25rem;
-    border-top: 1px solid var(--qpro-line);
+    min-height: 0;
 }
 
 .tcf-qpro-results .score-circle {
-    width: 168px !important;
-    height: 168px !important;
+    width: 132px !important;
+    height: 132px !important;
     margin: 0 auto !important;
     position: relative;
 }
 
 .tcf-qpro-results .score-text #percentage-text {
-    font-size: 1.85rem !important;
+    font-size: 1.55rem !important;
     font-weight: 800;
     color: var(--qpro-ink);
     line-height: 1.1;
 }
 
 .tcf-qpro-results .score-text #level-text {
-    font-size: 0.95rem !important;
+    font-size: 0.88rem !important;
     font-weight: 750;
     color: var(--qpro-accent);
     letter-spacing: 0.02em;
 }
 
-/*
- * Métriques en HAUTEUR (longueur), pas en largeur :
- * carte verticale = icône au-dessus, puis chiffre, puis libellé.
- * Grille 2×2 (mobile/tablette) puis 4 colonnes (desktop).
- */
 .tcf-qpro-results .stats-grid.tcf-qpro-metrics,
 .tcf-qpro-results .tcf-qpro-metrics {
     display: grid !important;
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 0.8rem !important;
+    gap: 0.65rem !important;
     margin: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
@@ -297,40 +305,40 @@ body.tcf-quiz-with-site-nav .tcf-quiz-standalone-wrap .app-container.tcf-qpro-re
 .tcf-qpro-results .stat-card.tcf-qpro-metric {
     background: #fff !important;
     border: 1px solid var(--qpro-line) !important;
-    border-radius: 18px !important;
-    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04) !important;
-    padding: 1.35rem 0.7rem 1.45rem !important;
+    border-radius: 14px !important;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04) !important;
+    padding: 0.85rem 0.8rem !important;
     transform: none !important;
     display: flex !important;
-    flex-direction: column !important; /* vertical = longueur */
+    flex-direction: row !important;
     align-items: center !important;
-    justify-content: center !important;
-    gap: 0.55rem !important;
-    min-height: 9.5rem !important; /* allonger la carte */
+    justify-content: flex-start !important;
+    gap: 0.7rem !important;
+    min-height: 0 !important;
     min-width: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
     overflow: hidden !important;
-    text-align: center !important;
+    text-align: left !important;
     box-sizing: border-box !important;
 }
 
 .tcf-qpro-results .tcf-qpro-metric:hover,
 .tcf-qpro-results .stat-card.tcf-qpro-metric:hover {
     transform: none !important;
-    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04) !important;
     border-color: #d0d5dd !important;
     background: #fafbfc !important;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05) !important;
 }
 
 .tcf-qpro-results .tcf-qpro-metric__icon.stat-icon,
 .tcf-qpro-results .tcf-qpro-metric .stat-icon {
     flex: 0 0 auto !important;
-    width: 2.85rem !important;
-    height: 2.85rem !important;
-    font-size: 1.4rem !important;
-    margin: 0 0 0.15rem !important;
-    border-radius: 12px !important;
+    width: 2.4rem !important;
+    height: 2.4rem !important;
+    font-size: 1.2rem !important;
+    margin: 0 !important;
+    border-radius: 10px !important;
     box-shadow: none !important;
     display: inline-flex !important;
     align-items: center !important;
@@ -338,18 +346,22 @@ body.tcf-quiz-with-site-nav .tcf-quiz-standalone-wrap .app-container.tcf-qpro-re
     color: #fff !important;
 }
 
+.tcf-qpro-results .tcf-qpro-metric--ok .stat-icon,
 .tcf-qpro-results .tcf-qpro-metric:nth-child(1) .stat-icon {
     background: var(--qpro-ok) !important;
 }
 
+.tcf-qpro-results .tcf-qpro-metric--bad .stat-icon,
 .tcf-qpro-results .tcf-qpro-metric:nth-child(2) .stat-icon {
     background: var(--qpro-bad) !important;
 }
 
+.tcf-qpro-results .tcf-qpro-metric--time .stat-icon,
 .tcf-qpro-results .tcf-qpro-metric:nth-child(3) .stat-icon {
     background: #2563eb !important;
 }
 
+.tcf-qpro-results .tcf-qpro-metric--pts .stat-icon,
 .tcf-qpro-results .tcf-qpro-metric:nth-child(4) .stat-icon {
     background: var(--qpro-warn) !important;
 }
@@ -357,17 +369,17 @@ body.tcf-quiz-with-site-nav .tcf-quiz-standalone-wrap .app-container.tcf-qpro-re
 .tcf-qpro-results .tcf-qpro-metric__body {
     display: flex !important;
     flex-direction: column !important;
-    align-items: center !important;
+    align-items: flex-start !important;
     justify-content: center !important;
-    gap: 0.3rem !important;
+    gap: 0.12rem !important;
     min-width: 0 !important;
-    width: 100% !important;
+    flex: 1 1 auto !important;
 }
 
 .tcf-qpro-results .tcf-qpro-metric__value.stat-value,
 .tcf-qpro-results .tcf-qpro-metric .stat-value {
     display: block !important;
-    font-size: 1.5rem !important;
+    font-size: 1.25rem !important;
     font-weight: 800 !important;
     color: var(--qpro-ink) !important;
     line-height: 1.15 !important;
@@ -378,102 +390,133 @@ body.tcf-quiz-with-site-nav .tcf-quiz-standalone-wrap .app-container.tcf-qpro-re
 .tcf-qpro-results .tcf-qpro-metric .stat-label {
     display: block !important;
     position: static !important;
-    font-size: 0.8rem !important;
+    font-size: 0.72rem !important;
     font-weight: 650 !important;
     color: var(--qpro-muted) !important;
-    line-height: 1.3 !important;
+    line-height: 1.25 !important;
     margin: 0 !important;
     max-width: 100% !important;
-    padding: 0 0.2rem;
     white-space: normal !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     word-break: break-word !important;
-    text-align: center !important;
+    text-align: left !important;
 }
 
-@media (min-width: 640px) {
-    .tcf-qpro-score-wrap {
-        padding: 2.15rem 1.25rem 1.85rem;
-        gap: 1.5rem;
-        min-height: 26rem; /* bloc résultats plus long verticalement */
+/* Tablette : score à gauche, grille 2×2 à droite */
+@media (min-width: 700px) {
+    .tcf-qpro-board {
+        grid-template-columns: minmax(200px, 240px) minmax(0, 1fr);
+        gap: 0.9rem;
+        align-items: stretch;
+    }
+
+    .tcf-qpro-score-card {
+        padding: 1.35rem 1rem;
     }
 
     .tcf-qpro-results .score-circle {
-        width: 188px !important;
-        height: 188px !important;
+        width: 148px !important;
+        height: 148px !important;
     }
 
     .tcf-qpro-results .score-text #percentage-text {
-        font-size: 2.1rem !important;
+        font-size: 1.7rem !important;
     }
 
     .tcf-qpro-results .score-text #level-text {
-        font-size: 1.05rem !important;
+        font-size: 0.95rem !important;
     }
 
     .tcf-qpro-results .tcf-qpro-metrics {
-        gap: 0.95rem !important;
+        gap: 0.75rem !important;
+        height: 100%;
+        align-content: stretch;
     }
 
     .tcf-qpro-results .tcf-qpro-metric.stat-card {
-        padding: 1.65rem 0.85rem 1.75rem !important;
-        min-height: 11rem !important; /* encore plus haut */
-        gap: 0.65rem !important;
+        padding: 1rem 1rem !important;
+        gap: 0.8rem !important;
     }
 
     .tcf-qpro-results .tcf-qpro-metric .stat-icon {
-        width: 3.15rem !important;
-        height: 3.15rem !important;
-        font-size: 1.5rem !important;
+        width: 2.65rem !important;
+        height: 2.65rem !important;
+        font-size: 1.3rem !important;
     }
 
     .tcf-qpro-results .tcf-qpro-metric .stat-value {
-        font-size: 1.65rem !important;
+        font-size: 1.4rem !important;
     }
 
     .tcf-qpro-results .tcf-qpro-metric .stat-label {
-        font-size: 0.88rem !important;
+        font-size: 0.8rem !important;
     }
 }
 
-@media (min-width: 900px) {
-    .tcf-qpro-results .tcf-qpro-metrics {
-        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-        gap: 0.9rem !important;
-    }
-
-    .tcf-qpro-results .tcf-qpro-metric.stat-card {
-        min-height: 12rem !important;
-        padding: 1.85rem 0.75rem 1.95rem !important;
-    }
-}
-
+/* Desktop : plus aéré, 4 cartes en 2×2 bien lisibles */
 @media (min-width: 960px) {
-    .tcf-qpro-score-wrap {
-        padding: 2.5rem 1.5rem 2.15rem;
-        min-height: 28rem;
+    .tcf-qpro-board {
+        grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
+        gap: 1rem;
+    }
+
+    .tcf-qpro-score-card {
+        padding: 1.5rem 1.15rem;
+        border-radius: 20px;
     }
 
     .tcf-qpro-results .score-circle {
-        width: 200px !important;
-        height: 200px !important;
+        width: 168px !important;
+        height: 168px !important;
     }
 
     .tcf-qpro-results .score-text #percentage-text {
-        font-size: 2.25rem !important;
+        font-size: 1.9rem !important;
     }
 
     .tcf-qpro-results .score-text #level-text {
-        font-size: 1.1rem !important;
+        font-size: 1rem !important;
+    }
+
+    .tcf-qpro-results .tcf-qpro-metrics {
+        gap: 0.85rem !important;
+    }
+
+    .tcf-qpro-results .tcf-qpro-metric.stat-card {
+        padding: 1.15rem 1.15rem !important;
+        border-radius: 16px !important;
+    }
+
+    .tcf-qpro-results .tcf-qpro-metric .stat-icon {
+        width: 2.85rem !important;
+        height: 2.85rem !important;
+        font-size: 1.4rem !important;
+        border-radius: 12px !important;
     }
 
     .tcf-qpro-results .tcf-qpro-metric .stat-value {
-        font-size: 1.75rem !important;
+        font-size: 1.55rem !important;
     }
 
     .tcf-qpro-results .tcf-qpro-metric .stat-label {
-        font-size: 0.92rem !important;
+        font-size: 0.86rem !important;
+    }
+}
+
+/* Grand écran : 4 cartes en ligne sous le score (layout dashboard) */
+@media (min-width: 1100px) {
+    .tcf-qpro-board {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .tcf-qpro-score-card {
+        padding: 1.35rem 1.5rem;
+    }
+
+    .tcf-qpro-results .tcf-qpro-metrics {
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
     }
 }
 
