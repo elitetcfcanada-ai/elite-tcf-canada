@@ -239,14 +239,14 @@ body.tcf-quiz-with-site-nav .tcf-quiz-standalone-wrap .app-container.tcf-qpro-re
     border: 1px solid var(--qpro-line);
     border-radius: 18px;
     box-shadow: 0 10px 28px rgba(18, 24, 38, 0.07);
-    padding: 1.85rem 0.75rem 1.55rem;
+    padding: 2rem 0.75rem 1.75rem;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 1.35rem;
+    gap: 1.5rem;
     width: 100%;
-    min-height: 22rem;
+    min-height: 24rem; /* allonger le bloc (hauteur), pas la largeur */
     box-sizing: border-box;
 }
 
@@ -277,12 +277,16 @@ body.tcf-quiz-with-site-nav .tcf-quiz-standalone-wrap .app-container.tcf-qpro-re
     letter-spacing: 0.02em;
 }
 
-/* Métriques : 2×2 mobile, 4 colonnes seulement sur grand écran — plus de chevauchement */
+/*
+ * Métriques en HAUTEUR (longueur), pas en largeur :
+ * carte verticale = icône au-dessus, puis chiffre, puis libellé.
+ * Grille 2×2 (mobile/tablette) puis 4 colonnes (desktop).
+ */
 .tcf-qpro-results .stats-grid.tcf-qpro-metrics,
 .tcf-qpro-results .tcf-qpro-metrics {
     display: grid !important;
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 0.75rem !important;
+    gap: 0.8rem !important;
     margin: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
@@ -293,21 +297,21 @@ body.tcf-quiz-with-site-nav .tcf-quiz-standalone-wrap .app-container.tcf-qpro-re
 .tcf-qpro-results .stat-card.tcf-qpro-metric {
     background: #fff !important;
     border: 1px solid var(--qpro-line) !important;
-    border-radius: 16px !important;
+    border-radius: 18px !important;
     box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04) !important;
-    padding: 1rem 0.85rem !important;
+    padding: 1.35rem 0.7rem 1.45rem !important;
     transform: none !important;
     display: flex !important;
-    flex-direction: row !important;
+    flex-direction: column !important; /* vertical = longueur */
     align-items: center !important;
-    justify-content: flex-start !important;
-    gap: 0.75rem !important;
-    min-height: 4.75rem !important;
+    justify-content: center !important;
+    gap: 0.55rem !important;
+    min-height: 9.5rem !important; /* allonger la carte */
     min-width: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
     overflow: hidden !important;
-    text-align: left !important;
+    text-align: center !important;
     box-sizing: border-box !important;
 }
 
@@ -322,10 +326,10 @@ body.tcf-quiz-with-site-nav .tcf-quiz-standalone-wrap .app-container.tcf-qpro-re
 .tcf-qpro-results .tcf-qpro-metric__icon.stat-icon,
 .tcf-qpro-results .tcf-qpro-metric .stat-icon {
     flex: 0 0 auto !important;
-    width: 2.75rem !important;
-    height: 2.75rem !important;
-    font-size: 1.35rem !important;
-    margin: 0 !important;
+    width: 2.85rem !important;
+    height: 2.85rem !important;
+    font-size: 1.4rem !important;
+    margin: 0 0 0.15rem !important;
     border-radius: 12px !important;
     box-shadow: none !important;
     display: inline-flex !important;
@@ -353,17 +357,17 @@ body.tcf-quiz-with-site-nav .tcf-quiz-standalone-wrap .app-container.tcf-qpro-re
 .tcf-qpro-results .tcf-qpro-metric__body {
     display: flex !important;
     flex-direction: column !important;
-    align-items: flex-start !important;
+    align-items: center !important;
     justify-content: center !important;
-    gap: 0.15rem !important;
+    gap: 0.3rem !important;
     min-width: 0 !important;
-    flex: 1 1 auto !important;
+    width: 100% !important;
 }
 
 .tcf-qpro-results .tcf-qpro-metric__value.stat-value,
 .tcf-qpro-results .tcf-qpro-metric .stat-value {
     display: block !important;
-    font-size: 1.35rem !important;
+    font-size: 1.5rem !important;
     font-weight: 800 !important;
     color: var(--qpro-ink) !important;
     line-height: 1.15 !important;
@@ -374,23 +378,25 @@ body.tcf-quiz-with-site-nav .tcf-quiz-standalone-wrap .app-container.tcf-qpro-re
 .tcf-qpro-results .tcf-qpro-metric .stat-label {
     display: block !important;
     position: static !important;
-    font-size: 0.78rem !important;
+    font-size: 0.8rem !important;
     font-weight: 650 !important;
     color: var(--qpro-muted) !important;
-    line-height: 1.25 !important;
+    line-height: 1.3 !important;
     margin: 0 !important;
     max-width: 100% !important;
+    padding: 0 0.2rem;
     white-space: normal !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     word-break: break-word !important;
+    text-align: center !important;
 }
 
 @media (min-width: 640px) {
     .tcf-qpro-score-wrap {
         padding: 2.15rem 1.25rem 1.85rem;
         gap: 1.5rem;
-        min-height: 24rem;
+        min-height: 26rem; /* bloc résultats plus long verticalement */
     }
 
     .tcf-qpro-results .score-circle {
@@ -407,61 +413,46 @@ body.tcf-quiz-with-site-nav .tcf-quiz-standalone-wrap .app-container.tcf-qpro-re
     }
 
     .tcf-qpro-results .tcf-qpro-metrics {
-        gap: 0.9rem !important;
+        gap: 0.95rem !important;
     }
 
     .tcf-qpro-results .tcf-qpro-metric.stat-card {
-        padding: 1.15rem 1rem !important;
-        min-height: 5.25rem !important;
-        gap: 0.9rem !important;
+        padding: 1.65rem 0.85rem 1.75rem !important;
+        min-height: 11rem !important; /* encore plus haut */
+        gap: 0.65rem !important;
     }
 
     .tcf-qpro-results .tcf-qpro-metric .stat-icon {
-        width: 3rem !important;
-        height: 3rem !important;
-        font-size: 1.45rem !important;
-    }
-
-    .tcf-qpro-results .tcf-qpro-metric .stat-value {
+        width: 3.15rem !important;
+        height: 3.15rem !important;
         font-size: 1.5rem !important;
     }
 
+    .tcf-qpro-results .tcf-qpro-metric .stat-value {
+        font-size: 1.65rem !important;
+    }
+
     .tcf-qpro-results .tcf-qpro-metric .stat-label {
-        font-size: 0.86rem !important;
+        font-size: 0.88rem !important;
     }
 }
 
-/* 4 colonnes seulement quand il y a assez de largeur (iPad paysage / desktop) */
 @media (min-width: 900px) {
     .tcf-qpro-results .tcf-qpro-metrics {
         grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-        gap: 0.85rem !important;
+        gap: 0.9rem !important;
     }
 
     .tcf-qpro-results .tcf-qpro-metric.stat-card {
-        flex-direction: column !important;
-        align-items: center !important;
-        text-align: center !important;
-        padding: 1.35rem 0.85rem !important;
-        min-height: 8.5rem !important;
-        gap: 0.55rem !important;
-    }
-
-    .tcf-qpro-results .tcf-qpro-metric__body {
-        align-items: center !important;
-        width: 100%;
-    }
-
-    .tcf-qpro-results .tcf-qpro-metric .stat-label {
-        text-align: center !important;
-        font-size: 0.9rem !important;
+        min-height: 12rem !important;
+        padding: 1.85rem 0.75rem 1.95rem !important;
     }
 }
 
 @media (min-width: 960px) {
     .tcf-qpro-score-wrap {
-        padding: 2.4rem 1.5rem 2rem;
-        min-height: 26rem;
+        padding: 2.5rem 1.5rem 2.15rem;
+        min-height: 28rem;
     }
 
     .tcf-qpro-results .score-circle {
@@ -478,7 +469,11 @@ body.tcf-quiz-with-site-nav .tcf-quiz-standalone-wrap .app-container.tcf-qpro-re
     }
 
     .tcf-qpro-results .tcf-qpro-metric .stat-value {
-        font-size: 1.65rem !important;
+        font-size: 1.75rem !important;
+    }
+
+    .tcf-qpro-results .tcf-qpro-metric .stat-label {
+        font-size: 0.92rem !important;
     }
 }
 

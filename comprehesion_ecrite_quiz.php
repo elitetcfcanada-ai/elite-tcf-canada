@@ -52,7 +52,7 @@ $aboUrl = site_href('abonnement.php');
     <link rel="stylesheet" href="Assets/css/header_footer.css">
     <link rel="stylesheet" href="Assets/css/tcf-responsive-pills.css">
     <link rel="stylesheet" href="Assets/css/quiz-site-chrome.css?v=17">
-    <link rel="stylesheet" href="Assets/css/tcf-quiz-pro.css?v=results-metrics-pro-11">
+    <link rel="stylesheet" href="Assets/css/tcf-quiz-pro.css?v=results-taller-vert-12">
 </head>
 
 <body class="tcf-quiz-with-site-nav">
