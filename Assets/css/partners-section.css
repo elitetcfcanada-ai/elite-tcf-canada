@@ -158,17 +158,18 @@ a.tcf-partners__card {
     font-size: 0.78rem;
     font-weight: 700;
     letter-spacing: 0.015em;
-    color: var(--tp-ink);
+    color: #fff;
     line-height: 1.35;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    background: #fff;
-    border-top: 1px solid rgba(15, 23, 42, 0.06);
+    background: var(--tp-red);
+    border-top: 1px solid rgba(211, 13, 13, 0.35);
 }
 
 .tcf-partners__card:hover .tcf-partners__name {
-    color: var(--tp-red);
+    color: #fff;
+    background: #b80b0b;
 }
 
 @media (min-width: 640px) {

@@ -40,7 +40,7 @@ unset($_SESSION['contact_flash']);
     <link rel="stylesheet" href="<?php echo site_href('Assets/css/style_tcf.css'); ?>?v=tc-card-2">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/subscription_section.css')); ?>">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/services-section.css')); ?>">
-    <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/partners-section.css')); ?>?v=partners-16x9-contain-5">
+    <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/partners-section.css')); ?>?v=partners-name-red-6">
     <link rel="stylesheet" href="https://unpkg.com/boxicons@latest/css/boxicons.min.css">
     <style>
         @media (max-width: 1100px) {
