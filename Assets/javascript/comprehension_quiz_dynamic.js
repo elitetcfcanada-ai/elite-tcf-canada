@@ -110,15 +110,24 @@
         return s.replace(/^\s*(?:<[a-z][^>]*>\s*)*([A-Da-d])\s*[\)\]\.\-–—:]\s*/i, '').trim();
     }
 
-    /** Toujours 4 propositions A–D (slots vides si besoin). */
+    /** Toujours 4 propositions A–D (texte facultatif). */
     function ensureFourAnswers(answers) {
         var src = Array.isArray(answers) ? answers : [];
+        var byKey = {};
+        src.forEach(function (a, i) {
+            if (!a) return;
+            var k = String(a.key || String.fromCharCode(97 + i)).toLowerCase();
+            if (/^[abcd]$/.test(k)) {
+                byKey[k] = a;
+            }
+        });
         var out = [];
         for (var i = 0; i < 4; i++) {
-            var a = src[i] || {};
+            var key = String.fromCharCode(97 + i);
+            var a = byKey[key] || src[i] || {};
             out.push({
                 id: a.id != null ? a.id : 'opt-' + i,
-                key: a.key || String.fromCharCode(97 + i),
+                key: a.key || key,
                 text: stripAnswerLetterPrefix(a.text || ''),
                 correct: !!a.correct
             });
@@ -266,7 +275,12 @@
                 let label = document.createElement('label');
                 label.htmlFor = 'answer-' + index;
                 label.className = 'answer-label';
+                var ansText = String(answer.text || '').trim();
                 label.innerHTML = convertNewlinesToBr(answer.text || '');
+                if (!ansText) {
+                    answerElement.classList.add('answer--letter-only');
+                    label.setAttribute('aria-label', 'Réponse ' + letters[index]);
+                }
 
                 answerElement.addEventListener('click', function (e) {
                     if (e.target === input) {

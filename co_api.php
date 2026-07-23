@@ -270,25 +270,43 @@ function co_exam_to_quiz_payload(array $exam): array
     $out = [];
     $n = 1;
     foreach ($exam['questions'] ?? [] as $q) {
-        $answers = [];
+        $slots = [null, null, null, null];
         foreach (array_values($q['answers'] ?? []) as $i => $a) {
+            $so = isset($a['sort_order']) ? (int) $a['sort_order'] : -1;
             $key = strtolower(trim((string) ($a['answer_key'] ?? '')));
+            if ($so >= 0 && $so <= 3) {
+                $slot = $so;
+            } elseif (preg_match('/^[abcd]$/', $key)) {
+                $slot = ord($key) - ord('a');
+            } else {
+                $slot = min(3, max(0, (int) $i));
+            }
             if ($key === '' || !preg_match('/^[a-z0-9]+$/i', $key)) {
-                $key = chr(97 + (int) $i);
+                $key = chr(97 + $slot);
             }
             $aid = isset($a['id']) && (string) $a['id'] !== ''
                 ? (string) $a['id']
-                : $key . ':' . $i;
-            $answers[] = [
+                : $key . ':' . $slot;
+            $slots[$slot] = [
                 'id' => $aid,
                 'key' => $key,
                 'text' => tcf_normalize_rich(co_strip_answer_letter_prefix((string) ($a['answer_text'] ?? ''))),
                 'correct' => !empty($a['is_correct']),
             ];
         }
-        // Toujours au plus 4 propositions ; ne pas inventer de cases vides
-        if (count($answers) > 4) {
-            $answers = array_slice($answers, 0, 4);
+        $answers = [];
+        for ($i = 0; $i < 4; $i++) {
+            $key = chr(97 + $i);
+            if (is_array($slots[$i])) {
+                $answers[] = $slots[$i];
+            } else {
+                $answers[] = [
+                    'id' => $key . ':' . $i,
+                    'key' => $key,
+                    'text' => '',
+                    'correct' => false,
+                ];
+            }
         }
         $out[] = [
             'id' => $n++,
@@ -628,15 +646,22 @@ try {
             }
             $editQuestions = [];
             foreach ($exam['questions'] as $q) {
+                $slots = [['text' => ''], ['text' => ''], ['text' => ''], ['text' => '']];
                 $correctIndex = 0;
-                $ansOut = [];
-                $idx = 0;
-                foreach ($q['answers'] as $a) {
-                    if (!empty($a['is_correct'])) {
-                        $correctIndex = $idx;
+                foreach ($q['answers'] as $i => $a) {
+                    $so = isset($a['sort_order']) ? (int) $a['sort_order'] : -1;
+                    $key = strtolower(trim((string) ($a['answer_key'] ?? '')));
+                    if ($so >= 0 && $so <= 3) {
+                        $slot = $so;
+                    } elseif (preg_match('/^[abcd]$/', $key)) {
+                        $slot = ord($key) - ord('a');
+                    } else {
+                        $slot = min(3, max(0, (int) $i));
                     }
-                    $ansOut[] = ['text' => (string) ($a['answer_text'] ?? '')];
-                    $idx++;
+                    $slots[$slot] = ['text' => (string) ($a['answer_text'] ?? '')];
+                    if (!empty($a['is_correct'])) {
+                        $correctIndex = $slot;
+                    }
                 }
                 $editQuestions[] = [
                     'id' => (int) $q['id'],
@@ -646,7 +671,7 @@ try {
                     'audio_src' => (string) ($q['audio_src'] ?? ''),
                     'audio_text' => (string) ($q['audio_text'] ?? ''),
                     'correct_index' => $correctIndex,
-                    'answers' => $ansOut,
+                    'answers' => $slots,
                 ];
             }
             unset($exam['questions']);
@@ -695,11 +720,11 @@ try {
                     co_json(['success' => false, 'message' => 'Données question invalides.'], 422);
                 }
                 $answersIn = $q['answers'] ?? [];
-                if (!is_array($answersIn) || count($answersIn) < 2) {
-                    co_json(['success' => false, 'message' => 'Chaque question doit avoir au moins 2 réponses (question ' . ($qi + 1) . ').'], 422);
+                if (!is_array($answersIn) || count($answersIn) < 4) {
+                    co_json(['success' => false, 'message' => 'Chaque question doit avoir 4 cases A–D (question ' . ($qi + 1) . ').'], 422);
                 }
                 $ci = isset($q['correct_index']) ? (int) $q['correct_index'] : 0;
-                if ($ci < 0 || $ci >= count($answersIn)) {
+                if ($ci < 0 || $ci > 3) {
                     co_json(['success' => false, 'message' => 'Indice de bonne réponse invalide (question ' . ($qi + 1) . ').'], 422);
                 }
             }
@@ -779,8 +804,7 @@ try {
                     if (!is_array($answersIn)) {
                         $answersIn = [];
                     }
-                    // 4 slots A–D : conserver l’index d’origine (même si une case est vide)
-                    $filled = 0;
+                    // 4 slots A–D toujours enregistrés (texte facultatif)
                     for ($ai = 0; $ai < 4; $ai++) {
                         $a = $answersIn[$ai] ?? null;
                         $atxt = '';
@@ -789,29 +813,13 @@ try {
                         } elseif (is_string($a)) {
                             $atxt = co_strip_answer_letter_prefix($a);
                         }
-                        if ($atxt === '') {
-                            continue;
-                        }
                         $key = ['a', 'b', 'c', 'd'][$ai];
                         $ok = ($ai === $correctIdx) ? 1 : 0;
                         $insA->execute([$qid, $key, $atxt, $ok, $ai]);
-                        $filled++;
                     }
-                    if ($filled < 2) {
+                    if ($correctIdx < 0 || $correctIdx > 3) {
                         throw new RuntimeException(
-                            'Question ' . ($ord + 1) . ' : indiquez au moins 2 propositions de réponse.'
-                        );
-                    }
-                    $correctRaw = $answersIn[$correctIdx] ?? null;
-                    $correctText = '';
-                    if (is_array($correctRaw)) {
-                        $correctText = co_strip_answer_letter_prefix((string) ($correctRaw['text'] ?? ''));
-                    } elseif (is_string($correctRaw)) {
-                        $correctText = co_strip_answer_letter_prefix($correctRaw);
-                    }
-                    if ($correctText === '') {
-                        throw new RuntimeException(
-                            'Question ' . ($ord + 1) . ' : la bonne réponse doit avoir un texte.'
+                            'Question ' . ($ord + 1) . ' : choisissez la bonne réponse (A–D).'
                         );
                     }
                 }

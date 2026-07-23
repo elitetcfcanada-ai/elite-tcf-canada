@@ -2223,15 +2223,23 @@
             '<small data-co-tts-status style="color:#64748b;"></small>' +
             '</div>' +
             '<small style="color:#64748b;display:block;margin-top:6px;">Plus besoin d’importer un fichier : l’extrait audio est généré à partir de ce texte.</small></div>' +
-            '<div class="form-group"><label class="form-label">Propositions de réponses (4 champs — lettres A–D automatiques côté candidat)</label>' +
-            '<small style="color:#64748b;display:block;margin-bottom:8px;">N’écrivez pas « A », « B », « C » ou « D » : le design utilisateur les affiche déjà. Saisissez uniquement le texte de chaque proposition.</small>' +
-            '<textarea class="form-control" rows="2" style="margin-bottom:6px;" data-co-ans="0" placeholder="Proposition 1 — texte seul (sans A)"></textarea>' +
-            '<textarea class="form-control" rows="2" style="margin-bottom:6px;" data-co-ans="1" placeholder="Proposition 2 — texte seul (sans B)"></textarea>' +
-            '<textarea class="form-control" rows="2" style="margin-bottom:6px;" data-co-ans="2" placeholder="Proposition 3 — texte seul (sans C)"></textarea>' +
-            '<textarea class="form-control" rows="2" data-co-ans="3" placeholder="Proposition 4 — texte seul (sans D)"></textarea></div>' +
+            '<div class="form-group"><label class="form-label">Réponses A · B · C · D</label>' +
+            '<small style="color:#64748b;display:block;margin-bottom:8px;">Les lettres sont déjà affichées côté candidat. Texte facultatif — laissez vide si seule la lettre suffit. N’écrivez pas « A) », « B) », etc.</small>' +
+            '<div class="co-ans-row" style="display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;">' +
+            '<span class="co-ans-badge" style="flex:0 0 2rem;height:2rem;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:800;background:#f1f5f9;border:1px solid #e2e8f0;margin-top:6px;">A</span>' +
+            '<textarea class="form-control" rows="1" data-co-ans="0" placeholder="Texte facultatif"></textarea></div>' +
+            '<div class="co-ans-row" style="display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;">' +
+            '<span class="co-ans-badge" style="flex:0 0 2rem;height:2rem;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:800;background:#f1f5f9;border:1px solid #e2e8f0;margin-top:6px;">B</span>' +
+            '<textarea class="form-control" rows="1" data-co-ans="1" placeholder="Texte facultatif"></textarea></div>' +
+            '<div class="co-ans-row" style="display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;">' +
+            '<span class="co-ans-badge" style="flex:0 0 2rem;height:2rem;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:800;background:#f1f5f9;border:1px solid #e2e8f0;margin-top:6px;">C</span>' +
+            '<textarea class="form-control" rows="1" data-co-ans="2" placeholder="Texte facultatif"></textarea></div>' +
+            '<div class="co-ans-row" style="display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;">' +
+            '<span class="co-ans-badge" style="flex:0 0 2rem;height:2rem;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:800;background:#f1f5f9;border:1px solid #e2e8f0;margin-top:6px;">D</span>' +
+            '<textarea class="form-control" rows="1" data-co-ans="3" placeholder="Texte facultatif"></textarea></div></div>' +
             '<div class="form-group"><label class="form-label">Bonne réponse</label>' +
             '<select class="form-control" data-co-correct>' +
-            '<option value="0">Proposition 1 (A)</option><option value="1">Proposition 2 (B)</option><option value="2">Proposition 3 (C)</option><option value="3">Proposition 4 (D)</option>' +
+            '<option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option>' +
             '</select></div>' +
             '</div>'
         );
@@ -2588,15 +2596,9 @@
                     ok = false;
                     return;
                 }
-                var filled = q.answers.filter(function (a) { return a.text.length > 0; }).length;
-                if (filled < 4) {
-                    toast('Question ' + (qi + 1) + ' : renseignez les 4 propositions (A–D s’affichent automatiquement côté candidat).', true);
-                    ok = false;
-                    return;
-                }
                 var ci = q.correct_index;
-                if (!q.answers[ci] || !q.answers[ci].text.trim()) {
-                    toast('Question ' + (qi + 1) + ' : la bonne réponse doit avoir un texte.', true);
+                if (ci < 0 || ci > 3) {
+                    toast('Question ' + (qi + 1) + ' : choisissez la bonne réponse (A–D).', true);
                     ok = false;
                 }
             });

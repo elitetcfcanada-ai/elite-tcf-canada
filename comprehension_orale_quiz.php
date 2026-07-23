@@ -47,7 +47,7 @@ $aboUrl = site_href('abonnement.php');
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Source+Sans+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="Assets/css/theme-vars.css">
-    <link rel="stylesheet" href="Assets/css/comprehesion_Orale.css?v=20">
+    <link rel="stylesheet" href="Assets/css/comprehesion_Orale.css?v=21">
     <link rel="stylesheet" href="Assets/css/header_footer.css">
     <link rel="stylesheet" href="Assets/css/tcf-responsive-pills.css">
     <link rel="stylesheet" href="Assets/css/quiz-site-chrome.css?v=17">
@@ -294,7 +294,7 @@ $aboUrl = site_href('abonnement.php');
     </script>
     <script src="Assets/javascript/tcf-tts.js?v=8"></script>
     <script src="Assets/javascript/tcf_quiz_dialog.js?v=1"></script>
-    <script src="Assets/javascript/comprehension_quiz_dynamic.js?v=19"></script>
+    <script src="Assets/javascript/comprehension_quiz_dynamic.js?v=20"></script>
 </div>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>
