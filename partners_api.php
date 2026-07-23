@@ -22,12 +22,16 @@ function partners_is_admin(): bool
 
 function partners_unlink_logo(?string $stored): void
 {
-    $stored = trim((string) $stored);
-    if ($stored === '' || strpos($stored, 'uploads/partners/') !== 0) {
+    $rel = function_exists('tcf_uploads_relative_path')
+        ? tcf_uploads_relative_path($stored)
+        : trim((string) $stored);
+    if ($rel === '' || strpos($rel, 'uploads/partners/') !== 0) {
         return;
     }
-    $fs = __DIR__ . DIRECTORY_SEPARATOR . str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $stored);
-    if (is_file($fs)) {
+    $fs = function_exists('tcf_uploads_fs_path')
+        ? tcf_uploads_fs_path($rel)
+        : (__DIR__ . DIRECTORY_SEPARATOR . str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $rel));
+    if ($fs !== '' && is_file($fs)) {
         @unlink($fs);
     }
 }
@@ -71,9 +75,15 @@ try {
 
             $newLogo = null;
             if (isset($_FILES['logo']) && ($_FILES['logo']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
-                $dir = __DIR__ . '/uploads/partners';
-                if (!is_dir($dir)) {
-                    @mkdir($dir, 0755, true);
+                $dir = __DIR__ . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'partners';
+                if (!is_dir($dir) && !@mkdir($dir, 0755, true) && !is_dir($dir)) {
+                    partners_json(['success' => false, 'message' => 'Impossible de créer le dossier uploads/partners.'], 500);
+                }
+                if (!is_writable($dir)) {
+                    @chmod($dir, 0755);
+                }
+                if (!is_writable($dir)) {
+                    partners_json(['success' => false, 'message' => 'Dossier uploads/partners non accessible en écriture sur le serveur.'], 500);
                 }
                 $ext = strtolower(pathinfo((string) $_FILES['logo']['name'], PATHINFO_EXTENSION));
                 if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif'], true)) {
@@ -90,9 +100,10 @@ try {
                 }
                 $fname = 'partner_' . date('YmdHis') . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
                 $dest = $dir . DIRECTORY_SEPARATOR . $fname;
-                if (!move_uploaded_file($tmp, $dest)) {
-                    partners_json(['success' => false, 'message' => 'Échec upload du logo.'], 500);
+                if (!move_uploaded_file($tmp, $dest) || !is_file($dest)) {
+                    partners_json(['success' => false, 'message' => 'Échec upload du logo sur le serveur.'], 500);
                 }
+                @chmod($dest, 0644);
                 $newLogo = 'uploads/partners/' . $fname;
             }
 

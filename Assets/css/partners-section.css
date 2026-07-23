@@ -149,6 +149,10 @@ a.tcf-partners__card {
     opacity: 1;
 }
 
+.tcf-partners__logo.is-broken {
+    opacity: 0;
+}
+
 .tcf-partners__name {
     display: block;
     width: 100%;

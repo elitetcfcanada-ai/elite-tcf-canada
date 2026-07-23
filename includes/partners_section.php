@@ -60,6 +60,7 @@ if (!$tcf_partners_home) {
                                 alt="<?php echo htmlspecialchars($pName, ENT_QUOTES, 'UTF-8'); ?>"
                                 loading="lazy"
                                 decoding="async"
+                                onerror="this.onerror=null;this.classList.add('is-broken');this.alt='Logo indisponible';"
                             >
                         </span>
                         <span class="tcf-partners__name"><?php echo htmlspecialchars($pName, ENT_QUOTES, 'UTF-8'); ?></span>

@@ -60,9 +60,17 @@ function tcf_partners_normalize_url(?string $url): ?string
 function tcf_partners_enrich_row(array $row): array
 {
     $logo = trim((string) ($row['logo_url'] ?? ''));
-    $row['logo_href'] = $logo !== '' && function_exists('site_href')
-        ? site_href(ltrim($logo, '/'))
-        : ($logo !== '' ? '/' . ltrim($logo, '/') : '');
+    // Même normalisation que vidéos/annonces (localhost, uploads/uploads/, etc.)
+    if ($logo !== '' && function_exists('tcf_uploads_public_href')) {
+        $row['logo_href'] = tcf_uploads_public_href($logo);
+    } elseif ($logo !== '' && function_exists('site_href')) {
+        $rel = function_exists('tcf_uploads_relative_path') ? tcf_uploads_relative_path($logo) : ltrim($logo, '/');
+        $row['logo_href'] = $rel !== '' && !preg_match('#^https?://#i', $rel)
+            ? site_href($rel)
+            : $rel;
+    } else {
+        $row['logo_href'] = $logo !== '' ? '/' . ltrim(str_replace('\\', '/', $logo), '/') : '';
+    }
     $row['is_published'] = (int) ($row['is_published'] ?? 0);
     $row['sort_order'] = (int) ($row['sort_order'] ?? 0);
     $row['id'] = (int) ($row['id'] ?? 0);
