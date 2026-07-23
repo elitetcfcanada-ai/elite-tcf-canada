@@ -2230,7 +2230,7 @@ $notifications_json = json_encode($notifications);
     <link rel="stylesheet" href="../Assets/css/superAdmin.css?v=admin-dash-2">
     <link rel="stylesheet" href="../Assets/css/tcf-brand-logo.css">
     <link rel="stylesheet" href="../Assets/css/sa_subscription_plans.css?v=userlike-2">
-    <link rel="stylesheet" href="../Assets/css/sa-partners.css?v=partners-16x9-4">
+    <link rel="stylesheet" href="../Assets/css/sa-partners.css?v=partners-16x9-5">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/profile_panel.css')); ?>?v=profile-cal-month-11">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/tcf-responsive-pills.css')); ?>">
     <link rel="stylesheet" href="../Assets/css/admin-mobile-nav.css">

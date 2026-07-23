@@ -132,7 +132,7 @@ a.tcf-partners__card {
     min-height: 0;
     padding: 0;
     overflow: hidden;
-    background: #eef1f5;
+    background: #f8fafc;
 }
 
 .tcf-partners__logo {
@@ -141,7 +141,8 @@ a.tcf-partners__card {
     height: 100%;
     max-width: none;
     max-height: none;
-    object-fit: cover;
+    /* contain : image 16:9 affichée entière, nette, sans zoom/crop */
+    object-fit: contain;
     object-position: center;
     filter: none;
     opacity: 1;
