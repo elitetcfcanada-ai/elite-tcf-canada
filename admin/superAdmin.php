@@ -2221,6 +2221,8 @@ $notifications_json = json_encode($notifications);
     <?php
     $tcf_brand_title = ($isSuperAdmin ? 'Super Admin' : 'Administration') . ' — ELITE TCF CANADA';
     $tcf_brand_desc = 'Espace d\'administration ELITE TCF CANADA — gestion utilisateurs, vidéos, sujets et annonces.';
+    $tcf_seo_robots = 'noindex, nofollow';
+    $tcf_seo_skip_title = true;
     include __DIR__ . '/../includes/tcf_brand_head.php';
     ?>
     <title><?php echo htmlspecialchars($tcf_brand_title); ?></title>

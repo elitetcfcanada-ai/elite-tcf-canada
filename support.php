@@ -6,13 +6,12 @@ $c = tcf_site_contact();
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php
-    $tcf_brand_title = 'Support TCF Canada — ' . $c['brand'];
+    $tcf_brand_title = 'Support ELITE TCF CANADA | Aide préparation TCF Canada';
+    $tcf_brand_desc = 'Contactez le support ELITE TCF CANADA pour toute question sur votre préparation à l\'examen TCF Canada.';
+    $tcf_brand_keywords = 'support TCF Canada, contact ELITE TCF CANADA, aide TCF Canada, assistance préparation TCF';
     include __DIR__ . '/includes/tcf_brand_head.php';
     ?>
-    <title>Support TCF Canada — <?php echo htmlspecialchars($c['brand']); ?></title>
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/theme-vars.css')); ?>">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/header_footer.css')); ?>">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/style_tcf.css')); ?>">

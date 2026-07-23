@@ -268,16 +268,16 @@ $tcf_show_register = ($tcf_flash_form === 'register');
 <html lang="fr">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php
-    $tcf_brand_title = 'Inscription / Connexion — ELITE TCF CANADA';
+    $tcf_brand_title = 'Connexion | ELITE TCF CANADA';
+    $tcf_brand_desc = 'Connectez-vous ou créez votre compte ELITE TCF CANADA pour accéder à la préparation TCF Canada.';
+    $tcf_brand_keywords = 'connexion ELITE TCF CANADA, inscription TCF Canada, compte préparation TCF';
+    $tcf_seo_robots = 'noindex, follow';
     include __DIR__ . '/includes/tcf_brand_head.php';
     ?>
     <link rel="stylesheet" href="https://unpkg.com/boxicons@latest/css/boxicons.min.css">
     <link rel="stylesheet" href="Assets/css/theme-vars.css">
     <link rel="stylesheet" href="Assets/css/style_login.css?v=auth-alert-2">
-    <title>Inscription / Connexion — ELITE TCF CANADA</title>
 </head>
 
 <body>

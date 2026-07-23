@@ -69,13 +69,12 @@ try {
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php
-    $tcf_brand_title = 'Expression Écrite — ELITE TCF CANADA';
+    $tcf_brand_title = 'Expression Écrite TCF Canada | ELITE TCF CANADA';
+    $tcf_brand_desc = 'Préparez l\'expression écrite du TCF Canada avec ELITE TCF CANADA : sujets d\'entraînement, consignes et pratique pour réussir.';
+    $tcf_brand_keywords = 'expression écrite TCF, TCF Canada EE, rédaction TCF Canada, ELITE TCF CANADA, sujets expression écrite, examen TCF IRCC';
     include __DIR__ . '/includes/tcf_brand_head.php';
     ?>
-    <title>Expression Écrite — ELITE TCF CANADA</title>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="Assets/css/theme-vars.css">
     <link rel="stylesheet" href="Assets/css/header_footer.css">

@@ -19,13 +19,12 @@ $aboUrl = site_href('abonnement.php');
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php
-    $tcf_brand_title = 'Compréhension Écrite — ELITE TCF CANADA';
+    $tcf_brand_title = 'Compréhension Écrite TCF Canada | ELITE TCF CANADA';
+    $tcf_brand_desc = 'Préparez la compréhension écrite du TCF Canada avec ELITE TCF CANADA : quiz chronométrés, sujets réalistes et corrections détaillées.';
+    $tcf_brand_keywords = 'compréhension écrite TCF, TCF Canada CE, lecture TCF Canada, ELITE TCF CANADA, entraînement compréhension écrite, examen TCF IRCC';
     include __DIR__ . '/includes/tcf_brand_head.php';
     ?>
-    <title>Compréhension Écrite — ELITE TCF CANADA</title>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="Assets/css/theme-vars.css">
     <link rel="stylesheet" href="Assets/css/header_footer.css">

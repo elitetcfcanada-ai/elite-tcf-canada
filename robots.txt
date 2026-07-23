@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /includes/
+Disallow: /scripts/
+Disallow: /database/
+Disallow: /uploads/private/
+Disallow: /*.sql$
+Disallow: /logout.php
+
+Sitemap: https://elitetcfcanada.online/sitemap.php
+Sitemap: https://elitetcfcanada.online/sitemap.xml

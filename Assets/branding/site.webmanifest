@@ -1,11 +1,12 @@
 {
   "name": "ELITE TCF CANADA",
   "short_name": "ELITE TCF",
-  "description": "Préparation à l'examen TCF Canada",
+  "description": "ELITE TCF CANADA — préparation à l'examen TCF Canada (CE, CO, EE, EO)",
+  "lang": "fr-FR",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#d30d0d",
+  "theme_color": "#c8102e",
   "icons": [
     {
       "src": "favicon.svg",

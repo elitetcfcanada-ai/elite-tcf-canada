@@ -27,11 +27,13 @@ unset($_SESSION['contact_flash']);
 <html lang="fr">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php
     $FOOTER_ASSET_PREFIX = '';
-    $tcf_brand_title = 'ELITE TCF CANADA — Préparation à l\'examen TCF Canada';
+    require_once __DIR__ . '/includes/tcf_seo.php';
+    $tcf_brand_title = 'ELITE TCF CANADA | Préparation TCF Canada — CE, CO, EE, EO';
+    $tcf_brand_desc = 'ELITE TCF CANADA : préparez l\'examen TCF Canada avec des entraînements en compréhension écrite et orale, expression écrite et orale, vidéos et sujets actualisés.';
+    $tcf_brand_keywords = tcf_seo_default_keywords() . ', plateforme préparation TCF, réussir TCF Canada, cours TCF Canada en ligne';
+    $tcf_seo_canonical = site_url('index.php');
     include __DIR__ . '/includes/tcf_brand_head.php';
     ?>
     <link rel="stylesheet" href="<?php echo site_href('Assets/css/theme-vars.css'); ?>">
@@ -58,7 +60,6 @@ unset($_SESSION['contact_flash']);
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Montserrat:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?php echo site_href('Assets/css/index-home-mobile.css'); ?>">
-    <title>ELITE TCF CANADA — Préparation à l'examen TCF Canada</title>
 </head>
 
 <body>
@@ -68,6 +69,7 @@ unset($_SESSION['contact_flash']);
 <section class="main-section">
     <div class="main-content">
         <div class="hero-copy">
+        <h1 style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;">ELITE TCF CANADA — Préparation à l'examen TCF Canada</h1>
         <h3>BIENVENUE DANS NOTRE SITE! <br>De Préparation au <br><span> TCF CANADA </span></h3>
         <p>Nous sommes heureux de vous accueillir et de vous accompagner dans votre préparation à 
             votre examen. N'hésitez pas à explorer nos ressources, poser 

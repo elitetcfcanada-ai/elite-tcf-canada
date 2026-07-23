@@ -19,13 +19,12 @@ $aboUrl = site_href('abonnement.php');
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php
-    $tcf_brand_title = 'Compréhension Orale — ELITE TCF CANADA';
+    $tcf_brand_title = 'Compréhension Orale TCF Canada | ELITE TCF CANADA';
+    $tcf_brand_desc = 'Entraînez-vous à la compréhension orale du TCF Canada sur ELITE TCF CANADA : épreuves chronométrées, audio et corrections pour progresser.';
+    $tcf_brand_keywords = 'compréhension orale TCF, TCF Canada CO, écoute TCF Canada, ELITE TCF CANADA, entraînement compréhension orale, examen TCF IRCC';
     include __DIR__ . '/includes/tcf_brand_head.php';
     ?>
-    <title>Compréhension Orale — ELITE TCF CANADA</title>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="Assets/css/theme-vars.css">
     <link rel="stylesheet" href="Assets/css/header_footer.css">

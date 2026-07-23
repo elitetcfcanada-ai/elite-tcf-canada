@@ -43,13 +43,12 @@ function tcf_video_duration_label(array $v): string
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php
-    $tcf_brand_title = 'Vidéos — ELITE TCF CANADA';
+    $tcf_brand_title = 'Vidéos TCF Canada | ELITE TCF CANADA';
+    $tcf_brand_desc = 'Regardez les vidéos de préparation TCF Canada sur ELITE TCF CANADA : conseils, méthodes et entraînements pour réussir l\'examen.';
+    $tcf_brand_keywords = 'vidéos TCF Canada, formation TCF Canada, ELITE TCF CANADA, cours TCF en ligne, préparation TCF vidéo, examen TCF IRCC';
     include __DIR__ . '/includes/tcf_brand_head.php';
     ?>
-    <title>Vidéos — ELITE TCF CANADA</title>
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/theme-vars.css')); ?>">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/header_footer.css')); ?>">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/style_tcf.css')); ?>">

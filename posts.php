@@ -18,13 +18,12 @@ $loginUrl = site_href('login.php?next=' . rawurlencode('posts.php'));
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php
-    $tcf_brand_title = 'Annonces — ELITE TCF CANADA';
+    $tcf_brand_title = 'Annonces TCF Canada | ELITE TCF CANADA';
+    $tcf_brand_desc = 'Suivez les annonces et actualités ELITE TCF CANADA pour votre préparation à l\'examen TCF Canada.';
+    $tcf_brand_keywords = 'annonces TCF Canada, actualités TCF, ELITE TCF CANADA, communauté TCF Canada';
     include __DIR__ . '/includes/tcf_brand_head.php';
     ?>
-    <title>Annonces — ELITE TCF CANADA</title>
     <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
     <link rel="stylesheet" href="Assets/css/theme-vars.css">
     <link rel="stylesheet" href="Assets/css/header_footer.css">

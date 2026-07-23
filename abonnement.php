@@ -5,13 +5,12 @@ require_once __DIR__ . '/includes/config.php';
 <html lang="fr">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php
-    $tcf_brand_title = 'Abonnement — ELITE TCF CANADA';
+    $tcf_brand_title = 'Abonnement TCF Canada | ELITE TCF CANADA';
+    $tcf_brand_desc = 'Choisissez votre abonnement ELITE TCF CANADA et accédez aux épreuves premium de préparation au TCF Canada.';
+    $tcf_brand_keywords = 'abonnement TCF Canada, premium TCF Canada, ELITE TCF CANADA, accès premium TCF, formation TCF Canada payante';
     include __DIR__ . '/includes/tcf_brand_head.php';
     ?>
-    <title>Abonnement — ELITE TCF CANADA</title>
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/theme-vars.css')); ?>">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/header_footer.css')); ?>">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/style_tcf.css')); ?>">

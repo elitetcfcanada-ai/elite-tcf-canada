@@ -15,13 +15,12 @@ if (!empty($_SESSION['user_id'])) {
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php
-    $tcf_brand_title = 'Expression Orale — ELITE TCF CANADA';
+    $tcf_brand_title = 'Expression Orale TCF Canada | ELITE TCF CANADA';
+    $tcf_brand_desc = 'Entraînez votre expression orale TCF Canada sur ELITE TCF CANADA : sujets, consignes et pratique pour réussir l\'épreuve orale.';
+    $tcf_brand_keywords = 'expression orale TCF, TCF Canada EO, parler français TCF, ELITE TCF CANADA, sujets expression orale, examen TCF IRCC';
     include __DIR__ . '/includes/tcf_brand_head.php';
     ?>
-    <title>Expression Orale — ELITE TCF CANADA</title>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="Assets/css/theme-vars.css">
     <link rel="stylesheet" href="Assets/css/header_footer.css">
