@@ -51,7 +51,7 @@ $aboUrl = site_href('abonnement.php');
     <link rel="stylesheet" href="Assets/css/header_footer.css">
     <link rel="stylesheet" href="Assets/css/tcf-responsive-pills.css">
     <link rel="stylesheet" href="Assets/css/quiz-site-chrome.css?v=17">
-    <link rel="stylesheet" href="Assets/css/tcf-quiz-pro.css?v=results-taller-10">
+    <link rel="stylesheet" href="Assets/css/tcf-quiz-pro.css?v=results-metrics-pro-11">
 </head>
 <body class="tcf-quiz-with-site-nav">
 <?php include __DIR__ . '/includes/header.php'; ?>
@@ -207,26 +207,34 @@ $aboUrl = site_href('abonnement.php');
                     </div>
                 </div>
 
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon"><i class='bx bx-check-circle'></i></div>
-                        <span class="stat-value" id="correct-answers">0</span>
-                        <span class="stat-label">Bonnes</span>
+                <div class="stats-grid tcf-qpro-metrics" role="list">
+                    <div class="stat-card tcf-qpro-metric" role="listitem">
+                        <div class="stat-icon tcf-qpro-metric__icon"><i class='bx bx-check-circle'></i></div>
+                        <div class="tcf-qpro-metric__body">
+                            <span class="stat-value tcf-qpro-metric__value" id="correct-answers">0</span>
+                            <span class="stat-label tcf-qpro-metric__label">Bonnes réponses</span>
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-icon"><i class='bx bx-x-circle'></i></div>
-                        <span class="stat-value" id="incorrect-answers">0</span>
-                        <span class="stat-label">Mauvaises</span>
+                    <div class="stat-card tcf-qpro-metric" role="listitem">
+                        <div class="stat-icon tcf-qpro-metric__icon"><i class='bx bx-x-circle'></i></div>
+                        <div class="tcf-qpro-metric__body">
+                            <span class="stat-value tcf-qpro-metric__value" id="incorrect-answers">0</span>
+                            <span class="stat-label tcf-qpro-metric__label">Mauvaises réponses</span>
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-icon"><i class='bx bx-time-five'></i></div>
-                        <span class="stat-value" id="time-taken">0:00</span>
-                        <span class="stat-label">Temps</span>
+                    <div class="stat-card tcf-qpro-metric" role="listitem">
+                        <div class="stat-icon tcf-qpro-metric__icon"><i class='bx bx-time-five'></i></div>
+                        <div class="tcf-qpro-metric__body">
+                            <span class="stat-value tcf-qpro-metric__value" id="time-taken">0:00</span>
+                            <span class="stat-label tcf-qpro-metric__label">Temps écoulé</span>
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-icon"><i class='bx bx-trophy'></i></div>
-                        <span class="stat-value" id="total-points">0</span>
-                        <span class="stat-label">Points</span>
+                    <div class="stat-card tcf-qpro-metric" role="listitem">
+                        <div class="stat-icon tcf-qpro-metric__icon"><i class='bx bx-trophy'></i></div>
+                        <div class="tcf-qpro-metric__body">
+                            <span class="stat-value tcf-qpro-metric__value" id="total-points">0</span>
+                            <span class="stat-label tcf-qpro-metric__label">Points obtenus</span>
+                        </div>
                     </div>
                 </div>
             </div>
