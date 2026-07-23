@@ -251,27 +251,28 @@ html[data-sa-theme='dark'] .tcf-superadmin-app .trace-map {
     filter: brightness(0.92) contrast(1.05);
 }
 
-html[data-sa-theme='dark'] body.tcf-superadmin-app > .notification-page {
+/* Ancien panneau (non v2) seulement — le tiroir v2 reste clair comme côté utilisateur */
+html[data-sa-theme='dark'] body.tcf-superadmin-app > .notification-page:not(.notification-drawer-v2) {
     background: var(--sa-surface) !important;
     border-left-color: var(--sa-border) !important;
 }
 
-html[data-sa-theme='dark'] body.tcf-superadmin-app > .notification-page .notification-content {
+html[data-sa-theme='dark'] body.tcf-superadmin-app > .notification-page:not(.notification-drawer-v2) .notification-content {
     background: var(--sa-surface) !important;
 }
 
-html[data-sa-theme='dark'] body.tcf-superadmin-app .notification-page .notification-item {
+html[data-sa-theme='dark'] body.tcf-superadmin-app .notification-page:not(.notification-drawer-v2) .notification-item {
     background: var(--sa-surface) !important;
     border-bottom-color: var(--sa-border) !important;
     color: var(--sa-text);
 }
 
-html[data-sa-theme='dark'] body.tcf-superadmin-app .notification-page .notification-item.unread {
+html[data-sa-theme='dark'] body.tcf-superadmin-app .notification-page:not(.notification-drawer-v2) .notification-item.unread {
     background: var(--sa-surface2) !important;
 }
 
-html[data-sa-theme='dark'] body.tcf-superadmin-app .notification-page .notification-item__title,
-html[data-sa-theme='dark'] body.tcf-superadmin-app .notification-page .notification-item__text {
+html[data-sa-theme='dark'] body.tcf-superadmin-app .notification-page:not(.notification-drawer-v2) .notification-item__title,
+html[data-sa-theme='dark'] body.tcf-superadmin-app .notification-page:not(.notification-drawer-v2) .notification-item__text {
     color: var(--sa-text) !important;
 }
 
@@ -297,12 +298,12 @@ html[data-sa-theme='dark'] .tcf-superadmin-app #notification-toast {
     box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
 }
 
-html[data-sa-theme='dark'] body.tcf-superadmin-app .notification-page .notification-title {
+html[data-sa-theme='dark'] body.tcf-superadmin-app .notification-page:not(.notification-drawer-v2) .notification-title {
     color: var(--sa-text) !important;
 }
 
-html[data-sa-theme='dark'] body.tcf-superadmin-app .notification-page .notification-desc,
-html[data-sa-theme='dark'] body.tcf-superadmin-app .notification-page .notification-time {
+html[data-sa-theme='dark'] body.tcf-superadmin-app .notification-page:not(.notification-drawer-v2) .notification-desc,
+html[data-sa-theme='dark'] body.tcf-superadmin-app .notification-page:not(.notification-drawer-v2) .notification-time {
     color: var(--sa-muted) !important;
 }
 

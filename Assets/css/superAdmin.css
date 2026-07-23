@@ -1622,28 +1622,37 @@
  * Notifications admin : même tiroir clair que côté utilisateur
  * (évite que le thème sombre admin déforme les cards).
  */
-body.tcf-superadmin-app > .notification-overlay {
+/*
+ * Tiroir notifications admin/super-admin = même design que l’utilisateur
+ * (profile_panel.css). On n’écrase plus le bandeau rouge ni le footer.
+ */
+body.tcf-superadmin-app > .notification-overlay,
+body.tcf-admin-app > .notification-overlay {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
     width: 100% !important;
     height: 100% !important;
     background: rgba(20, 22, 34, 0.45) !important;
-    z-index: 199000 !important;
+    z-index: 198000 !important;
 }
 
-body.tcf-superadmin-app > .notification-overlay:not(.active) {
+body.tcf-superadmin-app > .notification-overlay:not(.active),
+body.tcf-admin-app > .notification-overlay:not(.active) {
     display: none !important;
     pointer-events: none !important;
 }
 
-body.tcf-superadmin-app > .notification-overlay.active {
+body.tcf-superadmin-app > .notification-overlay.active,
+body.tcf-admin-app > .notification-overlay.active {
     display: block !important;
     pointer-events: auto !important;
 }
 
 body.tcf-superadmin-app > .notification-page.notification-drawer-v2,
-body.tcf-superadmin-app .notification-page.notification-drawer-v2.profile-drawer-v2 {
+body.tcf-superadmin-app .notification-page.notification-drawer-v2.profile-drawer-v2,
+body.tcf-admin-app > .notification-page.notification-drawer-v2,
+body.tcf-admin-app .notification-page.notification-drawer-v2.profile-drawer-v2 {
     position: fixed !important;
     top: 0 !important;
     right: -440px !important;
@@ -1656,34 +1665,58 @@ body.tcf-superadmin-app .notification-page.notification-drawer-v2.profile-drawer
     border-left: 0 !important;
     box-shadow: -12px 0 40px rgba(15, 23, 42, 0.12) !important;
     transition: right 0.28s ease !important;
-    z-index: 199100 !important;
+    z-index: 198100 !important;
     color-scheme: light !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
 }
 
 body.tcf-superadmin-app > .notification-page.notification-drawer-v2.active,
-body.tcf-superadmin-app .notification-page.notification-drawer-v2.profile-drawer-v2.active {
+body.tcf-superadmin-app .notification-page.notification-drawer-v2.profile-drawer-v2.active,
+body.tcf-admin-app > .notification-page.notification-drawer-v2.active,
+body.tcf-admin-app .notification-page.notification-drawer-v2.profile-drawer-v2.active {
     right: 0 !important;
     visibility: visible !important;
     pointer-events: auto !important;
 }
 
+/* Bandeau = même dégradé rouge que le côté utilisateur */
 body.tcf-superadmin-app .notification-drawer-v2 .profile-drawer-v2__top,
-body.tcf-superadmin-app .notification-drawer-v2 .profile-drawer-v2__footer {
-    background: #ffffff !important;
+body.tcf-admin-app .notification-drawer-v2 .profile-drawer-v2__top {
+    background: linear-gradient(135deg, var(--main-color, #d30d0d) 0%, var(--secondary-color, #a50a0a) 100%) !important;
+    color: #fff !important;
+    border-color: transparent !important;
+}
+
+body.tcf-superadmin-app .notification-drawer-v2 .profile-drawer-v2__eyebrow,
+body.tcf-admin-app .notification-drawer-v2 .profile-drawer-v2__eyebrow {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+body.tcf-superadmin-app .notification-drawer-v2 .profile-drawer-v2__title,
+body.tcf-admin-app .notification-drawer-v2 .profile-drawer-v2__title,
+body.tcf-superadmin-app .notification-drawer-v2 .profile-drawer-v2__close,
+body.tcf-admin-app .notification-drawer-v2 .profile-drawer-v2__close,
+body.tcf-superadmin-app .notification-drawer-v2 .profile-drawer-v2__close i,
+body.tcf-admin-app .notification-drawer-v2 .profile-drawer-v2__close i {
+    color: #fff !important;
+}
+
+body.tcf-superadmin-app .notification-drawer-v2 .profile-drawer-v2__footer,
+body.tcf-admin-app .notification-drawer-v2 .profile-drawer-v2__footer {
+    background: #fff !important;
     color: #0f172a !important;
-    border-color: #e2e8f0 !important;
+    border-top: 1px solid #e2e8f0 !important;
+    flex-shrink: 0 !important;
 }
 
-body.tcf-superadmin-app .notification-drawer-v2 .profile-drawer-v2__eyebrow {
-    color: #94a3b8 !important;
-}
-
-body.tcf-superadmin-app .notification-drawer-v2 .profile-drawer-v2__title {
-    color: #0f172a !important;
-}
-
-body.tcf-superadmin-app .notification-drawer-v2 .profile-drawer-v2__scroll {
-    padding: 1rem 1rem 1.25rem !important;
+body.tcf-superadmin-app .notification-drawer-v2 .profile-drawer-v2__scroll,
+body.tcf-admin-app .notification-drawer-v2 .profile-drawer-v2__scroll {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    padding: 0.6rem 0.7rem 0.85rem !important;
     background: #f1f5f9 !important;
     color: #0f172a !important;
 }
@@ -1691,33 +1724,48 @@ body.tcf-superadmin-app .notification-drawer-v2 .profile-drawer-v2__scroll {
 body.tcf-superadmin-app .notification-drawer-v2 .notif-card,
 body.tcf-superadmin-app .notification-drawer-v2 .profile-card-v2.notif-card,
 body.tcf-superadmin-app .notification-drawer-v2 .notif-empty-card,
-body.tcf-superadmin-app .notification-drawer-v2 .notification-feed-card,
-body.tcf-superadmin-app .notification-drawer-v2 .notification-summary-card,
-body.tcf-superadmin-app .notification-drawer-v2 .notification-empty-card {
+body.tcf-admin-app .notification-drawer-v2 .notif-card,
+body.tcf-admin-app .notification-drawer-v2 .profile-card-v2.notif-card,
+body.tcf-admin-app .notification-drawer-v2 .notif-empty-card {
     background: #ffffff !important;
     color: #0f172a !important;
     border: 1px solid #e2e8f0 !important;
-    border-radius: 16px !important;
+    border-radius: 10px !important;
     margin: 0 !important;
-    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04) !important;
+    box-shadow: none !important;
 }
 
 body.tcf-superadmin-app .notification-drawer-v2 .notif-card.is-unread,
-body.tcf-superadmin-app .notification-drawer-v2 .notification-feed-card.is-unread {
-    background: linear-gradient(180deg, #fff9f9 0%, #ffffff 48%) !important;
+body.tcf-admin-app .notification-drawer-v2 .notif-card.is-unread {
+    background: #fffafa !important;
     border-color: rgba(211, 13, 13, 0.22) !important;
+    box-shadow: 0 1px 4px rgba(211, 13, 13, 0.06) !important;
 }
 
 body.tcf-superadmin-app .notification-drawer-v2 .notif-card__title,
 body.tcf-superadmin-app .notification-drawer-v2 .notification-title,
 body.tcf-superadmin-app .notification-drawer-v2 .notif-card__type,
 body.tcf-superadmin-app .notification-drawer-v2 .tcf-notif-text,
-body.tcf-superadmin-app .notification-drawer-v2 .notification-desc {
+body.tcf-superadmin-app .notification-drawer-v2 .notification-desc,
+body.tcf-admin-app .notification-drawer-v2 .notif-card__title,
+body.tcf-admin-app .notification-drawer-v2 .notification-title,
+body.tcf-admin-app .notification-drawer-v2 .notif-card__type,
+body.tcf-admin-app .notification-drawer-v2 .tcf-notif-text,
+body.tcf-admin-app .notification-drawer-v2 .notification-desc {
     color: #0f172a !important;
 }
 
-body.tcf-superadmin-app .notification-drawer-v2 .notif-card__meta time {
+body.tcf-superadmin-app .notification-drawer-v2 .notif-card__meta time,
+body.tcf-admin-app .notification-drawer-v2 .notif-card__meta time {
     color: #64748b !important;
+}
+
+/* Footer court : Fermer + Tout lu (comme utilisateur) */
+body.tcf-superadmin-app .notification-drawer-v2__footer .tcf-btn,
+body.tcf-admin-app .notification-drawer-v2__footer .tcf-btn {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    white-space: nowrap !important;
 }
 
 /* Masquer l’ancien dropdown admin */

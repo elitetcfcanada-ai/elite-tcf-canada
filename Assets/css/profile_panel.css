@@ -1461,18 +1461,8 @@ nav .others.nav-others--user .nav-avatar-fallback {
     display: none !important;
 }
 
-.notif-mark-label--short {
-    display: none;
-}
-
-@media (max-width: 991px) {
-    .notif-mark-label--full {
-        display: none;
-    }
-
-    .notif-mark-label--short {
-        display: inline;
-    }
+.notif-mark-label {
+    display: inline;
 }
 
 /* Feed cartes — ultra compact pro */

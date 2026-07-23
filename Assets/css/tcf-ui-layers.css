@@ -80,20 +80,66 @@
 
 @media (max-width: 900px) {
     body.tcf-sa-has-mobile-nav > .notification-overlay,
+    body.tcf-sa-has-mobile-nav > .notification-overlay.profile-overlay-v2,
     body.tcf-sa-has-mobile-nav > .profile-overlay.profile-overlay-v2 {
         top: var(--tcf-sa-header-h) !important;
         bottom: var(--tcf-sa-mobile-nav-reserve, calc(var(--tcf-sa-mobile-nav-h, 4.5rem) + env(safe-area-inset-bottom, 0px))) !important;
         height: auto !important;
-        z-index: 4980 !important;
+        max-height: none !important;
+        z-index: 4600 !important;
     }
 
     body.tcf-sa-has-mobile-nav > .notification-page,
+    body.tcf-sa-has-mobile-nav > .notification-page.notification-drawer-v2,
+    body.tcf-sa-has-mobile-nav > .notification-page.notification-drawer-v2.profile-drawer-v2,
     body.tcf-sa-has-mobile-nav > .profile-page.profile-drawer-v2 {
         top: var(--tcf-sa-header-h) !important;
         bottom: var(--tcf-sa-mobile-nav-reserve, calc(var(--tcf-sa-mobile-nav-h, 4.5rem) + env(safe-area-inset-bottom, 0px))) !important;
         height: auto !important;
         max-height: none !important;
-        z-index: 4990 !important;
+        width: min(420px, 100vw) !important;
+        z-index: 4700 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+    }
+
+    body.tcf-sa-has-mobile-nav > .notification-page .profile-drawer-v2__scroll,
+    body.tcf-sa-has-mobile-nav > .notification-page .notification-drawer-v2__scroll,
+    body.tcf-sa-has-mobile-nav > .profile-page.profile-drawer-v2 .profile-drawer-v2__scroll {
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    body.tcf-sa-has-mobile-nav > .notification-page .profile-drawer-v2__top,
+    body.tcf-sa-has-mobile-nav > .notification-page .profile-drawer-v2__footer,
+    body.tcf-sa-has-mobile-nav > .notification-page .notification-drawer-v2__footer,
+    body.tcf-sa-has-mobile-nav > .profile-page.profile-drawer-v2 .profile-drawer-v2__top,
+    body.tcf-sa-has-mobile-nav > .profile-page.profile-drawer-v2 .profile-drawer-v2__footer {
+        flex-shrink: 0 !important;
+    }
+
+    body.tcf-sa-has-mobile-nav > .notification-page .notification-drawer-v2__footer,
+    body.tcf-sa-has-mobile-nav > .notification-page .profile-drawer-v2__footer {
+        position: relative !important;
+        bottom: auto !important;
+        gap: 0.45rem !important;
+        padding: 0.55rem 0.7rem !important;
+    }
+
+    body.tcf-sa-has-mobile-nav > .notification-page .notification-drawer-v2__footer .tcf-btn {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+        min-height: 2.45rem !important;
+        font-size: 0.78rem !important;
+        padding: 0.45rem 0.5rem !important;
+        white-space: nowrap !important;
+    }
+
+    body.tcf-sa-has-mobile-nav .tcf-sa-mobile-nav {
+        z-index: var(--tcf-sa-mobile-nav-z, 5000) !important;
     }
 }
 

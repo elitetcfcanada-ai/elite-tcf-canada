@@ -345,14 +345,19 @@
         z-index: 4900 !important;
     }
 
-    body.tcf-sa-has-mobile-nav > .notification-overlay {
+    body.tcf-sa-has-mobile-nav > .notification-overlay,
+    body.tcf-sa-has-mobile-nav > .notification-overlay.profile-overlay-v2 {
+        top: var(--tcf-sa-header-h, 3.75rem) !important;
         bottom: var(--tcf-sa-mobile-nav-reserve) !important;
         height: auto !important;
+        max-height: none !important;
         z-index: 4600 !important;
     }
 
-    body.tcf-sa-has-mobile-nav > .notification-page {
-        top: 0 !important;
+    body.tcf-sa-has-mobile-nav > .notification-page,
+    body.tcf-sa-has-mobile-nav > .notification-page.notification-drawer-v2,
+    body.tcf-sa-has-mobile-nav > .notification-page.notification-drawer-v2.profile-drawer-v2 {
+        top: var(--tcf-sa-header-h, 3.75rem) !important;
         bottom: var(--tcf-sa-mobile-nav-reserve) !important;
         height: auto !important;
         max-height: none !important;

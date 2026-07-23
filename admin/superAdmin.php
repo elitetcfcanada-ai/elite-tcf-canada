@@ -2227,14 +2227,14 @@ $notifications_json = json_encode($notifications);
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="../Assets/css/sa-theme.css">
     <script src="../Assets/javascript/sa-theme.js"></script>
-    <link rel="stylesheet" href="../Assets/css/superAdmin.css?v=admin-dash-2">
+    <link rel="stylesheet" href="../Assets/css/superAdmin.css?v=admin-notif-userlike-14">
     <link rel="stylesheet" href="../Assets/css/tcf-brand-logo.css">
     <link rel="stylesheet" href="../Assets/css/sa_subscription_plans.css?v=userlike-2">
     <link rel="stylesheet" href="../Assets/css/sa-partners.css?v=partners-16x9-contain-5">
-    <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/profile_panel.css')); ?>?v=profile-cal-month-11">
+    <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/profile_panel.css')); ?>?v=notif-tout-lu-14">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/tcf-responsive-pills.css')); ?>">
-    <link rel="stylesheet" href="../Assets/css/admin-mobile-nav.css">
-    <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/tcf-ui-layers.css')); ?>">
+    <link rel="stylesheet" href="../Assets/css/admin-mobile-nav.css?v=sa-notif-nav-14">
+    <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/tcf-ui-layers.css')); ?>?v=sa-notif-layers-14">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/tcf-assistant-widget.css')); ?>">
     <link rel="stylesheet" href="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.css">
@@ -3875,7 +3875,7 @@ $notifications_json = json_encode($notifications);
         $tcf_profile_panel_skip_assets = true;
         include __DIR__ . '/../includes/profile_panel_logged_in.php';
         ?>
-    <script src="<?php echo htmlspecialchars(site_href('Assets/javascript/profile_panel.js')); ?>"></script>
+    <script src="<?php echo htmlspecialchars(site_href('Assets/javascript/profile_panel.js')); ?>?v=notif-ui-14"></script>
         <?php
     }
     ?>
