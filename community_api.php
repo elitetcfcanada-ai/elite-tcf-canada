@@ -39,6 +39,7 @@ function cp_is_admin(): bool
 
 $action = trim((string) ($_POST['action'] ?? $_GET['action'] ?? ''));
 tcf_community_posts_ensure_tables($pdo);
+$cpTable = tcf_community_posts_table($pdo);
 $user = cp_user($pdo);
 
 try {
@@ -61,7 +62,7 @@ try {
             if ($postId <= 0) {
                 cp_json(['success' => false, 'message' => 'Annonce invalide.'], 422);
             }
-            $st = $pdo->prepare('SELECT id, visibility, is_published FROM community_posts WHERE id = ? LIMIT 1');
+            $st = $pdo->prepare('SELECT id, visibility, is_published FROM `' . $cpTable . '` WHERE id = ? LIMIT 1');
             $st->execute([$postId]);
             $post = $st->fetch(PDO::FETCH_ASSOC);
             if (!$post || !(int) $post['is_published']) {
@@ -71,6 +72,35 @@ try {
                 cp_json(['success' => false, 'message' => 'Accès refusé.'], 403);
             }
             $uid = (int) $user['id'];
+            if ($cpTable === 'annonces') {
+                $stL = $pdo->prepare("SELECT likes_json FROM annonces WHERE id = ? AND kind='post' LIMIT 1");
+                $stL->execute([$postId]);
+                $likes = json_decode((string) ($stL->fetchColumn() ?: '[]'), true);
+                if (!is_array($likes)) {
+                    $likes = [];
+                }
+                $liked = false;
+                $next = [];
+                foreach ($likes as $entry) {
+                    $idLike = is_array($entry) ? (int) ($entry['user_id'] ?? $entry[0] ?? 0) : (int) $entry;
+                    if ($idLike === $uid) {
+                        $liked = true;
+                        continue;
+                    }
+                    if ($idLike > 0) {
+                        $next[] = $idLike;
+                    }
+                }
+                if (!$liked) {
+                    $next[] = $uid;
+                    $liked = true;
+                } else {
+                    $liked = false;
+                }
+                $pdo->prepare('UPDATE annonces SET likes_json = ? WHERE id = ?')
+                    ->execute([json_encode(array_values($next), JSON_UNESCAPED_UNICODE) ?: '[]', $postId]);
+                cp_json(['success' => true, 'liked' => $liked, 'likes_count' => count($next)]);
+            }
             $chk = $pdo->prepare('SELECT 1 FROM community_post_likes WHERE post_id = ? AND user_id = ?');
             $chk->execute([$postId, $uid]);
             if ($chk->fetchColumn()) {
@@ -90,23 +120,41 @@ try {
             if (!cp_is_admin()) {
                 cp_json(['success' => false, 'message' => 'Accès refusé.'], 403);
             }
-            $st = $pdo->query(
-                "SELECT p.*,
-                    (SELECT COUNT(*) FROM community_post_likes l WHERE l.post_id = p.id) AS likes_count,
-                    (SELECT COUNT(*) FROM community_post_views v WHERE v.post_id = p.id) AS views_count
-                 FROM community_posts p
-                 ORDER BY p.created_at DESC
-                 LIMIT 200"
-            );
-            $rows = $st->fetchAll(PDO::FETCH_ASSOC) ?: [];
-            foreach ($rows as &$r) {
-                $img = trim((string) ($r['image_url'] ?? ''));
-                $r['image_href'] = $img !== '' ? site_href(ltrim($img, '/')) : '';
-                $r['visibility_label'] = tcf_community_visibility_label((string) ($r['visibility'] ?? 'registered'));
-                $r['likes_count'] = (int) ($r['likes_count'] ?? 0);
-                $r['views_count'] = (int) ($r['views_count'] ?? 0);
+            if ($cpTable === 'annonces') {
+                $st = $pdo->query(
+                    "SELECT * FROM annonces WHERE kind='post' ORDER BY created_at DESC LIMIT 200"
+                );
+                $rows = $st->fetchAll(PDO::FETCH_ASSOC) ?: [];
+                foreach ($rows as &$r) {
+                    $likes = json_decode((string) ($r['likes_json'] ?? '[]'), true);
+                    $views = json_decode((string) ($r['views_json'] ?? '[]'), true);
+                    $r['likes_count'] = is_array($likes) ? count($likes) : 0;
+                    $r['views_count'] = is_array($views) ? count($views) : 0;
+                    $img = trim((string) ($r['image_url'] ?? ''));
+                    $r['image_href'] = $img !== '' ? site_href(ltrim($img, '/')) : '';
+                    $r['visibility_label'] = tcf_community_visibility_label((string) ($r['visibility'] ?? 'registered'));
+                    unset($r['likes_json'], $r['views_json'], $r['image_data']);
+                }
+                unset($r);
+            } else {
+                $st = $pdo->query(
+                    "SELECT p.*,
+                        (SELECT COUNT(*) FROM community_post_likes l WHERE l.post_id = p.id) AS likes_count,
+                        (SELECT COUNT(*) FROM community_post_views v WHERE v.post_id = p.id) AS views_count
+                     FROM community_posts p
+                     ORDER BY p.created_at DESC
+                     LIMIT 200"
+                );
+                $rows = $st->fetchAll(PDO::FETCH_ASSOC) ?: [];
+                foreach ($rows as &$r) {
+                    $img = trim((string) ($r['image_url'] ?? ''));
+                    $r['image_href'] = $img !== '' ? site_href(ltrim($img, '/')) : '';
+                    $r['visibility_label'] = tcf_community_visibility_label((string) ($r['visibility'] ?? 'registered'));
+                    $r['likes_count'] = (int) ($r['likes_count'] ?? 0);
+                    $r['views_count'] = (int) ($r['views_count'] ?? 0);
+                }
+                unset($r);
             }
-            unset($r);
             cp_json(['success' => true, 'data' => $rows]);
         }
 
@@ -152,7 +200,7 @@ try {
 
             $uid = (int) ($_SESSION['user_id'] ?? 0);
             if ($id > 0) {
-                $st = $pdo->prepare('SELECT image_url, is_published FROM community_posts WHERE id = ?');
+                $st = $pdo->prepare('SELECT image_url, is_published FROM `' . $cpTable . '` WHERE id = ?');
                 $st->execute([$id]);
                 $old = $st->fetch(PDO::FETCH_ASSOC);
                 if (!$old) {
@@ -167,7 +215,7 @@ try {
                 }
                 $wasPublished = (int) ($old['is_published'] ?? 0) === 1;
                 $pdo->prepare(
-                    'UPDATE community_posts SET body=?, image_url=?, link_url=?, visibility=?, is_published=?, updated_at=NOW() WHERE id=?'
+                    'UPDATE `' . $cpTable . '` SET body=?, image_url=?, link_url=?, visibility=?, is_published=?, updated_at=NOW() WHERE id=?'
                 )->execute([$body, $finalImg !== '' ? $finalImg : null, $linkUrl, $visibility, $isPublished, $id]);
                 if ($isPublished && !$wasPublished) {
                     $excerpt = function_exists('mb_substr') ? mb_substr($body, 0, 140) : substr($body, 0, 140);
@@ -189,9 +237,15 @@ try {
                 cp_json(['success' => true, 'message' => 'Annonce mise à jour.', 'id' => $id]);
             }
 
-            $pdo->prepare(
-                'INSERT INTO community_posts (body, image_url, link_url, visibility, is_published, created_by) VALUES (?,?,?,?,?,?)'
-            )->execute([$body, $imageUrl, $linkUrl, $visibility, $isPublished, $uid > 0 ? $uid : null]);
+            if ($cpTable === 'annonces') {
+                $pdo->prepare(
+                    'INSERT INTO annonces (kind, body, image_url, link_url, visibility, is_published, created_by) VALUES (\'post\',?,?,?,?,?,?)'
+                )->execute([$body, $imageUrl, $linkUrl, $visibility, $isPublished, $uid > 0 ? $uid : null]);
+            } else {
+                $pdo->prepare(
+                    'INSERT INTO `' . $cpTable . '` (body, image_url, link_url, visibility, is_published, created_by) VALUES (?,?,?,?,?,?)'
+                )->execute([$body, $imageUrl, $linkUrl, $visibility, $isPublished, $uid > 0 ? $uid : null]);
+            }
             $newId = (int) $pdo->lastInsertId();
 
             if ($isPublished && $newId > 0) {
@@ -227,14 +281,19 @@ try {
             }
             $bodyPrev = '';
             try {
-                $stB = $pdo->prepare('SELECT body FROM community_posts WHERE id = ?');
+                $stB = $pdo->prepare('SELECT body FROM `' . $cpTable . '` WHERE id = ?');
                 $stB->execute([$id]);
                 $bodyPrev = (string) ($stB->fetchColumn() ?: '');
             } catch (Throwable $e) {
             }
-            $pdo->prepare('DELETE FROM community_post_likes WHERE post_id = ?')->execute([$id]);
-            $pdo->prepare('DELETE FROM community_post_views WHERE post_id = ?')->execute([$id]);
-            $pdo->prepare('DELETE FROM community_posts WHERE id = ?')->execute([$id]);
+            if ($cpTable !== 'annonces') {
+                try {
+                    $pdo->prepare('DELETE FROM community_post_likes WHERE post_id = ?')->execute([$id]);
+                    $pdo->prepare('DELETE FROM community_post_views WHERE post_id = ?')->execute([$id]);
+                } catch (Throwable $e) {
+                }
+            }
+            $pdo->prepare('DELETE FROM `' . $cpTable . '` WHERE id = ?')->execute([$id]);
             tcf_delete_notifications_matching($pdo, 'posts.php?id=' . $id);
             if ($bodyPrev !== '') {
                 $excerpt = function_exists('mb_substr') ? mb_substr($bodyPrev, 0, 140) : substr($bodyPrev, 0, 140);

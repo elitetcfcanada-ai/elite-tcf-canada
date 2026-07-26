@@ -35,7 +35,7 @@
         'subscription-plans': 'Forfaits',
         'subscription-payments': 'Historique paiements',
         'subscription-revenue': 'Revenus & budget',
-        messages: 'Annonces communautaires',
+        messages: 'Annonces',
         partners: 'Partenaires',
         'topics-section': 'Gestion des sujets',
         'topics-written': 'Compréhension écrite',

@@ -62,7 +62,7 @@ $__tcf_sub_active_until = '';
                     <h3 class="plan-name"><?php echo htmlspecialchars($plan['tier']); ?></h3>
                     <div class="period-badge"><?php echo htmlspecialchars($plan['badge']); ?></div>
                     <div class="price">
-                        <span class="currency"><?php echo htmlspecialchars((string) ($plan['currency'] ?? '$')); ?></span><?php echo htmlspecialchars($priceDisplay); ?>
+                        <span class="currency">$</span><?php echo htmlspecialchars($priceDisplay); ?>
                     </div>
                     <div class="wave-shape" aria-hidden="true">
                         <svg viewBox="0 0 400 40" preserveAspectRatio="none">
@@ -86,7 +86,7 @@ $__tcf_sub_active_until = '';
                         data-plan-key="<?php echo htmlspecialchars($plan['key']); ?>"
                         data-plan-label="<?php echo htmlspecialchars($plan['tier'] . ' — ' . $plan['badge']); ?>"
                         data-plan-price="<?php echo htmlspecialchars((string) $priceNum); ?>"
-                        data-plan-currency="<?php echo htmlspecialchars((string) ($plan['currency'] ?? '$')); ?>"
+                        data-plan-currency="$"
                         data-plan-xaf="<?php echo (int) ($plan['payment_xaf'] ?? tcf_subscription_payment_xaf_amount()); ?>"<?php echo $__tcf_sub_active ? ' disabled aria-disabled="true"' : ''; ?>>
                         <?php if ($__tcf_sub_active): ?>
                             ABONNÉ ACTIF<?php echo $__tcf_sub_active_until !== '' ? ' jusqu’au ' . htmlspecialchars($__tcf_sub_active_until) : ''; ?>

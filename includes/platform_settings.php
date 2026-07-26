@@ -5,10 +5,23 @@ declare(strict_types=1);
 /**
  * Réglages globaux de la plateforme (ex. mode gratuit temporaire).
  */
+function tcf_platform_settings_table(PDO $pdo): string
+{
+    require_once __DIR__ . '/tcf_schema.php';
+    if (tcf_schema_has_table($pdo, 'parametres')) {
+        return 'parametres';
+    }
+    return 'tcf_platform_settings';
+}
+
 function tcf_platform_settings_ensure(PDO $pdo): void
 {
     static $done = false;
     if ($done) {
+        return;
+    }
+    if (tcf_platform_settings_table($pdo) === 'parametres') {
+        $done = true;
         return;
     }
     $pdo->exec(
@@ -36,8 +49,9 @@ function tcf_platform_settings_ensure(PDO $pdo): void
 function tcf_platform_setting_get(PDO $pdo, string $key, string $default = ''): string
 {
     tcf_platform_settings_ensure($pdo);
+    $table = tcf_platform_settings_table($pdo);
     try {
-        $st = $pdo->prepare('SELECT setting_value FROM tcf_platform_settings WHERE setting_key = ? LIMIT 1');
+        $st = $pdo->prepare("SELECT setting_value FROM `$table` WHERE setting_key = ? LIMIT 1");
         $st->execute([$key]);
         $v = $st->fetchColumn();
         return $v !== false ? (string) $v : $default;
@@ -49,9 +63,10 @@ function tcf_platform_setting_get(PDO $pdo, string $key, string $default = ''): 
 function tcf_platform_setting_set(PDO $pdo, string $key, string $value): void
 {
     tcf_platform_settings_ensure($pdo);
+    $table = tcf_platform_settings_table($pdo);
     $st = $pdo->prepare(
-        'INSERT INTO tcf_platform_settings (setting_key, setting_value) VALUES (?, ?)
-         ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)'
+        "INSERT INTO `$table` (setting_key, setting_value) VALUES (?, ?)
+         ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)"
     );
     $st->execute([$key, $value]);
     tcf_platform_settings_bump_cache();

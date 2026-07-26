@@ -4,6 +4,8 @@ declare(strict_types=1);
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/subscription_access.php';
 require_once __DIR__ . '/includes/rich_text.php';
+require_once __DIR__ . '/includes/tcf_schema.php';
+require_once __DIR__ . '/includes/tcf_exam_store.php';
 
 $examId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 if ($examId <= 0) {
@@ -21,15 +23,50 @@ $premiumOk = tcf_user_has_premium_access($viewer);
 $loggedIn = $viewer !== null;
 
 $exam = null;
+$parts = [];
 try {
-    $st = $pdo->prepare(
-        "SELECT id, slug, title, subtitle, visibility, is_published
-         FROM tcf_eo_exams WHERE id = ? AND is_published = 1 LIMIT 1"
-    );
-    $st->execute([$examId]);
-    $exam = $st->fetch(PDO::FETCH_ASSOC) ?: null;
+    if (tcf_schema_has_table($pdo, 'expression_orale')) {
+        $full = tcf_exam_fetch_by_id($pdo, 'eo', $examId);
+        if ($full && !empty($full['is_published'])) {
+            $exam = $full;
+            $parts = $full['parts'] ?? [];
+            $examId = (int) ($full['id'] ?? $examId);
+            foreach ($parts as &$part) {
+                $tk = strtolower(trim((string) ($part['task_key'] ?? 'tache2')));
+                if (!in_array($tk, ['tache1', 'tache2', 'tache3'], true)) {
+                    $tk = 'tache2';
+                }
+                $part['task_key'] = $tk;
+            }
+            unset($part);
+        }
+    } else {
+        $st = $pdo->prepare(
+            "SELECT id, slug, title, subtitle, visibility, is_published
+             FROM tcf_eo_exams WHERE id = ? AND is_published = 1 LIMIT 1"
+        );
+        $st->execute([$examId]);
+        $exam = $st->fetch(PDO::FETCH_ASSOC) ?: null;
+        if ($exam) {
+            $stP = $pdo->prepare('SELECT * FROM tcf_eo_parts WHERE exam_id = ? ORDER BY sort_order ASC, part_number ASC, id ASC');
+            $stP->execute([$examId]);
+            $parts = $stP->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($parts as &$part) {
+                $stS = $pdo->prepare('SELECT * FROM tcf_eo_subjects WHERE part_id = ? ORDER BY subject_number ASC, id ASC');
+                $stS->execute([(int) $part['id']]);
+                $part['subjects'] = $stS->fetchAll(PDO::FETCH_ASSOC);
+                $tk = strtolower(trim((string) ($part['task_key'] ?? 'tache2')));
+                if (!in_array($tk, ['tache1', 'tache2', 'tache3'], true)) {
+                    $tk = 'tache2';
+                }
+                $part['task_key'] = $tk;
+            }
+            unset($part);
+        }
+    }
 } catch (Throwable $e) {
     $exam = null;
+    $parts = [];
 }
 
 if (!$exam) {
@@ -47,26 +84,6 @@ if ($isPremium && !$loggedIn) {
 if ($isPremium && !$premiumOk) {
     header('Location: ' . site_href('abonnement.php'));
     exit;
-}
-
-$parts = [];
-try {
-    $stP = $pdo->prepare('SELECT * FROM tcf_eo_parts WHERE exam_id = ? ORDER BY sort_order ASC, part_number ASC, id ASC');
-    $stP->execute([$examId]);
-    $parts = $stP->fetchAll(PDO::FETCH_ASSOC);
-    foreach ($parts as &$part) {
-        $stS = $pdo->prepare('SELECT * FROM tcf_eo_subjects WHERE part_id = ? ORDER BY subject_number ASC, id ASC');
-        $stS->execute([(int) $part['id']]);
-        $part['subjects'] = $stS->fetchAll(PDO::FETCH_ASSOC);
-        $tk = strtolower(trim((string) ($part['task_key'] ?? 'tache2')));
-        if (!in_array($tk, ['tache1', 'tache2', 'tache3'], true)) {
-            $tk = 'tache2';
-        }
-        $part['task_key'] = $tk;
-    }
-    unset($part);
-} catch (Throwable $e) {
-    $parts = [];
 }
 
 /** Regroupe Tâche 2 / 3 sous le même numéro de partie (UI mockup). */

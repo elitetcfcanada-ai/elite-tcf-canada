@@ -234,7 +234,7 @@ function tcf_notchpay_extract_authorization_url(array $payload): string
 /** @return list<string> */
 function tcf_notchpay_success_statuses(): array
 {
-    return ['complete', 'completed', 'success', 'successful'];
+    return ['complete', 'completed', 'success', 'successful', 'paid'];
 }
 
 /** @return list<string> */

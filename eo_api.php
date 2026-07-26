@@ -7,6 +7,8 @@ require_once __DIR__ . '/includes/tcf_notifications_helper.php';
 require_once __DIR__ . '/includes/rich_text.php';
 require_once __DIR__ . '/includes/admin_roles.php';
 require_once __DIR__ . '/includes/gemini_client.php';
+require_once __DIR__ . '/includes/tcf_schema.php';
+require_once __DIR__ . '/includes/tcf_exam_store.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -38,6 +40,9 @@ function eo_slug(string $title): string
 
 function eo_ensure_tables(PDO $pdo): void
 {
+    if (tcf_schema_is_consolidated($pdo) || tcf_schema_has_table($pdo, 'expression_orale')) {
+        return;
+    }
     $pdo->exec(
         "CREATE TABLE IF NOT EXISTS tcf_eo_exams (
             id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -153,6 +158,14 @@ function eo_seed_default_consignes(PDO $pdo): void
         'tache2' => 'Tâche 2 : Exercice en interaction',
         'tache3' => 'Tâche 3 : Expression d’un point de vue',
     ];
+    if (tcf_schema_has_table($pdo, 'expression_orale')) {
+        $sections = [];
+        foreach (['tache1', 'tache2', 'tache3'] as $i => $key) {
+            $sections[] = ['key' => $key, 'title' => $titles[$key], 'body' => $bodies[$key], 'sort' => $i + 1];
+        }
+        tcf_exam_seed_consignes($pdo, 'eo', $sections);
+        return;
+    }
     foreach (['tache1', 'tache2', 'tache3'] as $i => $key) {
         $sort = $i + 1;
         $st = $pdo->prepare('SELECT id, body FROM tcf_eo_consignes WHERE task_key=? ORDER BY id ASC LIMIT 1');
@@ -191,6 +204,9 @@ function eo_can_view_premium_consigne(PDO $pdo): bool
 
 function eo_fetch_exam(PDO $pdo, int $examId): ?array
 {
+    if (tcf_schema_has_table($pdo, 'expression_orale')) {
+        return tcf_exam_fetch_by_id($pdo, 'eo', $examId);
+    }
     $st = $pdo->prepare("SELECT * FROM tcf_eo_exams WHERE id=? LIMIT 1");
     $st->execute([$examId]);
     $exam = $st->fetch(PDO::FETCH_ASSOC);
@@ -274,6 +290,28 @@ function eo_sort_exams_by_title_date(array &$rows): void
 
 function eo_sync_exam_visibility(PDO $pdo): void
 {
+    if (tcf_schema_has_table($pdo, 'expression_orale')) {
+        $rows = $pdo->query("SELECT id, title, visibility FROM expression_orale WHERE kind='exam' AND is_published=1")->fetchAll(PDO::FETCH_ASSOC);
+        if (!$rows) {
+            return;
+        }
+        eo_sort_exams_by_title_date($rows);
+        $top3Ids = [];
+        foreach ($rows as $row) {
+            $top3Ids[] = (int) ($row['id'] ?? 0);
+            if (count($top3Ids) >= 3) {
+                break;
+            }
+        }
+        if ($top3Ids) {
+            $in = implode(',', array_map('intval', $top3Ids));
+            $pdo->exec("UPDATE expression_orale SET visibility='premium' WHERE kind='exam' AND is_published=1 AND id NOT IN ($in)");
+            $pdo->exec("UPDATE expression_orale SET visibility='gratuit' WHERE kind='exam' AND is_published=1 AND id IN ($in) AND visibility<>'premium'");
+        } else {
+            $pdo->exec("UPDATE expression_orale SET visibility='premium' WHERE kind='exam' AND is_published=1");
+        }
+        return;
+    }
     $rows = $pdo->query("SELECT id, title, visibility FROM tcf_eo_exams WHERE is_published=1")->fetchAll(PDO::FETCH_ASSOC);
     if (!$rows) {
         return;
@@ -295,6 +333,18 @@ function eo_sync_exam_visibility(PDO $pdo): void
 
 function eo_track_exam_view(PDO $pdo, int $examId): void
 {
+    if (tcf_schema_has_table($pdo, 'expression_orale')) {
+        $uid = !empty($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : null;
+        $vid = '';
+        if (empty($uid)) {
+            if (empty($_SESSION['tcf_visitor_id'])) {
+                $_SESSION['tcf_visitor_id'] = bin2hex(random_bytes(16));
+            }
+            $vid = (string) $_SESSION['tcf_visitor_id'];
+        }
+        tcf_exam_track_view($pdo, 'eo', $examId, $uid, $vid);
+        return;
+    }
     if ($examId <= 0) {
         return;
     }
@@ -314,6 +364,45 @@ function eo_track_exam_view(PDO $pdo, int $examId): void
     }
 }
 
+/** @return list<array<string,mixed>> */
+function eo_build_parts_content(array $parts): array
+{
+    $out = [];
+    $sortOrder = 0;
+    foreach ($parts as $i => $p) {
+        $subjects = is_array($p['subjects'] ?? null) ? $p['subjects'] : [];
+        if (!$subjects) {
+            continue;
+        }
+        $taskKey = (string) ($p['task_key'] ?? 'tache2');
+        if (!in_array($taskKey, ['tache1', 'tache2', 'tache3'], true)) {
+            $taskKey = 'tache2';
+        }
+        $sortOrder++;
+        $subOut = [];
+        foreach ($subjects as $j => $s) {
+            $subOut[] = [
+                'id' => (int) ($s['id'] ?? ($i + 1) * 10 + $j + 1),
+                'subject_number' => $j + 1,
+                'title' => trim((string) ($s['title'] ?? '')),
+                'prompt' => trim((string) ($s['prompt'] ?? '')),
+                'correction' => trim((string) ($s['correction'] ?? '')) ?: null,
+                'role_label' => trim((string) ($s['role_label'] ?? '')) ?: null,
+                'icon_class' => trim((string) ($s['icon_class'] ?? '')) ?: 'bx bx-message-detail',
+            ];
+        }
+        $out[] = [
+            'id' => (int) ($p['id'] ?? $i + 1),
+            'task_key' => $taskKey,
+            'part_number' => max(1, (int) ($p['part_number'] ?? ($i + 1))),
+            'part_title' => trim((string) ($p['part_title'] ?? '')) ?: null,
+            'sort_order' => $sortOrder,
+            'subjects' => $subOut,
+        ];
+    }
+    return $out;
+}
+
 eo_ensure_tables($pdo);
 eo_seed_default_consignes($pdo);
 
@@ -324,15 +413,24 @@ try {
     switch ($action) {
         case 'get_exams_public': {
             eo_sync_exam_visibility($pdo);
-            $st = $pdo->query(
-                "SELECT e.id, e.title, e.subtitle, e.visibility, e.published_at, COUNT(DISTINCT p.id) AS part_count
-                 FROM tcf_eo_exams e
-                 LEFT JOIN tcf_eo_parts p ON p.exam_id = e.id
-                 WHERE e.is_published=1
-                 GROUP BY e.id
-                 ORDER BY e.published_at DESC, e.id DESC"
-            );
-            $rows = $st->fetchAll(PDO::FETCH_ASSOC);
+            if (tcf_schema_has_table($pdo, 'expression_orale')) {
+                $rows = tcf_exam_list($pdo, 'eo', true);
+                foreach ($rows as &$r) {
+                    $full = tcf_exam_fetch_by_id($pdo, 'eo', (int) ($r['id'] ?? 0));
+                    $r['part_count'] = count($full['parts'] ?? []);
+                }
+                unset($r);
+            } else {
+                $st = $pdo->query(
+                    "SELECT e.id, e.title, e.subtitle, e.visibility, e.published_at, COUNT(DISTINCT p.id) AS part_count
+                     FROM tcf_eo_exams e
+                     LEFT JOIN tcf_eo_parts p ON p.exam_id = e.id
+                     WHERE e.is_published=1
+                     GROUP BY e.id
+                     ORDER BY e.published_at DESC, e.id DESC"
+                );
+                $rows = $st->fetchAll(PDO::FETCH_ASSOC);
+            }
             eo_sort_exams_by_title_date($rows);
             eo_json(['success' => true, 'data' => $rows]);
         }
@@ -340,10 +438,17 @@ try {
             $examId = (int) ($_POST['exam_id'] ?? 0);
             if ($examId <= 0) eo_json(['success' => false, 'message' => 'Épreuve invalide.'], 422);
             eo_sync_exam_visibility($pdo);
-            $st = $pdo->prepare("SELECT id, visibility FROM tcf_eo_exams WHERE id=? AND is_published=1");
-            $st->execute([$examId]);
-            $row = $st->fetch(PDO::FETCH_ASSOC);
-            if (!$row) eo_json(['success' => false, 'message' => 'Épreuve indisponible.'], 404);
+            if (tcf_schema_has_table($pdo, 'expression_orale')) {
+                $row = tcf_exam_fetch_by_id($pdo, 'eo', $examId);
+                if (!$row || empty($row['is_published'])) {
+                    eo_json(['success' => false, 'message' => 'Épreuve indisponible.'], 404);
+                }
+            } else {
+                $st = $pdo->prepare("SELECT id, visibility FROM tcf_eo_exams WHERE id=? AND is_published=1");
+                $st->execute([$examId]);
+                $row = $st->fetch(PDO::FETCH_ASSOC);
+                if (!$row) eo_json(['success' => false, 'message' => 'Épreuve indisponible.'], 404);
+            }
             if ((string) ($row['visibility'] ?? 'gratuit') === 'premium') {
                 if (!isset($_SESSION['user_id']) || (int) $_SESSION['user_id'] <= 0) {
                     eo_json(['success' => false, 'locked' => true, 'reason' => 'login', 'message' => 'Connectez-vous pour accéder à cette épreuve.'], 403);
@@ -362,23 +467,40 @@ try {
         case 'get_exams_admin': {
             if (!eo_is_admin()) eo_json(['success' => false, 'message' => 'Accès refusé.'], 403);
             eo_sync_exam_visibility($pdo);
-            $st = $pdo->query(
-                "SELECT e.*, COUNT(DISTINCT p.id) AS part_count, COUNT(s.id) AS subject_count
-                 FROM tcf_eo_exams e
-                 LEFT JOIN tcf_eo_parts p ON p.exam_id=e.id
-                 LEFT JOIN tcf_eo_subjects s ON s.part_id=p.id
-                 GROUP BY e.id
-                 ORDER BY e.created_at DESC, e.id DESC"
-            );
-            $rows = $st->fetchAll(PDO::FETCH_ASSOC);
-            eo_sort_exams_by_title_date($rows);
-            foreach ($rows as &$r) {
-                $r['effective_visibility'] = (string) ($r['visibility'] ?? 'gratuit');
-                $sv = $pdo->prepare("SELECT COUNT(*) FROM tcf_eo_exam_views WHERE exam_id=?");
-                $sv->execute([(int) ($r['id'] ?? 0)]);
-                $r['view_count'] = (int) $sv->fetchColumn();
+            if (tcf_schema_has_table($pdo, 'expression_orale')) {
+                $rows = tcf_exam_list($pdo, 'eo', false);
+                foreach ($rows as &$r) {
+                    $full = tcf_exam_fetch_by_id($pdo, 'eo', (int) ($r['id'] ?? 0));
+                    $parts = $full['parts'] ?? [];
+                    $r['part_count'] = count($parts);
+                    $subjectCount = 0;
+                    foreach ($parts as $p) {
+                        $subjectCount += count($p['subjects'] ?? []);
+                    }
+                    $r['subject_count'] = $subjectCount;
+                    $r['view_count'] = (int) ($r['views_count'] ?? 0);
+                    $r['effective_visibility'] = (string) ($r['visibility'] ?? 'gratuit');
+                }
+                unset($r);
+            } else {
+                $st = $pdo->query(
+                    "SELECT e.*, COUNT(DISTINCT p.id) AS part_count, COUNT(s.id) AS subject_count
+                     FROM tcf_eo_exams e
+                     LEFT JOIN tcf_eo_parts p ON p.exam_id=e.id
+                     LEFT JOIN tcf_eo_subjects s ON s.part_id=p.id
+                     GROUP BY e.id
+                     ORDER BY e.created_at DESC, e.id DESC"
+                );
+                $rows = $st->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($rows as &$r) {
+                    $r['effective_visibility'] = (string) ($r['visibility'] ?? 'gratuit');
+                    $sv = $pdo->prepare("SELECT COUNT(*) FROM tcf_eo_exam_views WHERE exam_id=?");
+                    $sv->execute([(int) ($r['id'] ?? 0)]);
+                    $r['view_count'] = (int) $sv->fetchColumn();
+                }
+                unset($r);
             }
-            unset($r);
+            eo_sort_exams_by_title_date($rows);
             eo_json(['success' => true, 'data' => $rows]);
         }
         case 'get_exam_for_edit': {
@@ -420,6 +542,37 @@ try {
             }
             if ($savedPartCount < 1) {
                 eo_json(['success' => false, 'message' => "Ajoutez au moins une partie avec des sujets (tâche 1, 2 ou 3)."], 422);
+            }
+
+            $partsContent = eo_build_parts_content($parts);
+            if (tcf_schema_has_table($pdo, 'expression_orale')) {
+                $wasPublished = 0;
+                $isNewExam = $examId <= 0;
+                if ($examId > 0) {
+                    $stWas = $pdo->prepare("SELECT is_published FROM expression_orale WHERE id=? AND kind='exam'");
+                    $stWas->execute([$examId]);
+                    $wasPublished = (int) $stWas->fetchColumn();
+                }
+                $examId = tcf_exam_save($pdo, 'eo', [
+                    'slug' => eo_slug($title),
+                    'title' => $title,
+                    'subtitle' => $subtitle !== '' ? $subtitle : null,
+                    'visibility' => $visibility,
+                    'is_published' => $isPublished,
+                    'duration_seconds' => 3600,
+                    'created_by' => (int) ($_SESSION['user_id'] ?? 0),
+                ], ['parts' => $partsContent], $examId > 0 ? $examId : null);
+                eo_sync_exam_visibility($pdo);
+                if ($isPublished && ($isNewExam || !$wasPublished)) {
+                    tcf_notify_users_registered_before(
+                        $pdo,
+                        'exam',
+                        'Nouvelle épreuve — Expression orale',
+                        "L'épreuve « $title » est maintenant disponible.",
+                        site_href('epreuve_eo.php?id=' . $examId)
+                    );
+                }
+                eo_json(['success' => true, 'message' => 'Épreuve enregistrée.', 'exam_id' => $examId]);
             }
 
             $pdo->beginTransaction();
@@ -488,36 +641,70 @@ try {
             }
             $examId = (int) ($_POST['exam_id'] ?? 0);
             if ($examId <= 0) eo_json(['success' => false, 'message' => 'Épreuve invalide.'], 422);
-            $pdo->prepare("DELETE FROM tcf_eo_exams WHERE id=?")->execute([$examId]);
+            if (tcf_schema_has_table($pdo, 'expression_orale')) {
+                tcf_exam_delete($pdo, 'eo', $examId);
+            } else {
+                $pdo->prepare("DELETE FROM tcf_eo_exams WHERE id=?")->execute([$examId]);
+            }
             tcf_delete_notifications_matching($pdo, 'epreuve_eo.php?id=' . $examId);
             eo_json(['success' => true, 'message' => 'Épreuve supprimée.']);
         }
         case 'get_consignes': {
-            eo_seed_default_consignes($pdo);
-            $canPremium = eo_can_view_premium_consigne($pdo);
-            if ($canPremium) {
-                $st = $pdo->query("SELECT id,title,body,task_key,visibility,is_published,sort_order FROM tcf_eo_consignes WHERE is_published=1 AND task_key IN ('tache1','tache2','tache3') ORDER BY task_key ASC, sort_order ASC, id ASC");
+            if (tcf_schema_has_table($pdo, 'expression_orale')) {
+                $canPremium = eo_can_view_premium_consigne($pdo);
+                $taskKeys = ['tache1', 'tache2', 'tache3'];
+                $rows = array_values(array_filter(
+                    tcf_exam_list_consignes($pdo, 'eo'),
+                    static function (array $row) use ($taskKeys, $canPremium): bool {
+                        $key = (string) ($row['section_key'] ?? '');
+                        if (!in_array($key, $taskKeys, true) || empty($row['is_published'])) {
+                            return false;
+                        }
+                        return $canPremium || (string) ($row['visibility'] ?? 'gratuit') === 'gratuit';
+                    }
+                ));
+                foreach ($rows as &$row) {
+                    $row['task_key'] = (string) ($row['section_key'] ?? '');
+                    $row['body'] = tcf_normalize_rich((string) ($row['body'] ?? ''));
+                }
+                unset($row);
             } else {
-                $st = $pdo->query("SELECT id,title,body,task_key,visibility,is_published,sort_order FROM tcf_eo_consignes WHERE is_published=1 AND visibility='gratuit' AND task_key IN ('tache1','tache2','tache3') ORDER BY task_key ASC, sort_order ASC, id ASC");
+                eo_seed_default_consignes($pdo);
+                $canPremium = eo_can_view_premium_consigne($pdo);
+                if ($canPremium) {
+                    $st = $pdo->query("SELECT id,title,body,task_key,visibility,is_published,sort_order FROM tcf_eo_consignes WHERE is_published=1 AND task_key IN ('tache1','tache2','tache3') ORDER BY task_key ASC, sort_order ASC, id ASC");
+                } else {
+                    $st = $pdo->query("SELECT id,title,body,task_key,visibility,is_published,sort_order FROM tcf_eo_consignes WHERE is_published=1 AND visibility='gratuit' AND task_key IN ('tache1','tache2','tache3') ORDER BY task_key ASC, sort_order ASC, id ASC");
+                }
+                $rows = $st->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($rows as &$row) {
+                    $row['body'] = tcf_normalize_rich((string) ($row['body'] ?? ''));
+                }
+                unset($row);
             }
-            $rows = $st->fetchAll(PDO::FETCH_ASSOC);
-            foreach ($rows as &$row) {
-                $row['body'] = tcf_normalize_rich((string) ($row['body'] ?? ''));
-            }
-            unset($row);
             eo_json(['success' => true, 'data' => $rows]);
         }
         case 'get_consignes_bundle_admin': {
             if (!eo_is_admin()) eo_json(['success' => false, 'message' => 'Accès refusé.'], 403);
-            eo_seed_default_consignes($pdo);
             $out = ['tache1' => '', 'tache2' => '', 'tache3' => '', 'is_published' => 1];
-            $st = $pdo->prepare("SELECT body,is_published FROM tcf_eo_consignes WHERE task_key=? ORDER BY sort_order ASC,id ASC LIMIT 1");
-            foreach (['tache1', 'tache2', 'tache3'] as $k) {
-                $st->execute([$k]);
-                $r = $st->fetch(PDO::FETCH_ASSOC);
-                if ($r) {
-                    $out[$k] = (string) ($r['body'] ?? '');
-                    $out['is_published'] = (int) ($r['is_published'] ?? 1);
+            if (tcf_schema_has_table($pdo, 'expression_orale')) {
+                foreach (tcf_exam_list_consignes($pdo, 'eo') as $row) {
+                    $k = (string) ($row['section_key'] ?? '');
+                    if (isset($out[$k])) {
+                        $out[$k] = (string) ($row['body'] ?? '');
+                        $out['is_published'] = (int) ($row['is_published'] ?? 1);
+                    }
+                }
+            } else {
+                eo_seed_default_consignes($pdo);
+                $st = $pdo->prepare("SELECT body,is_published FROM tcf_eo_consignes WHERE task_key=? ORDER BY sort_order ASC,id ASC LIMIT 1");
+                foreach (['tache1', 'tache2', 'tache3'] as $k) {
+                    $st->execute([$k]);
+                    $r = $st->fetch(PDO::FETCH_ASSOC);
+                    if ($r) {
+                        $out[$k] = (string) ($r['body'] ?? '');
+                        $out['is_published'] = (int) ($r['is_published'] ?? 1);
+                    }
                 }
             }
             eo_json(['success' => true, 'data' => $out]);
@@ -531,13 +718,24 @@ try {
             if ($t1 === '' || $t2 === '' || $t3 === '') {
                 eo_json(['success' => false, 'message' => 'Veuillez renseigner les consignes des 3 tâches.'], 422);
             }
-            $pdo->beginTransaction();
-            $pdo->exec("DELETE FROM tcf_eo_consignes WHERE task_key IN ('tache1','tache2','tache3')");
-            $ins = $pdo->prepare("INSERT INTO tcf_eo_consignes (title,body,task_key,visibility,is_published,sort_order,is_active) VALUES (?,?,?,'gratuit',?,?,1)");
-            $ins->execute(['Tâche 1 : Présentation (entretien dirigé)', $t1, 'tache1', $isPublished, 1]);
-            $ins->execute(['Tâche 2 : Exercice en interaction', $t2, 'tache2', $isPublished, 2]);
-            $ins->execute(['Tâche 3 : Expression d’un point de vue', $t3, 'tache3', $isPublished, 3]);
-            $pdo->commit();
+            if (tcf_schema_has_table($pdo, 'expression_orale')) {
+                $pdo->exec("DELETE FROM expression_orale WHERE kind='consigne' AND section_key IN ('tache1','tache2','tache3')");
+                $ins = $pdo->prepare(
+                    "INSERT INTO expression_orale (kind, title, section_key, visibility, is_published, content_json, created_at, updated_at)
+                     VALUES ('consigne',?,?,?,?,?,NOW(),NOW())"
+                );
+                $ins->execute(['Tâche 1 : Présentation (entretien dirigé)', 'tache1', 'gratuit', $isPublished, json_encode(['body' => $t1, 'sort_order' => 1], JSON_UNESCAPED_UNICODE)]);
+                $ins->execute(['Tâche 2 : Exercice en interaction', 'tache2', 'gratuit', $isPublished, json_encode(['body' => $t2, 'sort_order' => 2], JSON_UNESCAPED_UNICODE)]);
+                $ins->execute(['Tâche 3 : Expression d’un point de vue', 'tache3', 'gratuit', $isPublished, json_encode(['body' => $t3, 'sort_order' => 3], JSON_UNESCAPED_UNICODE)]);
+            } else {
+                $pdo->beginTransaction();
+                $pdo->exec("DELETE FROM tcf_eo_consignes WHERE task_key IN ('tache1','tache2','tache3')");
+                $ins = $pdo->prepare("INSERT INTO tcf_eo_consignes (title,body,task_key,visibility,is_published,sort_order,is_active) VALUES (?,?,?,'gratuit',?,?,1)");
+                $ins->execute(['Tâche 1 : Présentation (entretien dirigé)', $t1, 'tache1', $isPublished, 1]);
+                $ins->execute(['Tâche 2 : Exercice en interaction', $t2, 'tache2', $isPublished, 2]);
+                $ins->execute(['Tâche 3 : Expression d’un point de vue', $t3, 'tache3', $isPublished, 3]);
+                $pdo->commit();
+            }
             eo_json(['success' => true, 'message' => $isPublished ? 'Consignes publiées.' : 'Consignes enregistrées en brouillon.']);
         }
         case 'get_simulator_subject': {
@@ -546,19 +744,43 @@ try {
             }
             $taskKey = (string) ($_POST['task_key'] ?? 'tache2');
             if (!in_array($taskKey, ['tache1', 'tache2', 'tache3'], true)) $taskKey = 'tache2';
-            $consigneSt = $pdo->prepare("SELECT body FROM tcf_eo_consignes WHERE is_published=1 AND task_key=? ORDER BY sort_order ASC,id ASC LIMIT 1");
-            $consigneSt->execute([$taskKey]);
-            $consigne = (string) ($consigneSt->fetchColumn() ?: '');
-            $subjectSt = $pdo->prepare(
-                "SELECT s.title, s.prompt, s.role_label, p.part_number
-                 FROM tcf_eo_subjects s
-                 INNER JOIN tcf_eo_parts p ON p.id=s.part_id
-                 INNER JOIN tcf_eo_exams e ON e.id=p.exam_id
-                 WHERE e.is_published=1 AND p.task_key=?
-                 ORDER BY RAND() LIMIT 1"
-            );
-            $subjectSt->execute([$taskKey]);
-            $row = $subjectSt->fetch(PDO::FETCH_ASSOC) ?: [];
+            $consigne = '';
+            if (tcf_schema_has_table($pdo, 'expression_orale')) {
+                foreach (tcf_exam_list_consignes($pdo, 'eo') as $row) {
+                    if ((string) ($row['section_key'] ?? '') === $taskKey && !empty($row['is_published'])) {
+                        $consigne = (string) ($row['body'] ?? '');
+                        break;
+                    }
+                }
+                $candidates = [];
+                foreach (tcf_exam_list($pdo, 'eo', true) as $examRow) {
+                    $full = tcf_exam_fetch_by_id($pdo, 'eo', (int) ($examRow['id'] ?? 0));
+                    foreach ($full['parts'] ?? [] as $part) {
+                        if ((string) ($part['task_key'] ?? '') !== $taskKey) {
+                            continue;
+                        }
+                        foreach ($part['subjects'] ?? [] as $subject) {
+                            $subject['part_number'] = (int) ($part['part_number'] ?? 0);
+                            $candidates[] = $subject;
+                        }
+                    }
+                }
+                $row = $candidates !== [] ? $candidates[array_rand($candidates)] : [];
+            } else {
+                $consigneSt = $pdo->prepare("SELECT body FROM tcf_eo_consignes WHERE is_published=1 AND task_key=? ORDER BY sort_order ASC,id ASC LIMIT 1");
+                $consigneSt->execute([$taskKey]);
+                $consigne = (string) ($consigneSt->fetchColumn() ?: '');
+                $subjectSt = $pdo->prepare(
+                    "SELECT s.title, s.prompt, s.role_label, p.part_number
+                     FROM tcf_eo_subjects s
+                     INNER JOIN tcf_eo_parts p ON p.id=s.part_id
+                     INNER JOIN tcf_eo_exams e ON e.id=p.exam_id
+                     WHERE e.is_published=1 AND p.task_key=?
+                     ORDER BY RAND() LIMIT 1"
+                );
+                $subjectSt->execute([$taskKey]);
+                $row = $subjectSt->fetch(PDO::FETCH_ASSOC) ?: [];
+            }
             eo_json(['success' => true, 'data' => [
                 'task_key' => $taskKey,
                 'task_label' => strtoupper(str_replace('tache', 'Tâche ', $taskKey)),

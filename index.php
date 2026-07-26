@@ -2,12 +2,14 @@
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/avatar_helper.php';
 require_once __DIR__ . '/includes/site_contact.php';
+require_once __DIR__ . '/includes/tcf_legacy_tables.php';
 $tcf_index_contact = tcf_site_contact();
 $testimonialsHome = [];
 try {
+    $tTable = tcf_testimonials_table($pdo);
     $testimonialsHome = $pdo->query(
         'SELECT t.id, t.author_name, t.content, t.rating, t.created_at, t.user_id, u.avatar AS user_avatar '
-        . 'FROM testimonials t '
+        . 'FROM `' . $tTable . '` t '
         . 'LEFT JOIN users u ON u.id = t.user_id '
         . 'ORDER BY t.created_at DESC LIMIT 24'
     )->fetchAll(PDO::FETCH_ASSOC);
@@ -244,8 +246,11 @@ unset($_SESSION['contact_flash']);
                         }
                         $tcfAvatarUrl = null;
                         if (!empty($tm['user_id'])) {
-                            $syncedAvatar = tcf_sync_user_avatar_from_disk($pdo, (int) $tm['user_id'], $tm['user_avatar'] ?? null);
-                            $tcfAvatarUrl = tcf_avatar_public_url($syncedAvatar);
+                            $tcfAvatarUrl = tcf_user_avatar_display_url(
+                                $pdo,
+                                (int) $tm['user_id'],
+                                isset($tm['user_avatar']) ? (string) $tm['user_avatar'] : null
+                            );
                         }
                         $tcfRating = isset($tm['rating']) ? (int) $tm['rating'] : 0;
                         if ($tcfRating < 0 || $tcfRating > 5) {

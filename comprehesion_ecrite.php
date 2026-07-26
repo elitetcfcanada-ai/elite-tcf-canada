@@ -196,8 +196,7 @@ $aboUrl = site_href('abonnement.php');
             }
             listEl.innerHTML = rows.map(function (r) {
                 var isPremiumExam = String(r.visibility || 'gratuit') === 'premium';
-                var alwaysFree = !!r.always_free;
-                var locked = isPremiumExam && !alwaysFree && (!viewer || !premiumOk);
+                var locked = isPremiumExam && (!viewer || !premiumOk);
                 var sep = quizBase.indexOf('?') >= 0 ? '&' : '?';
                 var href = quizBase + sep + 'exam_id=' + encodeURIComponent(String(r.id));
                 var nextPath = 'comprehesion_ecrite_quiz.php?exam_id=' + encodeURIComponent(String(r.id));

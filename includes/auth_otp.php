@@ -23,11 +23,24 @@ function tcf_otp_send_for_user(PDO $pdo, int $userId, string $purpose, string $e
         }
 
         $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-        $pdo->prepare('DELETE FROM user_email_codes WHERE user_id = ? AND purpose = ?')->execute([$userId, $purpose]);
-        $ins = $pdo->prepare(
-            'INSERT INTO user_email_codes (user_id, code, purpose, expires_at) VALUES (?, ?, ?, DATE_ADD(NOW(), INTERVAL ' . (int) TCF_OTP_TTL_SECONDS . ' SECOND))'
-        );
-        $ins->execute([$userId, $code, $purpose]);
+        // Schéma consolidé : OTP sur users ; sinon table user_email_codes
+        $hasOtpCol = false;
+        try {
+            $hasOtpCol = (bool) $pdo->query("SHOW COLUMNS FROM users LIKE 'otp_code'")->fetchColumn();
+        } catch (Throwable $e) {
+            $hasOtpCol = false;
+        }
+        if ($hasOtpCol) {
+            $pdo->prepare(
+                'UPDATE users SET otp_code=?, otp_purpose=?, otp_expires_at=DATE_ADD(NOW(), INTERVAL ' . (int) TCF_OTP_TTL_SECONDS . ' SECOND) WHERE id=?'
+            )->execute([$code, $purpose, $userId]);
+        } else {
+            $pdo->prepare('DELETE FROM user_email_codes WHERE user_id = ? AND purpose = ?')->execute([$userId, $purpose]);
+            $ins = $pdo->prepare(
+                'INSERT INTO user_email_codes (user_id, code, purpose, expires_at) VALUES (?, ?, ?, DATE_ADD(NOW(), INTERVAL ' . (int) TCF_OTP_TTL_SECONDS . ' SECOND))'
+            );
+            $ins->execute([$userId, $code, $purpose]);
+        }
 
         $body = 'Bonjour ' . ($row['name'] ?? '') . ",\n\n"
             . $emailBodyIntro . "\n\n"
@@ -60,6 +73,18 @@ function tcf_otp_verify_and_consume(PDO $pdo, int $userId, string $purpose, stri
         return false;
     }
     try {
+        $hasOtpCol = (bool) $pdo->query("SHOW COLUMNS FROM users LIKE 'otp_code'")->fetchColumn();
+        if ($hasOtpCol) {
+            $stmt = $pdo->prepare(
+                'SELECT id FROM users WHERE id=? AND otp_purpose=? AND otp_code=? AND otp_expires_at > NOW() LIMIT 1'
+            );
+            $stmt->execute([$userId, $purpose, $code]);
+            if (!$stmt->fetchColumn()) {
+                return false;
+            }
+            $pdo->prepare('UPDATE users SET otp_code=NULL, otp_purpose=NULL, otp_expires_at=NULL WHERE id=?')->execute([$userId]);
+            return true;
+        }
         $stmt = $pdo->prepare(
             'SELECT id FROM user_email_codes WHERE user_id = ? AND purpose = ? AND code = ? AND expires_at > NOW() LIMIT 1'
         );

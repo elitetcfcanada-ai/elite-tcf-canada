@@ -6,8 +6,20 @@ declare(strict_types=1);
  * Annonces communautaires (image + texte + likes).
  */
 
+function tcf_community_posts_table(PDO $pdo): string
+{
+    require_once __DIR__ . '/tcf_schema.php';
+    if (tcf_schema_has_table($pdo, 'annonces')) {
+        return 'annonces';
+    }
+    return 'community_posts';
+}
+
 function tcf_community_posts_ensure_tables(PDO $pdo): void
 {
+    if (tcf_community_posts_table($pdo) === 'annonces') {
+        return;
+    }
     $pdo->exec(
         "CREATE TABLE IF NOT EXISTS community_posts (
             id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -152,7 +164,28 @@ function tcf_community_record_view(PDO $pdo, int $postId, ?array $user): void
     tcf_community_posts_ensure_tables($pdo);
     $key = tcf_community_viewer_key($user);
     $uid = (int) ($user['id'] ?? 0);
+    $table = tcf_community_posts_table($pdo);
     try {
+        if ($table === 'annonces') {
+            $st = $pdo->prepare('SELECT views_json FROM annonces WHERE id=? AND kind=\'post\'');
+            $st->execute([$postId]);
+            $raw = $st->fetchColumn();
+            $views = json_decode((string) $raw, true);
+            if (!is_array($views)) {
+                $views = [];
+            }
+            foreach ($views as $v) {
+                if (is_array($v) && ($v['viewer_key'] ?? '') === $key) {
+                    return;
+                }
+            }
+            $views[] = ['viewer_key' => $key, 'user_id' => $uid > 0 ? $uid : null];
+            $pdo->prepare('UPDATE annonces SET views_json=? WHERE id=?')->execute([
+                json_encode($views, JSON_UNESCAPED_UNICODE),
+                $postId,
+            ]);
+            return;
+        }
         $pdo->prepare(
             'INSERT IGNORE INTO community_post_views (post_id, viewer_key, user_id) VALUES (?, ?, ?)'
         )->execute([$postId, $key, $uid > 0 ? $uid : null]);
@@ -169,10 +202,41 @@ function tcf_community_posts_list_for_viewer(PDO $pdo, ?array $user, int $limit 
     tcf_community_posts_ensure_tables($pdo);
     $limit = max(1, min(100, $limit));
     $uid = (int) ($user['id'] ?? 0);
+    $table = tcf_community_posts_table($pdo);
+    if ($table === 'annonces') {
+        $st = $pdo->query(
+            "SELECT * FROM annonces
+             WHERE is_published = 1 AND kind = 'post'
+             ORDER BY created_at DESC
+             LIMIT $limit"
+        );
+        $rows = $st->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        $out = [];
+        foreach ($rows as $r) {
+            $vis = (string) ($r['visibility'] ?? 'registered');
+            if (!tcf_community_user_can_view_post($user, $vis)) {
+                continue;
+            }
+            $pid = (int) $r['id'];
+            tcf_community_record_view($pdo, $pid, $user);
+            $likes = json_decode((string) ($r['likes_json'] ?? '[]'), true);
+            if (!is_array($likes)) {
+                $likes = [];
+            }
+            $img = trim((string) ($r['image_url'] ?? ''));
+            $r['image_href'] = $img !== '' ? (function_exists('site_href') ? site_href(ltrim($img, '/')) : '/' . ltrim($img, '/')) : '';
+            $r['liked_by_me'] = $uid > 0 && in_array($uid, array_map('intval', $likes), true);
+            $r['likes_count'] = count($likes);
+            $r['visibility_label'] = tcf_community_visibility_label($vis);
+            unset($r['author_name'], $r['created_by'], $r['likes_json'], $r['views_json'], $r['image_data']);
+            $out[] = $r;
+        }
+        return $out;
+    }
     $st = $pdo->query(
         "SELECT p.*,
             (SELECT COUNT(*) FROM community_post_likes l WHERE l.post_id = p.id) AS likes_count
-         FROM community_posts p
+         FROM `$table` p
          WHERE p.is_published = 1
          ORDER BY p.created_at DESC
          LIMIT $limit"

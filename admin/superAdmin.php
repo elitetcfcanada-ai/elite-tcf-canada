@@ -8,6 +8,11 @@ require_once __DIR__ . '/../includes/site_contact.php';
 require_once __DIR__ . '/../includes/video_duration.php';
 require_once __DIR__ . '/../includes/tcf_notifications_helper.php';
 require_once __DIR__ . '/../includes/community_posts_helper.php';
+require_once __DIR__ . '/../includes/tcf_legacy_tables.php';
+require_once __DIR__ . '/../includes/media_blob.php';
+require_once __DIR__ . '/../includes/video_social.php';
+require_once __DIR__ . '/../includes/tcf_schema.php';
+require_once __DIR__ . '/../includes/partners_helper.php';
 try {
     tcf_community_posts_ensure_tables($pdo);
     tcf_community_drop_channel_tables($pdo);
@@ -220,8 +225,7 @@ function getUsers()
     }
     $users = tcf_enrich_users_with_activity_days($pdo, $users);
     foreach ($users as &$u) {
-        $synced = tcf_sync_user_avatar_from_disk($pdo, (int) $u['id'], $u['avatar'] ?? null);
-        $u['avatar_url'] = $synced ? tcf_avatar_public_url($synced) : null;
+        $u['avatar_url'] = tcf_user_avatar_display_url($pdo, (int) $u['id'], $u['avatar'] ?? null);
         $u['is_online'] = tcf_user_is_online(isset($u['last_activity']) ? (string) $u['last_activity'] : null);
     }
     unset($u);
@@ -424,18 +428,18 @@ function getVideos()
 {
     global $pdo;
     try {
-        $stmt = $pdo->query("SELECT v.*, (SELECT COUNT(*) FROM video_comments vc WHERE vc.video_id = v.id) AS comments_count FROM videos v ORDER BY v.created_at DESC");
-        $videos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $stmt = $pdo->query(tcf_videos_list_select_sql('v') . ' FROM videos v ORDER BY v.created_at DESC');
+        $videos = tcf_videos_normalize_list_rows($stmt->fetchAll(PDO::FETCH_ASSOC) ?: []);
         foreach ($videos as &$v) {
-            $v['thumbnail_href'] = tcf_uploads_public_href($v['thumbnail_url'] ?? '');
-            $v['video_href'] = tcf_uploads_public_href($v['video_url'] ?? '');
+            $v['thumbnail_href'] = tcf_video_media_href($pdo, (int) ($v['id'] ?? 0), $v['thumbnail_url'] ?? '', 'thumbnail');
+            $v['video_href'] = tcf_video_media_href($pdo, (int) ($v['id'] ?? 0), $v['video_url'] ?? '', 'video');
         }
         unset($v);
         try {
             $videos = tcf_enrich_videos_with_playlists($pdo, $videos);
         } catch (Throwable $e) {
         }
-        echo json_encode(['success' => true, 'data' => $videos]);
+        echo json_encode(['success' => true, 'data' => $videos], JSON_UNESCAPED_UNICODE);
     } catch (PDOException $e) {
         echo json_encode(['success' => false, 'message' => 'Erreur base de données: ' . $e->getMessage()]);
     }
@@ -514,6 +518,7 @@ function addVideo()
                 ]);
                 exit();
             }
+            tcf_video_store_blobs_from_paths($pdo, $newVid, $thumbnail_url, $video_url);
             try {
                 tcf_sync_video_playlists($pdo, $newVid, tcf_parse_playlist_ids_from_post());
             } catch (Throwable $e) {
@@ -605,6 +610,7 @@ function updateVideo()
         $success = $stmt->execute([$title, $description, $thumbnail_url, $video_url, $visibility, $duration, $id]);
 
         if ($success) {
+            tcf_video_store_blobs_from_paths($pdo, (int) $id, $thumbnail_url, $video_url);
             try {
                 tcf_sync_video_playlists($pdo, (int) $id, tcf_parse_playlist_ids_from_post());
             } catch (Throwable $e) {
@@ -655,9 +661,23 @@ function getTestimonials()
 {
     global $pdo;
     try {
-        $stmt = $pdo->query('SELECT id, author_name, content, user_id, rating, created_at FROM testimonials ORDER BY created_at DESC');
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        echo json_encode(['success' => true, 'data' => $rows]);
+        $table = tcf_testimonials_table($pdo);
+        $stmt = $pdo->query(
+            "SELECT t.id, t.author_name, t.content, t.user_id, t.rating, t.created_at, u.avatar AS user_avatar
+             FROM `{$table}` t
+             LEFT JOIN users u ON u.id = t.user_id
+             ORDER BY t.created_at DESC"
+        );
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        foreach ($rows as &$t) {
+            $uid = (int) ($t['user_id'] ?? 0);
+            $t['avatar_url'] = $uid > 0
+                ? tcf_user_avatar_display_url($pdo, $uid, isset($t['user_avatar']) ? (string) $t['user_avatar'] : null)
+                : null;
+            unset($t['user_avatar']);
+        }
+        unset($t);
+        echo json_encode(['success' => true, 'data' => $rows], JSON_UNESCAPED_UNICODE);
     } catch (PDOException $e) {
         echo json_encode(['success' => false, 'message' => 'Erreur base de données: ' . $e->getMessage()]);
     }
@@ -677,7 +697,8 @@ function deleteTestimonial()
             echo json_encode(['success' => false, 'message' => 'Identifiant invalide.']);
             exit();
         }
-        $stmt = $pdo->prepare('DELETE FROM testimonials WHERE id = ?');
+        $table = tcf_testimonials_table($pdo);
+        $stmt = $pdo->prepare("DELETE FROM `{$table}` WHERE id = ?");
         $success = $stmt->execute([$id]);
         if ($success) {
             addActivity($_SESSION['user_id'], 'message', 'Témoignage supprimé', "Témoignage #$id supprimé");
@@ -708,7 +729,8 @@ function updateTestimonial()
             exit();
         }
         if ($rating < 0 || $rating > 5) $rating = 0;
-        $stmt = $pdo->prepare('UPDATE testimonials SET author_name = ?, content = ?, rating = ? WHERE id = ?');
+        $table = tcf_testimonials_table($pdo);
+        $stmt = $pdo->prepare("UPDATE `{$table}` SET author_name = ?, content = ?, rating = ? WHERE id = ?");
         $ok   = $stmt->execute([$author, $content, $rating, $id]);
         if ($ok) {
             addActivity($_SESSION['user_id'], 'message', 'Témoignage modifié', "Témoignage #$id modifié");
@@ -1047,8 +1069,7 @@ function getAdmins()
         $admins = $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     foreach ($admins as &$a) {
-        $synced = tcf_sync_user_avatar_from_disk($pdo, (int) $a['id'], $a['avatar'] ?? null);
-        $a['avatar_url'] = $synced ? tcf_avatar_public_url($synced) : null;
+        $a['avatar_url'] = tcf_user_avatar_display_url($pdo, (int) $a['id'], $a['avatar'] ?? null);
         $a['is_online'] = tcf_user_is_online(isset($a['last_activity']) ? (string) $a['last_activity'] : null);
     }
     unset($a);
@@ -1211,6 +1232,10 @@ function tcf_admin_has_visit_logs(): bool
     if ($ok !== null) {
         return $ok;
     }
+    if (tcf_visiteurs_available($pdo)) {
+        $ok = true;
+        return $ok;
+    }
     try {
         $pdo->query('SELECT 1 FROM site_visit_logs LIMIT 1');
         $ok = true;
@@ -1220,20 +1245,55 @@ function tcf_admin_has_visit_logs(): bool
     return $ok;
 }
 
+function tcf_admin_normalize_range(string $range): string
+{
+    $range = preg_replace('/[^a-z0-9]/', '', strtolower($range));
+    $allowed = ['today', '7d', '30d', '90d', 'year'];
+    return in_array($range, $allowed, true) ? $range : '30d';
+}
+
+/** Visites uniques (1 appareil / jour) sur la période. */
+function tcf_admin_unique_visits_sql(string $range = 'today'): string
+{
+    global $pdo;
+    $range = tcf_admin_normalize_range($range);
+    $w = tcf_trace_sql_where($range, 'created_at');
+    if (tcf_visiteurs_available($pdo)) {
+        return "SELECT COUNT(*) FROM (
+            SELECT 1 FROM visiteurs
+            WHERE kind = 'site' AND {$w}
+              AND visitor_key IS NOT NULL AND visitor_key != ''
+            GROUP BY visitor_key, DATE(created_at)
+        ) tcf_uv";
+    }
+
+    return "SELECT COUNT(*) FROM (
+        SELECT 1 FROM site_visit_logs
+        WHERE {$w} AND session_id IS NOT NULL AND session_id != ''
+        GROUP BY session_id, DATE(created_at)
+    ) tcf_uv";
+}
+
+function tcf_admin_visitors_today_sql(): string
+{
+    return tcf_admin_unique_visits_sql('today');
+}
+
 function tcf_trace_sql_where(string $range, string $dateCol = 'created_at'): string
 {
-    switch ($range) {
+    switch (tcf_admin_normalize_range($range)) {
+        case 'today':
+            return "DATE($dateCol) = CURDATE()";
         case '7d':
-            return "$dateCol >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)";
+            return "$dateCol >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)";
         case '30d':
-            return "$dateCol >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)";
+            return "$dateCol >= DATE_SUB(CURDATE(), INTERVAL 29 DAY)";
         case '90d':
-            return "$dateCol >= DATE_SUB(CURDATE(), INTERVAL 90 DAY)";
+            return "$dateCol >= DATE_SUB(CURDATE(), INTERVAL 89 DAY)";
         case 'year':
-            return "YEAR($dateCol) = YEAR(CURDATE())";
-        case 'all':
+            return "$dateCol >= DATE_SUB(CURDATE(), INTERVAL 364 DAY)";
         default:
-            return '1=1';
+            return "$dateCol >= DATE_SUB(CURDATE(), INTERVAL 29 DAY)";
     }
 }
 
@@ -1241,30 +1301,24 @@ function getTraceability()
 {
     saRequireSuperAdminJson();
     global $pdo;
-    $range = preg_replace('/[^a-z0-9]/', '', strtolower($_POST['range'] ?? '30d'));
-    if (!in_array($range, ['7d', '30d', '90d', 'year', 'all'], true)) {
-        $range = '30d';
-    }
+    $range = tcf_admin_normalize_range((string) ($_POST['range'] ?? '30d'));
+
+    $empty = [
+        'range' => $range,
+        'visits_labels' => [],
+        'visits_values' => [],
+        'users_labels' => [],
+        'users_values' => [],
+        'payments_count_labels' => [],
+        'payments_count_values' => [],
+        'revenue_labels' => [],
+        'revenue_values' => [],
+        'visit_countries' => [],
+        'unique_visits' => 0,
+    ];
 
     if (!tcf_admin_has_visit_logs()) {
-        echo json_encode([
-            'success' => true,
-            'data' => [
-                'range' => $range,
-                'visits_labels' => [],
-                'visits_values' => [],
-                'users_labels' => [],
-                'users_values' => [],
-                'payments_count_labels' => [],
-                'payments_count_values' => [],
-                'revenue_labels' => [],
-                'revenue_values' => [],
-                'visit_countries' => [],
-                'signup_countries' => [],
-                'traffic_visits' => [],
-                'traffic_signups' => [],
-            ],
-        ]);
+        echo json_encode(['success' => true, 'data' => $empty]);
         exit();
     }
 
@@ -1272,101 +1326,101 @@ function getTraceability()
         $wVisit = tcf_trace_sql_where($range, 'v.created_at');
         $wUser = tcf_trace_sql_where($range, 'u.created_at');
         $wPay = tcf_trace_sql_where($range, 'p.created_at');
+        $useVisiteurs = tcf_visiteurs_available($pdo);
+        $bucket = 'DATE(v.created_at)';
+        $ub = 'DATE(u.created_at)';
+        $pb = 'DATE(p.created_at)';
 
-        if ($range === 'all') {
-            $bucket = "DATE_FORMAT(v.created_at, '%Y-%m')";
+        // Visites uniques / jour (pas des pages vues)
+        if ($useVisiteurs) {
+            $stmt = $pdo->query(
+                "SELECT {$bucket} AS lb, COUNT(DISTINCT v.visitor_key) AS c
+                 FROM visiteurs v
+                 WHERE v.kind = 'site' AND {$wVisit}
+                   AND v.visitor_key IS NOT NULL AND v.visitor_key != ''
+                 GROUP BY lb ORDER BY lb"
+            );
         } else {
-            $bucket = 'DATE(v.created_at)';
+            $stmt = $pdo->query(
+                "SELECT {$bucket} AS lb, COUNT(DISTINCT v.session_id) AS c
+                 FROM site_visit_logs v
+                 WHERE {$wVisit} AND v.session_id IS NOT NULL AND v.session_id != ''
+                 GROUP BY lb ORDER BY lb"
+            );
         }
-        $stmt = $pdo->query("SELECT $bucket AS lb, COUNT(*) AS c FROM site_visit_logs v WHERE $wVisit GROUP BY lb ORDER BY lb");
         $vis = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        if ($range === 'all') {
-            $ub = "DATE_FORMAT(u.created_at, '%Y-%m')";
-        } else {
-            $ub = 'DATE(u.created_at)';
-        }
-        $stmt = $pdo->query("SELECT $ub AS lb, COUNT(*) AS c FROM users u WHERE u.role = 'user' AND $wUser GROUP BY lb ORDER BY lb");
+        $stmt = $pdo->query(
+            "SELECT {$ub} AS lb, COUNT(*) AS c FROM users u WHERE u.role = 'user' AND {$wUser} GROUP BY lb ORDER BY lb"
+        );
         $usr = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        if ($range === 'all') {
-            $pb = "DATE_FORMAT(p.created_at, '%Y-%m')";
-        } else {
-            $pb = 'DATE(p.created_at)';
-        }
-        $stmt = $pdo->query("SELECT $pb AS lb, COUNT(*) AS c FROM payments p WHERE p.status = 'completed' AND $wPay GROUP BY lb ORDER BY lb");
-        $payc = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        $stmt = $pdo->query("SELECT $pb AS lb, COALESCE(SUM(p.amount),0) AS s FROM payments p WHERE p.status = 'completed' AND $wPay GROUP BY lb ORDER BY lb");
-        $rev = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        $stmt = $pdo->query("
-            SELECT v.country_code AS code, v.country_name AS name,
-                   COUNT(*) AS c,
-                   AVG(v.latitude) AS lat, AVG(v.longitude) AS lon
-            FROM site_visit_logs v
-            WHERE $wVisit AND v.country_code IS NOT NULL AND v.country_code != ''
-            GROUP BY v.country_code, v.country_name
-            ORDER BY c DESC
-            LIMIT 40
-        ");
-        $vcountries = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        $stmt = $pdo->query("
-            SELECT u.reg_country_code AS code, u.reg_country_name AS name, COUNT(*) AS c
-            FROM users u
-            WHERE u.role = 'user' AND $wUser
-              AND u.reg_country_code IS NOT NULL AND u.reg_country_code != ''
-            GROUP BY u.reg_country_code, u.reg_country_name
-            ORDER BY c DESC
-            LIMIT 40
-        ");
-        $scountries = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        $stmt = $pdo->query('
-            SELECT country_code AS code, AVG(latitude) AS lat, AVG(longitude) AS lon
-            FROM site_visit_logs
-            WHERE latitude IS NOT NULL AND longitude IS NOT NULL AND country_code IS NOT NULL
-            GROUP BY country_code
-        ');
-        $centroids = [];
-        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
-            $centroids[$r['code']] = ['lat' => (float) $r['lat'], 'lon' => (float) $r['lon']];
-        }
-        foreach ($scountries as &$sr) {
-            $c = $sr['code'];
-            if (isset($centroids[$c])) {
-                $sr['lat'] = $centroids[$c]['lat'];
-                $sr['lon'] = $centroids[$c]['lon'];
-            } else {
-                $sr['lat'] = null;
-                $sr['lon'] = null;
+        $payc = [];
+        $rev = [];
+        try {
+            $payTable = tcf_subscription_payments_table($pdo);
+            $payWhere = tcf_subscription_payments_revenue_where($payTable, 'p');
+            $wPayP = tcf_trace_sql_where($range, 'p.created_at');
+            $stmt = $pdo->query(
+                "SELECT DATE(p.created_at) AS lb, COUNT(*) AS c
+                 FROM `{$payTable}` p
+                 WHERE ({$payWhere}) AND {$wPayP}
+                 GROUP BY lb ORDER BY lb"
+            );
+            $payc = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $stmt = $pdo->query(
+                "SELECT DATE(p.created_at) AS lb, COALESCE(SUM(p.amount),0) AS s
+                 FROM `{$payTable}` p
+                 WHERE ({$payWhere}) AND {$wPayP}
+                 GROUP BY lb ORDER BY lb"
+            );
+            $rev = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Throwable $e) {
+            try {
+                $stmt = $pdo->query(
+                    "SELECT {$pb} AS lb, COUNT(*) AS c FROM payments p WHERE p.status = 'completed' AND {$wPay} GROUP BY lb ORDER BY lb"
+                );
+                $payc = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                $stmt = $pdo->query(
+                    "SELECT {$pb} AS lb, COALESCE(SUM(p.amount),0) AS s FROM payments p WHERE p.status = 'completed' AND {$wPay} GROUP BY lb ORDER BY lb"
+                );
+                $rev = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            } catch (Throwable $e2) {
+                $payc = [];
+                $rev = [];
             }
         }
-        unset($sr);
 
-        $stmt = $pdo->query("
-            SELECT v.traffic_source AS src, COUNT(*) AS c
-            FROM site_visit_logs v
-            WHERE $wVisit
-            GROUP BY v.traffic_source
-            ORDER BY c DESC
-        ");
-        $tvis = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        $stmt = $pdo->query("
-            SELECT u.reg_traffic_source AS src, COUNT(*) AS c
-            FROM users u
-            WHERE u.role = 'user' AND $wUser AND u.reg_traffic_source IS NOT NULL AND u.reg_traffic_source != ''
-            GROUP BY u.reg_traffic_source
-            ORDER BY c DESC
-        ");
-        $tsign = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if ($useVisiteurs) {
+            $stmt = $pdo->query(
+                "SELECT v.country_code AS code, v.country_name AS name,
+                        COUNT(DISTINCT v.visitor_key) AS c
+                 FROM visiteurs v
+                 WHERE v.kind = 'site' AND {$wVisit}
+                   AND v.country_code IS NOT NULL AND v.country_code != ''
+                   AND v.visitor_key IS NOT NULL AND v.visitor_key != ''
+                 GROUP BY v.country_code, v.country_name
+                 ORDER BY c DESC
+                 LIMIT 12"
+            );
+        } else {
+            $stmt = $pdo->query(
+                "SELECT v.country_code AS code, v.country_name AS name,
+                        COUNT(DISTINCT v.session_id) AS c
+                 FROM site_visit_logs v
+                 WHERE {$wVisit} AND v.country_code IS NOT NULL AND v.country_code != ''
+                 GROUP BY v.country_code, v.country_name
+                 ORDER BY c DESC
+                 LIMIT 12"
+            );
+        }
+        $vcountries = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         echo json_encode([
             'success' => true,
             'data' => [
                 'range' => $range,
+                'unique_visits' => sa_safe_count($pdo, tcf_admin_unique_visits_sql($range)),
                 'visits_labels' => array_column($vis, 'lb'),
                 'visits_values' => array_map('intval', array_column($vis, 'c')),
                 'users_labels' => array_column($usr, 'lb'),
@@ -1376,9 +1430,6 @@ function getTraceability()
                 'revenue_labels' => array_column($rev, 'lb'),
                 'revenue_values' => array_map('floatval', array_column($rev, 's')),
                 'visit_countries' => $vcountries,
-                'signup_countries' => $scountries,
-                'traffic_visits' => $tvis,
-                'traffic_signups' => $tsign,
             ],
         ]);
     } catch (PDOException $e) {
@@ -1458,32 +1509,83 @@ function getAdminDashboardStats(): void
     $videosTotal = sa_safe_count($pdo, 'SELECT COUNT(*) FROM videos');
     $videosPublic = sa_safe_count($pdo, "SELECT COUNT(*) FROM videos WHERE visibility IN ('public','premium') OR visibility IS NULL OR visibility=''");
     $videoViews = sa_safe_count($pdo, 'SELECT COALESCE(SUM(views), 0) FROM videos');
-    $videoComments = sa_safe_count($pdo, 'SELECT COUNT(*) FROM video_comments');
+    $videoComments = 0;
+    try {
+        $stVc = $pdo->query("SELECT comments_json FROM videos WHERE comments_json IS NOT NULL AND comments_json != '' AND comments_json != '[]'");
+        foreach ($stVc->fetchAll(PDO::FETCH_COLUMN) as $rawComments) {
+            $decoded = json_decode((string) $rawComments, true);
+            if (is_array($decoded)) {
+                $videoComments += count($decoded);
+            }
+        }
+    } catch (Throwable $e) {
+        $videoComments = sa_safe_count($pdo, 'SELECT COUNT(*) FROM video_comments');
+    }
 
-    $ceTotal = sa_safe_count($pdo, 'SELECT COUNT(*) FROM tcf_ce_exams');
-    $cePub = sa_safe_count($pdo, 'SELECT COUNT(*) FROM tcf_ce_exams WHERE is_published=1');
-    $coTotal = sa_safe_count($pdo, 'SELECT COUNT(*) FROM tcf_co_exams');
-    $coPub = sa_safe_count($pdo, 'SELECT COUNT(*) FROM tcf_co_exams WHERE is_published=1');
-    $eeTotal = sa_safe_count($pdo, 'SELECT COUNT(*) FROM tcf_ee_exams');
-    $eePub = sa_safe_count($pdo, 'SELECT COUNT(*) FROM tcf_ee_exams WHERE is_published=1');
-    $eoTotal = sa_safe_count($pdo, 'SELECT COUNT(*) FROM tcf_eo_exams');
-    $eoPub = sa_safe_count($pdo, 'SELECT COUNT(*) FROM tcf_eo_exams WHERE is_published=1');
+    if (tcf_schema_has_table($pdo, 'comprehension_ecrite')) {
+        $ceTotal = sa_safe_count($pdo, "SELECT COUNT(*) FROM comprehension_ecrite WHERE kind='exam'");
+        $cePub = sa_safe_count($pdo, "SELECT COUNT(*) FROM comprehension_ecrite WHERE kind='exam' AND is_published=1");
+        $ceViews = sa_safe_count($pdo, "SELECT COALESCE(SUM(views_count), 0) FROM comprehension_ecrite WHERE kind='exam'");
+    } else {
+        $ceTotal = sa_safe_count($pdo, 'SELECT COUNT(*) FROM tcf_ce_exams');
+        $cePub = sa_safe_count($pdo, 'SELECT COUNT(*) FROM tcf_ce_exams WHERE is_published=1');
+        $ceViews = sa_safe_count($pdo, 'SELECT COUNT(*) FROM tcf_ce_exam_views');
+    }
+    if (tcf_schema_has_table($pdo, 'comprehension_orale')) {
+        $coTotal = sa_safe_count($pdo, "SELECT COUNT(*) FROM comprehension_orale WHERE kind='exam'");
+        $coPub = sa_safe_count($pdo, "SELECT COUNT(*) FROM comprehension_orale WHERE kind='exam' AND is_published=1");
+        $coViews = sa_safe_count($pdo, "SELECT COALESCE(SUM(views_count), 0) FROM comprehension_orale WHERE kind='exam'");
+    } else {
+        $coTotal = sa_safe_count($pdo, 'SELECT COUNT(*) FROM tcf_co_exams');
+        $coPub = sa_safe_count($pdo, 'SELECT COUNT(*) FROM tcf_co_exams WHERE is_published=1');
+        $coViews = sa_safe_count($pdo, 'SELECT COUNT(*) FROM tcf_co_exam_views');
+    }
+    if (tcf_schema_has_table($pdo, 'expression_ecrite')) {
+        $eeTotal = sa_safe_count($pdo, "SELECT COUNT(*) FROM expression_ecrite WHERE kind='exam'");
+        $eePub = sa_safe_count($pdo, "SELECT COUNT(*) FROM expression_ecrite WHERE kind='exam' AND is_published=1");
+        $eeViews = sa_safe_count($pdo, "SELECT COALESCE(SUM(views_count), 0) FROM expression_ecrite WHERE kind='exam'");
+    } else {
+        $eeTotal = sa_safe_count($pdo, 'SELECT COUNT(*) FROM tcf_ee_exams');
+        $eePub = sa_safe_count($pdo, 'SELECT COUNT(*) FROM tcf_ee_exams WHERE is_published=1');
+        $eeViews = sa_safe_count($pdo, 'SELECT COUNT(*) FROM tcf_ee_exam_views');
+    }
+    if (tcf_schema_has_table($pdo, 'expression_orale')) {
+        $eoTotal = sa_safe_count($pdo, "SELECT COUNT(*) FROM expression_orale WHERE kind='exam'");
+        $eoPub = sa_safe_count($pdo, "SELECT COUNT(*) FROM expression_orale WHERE kind='exam' AND is_published=1");
+        $eoViews = sa_safe_count($pdo, "SELECT COALESCE(SUM(views_count), 0) FROM expression_orale WHERE kind='exam'");
+    } else {
+        $eoTotal = sa_safe_count($pdo, 'SELECT COUNT(*) FROM tcf_eo_exams');
+        $eoPub = sa_safe_count($pdo, 'SELECT COUNT(*) FROM tcf_eo_exams WHERE is_published=1');
+        $eoViews = sa_safe_count($pdo, 'SELECT COUNT(*) FROM tcf_eo_exam_views');
+    }
 
-    $ceViews = sa_safe_count($pdo, 'SELECT COUNT(*) FROM tcf_ce_exam_views');
-    $coViews = sa_safe_count($pdo, 'SELECT COUNT(*) FROM tcf_co_exam_views');
-    $eeViews = sa_safe_count($pdo, 'SELECT COUNT(*) FROM tcf_ee_exam_views');
-    $eoViews = sa_safe_count($pdo, 'SELECT COUNT(*) FROM tcf_eo_exam_views');
-
-    $annTotal = sa_safe_count($pdo, 'SELECT COUNT(*) FROM community_posts');
-    $annPub = sa_safe_count($pdo, 'SELECT COUNT(*) FROM community_posts WHERE is_published=1');
-    $annViews = sa_safe_count($pdo, 'SELECT COUNT(*) FROM community_post_views');
+    $annTotal = 0;
+    $annPub = 0;
+    $annViews = 0;
+    $cpTable = tcf_community_posts_table($pdo);
+    if ($cpTable === 'annonces') {
+        $annTotal = sa_safe_count($pdo, "SELECT COUNT(*) FROM annonces WHERE kind='post'");
+        $annPub = sa_safe_count($pdo, "SELECT COUNT(*) FROM annonces WHERE kind='post' AND is_published=1");
+        try {
+            $stAnn = $pdo->query("SELECT views_json FROM annonces WHERE kind='post' AND views_json IS NOT NULL AND views_json != '' AND views_json != '[]'");
+            foreach ($stAnn->fetchAll(PDO::FETCH_COLUMN) as $rawViews) {
+                $decoded = json_decode((string) $rawViews, true);
+                if (is_array($decoded)) {
+                    $annViews += count($decoded);
+                }
+            }
+        } catch (Throwable $e) {
+            $annViews = 0;
+        }
+    } else {
+        $annTotal = sa_safe_count($pdo, 'SELECT COUNT(*) FROM community_posts');
+        $annPub = sa_safe_count($pdo, 'SELECT COUNT(*) FROM community_posts WHERE is_published=1');
+        $annViews = sa_safe_count($pdo, 'SELECT COUNT(*) FROM community_post_views');
+    }
 
     $visitorsToday = 0;
     if (tcf_admin_has_visit_logs()) {
-        $visitorsToday = sa_safe_count(
-            $pdo,
-            'SELECT COUNT(DISTINCT session_id) FROM site_visit_logs WHERE DATE(created_at) = CURDATE()'
-        );
+        $visitorsToday = sa_safe_count($pdo, tcf_admin_visitors_today_sql());
     } else {
         $visitorsToday = sa_safe_count(
             $pdo,
@@ -1571,52 +1673,165 @@ function getStats()
     saRequireSuperAdminJson();
     global $pdo;
     try {
-        $stmt = $pdo->query("SELECT COUNT(*) as count FROM users WHERE role = 'user'");
-        $usersCount = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
+        $range = tcf_admin_normalize_range((string) ($_POST['range'] ?? 'today'));
+
+        $usersCount = sa_safe_count($pdo, "SELECT COUNT(*) FROM users WHERE role = 'user'");
+        $adminsCount = sa_safe_count($pdo, "SELECT COUNT(*) FROM users WHERE role IN ('admin','super_admin')");
+        $usersActive = sa_safe_count($pdo, "SELECT COUNT(*) FROM users WHERE role = 'user' AND status = 'active'");
 
         $visitorsCount = 0;
         if (tcf_admin_has_visit_logs()) {
-            $stmt = $pdo->query("SELECT COUNT(DISTINCT session_id) as count FROM site_visit_logs WHERE DATE(created_at) = CURDATE()");
-            $visitorsCount = (int) $stmt->fetch(PDO::FETCH_ASSOC)['count'];
+            $visitorsCount = sa_safe_count($pdo, tcf_admin_unique_visits_sql($range));
         } else {
-            try {
-                $stmt = $pdo->query("SELECT COUNT(DISTINCT ip_address) as count FROM analytics WHERE DATE(created_at) = CURDATE()");
-                $visitorsCount = (int) $stmt->fetch(PDO::FETCH_ASSOC)['count'];
-            } catch (Throwable $e) {
-                $visitorsCount = 0;
-            }
+            $wAnalytics = tcf_trace_sql_where($range, 'created_at');
+            $visitorsCount = sa_safe_count(
+                $pdo,
+                "SELECT COUNT(DISTINCT ip_address) FROM analytics WHERE {$wAnalytics}"
+            );
         }
 
-        $stmt = $pdo->query("SELECT COUNT(*) as count FROM users WHERE subscription_type != 'free' AND status = 'active' AND role = 'user'");
-        $subsCount = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
+        $subsCount = sa_safe_count(
+            $pdo,
+            "SELECT COUNT(*) FROM users
+             WHERE role = 'user'
+               AND status = 'active'
+               AND subscription_type != 'free'
+               AND (subscription_expires_at IS NULL OR subscription_expires_at > NOW())"
+        );
 
         $revenuePayments = 0.0;
         try {
-            $stmt = $pdo->query("SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE status = 'completed' AND MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE())");
+            $stmt = $pdo->query(
+                "SELECT COALESCE(SUM(amount), 0) AS total FROM payments
+                 WHERE status = 'completed'
+                   AND MONTH(created_at) = MONTH(CURDATE())
+                   AND YEAR(created_at) = YEAR(CURDATE())"
+            );
             $revenuePayments = (float) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
         } catch (Throwable $e) {
             $revenuePayments = 0.0;
         }
 
         $revenueSubsMonth = 0.0;
+        $paymentsCount = 0;
         try {
-            $stmt = $pdo->query("SELECT COALESCE(SUM(amount), 0) FROM subscription_payments WHERE MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE())");
+            $payTable = tcf_subscription_payments_table($pdo);
+            $payWhereRev = tcf_subscription_payments_revenue_where($payTable);
+            $payWhereHist = tcf_subscription_payments_history_where($payTable);
+            $stmt = $pdo->query(
+                "SELECT COALESCE(SUM(amount), 0) FROM `{$payTable}`
+                 WHERE ({$payWhereRev})
+                   AND MONTH(created_at) = MONTH(CURDATE())
+                   AND YEAR(created_at) = YEAR(CURDATE())"
+            );
             $revenueSubsMonth = (float) $stmt->fetchColumn();
+            $paymentsCount = sa_safe_count($pdo, "SELECT COUNT(*) FROM `{$payTable}` WHERE ({$payWhereHist})");
         } catch (Throwable $e) {
             $revenueSubsMonth = 0.0;
+            $paymentsCount = 0;
         }
 
         $revenue = $revenuePayments + $revenueSubsMonth;
 
+        $plansTable = tcf_subscription_plans_table($pdo);
+        $plansTotal = sa_safe_count($pdo, "SELECT COUNT(*) FROM `{$plansTable}`");
+        $plansActive = sa_safe_count($pdo, "SELECT COUNT(*) FROM `{$plansTable}` WHERE is_active = 1");
+
+        $videosTotal = sa_safe_count($pdo, 'SELECT COUNT(*) FROM videos');
+        $videoViews = sa_safe_count($pdo, 'SELECT COALESCE(SUM(views), 0) FROM videos');
+
+        $temTable = tcf_testimonials_table($pdo);
+        $testimonialsTotal = sa_safe_count($pdo, "SELECT COUNT(*) FROM `{$temTable}`");
+        $testimonialsPub = sa_safe_count($pdo, "SELECT COUNT(*) FROM `{$temTable}` WHERE is_published = 1");
+
+        $partTable = tcf_partners_table($pdo);
+        $partnersTotal = sa_safe_count($pdo, "SELECT COUNT(*) FROM `{$partTable}`");
+        $partnersPub = sa_safe_count($pdo, "SELECT COUNT(*) FROM `{$partTable}` WHERE is_published = 1");
+
+        $annTotal = 0;
+        $annPub = 0;
+        $cpTable = tcf_community_posts_table($pdo);
+        if ($cpTable === 'annonces') {
+            $annTotal = sa_safe_count($pdo, "SELECT COUNT(*) FROM annonces WHERE kind = 'post'");
+            $annPub = sa_safe_count($pdo, "SELECT COUNT(*) FROM annonces WHERE kind = 'post' AND is_published = 1");
+        } else {
+            $annTotal = sa_safe_count($pdo, 'SELECT COUNT(*) FROM community_posts');
+            $annPub = sa_safe_count($pdo, 'SELECT COUNT(*) FROM community_posts WHERE is_published = 1');
+        }
+
+        if (tcf_schema_has_table($pdo, 'comprehension_ecrite')) {
+            $ceTotal = sa_safe_count($pdo, "SELECT COUNT(*) FROM comprehension_ecrite WHERE kind = 'exam'");
+            $coTotal = sa_safe_count($pdo, "SELECT COUNT(*) FROM comprehension_orale WHERE kind = 'exam'");
+            $eeTotal = sa_safe_count($pdo, "SELECT COUNT(*) FROM expression_ecrite WHERE kind = 'exam'");
+            $eoTotal = sa_safe_count($pdo, "SELECT COUNT(*) FROM expression_orale WHERE kind = 'exam'");
+        } else {
+            $ceTotal = sa_safe_count($pdo, 'SELECT COUNT(*) FROM tcf_ce_exams');
+            $coTotal = sa_safe_count($pdo, 'SELECT COUNT(*) FROM tcf_co_exams');
+            $eeTotal = sa_safe_count($pdo, 'SELECT COUNT(*) FROM tcf_ee_exams');
+            $eoTotal = sa_safe_count($pdo, 'SELECT COUNT(*) FROM tcf_eo_exams');
+        }
+        $examsTotal = $ceTotal + $coTotal + $eeTotal + $eoTotal;
+
+        $activitiesCount = 0;
+        if (tcf_schema_has_table($pdo, 'activites')) {
+            $activitiesCount = sa_safe_count($pdo, "SELECT COUNT(*) FROM activites WHERE kind = 'log'");
+        } else {
+            $activitiesCount = sa_safe_count($pdo, 'SELECT COUNT(*) FROM activities');
+        }
+
         echo json_encode([
             'success' => true,
             'data' => [
+                'range' => $range,
                 'users' => $usersCount,
+                'users_active' => $usersActive,
+                'admins' => $adminsCount,
                 'visitors' => $visitorsCount,
                 'subs' => $subsCount,
                 'revenue' => $revenue,
                 'revenue_subscription_demo' => $revenueSubsMonth,
                 'revenue_payments_gateway' => $revenuePayments,
+                'videos' => $videosTotal,
+                'video_views' => $videoViews,
+                'testimonials' => $testimonialsTotal,
+                'testimonials_published' => $testimonialsPub,
+                'partners' => $partnersTotal,
+                'partners_published' => $partnersPub,
+                'announcements' => $annTotal,
+                'announcements_published' => $annPub,
+                'plans' => $plansTotal,
+                'plans_active' => $plansActive,
+                'payments' => $paymentsCount,
+                'activities' => $activitiesCount,
+                'exams' => $examsTotal,
+                'exams_by_skill' => [
+                    'ce' => $ceTotal,
+                    'co' => $coTotal,
+                    'ee' => $eeTotal,
+                    'eo' => $eoTotal,
+                ],
+                'charts' => [
+                    'platform_mix' => [
+                        'labels' => [
+                            'Utilisateurs',
+                            'Vidéos',
+                            'Épreuves',
+                            'Témoignages',
+                            'Partenaires',
+                            'Annonces',
+                            'Forfaits',
+                        ],
+                        'values' => [
+                            $usersCount,
+                            $videosTotal,
+                            $examsTotal,
+                            $testimonialsTotal,
+                            $partnersTotal,
+                            $annTotal,
+                            $plansTotal,
+                        ],
+                    ],
+                ],
             ],
         ]);
     } catch (PDOException $e) {
@@ -1629,18 +1844,26 @@ function getSubscriptionPaymentsAdmin(): void
 {
     global $pdo;
     try {
+        $payTable = tcf_subscription_payments_table($pdo);
+        $paySel = tcf_subscription_payments_select_sql($payTable, 'sp');
+        $payWhere = tcf_subscription_payments_history_where($payTable, 'sp');
         $stmt = $pdo->query(
-            "SELECT sp.id, sp.user_id, sp.plan_key, sp.plan_label, sp.amount, sp.currency, sp.payment_method, sp.created_at,
-                    u.name AS user_name, u.email AS user_email
-             FROM subscription_payments sp
+            $paySel . ", u.name AS user_name, u.email AS user_email
+             FROM `{$payTable}` sp
              LEFT JOIN users u ON u.id = sp.user_id
+             WHERE ({$payWhere})
              ORDER BY sp.created_at DESC
              LIMIT 500"
         );
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        echo json_encode(['success' => true, 'data' => $rows]);
+        echo json_encode(['success' => true, 'data' => $rows], JSON_UNESCAPED_UNICODE);
     } catch (Throwable $e) {
-        echo json_encode(['success' => false, 'data' => [], 'message' => 'Table subscription_payments absente ou erreur — importez database/tcf.sql']);
+        error_log('getSubscriptionPaymentsAdmin: ' . $e->getMessage());
+        echo json_encode([
+            'success' => false,
+            'data' => [],
+            'message' => 'Impossible de charger l’historique des paiements.',
+        ], JSON_UNESCAPED_UNICODE);
     }
     exit();
 }
@@ -1655,9 +1878,12 @@ function tcf_sa_subscription_revenue_chart_last12m(PDO $pdo): array
     $monthsFr = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
     $byMonth = [];
     try {
+        $payTable = tcf_subscription_payments_table($pdo);
+        $payWhere = tcf_subscription_payments_revenue_where($payTable);
         $stM = $pdo->query(
             "SELECT DATE_FORMAT(created_at, '%Y-%m') AS ym, COALESCE(SUM(amount), 0) AS total
-             FROM subscription_payments
+             FROM `{$payTable}`
+             WHERE ({$payWhere})
              GROUP BY DATE_FORMAT(created_at, '%Y-%m')"
         );
         foreach ($stM->fetchAll(PDO::FETCH_ASSOC) as $r) {
@@ -1683,11 +1909,13 @@ function getSubscriptionRevenueStatsAdmin(): void
 {
     global $pdo;
     try {
-        $total = (float) $pdo->query('SELECT COALESCE(SUM(amount), 0) FROM subscription_payments')->fetchColumn();
+        $payTable = tcf_subscription_payments_table($pdo);
+        $payWhere = tcf_subscription_payments_revenue_where($payTable);
+        $total = (float) $pdo->query("SELECT COALESCE(SUM(amount), 0) FROM `{$payTable}` WHERE ({$payWhere})")->fetchColumn();
         $month = (float) $pdo->query(
-            'SELECT COALESCE(SUM(amount), 0) FROM subscription_payments WHERE MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE())'
+            "SELECT COALESCE(SUM(amount), 0) FROM `{$payTable}` WHERE ({$payWhere}) AND MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE())"
         )->fetchColumn();
-        $count = (int) $pdo->query('SELECT COUNT(*) FROM subscription_payments')->fetchColumn();
+        $count = (int) $pdo->query("SELECT COUNT(*) FROM `{$payTable}` WHERE ({$payWhere})")->fetchColumn();
         $chart = tcf_sa_subscription_revenue_chart_last12m($pdo);
         echo json_encode([
             'success' => true,
@@ -1734,9 +1962,7 @@ function getSubscriptionsPlatformModeAdmin(): void
         echo json_encode([
             'success' => true,
             'disabled' => $disabled,
-            'message' => $disabled
-                ? 'Mode gratuit actif : tout le contenu premium est accessible sans abonnement.'
-                : 'Abonnements actifs : les cartes et paiements sont visibles côté utilisateur.',
+            'message' => $disabled ? 'Désactivée' : 'Activée',
         ], JSON_UNESCAPED_UNICODE);
     } catch (Throwable $e) {
         echo json_encode(['success' => false, 'disabled' => false, 'message' => $e->getMessage()]);
@@ -1784,17 +2010,25 @@ function createSubscriptionPlanAdmin(): void
         if ($feats === false) {
             $feats = '[]';
         }
-        $mxSt = $pdo->query('SELECT COALESCE(MAX(sort_order), 0) FROM subscription_plan_catalog');
+        $table = tcf_subscription_plans_table($pdo);
+        $mxSt = $pdo->query("SELECT COALESCE(MAX(sort_order), 0) FROM `{$table}`");
         $mx = $mxSt ? (int) $mxSt->fetchColumn() : 0;
-        $st = $pdo->prepare(
-            'INSERT INTO subscription_plan_catalog (plan_key, tier, badge, price, currency, duration_days, features_json, sort_order, is_active) VALUES (?, ?, ?, 0, ?, 7, ?, ?, 1)'
-        );
-        $st->execute([$planKey, $tier, $badge, '$', $feats, $mx + 1]);
+        if ($table === 'abonnements') {
+            $st = $pdo->prepare(
+                'INSERT INTO abonnements (plan_key, tier, badge, title, price_label, price_xaf, duration_days, features_json, sort_order, is_active) VALUES (?, ?, ?, ?, ?, 0, 7, ?, ?, 1)'
+            );
+            $st->execute([$planKey, $tier, $badge, $badge !== '' ? $badge : $tier, '$', $feats, $mx + 1]);
+        } else {
+            $st = $pdo->prepare(
+                'INSERT INTO subscription_plan_catalog (plan_key, tier, badge, price, currency, duration_days, features_json, sort_order, is_active) VALUES (?, ?, ?, 0, ?, 7, ?, ?, 1)'
+            );
+            $st->execute([$planKey, $tier, $badge, '$', $feats, $mx + 1]);
+        }
         echo json_encode(['success' => true, 'message' => 'Forfait ajouté. Complétez les informations puis enregistrez.']);
     } catch (Throwable $e) {
         $msg = $e->getMessage();
-        if (str_contains($msg, 'subscription_plan_catalog') || str_contains($msg, 'Unknown table')) {
-            echo json_encode(['success' => false, 'message' => 'Table catalogue absente — exécutez la migration SQL fournie avec le projet (subscription_plan_catalog).']);
+        if (str_contains($msg, 'abonnements') || str_contains($msg, 'subscription_plan_catalog') || str_contains($msg, 'Unknown table')) {
+            echo json_encode(['success' => false, 'message' => 'Table catalogue absente — importez database/tcf.sql.']);
             exit();
         }
         echo json_encode(['success' => false, 'message' => 'Erreur : ' . $msg]);
@@ -1811,7 +2045,8 @@ function deleteSubscriptionPlanAdmin(): void
         exit();
     }
     try {
-        $st = $pdo->prepare('SELECT plan_key FROM subscription_plan_catalog WHERE id = ?');
+        $table = tcf_subscription_plans_table($pdo);
+        $st = $pdo->prepare("SELECT plan_key FROM `{$table}` WHERE id = ?");
         $st->execute([$id]);
         $key = $st->fetchColumn();
         if ($key === false || $key === null) {
@@ -1828,7 +2063,7 @@ function deleteSubscriptionPlanAdmin(): void
             ]);
             exit();
         }
-        $pdo->prepare('DELETE FROM subscription_plan_catalog WHERE id = ?')->execute([$id]);
+        $pdo->prepare("DELETE FROM `{$table}` WHERE id = ?")->execute([$id]);
         echo json_encode(['success' => true, 'message' => 'Forfait supprimé.']);
     } catch (Throwable $e) {
         echo json_encode(['success' => false, 'message' => 'Erreur : ' . $e->getMessage()]);
@@ -1848,10 +2083,8 @@ function saveSubscriptionPlanAdmin(): void
     $badge = trim((string) ($_POST['badge'] ?? ''));
     $priceRaw = str_replace(',', '.', trim((string) ($_POST['price'] ?? '0')));
     $price = is_numeric($priceRaw) ? (float) $priceRaw : -1.0;
-    $currency = trim((string) ($_POST['currency'] ?? '$'));
-    if (strlen($currency) > 8) {
-        $currency = '$';
-    }
+    // Devise catalogue : toujours le dollar (affichage plateforme).
+    $currency = '$';
     $duration = (int) ($_POST['duration_days'] ?? 7);
     if ($duration < 1) {
         $duration = 7;
@@ -1889,16 +2122,24 @@ function saveSubscriptionPlanAdmin(): void
     }
 
     try {
-        $chk = $pdo->prepare('SELECT id FROM subscription_plan_catalog WHERE id = ?');
+        $table = tcf_subscription_plans_table($pdo);
+        $chk = $pdo->prepare("SELECT id FROM `{$table}` WHERE id = ?");
         $chk->execute([$id]);
         if (!$chk->fetchColumn()) {
             echo json_encode(['success' => false, 'message' => 'Formule introuvable (id).']);
             exit();
         }
-        $st = $pdo->prepare(
-            'UPDATE subscription_plan_catalog SET tier = ?, badge = ?, price = ?, currency = ?, duration_days = ?, features_json = ?, sort_order = ?, is_active = ? WHERE id = ?'
-        );
-        $st->execute([$tier, $badge, $price, $currency, $duration, $featuresJson, $sortOrder, $isActive, $id]);
+        if ($table === 'abonnements') {
+            $st = $pdo->prepare(
+                'UPDATE abonnements SET tier = ?, badge = ?, title = ?, price_label = ?, price_xaf = ?, duration_days = ?, features_json = ?, sort_order = ?, is_active = ? WHERE id = ?'
+            );
+            $st->execute([$tier, $badge, $badge !== '' ? $badge : $tier, $currency, (int) round($price), $duration, $featuresJson, $sortOrder, $isActive, $id]);
+        } else {
+            $st = $pdo->prepare(
+                'UPDATE subscription_plan_catalog SET tier = ?, badge = ?, price = ?, currency = ?, duration_days = ?, features_json = ?, sort_order = ?, is_active = ? WHERE id = ?'
+            );
+            $st->execute([$tier, $badge, $price, $currency, $duration, $featuresJson, $sortOrder, $isActive, $id]);
+        }
         echo json_encode(['success' => true, 'message' => 'Formule enregistrée. Elle apparaît sur la page Abonnement.']);
     } catch (Throwable $e) {
         echo json_encode(['success' => false, 'message' => 'Erreur : ' . $e->getMessage()]);
@@ -1916,15 +2157,28 @@ function getActivities()
             $limit = min(800, max(1, (int) $_POST['limit']));
         }
         $lim = (string) $limit;
-        $stmt = $pdo->prepare(
-            "
+        if (tcf_schema_has_table($pdo, 'activites')) {
+            $stmt = $pdo->prepare(
+                "
+            SELECT a.id, a.user_id, a.type, a.title, a.description, a.icon, a.created_at,
+                   u.name AS user_name, u.email AS user_email
+            FROM activites a
+            LEFT JOIN users u ON a.user_id = u.id
+            WHERE a.kind = 'log'
+            ORDER BY a.created_at DESC, a.id DESC
+            LIMIT {$lim}"
+            );
+        } else {
+            $stmt = $pdo->prepare(
+                "
             SELECT a.id, a.user_id, a.type, a.title, a.description, a.icon, a.created_at,
                    u.name AS user_name, u.email AS user_email
             FROM activities a
             LEFT JOIN users u ON a.user_id = u.id
             ORDER BY a.created_at DESC, a.id DESC
             LIMIT {$lim}"
-        );
+            );
+        }
         $stmt->execute();
         $activities = $stmt->fetchAll(PDO::FETCH_ASSOC);
         echo json_encode(['success' => true, 'data' => $activities]);
@@ -1991,8 +2245,7 @@ function addActivity($user_id, $type, $title, $description)
 
         $icon = $icons[$type] ?? 'bx bxs-bell';
 
-        $stmt = $pdo->prepare("INSERT INTO activities (user_id, type, title, description, icon) VALUES (?, ?, ?, ?, ?)");
-        $stmt->execute([$user_id, $type, $title, $description, $icon]);
+        tcf_log_activity($pdo, $user_id !== null ? (int) $user_id : null, $type, $title, $description, $icon);
     } catch (PDOException $e) {
         error_log("Erreur activité: " . $e->getMessage());
     }
@@ -2114,9 +2367,9 @@ try {
     $stmtSaProf->execute([(int) $_SESSION['user_id']]);
     $tcf_profile_panel_user = $stmtSaProf->fetch(PDO::FETCH_ASSOC);
     if ($tcf_profile_panel_user) {
-        $saAvSync = tcf_sync_user_avatar_from_disk($pdo, (int) $tcf_profile_panel_user['id'], $tcf_profile_panel_user['avatar'] ?? null);
-        $tcf_profile_panel_user['avatar_resolved'] = $saAvSync;
-        $tcf_profile_panel_user['avatar_display_url'] = tcf_avatar_public_url($saAvSync);
+        $saAvUrl = tcf_user_avatar_display_url($pdo, (int) $tcf_profile_panel_user['id'], $tcf_profile_panel_user['avatar'] ?? null);
+        $tcf_profile_panel_user['avatar_resolved'] = $saAvUrl ? ($tcf_profile_panel_user['avatar'] ?? '1') : null;
+        $tcf_profile_panel_user['avatar_display_url'] = $saAvUrl;
     }
 } catch (Throwable $e) {
     $tcf_profile_panel_user = null;
@@ -2144,34 +2397,52 @@ try {
     }
     $users = tcf_enrich_users_with_activity_days($pdo, $users);
     foreach ($users as &$u) {
-        $synced = tcf_sync_user_avatar_from_disk($pdo, (int) $u['id'], $u['avatar'] ?? null);
-        $u['avatar_url'] = $synced ? tcf_avatar_public_url($synced) : null;
+        $u['avatar_url'] = tcf_user_avatar_display_url($pdo, (int) $u['id'], $u['avatar'] ?? null);
         $u['is_online'] = tcf_user_is_online(isset($u['last_activity']) ? (string) $u['last_activity'] : null);
     }
     unset($u);
-    $videos = $pdo->query("SELECT v.*, (SELECT COUNT(*) FROM video_comments vc WHERE vc.video_id = v.id) AS comments_count FROM videos v ORDER BY v.created_at DESC")->fetchAll(PDO::FETCH_ASSOC);
-    foreach ($videos as &$vid) {
-        $vid['thumbnail_href'] = tcf_uploads_public_href($vid['thumbnail_url'] ?? '');
-        $vid['video_href'] = tcf_uploads_public_href($vid['video_url'] ?? '');
-    }
-    unset($vid);
     try {
-        $videos = tcf_enrich_videos_with_playlists($pdo, $videos);
+        $videos = tcf_videos_normalize_list_rows(
+            $pdo->query(tcf_videos_list_select_sql('v') . ' FROM videos v ORDER BY v.created_at DESC')->fetchAll(PDO::FETCH_ASSOC) ?: []
+        );
+        foreach ($videos as &$vid) {
+            $vid['thumbnail_href'] = tcf_video_media_href($pdo, (int) ($vid['id'] ?? 0), $vid['thumbnail_url'] ?? '', 'thumbnail');
+            $vid['video_href'] = tcf_video_media_href($pdo, (int) ($vid['id'] ?? 0), $vid['video_url'] ?? '', 'video');
+        }
+        unset($vid);
+        try {
+            $videos = tcf_enrich_videos_with_playlists($pdo, $videos);
+        } catch (Throwable $e) {
+        }
     } catch (Throwable $e) {
+        $videos = [];
     }
-    $topics = $pdo->query("SELECT * FROM topics ORDER BY created_at DESC")->fetchAll(PDO::FETCH_ASSOC);
+    $topics = [];
+    try {
+        if (tcf_schema_has_table($pdo, 'sujets')) {
+            $topics = $pdo->query("SELECT id, title, slug, type, visibility, is_published, created_at FROM sujets ORDER BY created_at DESC LIMIT 200")->fetchAll(PDO::FETCH_ASSOC);
+        }
+    } catch (Throwable $e) {
+        $topics = [];
+    }
     try {
         $admins = $pdo->query("SELECT id, name, email, role, status, avatar, last_login, last_activity, created_at FROM users WHERE role IN ('admin', 'super_admin')")->fetchAll(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
         $admins = $pdo->query("SELECT id, name, email, role, status, avatar, last_login, created_at FROM users WHERE role IN ('admin', 'super_admin')")->fetchAll(PDO::FETCH_ASSOC);
     }
     foreach ($admins as &$a) {
-        $synced = tcf_sync_user_avatar_from_disk($pdo, (int) $a['id'], $a['avatar'] ?? null);
-        $a['avatar_url'] = $synced ? tcf_avatar_public_url($synced) : null;
+        $a['avatar_url'] = tcf_user_avatar_display_url($pdo, (int) $a['id'], $a['avatar'] ?? null);
         $a['is_online'] = tcf_user_is_online(isset($a['last_activity']) ? (string) $a['last_activity'] : null);
     }
     unset($a);
-    $messages = $pdo->query("SELECT * FROM community_messages ORDER BY created_at DESC")->fetchAll(PDO::FETCH_ASSOC);
+    $messages = [];
+    try {
+        if (tcf_schema_has_table($pdo, 'annonces')) {
+            $messages = $pdo->query("SELECT id, body, visibility, is_published, created_by, created_at FROM annonces WHERE kind='message' ORDER BY created_at DESC LIMIT 200")->fetchAll(PDO::FETCH_ASSOC);
+        }
+    } catch (Throwable $e) {
+        $messages = [];
+    }
     $activities = [];
     if ($isSuperAdmin) {
         $notifications = $pdo->query("SELECT * FROM notifications ORDER BY created_at DESC LIMIT 20")->fetchAll(PDO::FETCH_ASSOC);
@@ -2229,13 +2500,13 @@ $notifications_json = json_encode($notifications);
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="../Assets/css/sa-theme.css">
     <script src="../Assets/javascript/sa-theme.js"></script>
-    <link rel="stylesheet" href="../Assets/css/superAdmin.css?v=admin-notif-userlike-14">
+    <link rel="stylesheet" href="../Assets/css/superAdmin.css?v=sa-ui-v7">
     <link rel="stylesheet" href="../Assets/css/tcf-brand-logo.css">
-    <link rel="stylesheet" href="../Assets/css/sa_subscription_plans.css?v=userlike-2">
+    <link rel="stylesheet" href="../Assets/css/sa_subscription_plans.css?v=usd-fixed-2">
     <link rel="stylesheet" href="../Assets/css/sa-partners.css?v=partners-16x9-contain-5">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/profile_panel.css')); ?>?v=notif-tout-lu-14">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/tcf-responsive-pills.css')); ?>">
-    <link rel="stylesheet" href="../Assets/css/admin-mobile-nav.css?v=sa-notif-nav-14">
+    <link rel="stylesheet" href="../Assets/css/admin-mobile-nav.css?v=sa-notif-nav-15">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/tcf-ui-layers.css')); ?>?v=sa-notif-layers-14">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/tcf-assistant-widget.css')); ?>">
     <link rel="stylesheet" href="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.css">
@@ -2301,7 +2572,7 @@ $notifications_json = json_encode($notifications);
 
         <?php if ($isSuperAdmin): ?>
         <div class="menu-item" data-target="testimonials">
-            <i class='bx bxs-quote-alt-left'></i>
+            <i class='bx bxs-quote-left' aria-hidden="true"></i>
             <span>Témoignages</span>
         </div>
         <div class="menu-item" id="subscription-menu">
@@ -2316,16 +2587,16 @@ $notifications_json = json_encode($notifications);
         </div>
         <div class="menu-item" data-target="messages">
             <i class='bx bxs-megaphone'></i>
-            <span>Annonces communautaires</span>
+            <span>Annonces</span>
         </div>
         <div class="menu-item" data-target="partners">
-            <i class='bx bxs-handshake'></i>
+            <i class='bx bxs-briefcase' aria-hidden="true"></i>
             <span>Partenaires</span>
         </div>
         <?php else: ?>
         <div class="menu-item" data-target="messages">
             <i class='bx bxs-megaphone'></i>
-            <span>Annonces communautaires</span>
+            <span>Annonces</span>
         </div>
         <?php endif; ?>
 
@@ -2396,102 +2667,151 @@ $notifications_json = json_encode($notifications);
         <!-- Dashboard Section -->
         <div id="dashboard" class="content-section active">
             <?php if ($isSuperAdmin): ?>
-            <!-- Stats Cards (super admin) -->
-            <div class="stats-container">
-                <div class="stat-card">
-                    <div class="stat-icon users"><i class='bx bxs-user'></i></div>
-                    <div class="stat-info">
-                        <h3 id="users-count">0</h3>
-                        <p>Utilisateurs inscrits</p>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon visitors"><i class='bx bxs-group'></i></div>
-                    <div class="stat-info">
-                        <h3 id="visitors-count">0</h3>
-                        <p>Visiteurs aujourd’hui (sessions)</p>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon subs"><i class='bx bxs-crown'></i></div>
-                    <div class="stat-info">
-                        <h3 id="subs-count">0</h3>
-                        <p>Abonnements actifs</p>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon revenue"><i class='bx bxs-wallet'></i></div>
-                    <div class="stat-info">
-                        <h3 id="revenue-count">$0</h3>
-                        <p>Revenu du mois (passerelle + abonnements)</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Traçabilité (données site_visit_logs + users + payments) -->
-            <div class="trace-panel">
-                <div class="trace-toolbar">
-                    <h3 class="trace-title"><i class='bx bx-line-chart'></i> Traçabilité &amp; géographie</h3>
-                    <label class="trace-label">Période
-                        <select id="trace-range" class="form-control trace-select">
-                            <option value="7d">7 derniers jours</option>
-                            <option value="30d" selected>30 derniers jours</option>
-                            <option value="90d">90 derniers jours</option>
-                            <option value="year">Année en cours</option>
-                            <option value="all">Depuis toujours (par mois)</option>
+            <div class="sa-admin-dash" id="sa-super-dash">
+                <div class="sa-super-toolbar">
+                    <label class="sa-super-toolbar__period">
+                        <span>Période</span>
+                        <select id="trace-range" class="form-control" aria-label="Période des statistiques">
+                            <option value="today" selected>Aujourd’hui</option>
+                            <option value="7d">7 jours</option>
+                            <option value="30d">1 mois</option>
+                            <option value="90d">3 mois</option>
+                            <option value="year">1 an</option>
                         </select>
                     </label>
                 </div>
-                <div class="charts-section trace-charts-row">
-                    <div class="chart-card trace-chart-wide">
-                        <div class="chart-header">
-                            <div class="chart-title">Séries temporelles</div>
-                            <select id="trace-metric" class="form-control" style="width:auto;">
-                                <option value="visits">Visites (pages vues)</option>
-                                <option value="users">Inscriptions</option>
-                                <option value="subs">Abonnements vendus (paiements)</option>
-                                <option value="revenue">Revenus ($)</option>
-                            </select>
+
+                <div class="stats-container sa-admin-dash__stats sa-super-kpi-grid" aria-label="Statistiques plateforme">
+                    <button type="button" class="stat-card sa-kpi-card" data-goto="users">
+                        <div class="stat-icon sa-admin-ico--visit"><i class='bx bxs-user'></i></div>
+                        <div class="stat-info">
+                            <h3 id="users-count">0</h3>
+                            <p>Utilisateurs</p>
+                            <span class="sa-kpi-card__meta" id="sa-mod-users-meta">0 actifs</span>
                         </div>
-                        <div class="chart-container trace-chart-tall">
-                            <canvas id="traceTimeChart"></canvas>
+                    </button>
+                    <div class="stat-card sa-kpi-card sa-kpi-card--accent" id="sa-visitors-card">
+                        <div class="stat-icon sa-admin-ico--views"><i class='bx bxs-group'></i></div>
+                        <div class="stat-info">
+                            <h3 id="visitors-count">0</h3>
+                            <p id="visitors-label">Visiteurs</p>
+                        </div>
+                    </div>
+                    <button type="button" class="stat-card sa-kpi-card" data-goto="subscription-revenue">
+                        <div class="stat-icon sa-admin-ico--exam"><i class='bx bxs-crown'></i></div>
+                        <div class="stat-info">
+                            <h3 id="subs-count">0</h3>
+                            <p>Abonnements actifs</p>
+                        </div>
+                    </button>
+                    <button type="button" class="stat-card sa-kpi-card" data-goto="subscription-revenue">
+                        <div class="stat-icon sa-admin-ico--revenue"><i class='bx bxs-dollar-circle'></i></div>
+                        <div class="stat-info">
+                            <h3 id="revenue-count">$0.00</h3>
+                            <p>Revenu du mois ($)</p>
+                        </div>
+                    </button>
+                    <button type="button" class="stat-card sa-kpi-card" data-goto="admins">
+                        <div class="stat-icon sa-admin-ico--admin"><i class='bx bxs-shield'></i></div>
+                        <div class="stat-info">
+                            <h3 id="sa-mod-admins">0</h3>
+                            <p>Administrateurs</p>
+                        </div>
+                    </button>
+                    <button type="button" class="stat-card sa-kpi-card" data-goto="videos">
+                        <div class="stat-icon sa-admin-ico--video"><i class='bx bxs-video'></i></div>
+                        <div class="stat-info">
+                            <h3 id="sa-mod-videos">0</h3>
+                            <p>Vidéos</p>
+                            <span class="sa-kpi-card__meta" id="sa-mod-videos-meta">0 vues</span>
+                        </div>
+                    </button>
+                    <button type="button" class="stat-card sa-kpi-card" data-goto="testimonials">
+                        <div class="stat-icon sa-admin-ico--quote"><i class='bx bxs-quote-left'></i></div>
+                        <div class="stat-info">
+                            <h3 id="sa-mod-testimonials">0</h3>
+                            <p>Témoignages</p>
+                            <span class="sa-kpi-card__meta" id="sa-mod-testimonials-meta">0 publiés</span>
+                        </div>
+                    </button>
+                    <button type="button" class="stat-card sa-kpi-card" data-goto="partners">
+                        <div class="stat-icon sa-admin-ico--partner"><i class='bx bxs-briefcase'></i></div>
+                        <div class="stat-info">
+                            <h3 id="sa-mod-partners">0</h3>
+                            <p>Partenaires</p>
+                            <span class="sa-kpi-card__meta" id="sa-mod-partners-meta">0 publiés</span>
+                        </div>
+                    </button>
+                    <button type="button" class="stat-card sa-kpi-card" data-goto="messages">
+                        <div class="stat-icon sa-admin-ico--msg"><i class='bx bxs-megaphone'></i></div>
+                        <div class="stat-info">
+                            <h3 id="sa-mod-announcements">0</h3>
+                            <p>Annonces</p>
+                            <span class="sa-kpi-card__meta" id="sa-mod-announcements-meta">0 publiées</span>
+                        </div>
+                    </button>
+                    <button type="button" class="stat-card sa-kpi-card" data-goto="subscription-plans">
+                        <div class="stat-icon sa-admin-ico--plan"><i class='bx bx-credit-card'></i></div>
+                        <div class="stat-info">
+                            <h3 id="sa-mod-plans">0</h3>
+                            <p>Forfaits</p>
+                            <span class="sa-kpi-card__meta" id="sa-mod-plans-meta">0 actifs</span>
+                        </div>
+                    </button>
+                    <button type="button" class="stat-card sa-kpi-card" data-goto="subscription-payments">
+                        <div class="stat-icon sa-admin-ico--pay"><i class='bx bx-receipt'></i></div>
+                        <div class="stat-info">
+                            <h3 id="sa-mod-payments">0</h3>
+                            <p>Paiements</p>
+                        </div>
+                    </button>
+                    <button type="button" class="stat-card sa-kpi-card" data-goto="topics-written">
+                        <div class="stat-icon sa-admin-ico--ce"><i class='bx bxs-book'></i></div>
+                        <div class="stat-info">
+                            <h3 id="sa-mod-ce">0</h3>
+                            <p>CE</p>
+                        </div>
+                    </button>
+                    <button type="button" class="stat-card sa-kpi-card" data-goto="topics-oral">
+                        <div class="stat-icon sa-admin-ico--co"><i class='bx bxs-headphones'></i></div>
+                        <div class="stat-info">
+                            <h3 id="sa-mod-co">0</h3>
+                            <p>CO</p>
+                        </div>
+                    </button>
+                    <button type="button" class="stat-card sa-kpi-card" data-goto="topics-expression">
+                        <div class="stat-icon sa-admin-ico--ee"><i class='bx bxs-pencil'></i></div>
+                        <div class="stat-info">
+                            <h3 id="sa-mod-ee">0</h3>
+                            <p>EE</p>
+                        </div>
+                    </button>
+                    <button type="button" class="stat-card sa-kpi-card" data-goto="topics-speaking">
+                        <div class="stat-icon sa-admin-ico--eo"><i class='bx bxs-microphone'></i></div>
+                        <div class="stat-info">
+                            <h3 id="sa-mod-eo">0</h3>
+                            <p>EO</p>
+                        </div>
+                    </button>
+                </div>
+
+                <div class="charts-section sa-admin-dash__charts">
+                    <div class="chart-card sa-super-overview-card">
+                        <div class="chart-header">
+                            <div class="chart-title">Activité plateforme</div>
+                        </div>
+                        <div class="chart-container sa-admin-chart sa-admin-chart--overview">
+                            <canvas id="saOverviewChart"></canvas>
                         </div>
                     </div>
                 </div>
-                <div class="charts-section">
+
+                <div class="charts-section sa-admin-dash__charts">
                     <div class="chart-card">
                         <div class="chart-header">
-                            <div class="chart-title">Sources de trafic — visites</div>
+                            <div class="chart-title">Top pays — visiteurs uniques</div>
                         </div>
-                        <div class="chart-container">
-                            <canvas id="traceTrafficVisitsChart"></canvas>
-                        </div>
-                    </div>
-                    <div class="chart-card">
-                        <div class="chart-header">
-                            <div class="chart-title">Sources de trafic — inscriptions</div>
-                        </div>
-                        <div class="chart-container">
-                            <canvas id="traceTrafficSignupsChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-                <div class="charts-section trace-geo-row">
-                    <div class="chart-card trace-map-card">
-                        <div class="chart-header trace-geo-header">
-                            <div class="chart-title">Carte mondiale</div>
-                            <select id="trace-geo-mode" class="form-control trace-geo-select" title="Couche affichée">
-                                <option value="visits">Visites par pays</option>
-                                <option value="signups">Inscriptions par pays</option>
-                            </select>
-                        </div>
-                        <div id="traceMapGeo" class="trace-map"></div>
-                    </div>
-                    <div class="chart-card">
-                        <div class="chart-header">
-                            <div class="chart-title" id="trace-countries-title">Répartition par pays — visites</div>
-                        </div>
-                        <div class="chart-container trace-chart-tall">
+                        <div class="chart-container sa-admin-chart">
                             <canvas id="traceCountriesChart"></canvas>
                         </div>
                     </div>
@@ -2533,7 +2853,7 @@ $notifications_json = json_encode($notifications);
                         <div class="stat-icon sa-admin-ico--msg"><i class='bx bxs-megaphone'></i></div>
                         <div class="stat-info">
                             <h3 id="adm-dash-announcements">0</h3>
-                            <p>Annonces communautaires</p>
+                            <p>Annonces</p>
                         </div>
                     </div>
                     <div class="stat-card">
@@ -2628,9 +2948,6 @@ $notifications_json = json_encode($notifications);
                 <div class="section-header sa-activity-page-head">
                     <div class="sa-activity-page-intro">
                         <div class="section-title">Activité récente</div>
-                        <p class="sa-activity-subtitle">
-                            Historique des actions enregistrées côté administration — auteur, type, date et heure.
-                        </p>
                     </div>
                     <div class="sa-activity-toolbar">
                         <label class="sa-activity-field">
@@ -2867,11 +3184,6 @@ $notifications_json = json_encode($notifications);
                         <i class="bx bx-refresh"></i> Actualiser
                     </button>
                 </div>
-                <p style="color:var(--sa-muted,#64748b);font-size:14px;margin-bottom:20px;">
-                    Gérez les avis publiés sur la page d'accueil. Cliquez sur un témoignage pour voir le contenu complet.
-                </p>
-
-                <!-- Stats rapides -->
                 <div class="sa-testi-stats" id="sa-testi-stats">
                     <div class="sa-testi-stat-card">
                         <i class="bx bxs-comment-detail"></i>
@@ -2881,14 +3193,14 @@ $notifications_json = json_encode($notifications);
                         </div>
                     </div>
                     <div class="sa-testi-stat-card">
-                        <i class="bx bxs-star" style="color:#f59e0b;"></i>
+                        <i class="bx bxs-star"></i>
                         <div>
                             <span class="sa-testi-stat-val" id="sa-testi-avg">—</span>
                             <span class="sa-testi-stat-lbl">Note moyenne</span>
                         </div>
                     </div>
                     <div class="sa-testi-stat-card">
-                        <i class="bx bxs-award" style="color:#10b981;"></i>
+                        <i class="bx bxs-award"></i>
                         <div>
                             <span class="sa-testi-stat-val" id="sa-testi-five">—</span>
                             <span class="sa-testi-stat-lbl">5 étoiles</span>
@@ -2896,7 +3208,6 @@ $notifications_json = json_encode($notifications);
                     </div>
                 </div>
 
-                <!-- Barre recherche + filtre -->
                 <div class="sa-testi-toolbar">
                     <div class="sa-testi-search-wrap">
                         <i class="bx bx-search"></i>
@@ -2904,23 +3215,20 @@ $notifications_json = json_encode($notifications);
                     </div>
                     <select id="sa-testi-filter-rating" class="sa-testi-select">
                         <option value="">Toutes les notes</option>
-                        <option value="5">⭐⭐⭐⭐⭐ 5 étoiles</option>
-                        <option value="4">⭐⭐⭐⭐ 4 étoiles</option>
-                        <option value="3">⭐⭐⭐ 3 étoiles</option>
-                        <option value="2">⭐⭐ 2 étoiles</option>
-                        <option value="1">⭐ 1 étoile</option>
+                        <option value="5">5 étoiles</option>
+                        <option value="4">4 étoiles</option>
+                        <option value="3">3 étoiles</option>
+                        <option value="2">2 étoiles</option>
+                        <option value="1">1 étoile</option>
                         <option value="0">Sans note</option>
                     </select>
                 </div>
 
-                <!-- Grille de cartes -->
                 <div class="sa-testi-grid" id="sa-testi-grid">
                     <div class="sa-testi-loading">
                         <i class="bx bx-loader-alt bx-spin"></i> Chargement…
                     </div>
                 </div>
-
-                <!-- Compteur résultats -->
                 <p class="sa-testi-result-count" id="sa-testi-result-count"></p>
             </div>
         </div>
@@ -2993,24 +3301,17 @@ $notifications_json = json_encode($notifications);
             <div class="dashboard-section">
                 <div class="section-header">
                     <div class="section-title">Forfaits d’abonnement</div>
-                </div>
-                <p class="sa-sub-pro-lead">
-                    Définissez les offres visibles sur la page Abonnement : libellés, tarifs, durée d’accès et liste d’avantages.
-                    Les membres voient les changements dès enregistrement.
-                </p>
-                <div class="sa-sub-platform-toggle" id="sa-sub-platform-toggle" role="region" aria-label="Mode abonnements plateforme">
-                    <div class="sa-sub-platform-toggle__info">
-                        <strong>Abonnements plateforme</strong>
-                        <p id="sa-sub-platform-toggle-desc">Chargement…</p>
+                    <div class="sa-sub-pro-toolbar sa-sub-pro-toolbar--inline">
+                        <button type="button" class="btn btn-primary" id="sa-sub-platform-toggle-btn" data-disabled="0">
+                            <i class="bx bx-check-circle"></i> <span id="sa-sub-platform-toggle-label">Activée</span>
+                        </button>
+                        <button type="button" class="btn btn-primary" id="sa-sub-add-plan-btn">
+                            <i class="bx bx-plus"></i> Ajouter un forfait
+                        </button>
                     </div>
-                    <button type="button" class="btn btn-secondary" id="sa-sub-platform-toggle-btn">
-                        <i class="bx bx-power-off"></i> <span id="sa-sub-platform-toggle-label">…</span>
-                    </button>
                 </div>
-                <div class="sa-sub-pro-toolbar">
-                    <button type="button" class="btn btn-primary" id="sa-sub-add-plan-btn">
-                        <i class="bx bx-plus"></i> Ajouter un forfait
-                    </button>
+                <div id="sa-sub-platform-toggle" hidden aria-hidden="true">
+                    <p id="sa-sub-platform-toggle-desc"></p>
                 </div>
                 <div class="sa-sub-pro-plans-wrap" role="region" aria-label="Édition des cartes forfait">
                     <div id="sa-plan-catalog-grid" class="sa-plan-catalog-grid">
@@ -3026,9 +3327,6 @@ $notifications_json = json_encode($notifications);
                 <div class="section-header">
                     <div class="section-title">Historique des paiements</div>
                 </div>
-                <p class="sa-sub-pro-lead">
-                    Transactions enregistrées lors des souscriptions depuis la page Abonnement.
-                </p>
                 <div class="table-container" style="overflow-x:auto;">
                     <table class="table" id="sa-subscription-payments-table" style="width:100%;min-width:720px;">
                         <thead>
@@ -3055,9 +3353,6 @@ $notifications_json = json_encode($notifications);
                 <div class="section-header">
                     <div class="section-title">Synthèse des revenus</div>
                 </div>
-                <p class="sa-sub-pro-lead">
-                    Indicateurs agrégés à partir des paiements enregistrés — utiles pour suivre l’activité sur l’offre d’abonnement.
-                </p>
                 <div class="stats-container" style="margin-bottom:0;">
                     <div class="stat-card">
                         <div class="stat-icon revenue"><i class="bx bx-dollar-circle"></i></div>
@@ -3092,18 +3387,15 @@ $notifications_json = json_encode($notifications);
             </div>
         </div>
 
-        <!-- Annonces communautaires -->
+        <!-- Annonces -->
         <div id="messages" class="content-section" style="display:none;">
             <div class="dashboard-section">
                 <div class="section-header">
-                    <div class="section-title">Annonces communautaires</div>
+                    <div class="section-title">Annonces</div>
                     <button type="button" class="btn btn-primary" id="add-message-btn">
                         <i class='bx bx-plus'></i> Nouvelle annonce
                     </button>
                 </div>
-                <p style="color:#64748b;font-size:14px;margin-bottom:16px;">
-                    Publiez une image, un texte (avec retours à la ligne) et éventuellement un lien. Les membres inscrits sont notifiés.
-                </p>
 
                 <form id="message-form" style="display:none;" enctype="multipart/form-data">
                     <input type="hidden" id="message-edit-id" value="">
@@ -3150,7 +3442,7 @@ $notifications_json = json_encode($notifications);
                 <div class="section-header" style="margin-top: 30px;">
                     <div class="section-title">Annonces publiées</div>
                 </div>
-                <div id="messages-container"></div>
+                <div class="sa-msg-grid" id="messages-container"></div>
             </div>
         </div>
 
@@ -3163,9 +3455,6 @@ $notifications_json = json_encode($notifications);
                         <i class="bx bx-plus"></i> Ajouter un partenaire
                     </button>
                 </div>
-                <p style="color:#64748b;font-size:14px;margin-bottom:16px;">
-                    Publiez le logo des entreprises partenaires. Ils s’affichent sur la page d’accueil, juste après la section abonnement.
-                </p>
 
                 <form id="partner-form" style="display:none;" enctype="multipart/form-data">
                     <input type="hidden" id="partner-edit-id" value="">
@@ -3297,6 +3586,44 @@ $notifications_json = json_encode($notifications);
                         </div>
                     </form>
 
+                    <form id="ee-exam-json-form" style="display:none;">
+                        <input type="hidden" id="ee-json-exam-id">
+                        <div class="form-group">
+                            <label class="form-label">Titre de l'épreuve</label>
+                            <input type="text" class="form-control" id="ee-json-exam-title" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Sous-titre (optionnel)</label>
+                            <input type="text" class="form-control" id="ee-json-exam-subtitle">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Visibilité</label>
+                            <select class="form-control" id="ee-json-exam-visibility">
+                                <option value="gratuit">Gratuit</option>
+                                <option value="premium">Premium</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" style="display:flex;align-items:center;gap:.5rem;">
+                                <input type="checkbox" id="ee-json-exam-published" checked>
+                                <span>Publier immédiatement</span>
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Fichier JSON des combinaisons</label>
+                            <input type="file" class="form-control" id="ee-json-file" accept=".json,application/json">
+                            <small style="color:#64748b;display:block;margin-top:6px;">Tableau de combinaisons, ou objet <code>{"combinations":[...]}</code>. Chaque combinaison : title, tasks[{task_number, prompt, correction, documents[{title, content}]}].</small>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Ou coller le JSON</label>
+                            <textarea class="form-control" id="ee-json-paste" rows="8" placeholder='[{"title":"Combinaison 1","tasks":[{"task_number":1,"prompt":"...","documents":[{"content":"..."}]}]}]'></textarea>
+                        </div>
+                        <div class="form-buttons">
+                            <button type="button" class="btn btn-outline" id="ee-json-cancel-btn">Annuler</button>
+                            <button type="submit" class="btn btn-primary">Enregistrer depuis JSON</button>
+                        </div>
+                    </form>
+
                     <div class="dashboard-section" style="margin-top:16px;">
                         <div class="section-header">
                             <div class="section-title">Consignes Expression Écrite</div>
@@ -3344,6 +3671,7 @@ $notifications_json = json_encode($notifications);
                                 <option value="gratuit">Gratuit</option>
                                 <option value="premium">Premium</option>
                             </select>
+                            <small style="color:#64748b;">Auto: les 3 épreuves les plus récentes restent gratuites par défaut; vous pouvez forcer Premium.</small>
                         </div>
                         <div class="form-group">
                             <label class="form-label" style="display:flex;align-items:center;gap:.5rem;">
@@ -3450,6 +3778,7 @@ $notifications_json = json_encode($notifications);
                                 <option value="gratuit">Gratuit</option>
                                 <option value="premium">Premium</option>
                             </select>
+                            <small style="color:#64748b;">Auto: les 3 épreuves les plus récentes restent gratuites par défaut; vous pouvez forcer Premium.</small>
                         </div>
                         <div class="form-group">
                             <label class="form-label" style="display:flex;align-items:center;gap:.5rem;">
@@ -3575,6 +3904,44 @@ $notifications_json = json_encode($notifications);
                         <div class="form-buttons">
                             <button type="button" class="btn btn-outline" id="eo-cancel-btn">Annuler</button>
                             <button type="submit" class="btn btn-primary">Enregistrer l'épreuve</button>
+                        </div>
+                    </form>
+
+                    <form id="eo-exam-json-form" style="display:none;">
+                        <input type="hidden" id="eo-json-exam-id">
+                        <div class="form-group">
+                            <label class="form-label">Titre de l'épreuve</label>
+                            <input type="text" class="form-control" id="eo-json-exam-title" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Sous-titre (optionnel)</label>
+                            <input type="text" class="form-control" id="eo-json-exam-subtitle">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Visibilité</label>
+                            <select class="form-control" id="eo-json-exam-visibility">
+                                <option value="gratuit">Gratuit</option>
+                                <option value="premium">Premium</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" style="display:flex;align-items:center;gap:.5rem;">
+                                <input type="checkbox" id="eo-json-exam-published" checked>
+                                <span>Publier immédiatement</span>
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Fichier JSON des parties</label>
+                            <input type="file" class="form-control" id="eo-json-file" accept=".json,application/json">
+                            <small style="color:#64748b;display:block;margin-top:6px;">Tableau de parties, ou objet <code>{"parts":[...]}</code>. Chaque partie publiée doit avoir <strong>exactement 5 sujets</strong> : task_key (tache1|tache2|tache3), subjects[{title, prompt, correction}].</small>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Ou coller le JSON</label>
+                            <textarea class="form-control" id="eo-json-paste" rows="8" placeholder='[{"task_key":"tache2","part_title":"Partie 1","subjects":[{"title":"...","prompt":"..."},"...×5"]}]'></textarea>
+                        </div>
+                        <div class="form-buttons">
+                            <button type="button" class="btn btn-outline" id="eo-json-cancel-btn">Annuler</button>
+                            <button type="submit" class="btn btn-primary">Enregistrer depuis JSON</button>
                         </div>
                     </form>
 
@@ -3736,15 +4103,25 @@ $notifications_json = json_encode($notifications);
                     <label class="form-label">Abonnement</label>
                     <select class="form-control" id="user-subscription">
                         <option value="free">Gratuit</option>
-                        <?php foreach (tcf_subscription_plans_catalog(false) as $tcf_plan_opt): ?>
-                            <option value="<?php echo htmlspecialchars($tcf_plan_opt['key']); ?>">
-                                <?php echo htmlspecialchars(trim(($tcf_plan_opt['tier'] ?? '') . ' — ' . ($tcf_plan_opt['badge'] ?? ''))); ?>
+                        <?php foreach (tcf_subscription_plans_catalog(true) as $tcf_plan_opt): ?>
+                            <?php
+                            // Masquer les cartes incomplètes (prix 0 / brouillon admin).
+                            $tcfPayXaf = (int) ($tcf_plan_opt['payment_xaf'] ?? 0);
+                            $tcfPrice = (float) ($tcf_plan_opt['price'] ?? 0);
+                            if ($tcfPayXaf < 100 && $tcfPrice <= 0) {
+                                continue;
+                            }
+                            $tcfLabel = trim(($tcf_plan_opt['tier'] ?? '') . ' — ' . ($tcf_plan_opt['badge'] ?? ''));
+                            if ($tcfLabel === '' || $tcfLabel === '—') {
+                                continue;
+                            }
+                            ?>
+                            <option value="<?php echo htmlspecialchars((string) ($tcf_plan_opt['key'] ?? '')); ?>">
+                                <?php echo htmlspecialchars($tcfLabel); ?>
                             </option>
                         <?php endforeach; ?>
-                        <option value="monthly">⚠ Mensuel (hérité)</option>
-                        <option value="annual">⚠ Annuel (hérité)</option>
                     </select>
-                    <small class="form-hint">Les formules correspondent à la page Abonnement. Les types « hérité » ne sont plus proposés aux nouveaux comptes.</small>
+                    <small class="form-hint">Uniquement les forfaits actifs configurés (Abonnements → Forfaits).</small>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Statut</label>
@@ -3843,8 +4220,8 @@ $notifications_json = json_encode($notifications);
         window.TCF_PARTNERS_API = <?php echo json_encode(site_href('partners_api.php')); ?>;
     </script>
     <script src="../Assets/javascript/tcf-tts.js?v=6"></script>
-    <script src="../Assets/javascript/superAdmin.ui.js?v=co-abcd-optional-4"></script>
-    <script src="../Assets/javascript/admin-mobile-nav.js"></script>
+    <script src="../Assets/javascript/superAdmin.ui.js?v=sa-ui-v7"></script>
+    <script src="../Assets/javascript/admin-mobile-nav.js?v=sa-ui-v7"></script>
 
     <div class="tcf-ai-assistant" id="tcf-ai-assistant" data-greeting="Bonjour, je suis votre assistant administration. Comment puis-je vous aider sur la plateforme ?">
         <div class="tcf-ai-assistant__panel" id="tcf-ai-assistant-panel" aria-live="polite">

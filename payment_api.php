@@ -72,10 +72,7 @@ if ($userEmail === '') {
 
 function tcf_payment_pending_by_ref(PDO $pdo, string $ref, int $uid): ?array
 {
-    $st = $pdo->prepare('SELECT * FROM subscription_payment_pending WHERE notch_reference = ? AND user_id = ? LIMIT 1');
-    $st->execute([$ref, $uid]);
-    $row = $st->fetch(PDO::FETCH_ASSOC);
-    return $row ?: null;
+    return tcf_payment_pending_find_by_ref($pdo, $ref, $uid);
 }
 
 function tcf_payment_try_finalize(PDO $pdo, int $uid, array $pending, string $channel): array
@@ -84,7 +81,7 @@ function tcf_payment_try_finalize(PDO $pdo, int $uid, array $pending, string $ch
     $planKey = (string) ($pending['plan_key'] ?? '');
     $statusRow = (string) ($pending['status'] ?? 'pending');
 
-    if ($statusRow === 'complete') {
+    if (tcf_payment_is_finalized_status($statusRow)) {
         return ['success' => true, 'status' => 'complete', 'already' => true];
     }
 
@@ -96,8 +93,7 @@ function tcf_payment_try_finalize(PDO $pdo, int $uid, array $pending, string $ch
     $payStatus = tcf_notchpay_payment_status_from_response($check['data']);
     if (tcf_notchpay_is_failure_status($payStatus)) {
         try {
-            $pdo->prepare('UPDATE subscription_payment_pending SET status = ? WHERE id = ?')
-                ->execute([$payStatus !== '' ? $payStatus : 'failed', (int) ($pending['id'] ?? 0)]);
+            tcf_payment_pending_update_status($pdo, (int) ($pending['id'] ?? 0), $payStatus !== '' ? $payStatus : 'failed');
         } catch (Throwable $e) {
         }
 
@@ -112,8 +108,11 @@ function tcf_payment_try_finalize(PDO $pdo, int $uid, array $pending, string $ch
         return ['success' => true, 'status' => $payStatus !== '' ? $payStatus : 'pending', 'message' => 'Paiement en cours…'];
     }
 
-    $plan = tcf_subscription_plan_by_key($planKey);
+    $plan = tcf_subscription_plan_by_key($planKey, false);
     $amountUsd = isset($plan['price']) ? (float) $plan['price'] : tcf_subscription_display_usd_amount();
+    if ($plan && strtoupper((string) ($plan['currency'] ?? '')) === 'XAF' && $amountUsd >= 100) {
+        $amountUsd = round($amountUsd / 600, 2);
+    }
     $method = $channel !== '' ? $channel : (string) ($pending['channel'] ?? 'notchpay');
     $result = tcf_subscription_activate_user($pdo, $uid, $planKey, $method, $amountUsd, 'USD', $ref);
 
@@ -122,8 +121,7 @@ function tcf_payment_try_finalize(PDO $pdo, int $uid, array $pending, string $ch
     }
 
     try {
-        $pdo->prepare('UPDATE subscription_payment_pending SET status = ?, channel = COALESCE(NULLIF(?, \'\'), channel) WHERE id = ?')
-            ->execute(['complete', $channel, (int) ($pending['id'] ?? 0)]);
+        tcf_payment_pending_update_status($pdo, (int) ($pending['id'] ?? 0), 'complete', $channel);
     } catch (Throwable $e) {
     }
 
@@ -160,7 +158,16 @@ if ($action === 'init') {
 
     $provider = isset($input['provider']) ? trim((string) $input['provider']) : 'auto';
     $channel = tcf_notchpay_resolve_channel($phone, $provider);
-    $amountXaf = isset($plan['payment_xaf']) ? (int) $plan['payment_xaf'] : tcf_subscription_payment_xaf_amount();
+    // Local / test : toujours 100 XAF (comportement historique qui marchait).
+    if (tcf_is_local_host()) {
+        $amountXaf = tcf_subscription_payment_xaf_amount();
+    } else {
+        $amountXaf = isset($plan['payment_xaf']) ? (int) $plan['payment_xaf'] : tcf_subscription_payment_xaf_amount();
+    }
+    if ($amountXaf < 100) {
+        echo json_encode(['success' => false, 'message' => 'Montant du forfait invalide. Contactez l’administrateur.']);
+        exit;
+    }
     $reference = 'tcf_' . $uid . '_' . preg_replace('/[^a-z0-9_]/i', '', $planKey) . '_' . time() . '_' . bin2hex(random_bytes(4));
     $description = 'Abonnement ' . ($plan['tier'] ?? '') . ' — ' . ($plan['badge'] ?? $planKey);
     $callbackUrl = tcf_payment_callback_url();
@@ -189,12 +196,13 @@ if ($action === 'init') {
     }
 
     try {
-        $ins = $pdo->prepare(
-            'INSERT INTO subscription_payment_pending (user_id, plan_key, notch_reference, amount_xaf, channel, status) VALUES (?, ?, ?, ?, ?, ?)'
-        );
-        $ins->execute([$uid, $planKey, $notchRef, $amountXaf, $channel, 'pending']);
+        tcf_payment_pending_insert($pdo, $uid, $planKey, $notchRef, $amountXaf, $channel);
     } catch (Throwable $e) {
-        echo json_encode(['success' => false, 'message' => 'Impossible d\'enregistrer la transaction.']);
+        error_log('payment_api pending insert: ' . $e->getMessage());
+        echo json_encode([
+            'success' => false,
+            'message' => 'Impossible d\'enregistrer la transaction. Réessayez ou contactez le support.',
+        ]);
         exit;
     }
 
@@ -211,8 +219,7 @@ if ($action === 'init') {
             if ($usedChannel !== '' && $usedChannel !== $channel) {
                 $channel = $usedChannel;
                 try {
-                    $pdo->prepare('UPDATE subscription_payment_pending SET channel = ? WHERE notch_reference = ?')
-                        ->execute([$channel, $notchRef]);
+                    tcf_payment_pending_update_channel_by_ref($pdo, $notchRef, $channel);
                 } catch (Throwable $e) {
                 }
             }
@@ -262,7 +269,8 @@ if ($action === 'status') {
     $channel = (string) ($pending['channel'] ?? '');
     $final = tcf_payment_try_finalize($pdo, $uid, $pending, $channel);
 
-    if (($final['status'] ?? '') === 'complete' && !empty($final['success'])) {
+    $finalStatus = strtolower(trim((string) ($final['status'] ?? 'pending')));
+    if (!empty($final['success']) && tcf_payment_is_finalized_status($finalStatus)) {
         echo json_encode([
             'success' => true,
             'status' => 'complete',

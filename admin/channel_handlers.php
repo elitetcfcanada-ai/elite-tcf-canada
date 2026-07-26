@@ -57,7 +57,7 @@ function getChannelPosts(): void
 
 function saveChannelPost(): void
 {
-    echo json_encode(['success' => false, 'message' => 'Utilisez Gestion des annonces (annonces communautaires).']);
+    echo json_encode(['success' => false, 'message' => 'Utilisez Gestion des annonces.']);
     exit();
 }
 

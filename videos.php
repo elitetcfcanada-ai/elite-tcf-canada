@@ -3,6 +3,7 @@
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/site_contact.php';
 require_once __DIR__ . '/includes/video_duration.php';
+require_once __DIR__ . '/includes/media_blob.php';
 
 $videosList = [];
 try {
@@ -68,7 +69,7 @@ function tcf_video_duration_label(array $v): string
             <?php foreach ($videosList as $v): ?>
             <?php
             $vidId = (int) ($v['id'] ?? 0);
-            $thumb = tcf_uploads_public_href($v['thumbnail_url'] ?? '');
+            $thumb = tcf_video_media_href($pdo, $vidId, $v['thumbnail_url'] ?? '', 'thumbnail');
             $durLabel = tcf_video_duration_label($v);
             $watchHref = tcf_video_watch_href($vidId);
             ?>

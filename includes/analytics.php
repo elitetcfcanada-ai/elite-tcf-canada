@@ -133,6 +133,10 @@ function tcf_should_skip_tracking(): bool
     return false;
 }
 
+/**
+ * Une visite = 1 appareil (cookie tcf_vid) qui ouvre la plateforme, 1 fois par jour calendaire.
+ * Les navigations de pages suivantes le même jour ne sont pas recomptées.
+ */
 function tcf_maybe_track_visit(): void
 {
     global $pdo;
@@ -143,8 +147,15 @@ function tcf_maybe_track_visit(): void
         return;
     }
 
+    require_once __DIR__ . '/tcf_schema.php';
+    require_once __DIR__ . '/visitor_id.php';
+
+    $useVisiteurs = false;
     try {
-        $pdo->query("SELECT 1 FROM site_visit_logs LIMIT 1");
+        $useVisiteurs = tcf_schema_has_table($pdo, 'visiteurs');
+        if (!$useVisiteurs) {
+            $pdo->query('SELECT 1 FROM site_visit_logs LIMIT 1');
+        }
     } catch (Throwable $e) {
         return;
     }
@@ -153,8 +164,18 @@ function tcf_maybe_track_visit(): void
         session_start();
     }
 
-    $sid = session_id();
-    if ($sid === '') {
+    $vid = tcf_visitor_id();
+    if ($vid === '') {
+        return;
+    }
+
+    $today = date('Y-m-d');
+    if (
+        !empty($_SESSION['tcf_site_visit_day'])
+        && (string) $_SESSION['tcf_site_visit_day'] === $today
+        && !empty($_SESSION['tcf_site_visit_vid'])
+        && (string) $_SESSION['tcf_site_visit_vid'] === $vid
+    ) {
         return;
     }
 
@@ -166,14 +187,71 @@ function tcf_maybe_track_visit(): void
     [$utmS, $utmM] = tcf_parse_utm();
     $geo = tcf_geo_for_ip($ip);
     $uid = isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : null;
+    $sid = session_id();
 
     try {
+        if ($useVisiteurs) {
+            $chk = $pdo->prepare(
+                "SELECT id FROM visiteurs
+                 WHERE kind = 'site' AND visitor_key = ? AND DATE(created_at) = CURDATE()
+                 LIMIT 1"
+            );
+            $chk->execute([$vid]);
+            if ($chk->fetchColumn()) {
+                $_SESSION['tcf_site_visit_day'] = $today;
+                $_SESSION['tcf_site_visit_vid'] = $vid;
+                return;
+            }
+
+            $meta = json_encode([
+                'session_id' => $sid,
+                'visitor_id' => $vid,
+                'referrer' => $ref,
+                'traffic_source' => $traffic,
+                'utm_source' => $utmS,
+                'utm_medium' => $utmM,
+                'region_name' => $geo['region_name'] ?? null,
+                'city' => $geo['city'] ?? null,
+                'latitude' => $geo['latitude'] ?? null,
+                'longitude' => $geo['longitude'] ?? null,
+            ], JSON_UNESCAPED_UNICODE);
+            $stmt = $pdo->prepare(
+                "INSERT INTO visiteurs (kind, visitor_key, user_id, path, ip_address, user_agent, country_code, country_name, meta_json, created_at)
+                 VALUES ('site', ?, ?, ?, ?, ?, ?, ?, ?, NOW())"
+            );
+            $stmt->execute([
+                $vid,
+                $uid ?: null,
+                $path,
+                $ip,
+                $ua,
+                $geo['country_code'],
+                $geo['country_name'],
+                $meta,
+            ]);
+            $_SESSION['tcf_site_visit_day'] = $today;
+            $_SESSION['tcf_site_visit_vid'] = $vid;
+            return;
+        }
+
+        $chk = $pdo->prepare(
+            "SELECT id FROM site_visit_logs
+             WHERE session_id = ? AND DATE(created_at) = CURDATE()
+             LIMIT 1"
+        );
+        $chk->execute([$vid]);
+        if ($chk->fetchColumn()) {
+            $_SESSION['tcf_site_visit_day'] = $today;
+            $_SESSION['tcf_site_visit_vid'] = $vid;
+            return;
+        }
+
         $stmt = $pdo->prepare("INSERT INTO site_visit_logs (
             session_id, user_id, page_path, ip_address, user_agent, referrer, traffic_source,
             utm_source, utm_medium, country_code, country_name, region_name, city, latitude, longitude
         ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
         $stmt->execute([
-            $sid,
+            $vid,
             $uid ?: null,
             $path,
             $ip,
@@ -189,6 +267,8 @@ function tcf_maybe_track_visit(): void
             $geo['latitude'],
             $geo['longitude'],
         ]);
+        $_SESSION['tcf_site_visit_day'] = $today;
+        $_SESSION['tcf_site_visit_vid'] = $vid;
     } catch (Throwable $e) {
         error_log('tcf_track: ' . $e->getMessage());
     }

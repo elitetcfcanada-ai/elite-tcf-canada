@@ -6,8 +6,17 @@ require_once __DIR__ . '/payment_config.php';
 
 /**
  * Catalogue d’abonnements (page abonnement.php).
- * Source : table subscription_plan_catalog si présente, sinon valeurs de secours.
+ * Source : table abonnements / subscription_plan_catalog si présente, sinon valeurs de secours.
  */
+
+function tcf_subscription_plans_table(PDO $pdo): string
+{
+    require_once __DIR__ . '/tcf_schema.php';
+    if (tcf_schema_has_table($pdo, 'abonnements')) {
+        return 'abonnements';
+    }
+    return 'subscription_plan_catalog';
+}
 
 /**
  * Affichage USD + prélèvement XAF (test Notch Pay).
@@ -19,17 +28,29 @@ function tcf_subscription_plans_apply_payment_overlay(array $plans): array
 {
     $pubKey = tcf_notchpay_public_key();
     $secKey = tcf_notchpay_secret_key();
-    $isTest = str_starts_with($pubKey, 'pk_test.') || str_starts_with($secKey, 'sk_test.');
+    // Comme avant : montant test (100 XAF) en local OU avec clés pk_test/sk_test.
+    $useTestAmount = (function_exists('tcf_is_local_host') && tcf_is_local_host())
+        || str_starts_with($pubKey, 'pk_test.')
+        || str_starts_with($secKey, 'sk_test.');
 
     foreach ($plans as &$p) {
-        if ($isTest) {
-            // En test Notch Pay : montant XAF de test, mais on garde le prix USD affiché du forfait
+        $cur = strtoupper(trim((string) ($p['currency'] ?? '')));
+        $isXaf = in_array($cur, ['XAF', 'FCFA', 'CFA'], true);
+        if ($useTestAmount) {
+            // Comportement historique : prélèvement 100 FCFA, prix USD affiché
+            if ($isXaf) {
+                $p['price'] = round(((float) ($p['price'] ?? 0)) / 600, 2);
+            }
             $p['currency'] = '$';
             $p['payment_xaf'] = tcf_subscription_payment_xaf_amount();
+        } elseif ($isXaf) {
+            $p['payment_xaf'] = (int) round((float) ($p['price'] ?? 0));
+            $p['price'] = round(((float) ($p['price'] ?? 0)) / 600, 2);
+            $p['currency'] = '$';
         } else {
-            // Production: Keep actual price, convert USD to XAF (1 USD = 600 XAF)
-            $rate = 600;
-            $p['payment_xaf'] = (int) round(($p['price'] ?? 0.0) * $rate);
+            // Production USD → XAF (1 USD = 600 XAF)
+            $p['currency'] = '$';
+            $p['payment_xaf'] = (int) round(((float) ($p['price'] ?? 0.0)) * 600);
         }
     }
     unset($p);
@@ -95,11 +116,27 @@ function tcf_subscription_plans_rows_from_db(): ?array
         return null;
     }
     try {
-        $st = $pdo->query(
-            'SELECT id, plan_key, tier, badge, price, currency, duration_days, features_json, sort_order, is_active
-             FROM subscription_plan_catalog
-             ORDER BY sort_order ASC, id ASC'
-        );
+        $table = tcf_subscription_plans_table($pdo);
+        if ($table === 'abonnements') {
+            // price_label "$" / "USD" ⇒ price_xaf contient le prix d’affichage USD ;
+            // sinon price_xaf est un montant XAF réel.
+            $st = $pdo->query(
+                "SELECT id, plan_key, tier, badge, price_xaf AS price,
+                        CASE
+                          WHEN UPPER(TRIM(price_label)) IN ('$', 'USD', 'US$') THEN '$'
+                          ELSE 'XAF'
+                        END AS currency,
+                        duration_days, features_json, sort_order, is_active
+                 FROM abonnements
+                 ORDER BY sort_order ASC, id ASC"
+            );
+        } else {
+            $st = $pdo->query(
+                'SELECT id, plan_key, tier, badge, price, currency, duration_days, features_json, sort_order, is_active
+                 FROM subscription_plan_catalog
+                 ORDER BY sort_order ASC, id ASC'
+            );
+        }
         if ($st === false) {
             return null;
         }
@@ -177,20 +214,21 @@ function tcf_subscription_plans_dedupe_db(?PDO $db = null): array
     }
     $removed = 0;
     try {
+        $table = tcf_subscription_plans_table($db);
         $dupes = $db->query(
-            'SELECT plan_key, MIN(id) AS keep_id, COUNT(*) AS n
-             FROM subscription_plan_catalog
+            "SELECT plan_key, MIN(id) AS keep_id, COUNT(*) AS n
+             FROM `$table`
              GROUP BY plan_key
-             HAVING COUNT(*) > 1'
+             HAVING COUNT(*) > 1"
         )->fetchAll(PDO::FETCH_ASSOC);
-        $del = $db->prepare('DELETE FROM subscription_plan_catalog WHERE plan_key = ? AND id <> ?');
+        $del = $db->prepare("DELETE FROM `$table` WHERE plan_key = ? AND id <> ?");
         foreach ($dupes as $d) {
             $del->execute([(string) $d['plan_key'], (int) $d['keep_id']]);
             $removed += max(0, (int) $d['n'] - 1);
         }
-        // Empêche les futurs doublons
         try {
-            $db->exec('ALTER TABLE subscription_plan_catalog ADD UNIQUE KEY uq_subscription_plan_key (plan_key)');
+            $idx = $table === 'abonnements' ? 'uq_abo_plan_key' : 'uq_subscription_plan_key';
+            $db->exec("ALTER TABLE `$table` ADD UNIQUE KEY `$idx` (plan_key)");
         } catch (Throwable $e) {
             // Index déjà présent
         }
@@ -199,7 +237,8 @@ function tcf_subscription_plans_dedupe_db(?PDO $db = null): array
     }
     $remaining = 0;
     try {
-        $remaining = (int) $db->query('SELECT COUNT(*) FROM subscription_plan_catalog')->fetchColumn();
+        $table = tcf_subscription_plans_table($db);
+        $remaining = (int) $db->query("SELECT COUNT(*) FROM `$table`")->fetchColumn();
     } catch (Throwable $e) {
     }
 
@@ -234,37 +273,86 @@ function tcf_subscription_plans_seed_if_empty(): void
         return;
     }
     try {
-        $n = (int) $pdo->query('SELECT COUNT(*) FROM subscription_plan_catalog')->fetchColumn();
+        $table = tcf_subscription_plans_table($pdo);
+        $n = (int) $pdo->query("SELECT COUNT(*) FROM `$table`")->fetchColumn();
         if ($n > 0) {
             return;
         }
         $static = tcf_subscription_plans_catalog_static();
-        $st = $pdo->prepare(
-            'INSERT INTO subscription_plan_catalog
-                (plan_key, tier, badge, price, currency, duration_days, features_json, sort_order, is_active)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)'
-        );
+        if ($table === 'abonnements') {
+            $st = $pdo->prepare(
+                'INSERT INTO abonnements
+                    (plan_key, tier, badge, title, price_label, price_xaf, duration_days, features_json, sort_order, is_active)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)'
+            );
+        } else {
+            $st = $pdo->prepare(
+                'INSERT INTO subscription_plan_catalog
+                    (plan_key, tier, badge, price, currency, duration_days, features_json, sort_order, is_active)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)'
+            );
+        }
         $order = 1;
         foreach ($static as $p) {
             $feats = json_encode($p['features'] ?? tcf_subscription_default_features(), JSON_UNESCAPED_UNICODE);
             if ($feats === false) {
                 $feats = '[]';
             }
-            $st->execute([
-                (string) ($p['key'] ?? ('plan_' . $order)),
-                (string) ($p['tier'] ?? 'STANDARD'),
-                (string) ($p['badge'] ?? ''),
-                (float) ($p['price'] ?? 0),
-                (string) (($p['currency'] ?? '') !== '' ? $p['currency'] : '$'),
-                (int) ($p['duration_days'] ?? 7),
-                $feats,
-                $order,
-            ]);
+            if ($table === 'abonnements') {
+                $st->execute([
+                    (string) ($p['key'] ?? ('plan_' . $order)),
+                    (string) ($p['tier'] ?? 'STANDARD'),
+                    (string) ($p['badge'] ?? ''),
+                    (string) ($p['badge'] ?? ($p['key'] ?? 'Plan')),
+                    (string) (($p['currency'] ?? '') !== '' ? $p['currency'] : '$'),
+                    (int) round((float) ($p['price'] ?? 0)),
+                    (int) ($p['duration_days'] ?? 7),
+                    $feats,
+                    $order,
+                ]);
+            } else {
+                $st->execute([
+                    (string) ($p['key'] ?? ('plan_' . $order)),
+                    (string) ($p['tier'] ?? 'STANDARD'),
+                    (string) ($p['badge'] ?? ''),
+                    (float) ($p['price'] ?? 0),
+                    (string) (($p['currency'] ?? '') !== '' ? $p['currency'] : '$'),
+                    (int) ($p['duration_days'] ?? 7),
+                    $feats,
+                    $order,
+                ]);
+            }
             $order++;
         }
     } catch (Throwable $e) {
         error_log('tcf_subscription_plans_seed_if_empty: ' . $e->getMessage());
     }
+}
+
+/**
+ * Force l’affichage catalogue en dollars (USD), même si une ancienne ligne est en XAF.
+ *
+ * @param list<array<string,mixed>> $plans
+ * @return list<array<string,mixed>>
+ */
+function tcf_subscription_plans_force_usd_display(array $plans): array
+{
+    foreach ($plans as &$p) {
+        $cur = strtoupper(trim((string) ($p['currency'] ?? '')));
+        $isXaf = in_array($cur, ['XAF', 'FCFA', 'CFA'], true);
+        $price = (float) ($p['price'] ?? 0);
+        if ($isXaf) {
+            $price = round($price / 600, 2);
+        }
+        $p['price'] = $price;
+        $p['currency'] = '$';
+        if (!isset($p['payment_xaf']) || (int) $p['payment_xaf'] <= 0) {
+            $p['payment_xaf'] = (int) round($price * 600);
+        }
+    }
+    unset($p);
+
+    return $plans;
 }
 
 /**
@@ -280,7 +368,9 @@ function tcf_subscription_plans_catalog_admin(): array
         return [];
     }
 
-    return tcf_subscription_plans_normalize_rows($rows, false);
+    return tcf_subscription_plans_force_usd_display(
+        tcf_subscription_plans_normalize_rows($rows, false)
+    );
 }
 
 function tcf_subscription_plan_by_key(string $key, bool $activeOnly = true): ?array
@@ -368,15 +458,18 @@ function tcf_subscription_validate_user_type_for_save(string $type, bool $isNewU
     if ($t === '' || $t === 'free') {
         return null;
     }
-    if ($isNewUser && ($t === 'monthly' || $t === 'annual')) {
-        return 'Choisissez une formule du catalogue (page Abonnement), pas l’ancien type mensuel/annuel.';
-    }
     if ($t === 'monthly' || $t === 'annual') {
+        if ($isNewUser) {
+            return 'Choisissez un forfait actif de la plateforme (pas Mensuel/Annuel).';
+        }
+
+        // Modification : conserver un ancien type hérité déjà attribué.
         return null;
     }
-    if (tcf_subscription_plan_by_key($t, false) !== null) {
+    // Création : uniquement forfaits actifs. Modification : actif ou existant (même inactif).
+    if (tcf_subscription_plan_by_key($t, $isNewUser) !== null) {
         return null;
     }
 
-    return 'Type d’abonnement non reconnu.';
+    return 'Forfait inconnu ou inactif. Activez-le dans Abonnements → Forfaits.';
 }

@@ -3,7 +3,9 @@
 declare(strict_types=1);
 
 /**
- * Connexion persistante (« Rester connecté ») via cookie HttpOnly + jetons en base.
+ * Connexion persistante (« Rester connecté ») via cookie HttpOnly.
+ * Stockage consolidé : users.remember_token + users.remember_expires_at
+ * (format cookie : selector:validator ; remember_token = selector:sha256(validator))
  */
 
 const TCF_REMEMBER_COOKIE = 'tcf_remember';
@@ -20,27 +22,19 @@ function tcf_remember_is_https(): bool
     return !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
 }
 
-function tcf_remember_ensure_table(PDO $pdo): void
+function tcf_remember_users_columns_ready(PDO $pdo): bool
 {
-    static $done = false;
-    if ($done) {
-        return;
+    static $ok = null;
+    if ($ok !== null) {
+        return $ok;
     }
-    $pdo->exec(
-        'CREATE TABLE IF NOT EXISTS tcf_remember_tokens (
-            id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-            user_id INT NOT NULL,
-            selector VARCHAR(64) NOT NULL,
-            token_hash VARCHAR(255) NOT NULL,
-            expires_at DATETIME NOT NULL,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
-            UNIQUE KEY uq_tcf_remember_selector (selector),
-            KEY idx_tcf_remember_user (user_id),
-            KEY idx_tcf_remember_expires (expires_at)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
-    );
-    $done = true;
+    try {
+        $cols = $pdo->query('SHOW COLUMNS FROM users')->fetchAll(PDO::FETCH_COLUMN);
+        $ok = in_array('remember_token', $cols, true) && in_array('remember_expires_at', $cols, true);
+    } catch (Throwable $e) {
+        $ok = false;
+    }
+    return $ok;
 }
 
 function tcf_remember_set_cookie(string $value, int $expires): void
@@ -72,10 +66,9 @@ function tcf_remember_clear_cookie(): void
 
 function tcf_remember_issue(PDO $pdo, int $userId): void
 {
-    if ($userId <= 0) {
+    if ($userId <= 0 || !tcf_remember_users_columns_ready($pdo)) {
         return;
     }
-    tcf_remember_ensure_table($pdo);
     try {
         $selector = bin2hex(random_bytes(16));
         $validator = bin2hex(random_bytes(32));
@@ -85,10 +78,8 @@ function tcf_remember_issue(PDO $pdo, int $userId): void
     $hash = hash('sha256', $validator);
     $expiresAt = (new DateTimeImmutable('+' . TCF_REMEMBER_DAYS . ' days'))->format('Y-m-d H:i:s');
     try {
-        $pdo->prepare('DELETE FROM tcf_remember_tokens WHERE user_id = ? OR expires_at < NOW()')->execute([$userId]);
-        $pdo->prepare(
-            'INSERT INTO tcf_remember_tokens (user_id, selector, token_hash, expires_at) VALUES (?, ?, ?, ?)'
-        )->execute([$userId, $selector, $hash, $expiresAt]);
+        $pdo->prepare('UPDATE users SET remember_token = ?, remember_expires_at = ? WHERE id = ?')
+            ->execute([$selector . ':' . $hash, $expiresAt, $userId]);
     } catch (Throwable $e) {
         return;
     }
@@ -99,7 +90,7 @@ function tcf_remember_revoke_current(PDO $pdo): void
 {
     $raw = (string) ($_COOKIE[TCF_REMEMBER_COOKIE] ?? '');
     tcf_remember_clear_cookie();
-    if ($raw === '' || strpos($raw, ':') === false) {
+    if ($raw === '' || strpos($raw, ':') === false || !tcf_remember_users_columns_ready($pdo)) {
         return;
     }
     [$selector] = explode(':', $raw, 2);
@@ -107,8 +98,13 @@ function tcf_remember_revoke_current(PDO $pdo): void
         return;
     }
     try {
-        tcf_remember_ensure_table($pdo);
-        $pdo->prepare('DELETE FROM tcf_remember_tokens WHERE selector = ?')->execute([$selector]);
+        $st = $pdo->prepare('SELECT id, remember_token FROM users WHERE remember_token LIKE ? LIMIT 1');
+        $st->execute([$selector . ':%']);
+        $row = $st->fetch(PDO::FETCH_ASSOC);
+        if ($row) {
+            $pdo->prepare('UPDATE users SET remember_token = NULL, remember_expires_at = NULL WHERE id = ?')
+                ->execute([(int) $row['id']]);
+        }
     } catch (Throwable $e) {
         // ignore
     }
@@ -123,7 +119,7 @@ function tcf_remember_try_resume(PDO $pdo): void
         return;
     }
     $raw = (string) ($_COOKIE[TCF_REMEMBER_COOKIE] ?? '');
-    if ($raw === '' || strpos($raw, ':') === false) {
+    if ($raw === '' || strpos($raw, ':') === false || !tcf_remember_users_columns_ready($pdo)) {
         return;
     }
     [$selector, $validator] = explode(':', $raw, 2);
@@ -132,27 +128,21 @@ function tcf_remember_try_resume(PDO $pdo): void
         return;
     }
     try {
-        tcf_remember_ensure_table($pdo);
         $st = $pdo->prepare(
-            'SELECT t.id, t.user_id, t.token_hash, t.expires_at, u.*
-             FROM tcf_remember_tokens t
-             INNER JOIN users u ON u.id = t.user_id
-             WHERE t.selector = ?
-             LIMIT 1'
+            'SELECT * FROM users WHERE remember_token LIKE ? AND remember_expires_at IS NOT NULL AND remember_expires_at > NOW() LIMIT 1'
         );
-        $st->execute([$selector]);
+        $st->execute([$selector . ':%']);
         $row = $st->fetch(PDO::FETCH_ASSOC);
         if (!$row) {
             tcf_remember_clear_cookie();
             return;
         }
-        if (strtotime((string) $row['expires_at']) < time()) {
-            $pdo->prepare('DELETE FROM tcf_remember_tokens WHERE id = ?')->execute([(int) $row['id']]);
-            tcf_remember_clear_cookie();
-            return;
-        }
-        if (!hash_equals((string) $row['token_hash'], hash('sha256', $validator))) {
-            $pdo->prepare('DELETE FROM tcf_remember_tokens WHERE user_id = ?')->execute([(int) $row['user_id']]);
+        $stored = (string) ($row['remember_token'] ?? '');
+        $parts = explode(':', $stored, 2);
+        $tokenHash = $parts[1] ?? '';
+        if ($tokenHash === '' || !hash_equals($tokenHash, hash('sha256', $validator))) {
+            $pdo->prepare('UPDATE users SET remember_token = NULL, remember_expires_at = NULL WHERE id = ?')
+                ->execute([(int) $row['id']]);
             tcf_remember_clear_cookie();
             return;
         }
@@ -160,18 +150,16 @@ function tcf_remember_try_resume(PDO $pdo): void
             tcf_remember_revoke_current($pdo);
             return;
         }
-        // Rotation du jeton
-        $pdo->prepare('DELETE FROM tcf_remember_tokens WHERE id = ?')->execute([(int) $row['id']]);
         if (session_status() === PHP_SESSION_ACTIVE) {
             session_regenerate_id(true);
         }
-        $_SESSION['user_id'] = (int) $row['user_id'];
+        $_SESSION['user_id'] = (int) $row['id'];
         $_SESSION['username'] = $row['name'] ?? '';
         $_SESSION['email'] = $row['email'] ?? '';
         $_SESSION['role'] = $row['role'] ?? 'user';
         $_SESSION['is_admin'] = in_array($row['role'] ?? '', ['admin', 'super_admin'], true);
-        tcf_remember_issue($pdo, (int) $row['user_id']);
+        tcf_remember_issue($pdo, (int) $row['id']);
     } catch (Throwable $e) {
-        // Table absente / DB locale cassée : ignorer
+        // ignore
     }
 }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/subscription_access.php';
 require_once __DIR__ . '/includes/rich_text.php';
+require_once __DIR__ . '/includes/tcf_schema.php';
+require_once __DIR__ . '/includes/tcf_exam_store.php';
 
 $examId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 if ($examId <= 0) {
@@ -21,17 +23,46 @@ $premiumOk = tcf_user_has_premium_access($viewer);
 $loggedIn = $viewer !== null;
 
 $exam = null;
+$combinations = [];
 try {
-    $st = $pdo->prepare(
-        "SELECT id, slug, title, subtitle, visibility, is_published
-         FROM tcf_ee_exams
-         WHERE id = ? AND is_published = 1
-         LIMIT 1"
-    );
-    $st->execute([$examId]);
-    $exam = $st->fetch(PDO::FETCH_ASSOC) ?: null;
+    if (tcf_schema_has_table($pdo, 'expression_ecrite')) {
+        $full = tcf_exam_fetch_by_id($pdo, 'ee', $examId);
+        if ($full && !empty($full['is_published'])) {
+            $exam = $full;
+            $combinations = $full['combinations'] ?? [];
+            $examId = (int) ($full['id'] ?? $examId);
+        }
+    } else {
+        $st = $pdo->prepare(
+            "SELECT id, slug, title, subtitle, visibility, is_published
+             FROM tcf_ee_exams
+             WHERE id = ? AND is_published = 1
+             LIMIT 1"
+        );
+        $st->execute([$examId]);
+        $exam = $st->fetch(PDO::FETCH_ASSOC) ?: null;
+        if ($exam) {
+            $stC = $pdo->prepare('SELECT * FROM tcf_ee_combinations WHERE exam_id = ? ORDER BY sort_order ASC, combo_number ASC');
+            $stC->execute([$examId]);
+            $combinations = $stC->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($combinations as &$combo) {
+                $stT = $pdo->prepare('SELECT * FROM tcf_ee_tasks WHERE combination_id = ? ORDER BY sort_order ASC, task_number ASC');
+                $stT->execute([(int) $combo['id']]);
+                $tasks = $stT->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($tasks as &$task) {
+                    $stD = $pdo->prepare('SELECT * FROM tcf_ee_task_documents WHERE task_id = ? ORDER BY sort_order ASC, doc_number ASC');
+                    $stD->execute([(int) $task['id']]);
+                    $task['documents'] = $stD->fetchAll(PDO::FETCH_ASSOC);
+                }
+                unset($task);
+                $combo['tasks'] = $tasks;
+            }
+            unset($combo);
+        }
+    }
 } catch (Throwable $e) {
     $exam = null;
+    $combinations = [];
 }
 
 if (!$exam) {
@@ -49,28 +80,6 @@ if ($isPremium && !$loggedIn) {
 if ($isPremium && !$premiumOk) {
     header('Location: ' . site_href('abonnement.php'));
     exit;
-}
-
-$combinations = [];
-try {
-    $stC = $pdo->prepare('SELECT * FROM tcf_ee_combinations WHERE exam_id = ? ORDER BY sort_order ASC, combo_number ASC');
-    $stC->execute([$examId]);
-    $combinations = $stC->fetchAll(PDO::FETCH_ASSOC);
-    foreach ($combinations as &$combo) {
-        $stT = $pdo->prepare('SELECT * FROM tcf_ee_tasks WHERE combination_id = ? ORDER BY sort_order ASC, task_number ASC');
-        $stT->execute([(int) $combo['id']]);
-        $tasks = $stT->fetchAll(PDO::FETCH_ASSOC);
-        foreach ($tasks as &$task) {
-            $stD = $pdo->prepare('SELECT * FROM tcf_ee_task_documents WHERE task_id = ? ORDER BY sort_order ASC, doc_number ASC');
-            $stD->execute([(int) $task['id']]);
-            $task['documents'] = $stD->fetchAll(PDO::FETCH_ASSOC);
-        }
-        unset($task);
-        $combo['tasks'] = $tasks;
-    }
-    unset($combo);
-} catch (Throwable $e) {
-    $combinations = [];
 }
 
 $pageTitle = (string) ($exam['title'] ?? 'Expression Écrite');

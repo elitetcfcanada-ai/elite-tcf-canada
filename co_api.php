@@ -6,6 +6,8 @@ require_once __DIR__ . '/includes/subscription_access.php';
 require_once __DIR__ . '/includes/tcf_notifications_helper.php';
 require_once __DIR__ . '/includes/rich_text.php';
 require_once __DIR__ . '/includes/admin_roles.php';
+require_once __DIR__ . '/includes/tcf_schema.php';
+require_once __DIR__ . '/includes/tcf_exam_store.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -39,6 +41,9 @@ function co_slug(string $title): string
 
 function co_ensure_tables(PDO $pdo): void
 {
+    if (tcf_schema_is_consolidated($pdo) || tcf_schema_has_table($pdo, 'comprehension_orale')) {
+        return;
+    }
     $pdo->exec(
         "CREATE TABLE IF NOT EXISTS tcf_co_exams (
             id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -136,6 +141,9 @@ function co_can_view_premium_consigne(PDO $pdo): bool
 /** Table consignes CO (3 sections : structure, techniques, erreurs). */
 function co_ensure_co_consignes_table(PDO $pdo): void
 {
+    if (tcf_schema_is_consolidated($pdo) || tcf_schema_has_table($pdo, 'comprehension_orale')) {
+        return;
+    }
     $pdo->exec(
         "CREATE TABLE IF NOT EXISTS tcf_co_consignes (
             id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -165,13 +173,23 @@ function co_ensure_co_consignes_table(PDO $pdo): void
 function co_seed_default_consignes(PDO $pdo): void
 {
     require_once __DIR__ . '/includes/tcf_consignes_defaults.php';
-    co_ensure_co_consignes_table($pdo);
     $bodies = tcf_consigne_co_bodies();
     $titles = [
         'structure' => 'Structure de l’épreuve et stratégie de scoring',
         'techniques' => 'Les 5 techniques essentielles',
         'erreurs' => 'Erreurs courantes à éviter',
     ];
+    if (tcf_schema_has_table($pdo, 'comprehension_orale')) {
+        $sections = [];
+        $sort = 0;
+        foreach (['structure', 'techniques', 'erreurs'] as $key) {
+            $sort++;
+            $sections[] = ['key' => $key, 'title' => $titles[$key], 'body' => $bodies[$key], 'sort' => $sort];
+        }
+        tcf_exam_seed_consignes($pdo, 'co', $sections);
+        return;
+    }
+    co_ensure_co_consignes_table($pdo);
     $sort = 0;
     foreach (['structure', 'techniques', 'erreurs'] as $key) {
         $sort++;
@@ -197,6 +215,18 @@ function co_seed_default_consignes(PDO $pdo): void
 
 function co_track_view(PDO $pdo, int $examId): void
 {
+    if (tcf_schema_has_table($pdo, 'comprehension_orale')) {
+        $uid = !empty($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : null;
+        $vid = '';
+        if (empty($uid)) {
+            if (empty($_SESSION['tcf_visitor_id'])) {
+                $_SESSION['tcf_visitor_id'] = bin2hex(random_bytes(16));
+            }
+            $vid = (string) $_SESSION['tcf_visitor_id'];
+        }
+        tcf_exam_track_view($pdo, 'co', $examId, $uid, $vid);
+        return;
+    }
     if ($examId <= 0) {
         return;
     }
@@ -236,6 +266,9 @@ function co_resolve_media_url(string $ref): string
 
 function co_fetch_exam_full(PDO $pdo, int $examId): ?array
 {
+    if (tcf_schema_has_table($pdo, 'comprehension_orale')) {
+        return tcf_exam_fetch_by_id($pdo, 'co', $examId);
+    }
     $st = $pdo->prepare('SELECT * FROM tcf_co_exams WHERE id=? LIMIT 1');
     $st->execute([$examId]);
     $exam = $st->fetch(PDO::FETCH_ASSOC);
@@ -322,37 +355,134 @@ function co_exam_to_quiz_payload(array $exam): array
     return $out;
 }
 
+function co_exam_rank_from_title(string $title): int
+{
+    $t = mb_strtolower($title);
+    $months = [
+        'janvier' => 1, 'janv' => 1,
+        'fevrier' => 2, 'février' => 2, 'fevr' => 2, 'févr' => 2,
+        'mars' => 3,
+        'avril' => 4, 'avr' => 4,
+        'mai' => 5,
+        'juin' => 6,
+        'juillet' => 7, 'juil' => 7,
+        'aout' => 8, 'août' => 8,
+        'septembre' => 9, 'sept' => 9,
+        'octobre' => 10, 'oct' => 10,
+        'novembre' => 11, 'nov' => 11,
+        'decembre' => 12, 'décembre' => 12, 'dec' => 12, 'déc' => 12,
+    ];
+    $year = 0;
+    if (preg_match('/(20\d{2})/u', $t, $ym)) {
+        $year = (int) $ym[1];
+    }
+    $month = 0;
+    foreach ($months as $label => $num) {
+        if (mb_stripos($t, $label) !== false) {
+            $month = $num;
+            break;
+        }
+    }
+    if ($year <= 0) {
+        return 0;
+    }
+    return ($year * 100) + $month;
+}
+
 function co_sort_exams_by_title(array &$rows): void
 {
     usort($rows, static function (array $a, array $b): int {
+        $ra = co_exam_rank_from_title((string) ($a['title'] ?? ''));
+        $rb = co_exam_rank_from_title((string) ($b['title'] ?? ''));
+        if ($ra !== $rb) {
+            return $rb <=> $ra;
+        }
         return (int) ($b['id'] ?? 0) <=> (int) ($a['id'] ?? 0);
     });
 }
 
-/** Liste publique : anciennes épreuves en haut, les nouvelles publiées en bas (id croissant). */
+/** Liste publique utilisateur : plus anciennes en haut, nouvelles publiées en bas. */
 function co_sort_exams_public_user_order(array &$rows): void
 {
     usort($rows, static function (array $a, array $b): int {
+        $ra = co_exam_rank_from_title((string) ($a['title'] ?? ''));
+        $rb = co_exam_rank_from_title((string) ($b['title'] ?? ''));
+        if ($ra !== $rb) {
+            return $ra <=> $rb; // anciennes d'abord
+        }
         return (int) ($a['id'] ?? 0) <=> (int) ($b['id'] ?? 0);
     });
 }
 
-/** Les 3 épreuves publiées les plus récentes sont toujours accessibles sans abonnement. */
-function co_last_three_published_exam_ids(PDO $pdo): array
+/**
+ * Auto-visibilité comme EE/EO :
+ * les 3 épreuves publiées les plus récentes (rang titre) → gratuit
+ * (sauf Premium forcé) ; les autres → premium.
+ */
+function co_sync_exam_visibility(PDO $pdo): void
 {
     co_ensure_tables($pdo);
     try {
-        $st = $pdo->query(
-            "SELECT id FROM tcf_co_exams WHERE is_published = 1
-             ORDER BY COALESCE(published_at, updated_at, created_at) DESC, id DESC
-             LIMIT 3"
-        );
-        $ids = $st ? $st->fetchAll(PDO::FETCH_COLUMN) : [];
-    } catch (Throwable $e) {
-        return [];
-    }
+        if (tcf_schema_has_table($pdo, 'comprehension_orale')) {
+            $rows = $pdo->query(
+                "SELECT id, title, visibility FROM comprehension_orale WHERE kind='exam' AND is_published=1"
+            )->fetchAll(PDO::FETCH_ASSOC);
+            if (!$rows) {
+                return;
+            }
+            co_sort_exams_by_title($rows);
+            $top3Ids = [];
+            foreach ($rows as $row) {
+                $top3Ids[] = (int) ($row['id'] ?? 0);
+                if (count($top3Ids) >= 3) {
+                    break;
+                }
+            }
+            if ($top3Ids) {
+                $in = implode(',', array_map('intval', $top3Ids));
+                $pdo->exec(
+                    "UPDATE comprehension_orale SET visibility='premium'
+                     WHERE kind='exam' AND is_published=1 AND id NOT IN ($in)"
+                );
+                $pdo->exec(
+                    "UPDATE comprehension_orale SET visibility='gratuit'
+                     WHERE kind='exam' AND is_published=1 AND id IN ($in) AND visibility<>'premium'"
+                );
+            } else {
+                $pdo->exec(
+                    "UPDATE comprehension_orale SET visibility='premium' WHERE kind='exam' AND is_published=1"
+                );
+            }
+            return;
+        }
 
-    return array_values(array_map('intval', is_array($ids) ? $ids : []));
+        $rows = $pdo->query(
+            'SELECT id, title, visibility FROM tcf_co_exams WHERE is_published=1'
+        )->fetchAll(PDO::FETCH_ASSOC);
+        if (!$rows) {
+            return;
+        }
+        co_sort_exams_by_title($rows);
+        $top3Ids = [];
+        foreach ($rows as $row) {
+            $top3Ids[] = (int) ($row['id'] ?? 0);
+            if (count($top3Ids) >= 3) {
+                break;
+            }
+        }
+        if ($top3Ids) {
+            $in = implode(',', array_map('intval', $top3Ids));
+            $pdo->exec("UPDATE tcf_co_exams SET visibility='premium' WHERE is_published=1 AND id NOT IN ($in)");
+            $pdo->exec(
+                "UPDATE tcf_co_exams SET visibility='gratuit'
+                 WHERE is_published=1 AND id IN ($in) AND visibility<>'premium'"
+            );
+        } else {
+            $pdo->exec("UPDATE tcf_co_exams SET visibility='premium' WHERE is_published=1");
+        }
+    } catch (Throwable $e) {
+        // ignore sync errors
+    }
 }
 
 /**
@@ -547,19 +677,24 @@ if ($action === '') {
 try {
     switch ($action) {
         case 'get_exams_public': {
-            $st = $pdo->query(
-                "SELECT e.id, e.slug, e.title, e.subtitle, e.visibility, e.duration_seconds, e.published_at,
-                    (SELECT COUNT(*) FROM tcf_co_questions q WHERE q.exam_id = e.id) AS question_count
-                 FROM tcf_co_exams e
-                 WHERE e.is_published = 1"
-            );
-            $rows = $st->fetchAll(PDO::FETCH_ASSOC);
-            co_sort_exams_public_user_order($rows);
-            $alwaysFree = array_fill_keys(co_last_three_published_exam_ids($pdo), true);
-            foreach ($rows as &$r) {
-                $r['always_free'] = isset($alwaysFree[(int) ($r['id'] ?? 0)]);
+            co_sync_exam_visibility($pdo);
+            if (tcf_schema_has_table($pdo, 'comprehension_orale')) {
+                $rows = tcf_exam_list($pdo, 'co', true);
+                foreach ($rows as &$r) {
+                    $full = tcf_exam_fetch_by_id($pdo, 'co', (int) $r['id']);
+                    $r['question_count'] = count($full['questions'] ?? []);
+                }
+                unset($r);
+            } else {
+                $st = $pdo->query(
+                    "SELECT e.id, e.slug, e.title, e.subtitle, e.visibility, e.duration_seconds, e.published_at,
+                        (SELECT COUNT(*) FROM tcf_co_questions q WHERE q.exam_id = e.id) AS question_count
+                     FROM tcf_co_exams e
+                     WHERE e.is_published = 1"
+                );
+                $rows = $st->fetchAll(PDO::FETCH_ASSOC);
             }
-            unset($r);
+            co_sort_exams_public_user_order($rows);
             co_json(['success' => true, 'data' => $rows]);
         }
 
@@ -568,15 +703,21 @@ try {
             if ($examId <= 0) {
                 co_json(['success' => false, 'message' => 'Épreuve invalide.'], 422);
             }
-            $st = $pdo->prepare('SELECT * FROM tcf_co_exams WHERE id=? AND is_published=1');
-            $st->execute([$examId]);
-            $row = $st->fetch(PDO::FETCH_ASSOC);
-            if (!$row) {
-                co_json(['success' => false, 'message' => 'Épreuve indisponible.'], 404);
+            co_sync_exam_visibility($pdo);
+            if (tcf_schema_has_table($pdo, 'comprehension_orale')) {
+                $row = tcf_exam_fetch_by_id($pdo, 'co', $examId);
+                if (!$row || empty($row['is_published'])) {
+                    co_json(['success' => false, 'message' => 'Épreuve indisponible.'], 404);
+                }
+            } else {
+                $st = $pdo->prepare('SELECT * FROM tcf_co_exams WHERE id=? AND is_published=1');
+                $st->execute([$examId]);
+                $row = $st->fetch(PDO::FETCH_ASSOC);
+                if (!$row) {
+                    co_json(['success' => false, 'message' => 'Épreuve indisponible.'], 404);
+                }
             }
-            $alwaysFreeIds = co_last_three_published_exam_ids($pdo);
-            $isAlwaysFree = in_array($examId, $alwaysFreeIds, true);
-            if (((string) ($row['visibility'] ?? 'gratuit')) === 'premium' && !$isAlwaysFree) {
+            if (((string) ($row['visibility'] ?? 'gratuit')) === 'premium') {
                 if (empty($_SESSION['user_id'])) {
                     co_json(['success' => false, 'locked' => true, 'reason' => 'login', 'message' => 'Connectez-vous pour accéder à cette épreuve.'], 403);
                 }
@@ -618,12 +759,23 @@ try {
             if (!co_is_admin()) {
                 co_json(['success' => false, 'message' => 'Accès refusé.'], 403);
             }
-            $st = $pdo->query(
-                "SELECT e.*, (SELECT COUNT(*) FROM tcf_co_questions q WHERE q.exam_id=e.id) AS question_count,
-                    (SELECT COUNT(*) FROM tcf_co_exam_views v WHERE v.exam_id=e.id) AS view_count
-                 FROM tcf_co_exams e"
-            );
-            $rows = $st->fetchAll(PDO::FETCH_ASSOC);
+            co_sync_exam_visibility($pdo);
+            if (tcf_schema_has_table($pdo, 'comprehension_orale')) {
+                $rows = tcf_exam_list($pdo, 'co', false);
+                foreach ($rows as &$r) {
+                    $full = tcf_exam_fetch_by_id($pdo, 'co', (int) $r['id']);
+                    $r['question_count'] = count($full['questions'] ?? []);
+                    $r['view_count'] = (int) ($r['views_count'] ?? 0);
+                }
+                unset($r);
+            } else {
+                $st = $pdo->query(
+                    "SELECT e.*, (SELECT COUNT(*) FROM tcf_co_questions q WHERE q.exam_id=e.id) AS question_count,
+                        (SELECT COUNT(*) FROM tcf_co_exam_views v WHERE v.exam_id=e.id) AS view_count
+                     FROM tcf_co_exams e"
+                );
+                $rows = $st->fetchAll(PDO::FETCH_ASSOC);
+            }
             co_sort_exams_by_title($rows);
             foreach ($rows as &$r) {
                 $r['effective_visibility'] = (string) ($r['visibility'] ?? 'gratuit');
@@ -727,6 +879,66 @@ try {
                 if ($ci < 0 || $ci > 3) {
                     co_json(['success' => false, 'message' => 'Indice de bonne réponse invalide (question ' . ($qi + 1) . ').'], 422);
                 }
+            }
+
+            if (tcf_schema_has_table($pdo, 'comprehension_orale')) {
+                $isNewExam = $examId <= 0;
+                $wasPublished = 0;
+                if ($examId > 0) {
+                    $stWas = $pdo->prepare("SELECT is_published FROM comprehension_orale WHERE id=? AND kind='exam'");
+                    $stWas->execute([$examId]);
+                    $wasPublished = (int) $stWas->fetchColumn();
+                }
+                $qPayload = [];
+                foreach ($questions as $i => $q) {
+                    $answers = [];
+                    $correctIdx = (int) ($q['correct_index'] ?? 0);
+                    for ($ai = 0; $ai < 4; $ai++) {
+                        $a = $q['answers'][$ai] ?? null;
+                        $atxt = '';
+                        if (is_array($a)) {
+                            $atxt = co_strip_answer_letter_prefix((string) ($a['text'] ?? ''));
+                        }
+                        $answers[] = [
+                            'id' => ($i + 1) * 10 + $ai,
+                            'answer_key' => ['a', 'b', 'c', 'd'][$ai],
+                            'answer_text' => $atxt,
+                            'is_correct' => ($ai === $correctIdx) ? 1 : 0,
+                            'sort_order' => $ai,
+                        ];
+                    }
+                    $qPayload[] = [
+                        'id' => $i + 1,
+                        'sort_order' => $i + 1,
+                        'question_text' => (string) ($q['question_text'] ?? ''),
+                        'points' => (int) ($q['points'] ?? 1),
+                        'image_src' => (string) ($q['image_src'] ?? ''),
+                        'audio_src' => (string) ($q['audio_src'] ?? ''),
+                        'audio_text' => (string) ($q['audio_text'] ?? ''),
+                        'answers' => $answers,
+                    ];
+                }
+                $examId = tcf_exam_save($pdo, 'co', [
+                    'slug' => co_slug($title),
+                    'title' => $title,
+                    'subtitle' => $subtitle !== '' ? $subtitle : null,
+                    'intro_html' => $introHtml !== '' ? $introHtml : null,
+                    'visibility' => $visibility,
+                    'is_published' => $isPublished,
+                    'duration_seconds' => $durationSeconds,
+                    'created_by' => (int) ($_SESSION['user_id'] ?? 0),
+                ], ['questions' => $qPayload], $examId > 0 ? $examId : null);
+                if ($isPublished && ($isNewExam || !$wasPublished)) {
+                    tcf_notify_users_registered_before(
+                        $pdo,
+                        'exam',
+                        'Nouvelle épreuve — Compréhension orale',
+                        "L'épreuve « $title » est maintenant disponible.",
+                        site_href('comprehension_orale_quiz.php?exam_id=' . $examId)
+                    );
+                }
+                co_sync_exam_visibility($pdo);
+                co_json(['success' => true, 'message' => 'Épreuve enregistrée.', 'exam_id' => $examId]);
             }
 
             $pdo->beginTransaction();
@@ -840,6 +1052,7 @@ try {
                     site_href('comprehension_orale_quiz.php?exam_id=' . $examId)
                 );
             }
+            co_sync_exam_visibility($pdo);
             co_json(['success' => true, 'message' => 'Épreuve enregistrée.', 'exam_id' => $examId]);
         }
 
@@ -854,25 +1067,47 @@ try {
             if ($examId <= 0) {
                 co_json(['success' => false, 'message' => 'ID invalide.'], 422);
             }
-            $pdo->prepare('DELETE FROM tcf_co_exams WHERE id=?')->execute([$examId]);
+            if (tcf_schema_has_table($pdo, 'comprehension_orale')) {
+                tcf_exam_delete($pdo, 'co', $examId);
+            } else {
+                $pdo->prepare('DELETE FROM tcf_co_exams WHERE id=?')->execute([$examId]);
+            }
             tcf_delete_notifications_matching($pdo, 'comprehension_orale_quiz.php?exam_id=' . $examId);
+            co_sync_exam_visibility($pdo);
             co_json(['success' => true, 'message' => 'Supprimé.']);
         }
 
         case 'get_consignes': {
-            co_seed_default_consignes($pdo);
-            $canPremium = co_can_view_premium_consigne($pdo);
-            $keys = "'structure','techniques','erreurs'";
-            if ($canPremium) {
-                $st = $pdo->query(
-                    "SELECT id, title, body, section_key, visibility, is_published, sort_order FROM tcf_co_consignes WHERE is_published=1 AND section_key IN ($keys) ORDER BY sort_order ASC, id ASC"
-                );
+            if (tcf_schema_has_table($pdo, 'comprehension_orale')) {
+                $canPremium = co_can_view_premium_consigne($pdo);
+                $rows = tcf_exam_list_consignes($pdo, 'co');
+                $keys = ['structure', 'techniques', 'erreurs'];
+                $rows = array_values(array_filter($rows, static function (array $row) use ($keys, $canPremium): bool {
+                    $key = (string) ($row['section_key'] ?? '');
+                    if (!in_array($key, $keys, true) || empty($row['is_published'])) {
+                        return false;
+                    }
+                    if (!$canPremium && (string) ($row['visibility'] ?? 'gratuit') !== 'gratuit') {
+                        return false;
+                    }
+                    return true;
+                }));
+                usort($rows, static fn (array $a, array $b): int => ((int) ($a['sort_order'] ?? 0)) <=> ((int) ($b['sort_order'] ?? 0)));
             } else {
-                $st = $pdo->query(
-                    "SELECT id, title, body, section_key, visibility, is_published, sort_order FROM tcf_co_consignes WHERE is_published=1 AND visibility='gratuit' AND section_key IN ($keys) ORDER BY sort_order ASC, id ASC"
-                );
+                co_seed_default_consignes($pdo);
+                $canPremium = co_can_view_premium_consigne($pdo);
+                $keys = "'structure','techniques','erreurs'";
+                if ($canPremium) {
+                    $st = $pdo->query(
+                        "SELECT id, title, body, section_key, visibility, is_published, sort_order FROM tcf_co_consignes WHERE is_published=1 AND section_key IN ($keys) ORDER BY sort_order ASC, id ASC"
+                    );
+                } else {
+                    $st = $pdo->query(
+                        "SELECT id, title, body, section_key, visibility, is_published, sort_order FROM tcf_co_consignes WHERE is_published=1 AND visibility='gratuit' AND section_key IN ($keys) ORDER BY sort_order ASC, id ASC"
+                    );
+                }
+                $rows = $st->fetchAll(PDO::FETCH_ASSOC) ?: [];
             }
-            $rows = $st->fetchAll(PDO::FETCH_ASSOC) ?: [];
             foreach ($rows as &$row) {
                 $row['body'] = tcf_normalize_rich((string) ($row['body'] ?? ''));
                 $row['task_key'] = (string) ($row['section_key'] ?? '');
@@ -885,15 +1120,25 @@ try {
             if (!co_is_admin()) {
                 co_json(['success' => false, 'message' => 'Accès refusé.'], 403);
             }
-            co_seed_default_consignes($pdo);
             $out = ['structure' => '', 'techniques' => '', 'erreurs' => '', 'is_published' => 1];
-            $st = $pdo->query("SELECT body, section_key, is_published FROM tcf_co_consignes WHERE section_key IN ('structure','techniques','erreurs') ORDER BY sort_order ASC, id ASC");
-            foreach (($st->fetchAll(PDO::FETCH_ASSOC) ?: []) as $row) {
-                $k = (string) ($row['section_key'] ?? '');
-                if (isset($out[$k])) {
-                    $out[$k] = (string) ($row['body'] ?? '');
+            if (tcf_schema_has_table($pdo, 'comprehension_orale')) {
+                foreach (tcf_exam_list_consignes($pdo, 'co') as $row) {
+                    $k = (string) ($row['section_key'] ?? '');
+                    if (isset($out[$k])) {
+                        $out[$k] = (string) ($row['body'] ?? '');
+                        $out['is_published'] = (int) ($row['is_published'] ?? 1);
+                    }
                 }
-                $out['is_published'] = (int) ($row['is_published'] ?? 1);
+            } else {
+                co_seed_default_consignes($pdo);
+                $st = $pdo->query("SELECT body, section_key, is_published FROM tcf_co_consignes WHERE section_key IN ('structure','techniques','erreurs') ORDER BY sort_order ASC, id ASC");
+                foreach (($st->fetchAll(PDO::FETCH_ASSOC) ?: []) as $row) {
+                    $k = (string) ($row['section_key'] ?? '');
+                    if (isset($out[$k])) {
+                        $out[$k] = (string) ($row['body'] ?? '');
+                        $out['is_published'] = (int) ($row['is_published'] ?? 1);
+                    }
+                }
             }
             co_json(['success' => true, 'data' => $out]);
         }
@@ -909,7 +1154,6 @@ try {
             if ($structure === '' || $techniques === '' || $erreurs === '') {
                 co_json(['success' => false, 'message' => 'Veuillez renseigner les 3 sections de consignes.'], 422);
             }
-            co_seed_default_consignes($pdo);
             $titles = [
                 'structure' => 'Structure de l’épreuve et stratégie de scoring',
                 'techniques' => 'Les 5 techniques essentielles',
@@ -920,12 +1164,32 @@ try {
                 'techniques' => $techniques,
                 'erreurs' => $erreurs,
             ];
-            $pdo->exec("DELETE FROM tcf_co_consignes WHERE section_key IN ('structure','techniques','erreurs')");
-            $ins = $pdo->prepare('INSERT INTO tcf_co_consignes (title, body, section_key, visibility, is_published, sort_order) VALUES (?,?,?,?,?,?)');
-            $sort = 0;
-            foreach (['structure', 'techniques', 'erreurs'] as $key) {
-                $sort++;
-                $ins->execute([$titles[$key], $bodies[$key], $key, 'gratuit', $isPublished, $sort]);
+            if (tcf_schema_has_table($pdo, 'comprehension_orale')) {
+                $pdo->exec("DELETE FROM comprehension_orale WHERE kind='consigne' AND section_key IN ('structure','techniques','erreurs')");
+                $ins = $pdo->prepare(
+                    "INSERT INTO comprehension_orale (kind, title, section_key, visibility, is_published, content_json, created_at, updated_at)
+                     VALUES ('consigne',?,?,?,?,?,NOW(),NOW())"
+                );
+                $sort = 0;
+                foreach (['structure', 'techniques', 'erreurs'] as $key) {
+                    $sort++;
+                    $ins->execute([
+                        $titles[$key],
+                        $key,
+                        'gratuit',
+                        $isPublished,
+                        json_encode(['body' => $bodies[$key], 'sort_order' => $sort], JSON_UNESCAPED_UNICODE),
+                    ]);
+                }
+            } else {
+                co_seed_default_consignes($pdo);
+                $pdo->exec("DELETE FROM tcf_co_consignes WHERE section_key IN ('structure','techniques','erreurs')");
+                $ins = $pdo->prepare('INSERT INTO tcf_co_consignes (title, body, section_key, visibility, is_published, sort_order) VALUES (?,?,?,?,?,?)');
+                $sort = 0;
+                foreach (['structure', 'techniques', 'erreurs'] as $key) {
+                    $sort++;
+                    $ins->execute([$titles[$key], $bodies[$key], $key, 'gratuit', $isPublished, $sort]);
+                }
             }
             co_json(['success' => true, 'message' => 'Consignes enregistrées.']);
         }

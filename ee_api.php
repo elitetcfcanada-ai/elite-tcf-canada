@@ -7,6 +7,9 @@ require_once __DIR__ . '/includes/tcf_notifications_helper.php';
 require_once __DIR__ . '/includes/rich_text.php';
 require_once __DIR__ . '/includes/admin_roles.php';
 require_once __DIR__ . '/includes/gemini_client.php';
+require_once __DIR__ . '/includes/tcf_schema.php';
+require_once __DIR__ . '/includes/tcf_exam_store.php';
+require_once __DIR__ . '/includes/tcf_legacy_tables.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -43,6 +46,9 @@ function ee_slug(string $title): string
 
 function ee_ensure_consignes_table(PDO $pdo): void
 {
+    if (tcf_schema_is_consolidated($pdo) || tcf_schema_has_table($pdo, 'expression_ecrite')) {
+        return;
+    }
     $pdo->exec(
         "CREATE TABLE IF NOT EXISTS tcf_ee_consignes (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -98,6 +104,14 @@ function ee_seed_default_consignes(PDO $pdo): void
         'tache2' => 'Tâche 2 : Article de blog / Narration',
         'tache3' => 'Tâche 3 : Texte argumentatif',
     ];
+    if (tcf_schema_has_table($pdo, 'expression_ecrite')) {
+        $sections = [];
+        foreach (['tache1', 'tache2', 'tache3'] as $i => $key) {
+            $sections[] = ['key' => $key, 'title' => $titles[$key], 'body' => $bodies[$key], 'sort' => $i + 1];
+        }
+        tcf_exam_seed_consignes($pdo, 'ee', $sections);
+        return;
+    }
 
     foreach (['tache1', 'tache2', 'tache3'] as $i => $key) {
         $sort = $i + 1;
@@ -124,6 +138,9 @@ function ee_seed_default_consignes(PDO $pdo): void
 
 function ee_ensure_exams_visibility_column(PDO $pdo): void
 {
+    if (tcf_schema_has_table($pdo, 'expression_ecrite')) {
+        return;
+    }
     try {
         $cols = $pdo->query("SHOW COLUMNS FROM tcf_ee_exams")->fetchAll(PDO::FETCH_ASSOC);
         $hasVisibility = false;
@@ -142,6 +159,9 @@ function ee_ensure_exams_visibility_column(PDO $pdo): void
 
 function ee_ensure_exam_views_table(PDO $pdo): void
 {
+    if (tcf_schema_is_consolidated($pdo) || tcf_schema_has_table($pdo, 'expression_ecrite')) {
+        return;
+    }
     $pdo->exec(
         "CREATE TABLE IF NOT EXISTS tcf_ee_exam_views (
             id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -164,6 +184,18 @@ function ee_ensure_exam_views_table(PDO $pdo): void
 
 function ee_track_exam_view(PDO $pdo, int $examId): void
 {
+    if (tcf_schema_has_table($pdo, 'expression_ecrite')) {
+        $uid = !empty($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : null;
+        $vid = '';
+        if (empty($uid)) {
+            if (empty($_SESSION['tcf_visitor_id'])) {
+                $_SESSION['tcf_visitor_id'] = bin2hex(random_bytes(16));
+            }
+            $vid = (string) $_SESSION['tcf_visitor_id'];
+        }
+        tcf_exam_track_view($pdo, 'ee', $examId, $uid, $vid);
+        return;
+    }
     if ($examId <= 0) {
         return;
     }
@@ -244,6 +276,28 @@ function ee_recent_free_exam_ids_from_rows(array $rows, int $limit = 3): array
 
 function ee_sync_exam_visibility(PDO $pdo): void
 {
+    if (tcf_schema_has_table($pdo, 'expression_ecrite')) {
+        $rows = $pdo->query("SELECT id, title, visibility FROM expression_ecrite WHERE kind='exam' AND is_published=1")->fetchAll(PDO::FETCH_ASSOC);
+        if (!$rows) {
+            return;
+        }
+        ee_sort_exams_by_title_date($rows);
+        $top3Ids = [];
+        foreach ($rows as $row) {
+            $top3Ids[] = (int) ($row['id'] ?? 0);
+            if (count($top3Ids) >= 3) {
+                break;
+            }
+        }
+        if ($top3Ids) {
+            $in = implode(',', array_map('intval', $top3Ids));
+            $pdo->exec("UPDATE expression_ecrite SET visibility='premium' WHERE kind='exam' AND is_published=1 AND id NOT IN ($in)");
+            $pdo->exec("UPDATE expression_ecrite SET visibility='gratuit' WHERE kind='exam' AND is_published=1 AND id IN ($in) AND visibility<>'premium'");
+        } else {
+            $pdo->exec("UPDATE expression_ecrite SET visibility='premium' WHERE kind='exam' AND is_published=1");
+        }
+        return;
+    }
     $rows = $pdo->query("SELECT id, title, visibility FROM tcf_ee_exams WHERE is_published=1")->fetchAll(PDO::FETCH_ASSOC);
     if (!$rows) {
         return;
@@ -462,6 +516,139 @@ function ee_normalize_feedback(array $fb): array
     return $out;
 }
 
+function ee_attach_combination_tasks(array $exam): array
+{
+    $combos = $exam['combinations'] ?? [];
+    if (!empty($combos) && isset($combos[0]['tasks']) && is_array($combos[0]['tasks'])) {
+        $exam['combinations'] = $combos;
+        return $exam;
+    }
+    $tasksByCombo = [];
+    foreach ($exam['tasks'] ?? [] as $t) {
+        $cid = (int) ($t['combination_id'] ?? 0);
+        $tasksByCombo[$cid][] = $t;
+    }
+    $out = [];
+    foreach ($combos as $c) {
+        $cid = (int) ($c['id'] ?? 0);
+        $c['tasks'] = $tasksByCombo[$cid] ?? [];
+        $out[] = $c;
+    }
+    if ($out === [] && !empty($exam['tasks'])) {
+        $out = [[
+            'id' => 1,
+            'combo_number' => 1,
+            'title' => 'Combinaison 1',
+            'sort_order' => 0,
+            'tasks' => $exam['tasks'],
+        ]];
+    }
+    $exam['combinations'] = $out;
+    return $exam;
+}
+
+function ee_fetch_exam_full(PDO $pdo, int $examId): ?array
+{
+    if (tcf_schema_has_table($pdo, 'expression_ecrite')) {
+        $exam = tcf_exam_fetch_by_id($pdo, 'ee', $examId);
+        return $exam ? ee_attach_combination_tasks($exam) : null;
+    }
+    $stmtEx = $pdo->prepare('SELECT * FROM tcf_ee_exams WHERE id=?');
+    $stmtEx->execute([$examId]);
+    $exam = $stmtEx->fetch(PDO::FETCH_ASSOC);
+    if (!$exam) {
+        return null;
+    }
+    $stmtC = $pdo->prepare('SELECT * FROM tcf_ee_combinations WHERE exam_id=? ORDER BY sort_order ASC, combo_number ASC');
+    $stmtC->execute([$examId]);
+    $combos = $stmtC->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($combos as &$combo) {
+        $stmtT = $pdo->prepare('SELECT * FROM tcf_ee_tasks WHERE combination_id=? ORDER BY sort_order ASC, task_number ASC');
+        $stmtT->execute([$combo['id']]);
+        $tasks = $stmtT->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($tasks as &$task) {
+            $stmtD = $pdo->prepare('SELECT * FROM tcf_ee_task_documents WHERE task_id=? ORDER BY sort_order ASC, doc_number ASC');
+            $stmtD->execute([$task['id']]);
+            $task['documents'] = $stmtD->fetchAll(PDO::FETCH_ASSOC);
+        }
+        unset($task);
+        $combo['tasks'] = $tasks;
+    }
+    unset($combo);
+    $exam['combinations'] = $combos;
+    return $exam;
+}
+
+/** @return list<array<string,mixed>> */
+function ee_build_combinations_content(array $combinationsData): array
+{
+    $out = [];
+    foreach ($combinationsData as $ci => $combo) {
+        $tasks = [];
+        foreach ($combo['tasks'] ?? [] as $ti => $task) {
+            $docs = [];
+            foreach ($task['documents'] ?? [] as $di => $doc) {
+                $docContent = trim((string) ($doc['content'] ?? ''));
+                if ($docContent === '') {
+                    continue;
+                }
+                $docs[] = [
+                    'id' => (int) ($doc['id'] ?? ($ci + 1) * 100 + ($ti + 1) * 10 + $di + 1),
+                    'doc_number' => (int) ($doc['doc_number'] ?? ($di + 1)),
+                    'title' => trim((string) ($doc['title'] ?? '')) ?: null,
+                    'content' => $docContent,
+                    'sort_order' => (int) ($doc['sort_order'] ?? $di),
+                ];
+            }
+            $tasks[] = [
+                'id' => (int) ($task['id'] ?? ($ci + 1) * 10 + $ti + 1),
+                'task_number' => (int) ($task['task_number'] ?? ($ti + 1)),
+                'prompt' => trim((string) ($task['prompt'] ?? '')),
+                'correction' => trim((string) ($task['correction'] ?? '')) ?: null,
+                'word_min' => isset($task['word_min']) && $task['word_min'] !== '' && $task['word_min'] !== null ? (int) $task['word_min'] : null,
+                'word_max' => isset($task['word_max']) && $task['word_max'] !== '' && $task['word_max'] !== null ? (int) $task['word_max'] : null,
+                'sort_order' => (int) ($task['sort_order'] ?? $ti),
+                'documents' => $docs,
+            ];
+        }
+        $out[] = [
+            'id' => (int) ($combo['id'] ?? $ci + 1),
+            'combo_number' => (int) ($combo['combo_number'] ?? ($ci + 1)),
+            'title' => trim((string) ($combo['title'] ?? 'Combinaison ' . ($ci + 1))),
+            'sort_order' => (int) ($combo['sort_order'] ?? $ci),
+            'tasks' => $tasks,
+        ];
+    }
+    return $out;
+}
+
+function ee_random_task_prompt(PDO $pdo, int $taskNum): string
+{
+    if (tcf_schema_has_table($pdo, 'expression_ecrite')) {
+        $prompts = [];
+        foreach (tcf_exam_list($pdo, 'ee', true) as $row) {
+            $full = ee_attach_combination_tasks(tcf_exam_fetch_by_id($pdo, 'ee', (int) $row['id']) ?: []);
+            foreach ($full['combinations'] ?? [] as $combo) {
+                foreach ($combo['tasks'] ?? [] as $task) {
+                    if ((int) ($task['task_number'] ?? 0) === $taskNum) {
+                        $p = trim((string) ($task['prompt'] ?? ''));
+                        if ($p !== '') {
+                            $prompts[] = $p;
+                        }
+                    }
+                }
+            }
+        }
+        if ($prompts !== []) {
+            return $prompts[array_rand($prompts)];
+        }
+        return '';
+    }
+    $promptStmt = $pdo->prepare("SELECT t.prompt FROM tcf_ee_tasks t INNER JOIN tcf_ee_combinations c ON c.id=t.combination_id INNER JOIN tcf_ee_exams e ON e.id=c.exam_id WHERE e.is_published=1 AND t.task_number=? AND t.prompt IS NOT NULL AND t.prompt<>'' ORDER BY RAND() LIMIT 1");
+    $promptStmt->execute([$taskNum]);
+    return trim((string) ($promptStmt->fetchColumn() ?: ''));
+}
+
 function ee_save_combinations(PDO $pdo, int $examId, array $combinationsData): void
 {
     foreach ($combinationsData as $ci => $combo) {
@@ -507,19 +694,40 @@ switch ($action) {
 
     case 'get_consignes':
         try {
-            ee_ensure_consignes_table($pdo);
-            ee_seed_default_consignes($pdo);
-            $canPremium = ee_can_view_premium_consigne($pdo);
-            if ($canPremium) {
-                $stmt = $pdo->query("SELECT id, title, body, task_key, visibility, is_published, sort_order FROM tcf_ee_consignes WHERE is_published=1 AND task_key IN ('tache1','tache2','tache3') ORDER BY task_key ASC, sort_order ASC, id ASC");
+            if (tcf_schema_has_table($pdo, 'expression_ecrite')) {
+                $canPremium = ee_can_view_premium_consigne($pdo);
+                $taskKeys = ['tache1', 'tache2', 'tache3'];
+                $rows = array_values(array_filter(
+                    tcf_exam_list_consignes($pdo, 'ee'),
+                    static function (array $row) use ($taskKeys, $canPremium): bool {
+                        $key = (string) ($row['section_key'] ?? '');
+                        if (!in_array($key, $taskKeys, true) || empty($row['is_published'])) {
+                            return false;
+                        }
+                        return $canPremium || (string) ($row['visibility'] ?? 'gratuit') === 'gratuit';
+                    }
+                ));
+                foreach ($rows as &$row) {
+                    $row['task_key'] = (string) ($row['section_key'] ?? '');
+                    $row['body'] = tcf_normalize_rich((string) ($row['body'] ?? ''));
+                }
+                unset($row);
+                usort($rows, static fn (array $a, array $b): int => strcmp((string) ($a['task_key'] ?? ''), (string) ($b['task_key'] ?? '')));
             } else {
-                $stmt = $pdo->query("SELECT id, title, body, task_key, visibility, is_published, sort_order FROM tcf_ee_consignes WHERE is_published=1 AND visibility='gratuit' AND task_key IN ('tache1','tache2','tache3') ORDER BY task_key ASC, sort_order ASC, id ASC");
+                ee_ensure_consignes_table($pdo);
+                ee_seed_default_consignes($pdo);
+                $canPremium = ee_can_view_premium_consigne($pdo);
+                if ($canPremium) {
+                    $stmt = $pdo->query("SELECT id, title, body, task_key, visibility, is_published, sort_order FROM tcf_ee_consignes WHERE is_published=1 AND task_key IN ('tache1','tache2','tache3') ORDER BY task_key ASC, sort_order ASC, id ASC");
+                } else {
+                    $stmt = $pdo->query("SELECT id, title, body, task_key, visibility, is_published, sort_order FROM tcf_ee_consignes WHERE is_published=1 AND visibility='gratuit' AND task_key IN ('tache1','tache2','tache3') ORDER BY task_key ASC, sort_order ASC, id ASC");
+                }
+                $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($rows as &$row) {
+                    $row['body'] = tcf_normalize_rich((string) ($row['body'] ?? ''));
+                }
+                unset($row);
             }
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            foreach ($rows as &$row) {
-                $row['body'] = tcf_normalize_rich((string) ($row['body'] ?? ''));
-            }
-            unset($row);
             ee_json(['success' => true, 'data' => $rows, 'can_premium' => $canPremium]);
         } catch (Throwable $e) {
             ee_json(['success' => false, 'message' => $e->getMessage()]);
@@ -531,6 +739,18 @@ switch ($action) {
             ee_json(['success' => false, 'message' => 'Accès refusé.'], 403);
         }
         try {
+            if (tcf_schema_has_table($pdo, 'expression_ecrite')) {
+                $rows = array_values(array_filter(
+                    tcf_exam_list_consignes($pdo, 'ee'),
+                    static fn (array $row): bool => in_array((string) ($row['section_key'] ?? ''), ['tache1', 'tache2', 'tache3'], true)
+                ));
+                foreach ($rows as &$row) {
+                    $row['task_key'] = (string) ($row['section_key'] ?? '');
+                }
+                unset($row);
+                usort($rows, static fn (array $a, array $b): int => strcmp((string) ($a['task_key'] ?? ''), (string) ($b['task_key'] ?? '')));
+                ee_json(['success' => true, 'data' => $rows]);
+            }
             ee_ensure_consignes_table($pdo);
             ee_seed_default_consignes($pdo);
             $stmt = $pdo->query("SELECT id, title, body, task_key, visibility, is_published, sort_order FROM tcf_ee_consignes WHERE task_key IN ('tache1','tache2','tache3') ORDER BY task_key ASC, sort_order ASC, id ASC");
@@ -545,8 +765,6 @@ switch ($action) {
             ee_json(['success' => false, 'message' => 'Accès refusé.'], 403);
         }
         try {
-            ee_ensure_consignes_table($pdo);
-            ee_seed_default_consignes($pdo);
             $tasks = ['tache1', 'tache2', 'tache3'];
             $bundle = [
                 'tache1' => '',
@@ -554,13 +772,25 @@ switch ($action) {
                 'tache3' => '',
                 'is_published' => 1,
             ];
-            $stmt = $pdo->prepare("SELECT body, is_published FROM tcf_ee_consignes WHERE task_key=? ORDER BY sort_order ASC, id ASC LIMIT 1");
-            foreach ($tasks as $t) {
-                $stmt->execute([$t]);
-                $row = $stmt->fetch(PDO::FETCH_ASSOC);
-                if ($row) {
-                    $bundle[$t] = (string) ($row['body'] ?? '');
-                    $bundle['is_published'] = (int) ($row['is_published'] ?? 1);
+            if (tcf_schema_has_table($pdo, 'expression_ecrite')) {
+                foreach (tcf_exam_list_consignes($pdo, 'ee') as $row) {
+                    $k = (string) ($row['section_key'] ?? '');
+                    if (isset($bundle[$k])) {
+                        $bundle[$k] = (string) ($row['body'] ?? '');
+                        $bundle['is_published'] = (int) ($row['is_published'] ?? 1);
+                    }
+                }
+            } else {
+                ee_ensure_consignes_table($pdo);
+                ee_seed_default_consignes($pdo);
+                $stmt = $pdo->prepare("SELECT body, is_published FROM tcf_ee_consignes WHERE task_key=? ORDER BY sort_order ASC, id ASC LIMIT 1");
+                foreach ($tasks as $t) {
+                    $stmt->execute([$t]);
+                    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                    if ($row) {
+                        $bundle[$t] = (string) ($row['body'] ?? '');
+                        $bundle['is_published'] = (int) ($row['is_published'] ?? 1);
+                    }
                 }
             }
             ee_json(['success' => true, 'data' => $bundle]);
@@ -581,19 +811,41 @@ switch ($action) {
             ee_json(['success' => false, 'message' => 'Veuillez renseigner les consignes des 3 tâches.']);
         }
         try {
-            ee_ensure_consignes_table($pdo);
-            $pdo->beginTransaction();
-            $pdo->exec("DELETE FROM tcf_ee_consignes WHERE task_key IN ('tache1','tache2','tache3')");
-            $ins = $pdo->prepare("INSERT INTO tcf_ee_consignes (title, body, task_key, visibility, is_published, sort_order, is_active) VALUES (?, ?, ?, 'gratuit', ?, ?, 1)");
-            $rows = [
-                ['tache1', $tache1, 1],
-                ['tache2', $tache2, 2],
-                ['tache3', $tache3, 3],
-            ];
-            foreach ($rows as $r) {
-                $ins->execute([ee_consigne_task_title($r[0]), $r[1], $r[0], $isPublished, $r[2]]);
+            if (tcf_schema_has_table($pdo, 'expression_ecrite')) {
+                $pdo->exec("DELETE FROM expression_ecrite WHERE kind='consigne' AND section_key IN ('tache1','tache2','tache3')");
+                $ins = $pdo->prepare(
+                    "INSERT INTO expression_ecrite (kind, title, section_key, visibility, is_published, content_json, created_at, updated_at)
+                     VALUES ('consigne',?,?,?,?,?,NOW(),NOW())"
+                );
+                $rows = [
+                    ['tache1', $tache1, 1],
+                    ['tache2', $tache2, 2],
+                    ['tache3', $tache3, 3],
+                ];
+                foreach ($rows as $r) {
+                    $ins->execute([
+                        ee_consigne_task_title($r[0]),
+                        $r[0],
+                        'gratuit',
+                        $isPublished,
+                        json_encode(['body' => $r[1], 'sort_order' => $r[2]], JSON_UNESCAPED_UNICODE),
+                    ]);
+                }
+            } else {
+                ee_ensure_consignes_table($pdo);
+                $pdo->beginTransaction();
+                $pdo->exec("DELETE FROM tcf_ee_consignes WHERE task_key IN ('tache1','tache2','tache3')");
+                $ins = $pdo->prepare("INSERT INTO tcf_ee_consignes (title, body, task_key, visibility, is_published, sort_order, is_active) VALUES (?, ?, ?, 'gratuit', ?, ?, 1)");
+                $rows = [
+                    ['tache1', $tache1, 1],
+                    ['tache2', $tache2, 2],
+                    ['tache3', $tache3, 3],
+                ];
+                foreach ($rows as $r) {
+                    $ins->execute([ee_consigne_task_title($r[0]), $r[1], $r[0], $isPublished, $r[2]]);
+                }
+                $pdo->commit();
             }
-            $pdo->commit();
             ee_json(['success' => true, 'message' => 'Consignes enregistrées et publiées.']);
         } catch (Throwable $e) {
             if ($pdo->inTransaction()) $pdo->rollBack();
@@ -615,16 +867,24 @@ switch ($action) {
         }
         $defaults = ee_simulator_task_defaults($taskKey);
         try {
-            ee_ensure_consignes_table($pdo);
-            ee_seed_default_consignes($pdo);
-            $consigneStmt = $pdo->prepare("SELECT body FROM tcf_ee_consignes WHERE is_published=1 AND task_key=? ORDER BY sort_order ASC, id ASC LIMIT 1");
-            $consigneStmt->execute([$taskKey]);
-            $consigne = (string) ($consigneStmt->fetchColumn() ?: '');
+            $consigne = '';
+            if (tcf_schema_has_table($pdo, 'expression_ecrite')) {
+                foreach (tcf_exam_list_consignes($pdo, 'ee') as $row) {
+                    if ((string) ($row['section_key'] ?? '') === $taskKey && !empty($row['is_published'])) {
+                        $consigne = (string) ($row['body'] ?? '');
+                        break;
+                    }
+                }
+            } else {
+                ee_ensure_consignes_table($pdo);
+                ee_seed_default_consignes($pdo);
+                $consigneStmt = $pdo->prepare("SELECT body FROM tcf_ee_consignes WHERE is_published=1 AND task_key=? ORDER BY sort_order ASC, id ASC LIMIT 1");
+                $consigneStmt->execute([$taskKey]);
+                $consigne = (string) ($consigneStmt->fetchColumn() ?: '');
+            }
 
             $taskNum = (int) $defaults['task_number'];
-            $promptStmt = $pdo->prepare("SELECT t.prompt FROM tcf_ee_tasks t INNER JOIN tcf_ee_combinations c ON c.id=t.combination_id INNER JOIN tcf_ee_exams e ON e.id=c.exam_id WHERE e.is_published=1 AND t.task_number=? AND t.prompt IS NOT NULL AND t.prompt<>'' ORDER BY RAND() LIMIT 1");
-            $promptStmt->execute([$taskNum]);
-            $baseSubject = trim((string) ($promptStmt->fetchColumn() ?: ''));
+            $baseSubject = ee_random_task_prompt($pdo, $taskNum);
             if ($baseSubject === '') {
                 $fallback = [
                     'tache1' => "Vous écrivez un courriel à un ami pour lui proposer une activité ce week-end.",
@@ -723,8 +983,12 @@ switch ($action) {
         try {
             ee_ensure_exams_visibility_column($pdo);
             ee_sync_exam_visibility($pdo);
-            $stmt = $pdo->query('SELECT id, slug, title, subtitle, visibility, is_published, published_at, created_at FROM tcf_ee_exams WHERE is_published=1');
-            $exams = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            if (tcf_schema_has_table($pdo, 'expression_ecrite')) {
+                $exams = tcf_exam_list($pdo, 'ee', true);
+            } else {
+                $stmt = $pdo->query('SELECT id, slug, title, subtitle, visibility, is_published, published_at, created_at FROM tcf_ee_exams WHERE is_published=1');
+                $exams = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            }
             ee_sort_exams_by_title_date($exams);
             ee_json(['success' => true, 'data' => $exams]);
         } catch (Throwable $e) {
@@ -740,19 +1004,31 @@ switch ($action) {
             ee_ensure_exams_visibility_column($pdo);
             ee_ensure_exam_views_table($pdo);
             ee_sync_exam_visibility($pdo);
-            $stmt = $pdo->query('SELECT id, slug, title, subtitle, visibility, is_published, published_at, created_at FROM tcf_ee_exams');
-            $exams = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            ee_sort_exams_by_title_date($exams);
-            foreach ($exams as &$e) {
-                $s = $pdo->prepare('SELECT COUNT(*) FROM tcf_ee_combinations WHERE exam_id=?');
-                $s->execute([$e['id']]);
-                $e['combo_count'] = (int) $s->fetchColumn();
-                $sv = $pdo->prepare('SELECT COUNT(*) FROM tcf_ee_exam_views WHERE exam_id=?');
-                $sv->execute([$e['id']]);
-                $e['view_count'] = (int) $sv->fetchColumn();
-                $e['effective_visibility'] = (string) ($e['visibility'] ?? 'gratuit');
+            if (tcf_schema_has_table($pdo, 'expression_ecrite')) {
+                $exams = tcf_exam_list($pdo, 'ee', false);
+                foreach ($exams as &$e) {
+                    $full = ee_fetch_exam_full($pdo, (int) ($e['id'] ?? 0));
+                    $e['combo_count'] = count($full['combinations'] ?? []);
+                    $e['view_count'] = (int) ($e['views_count'] ?? 0);
+                    $e['effective_visibility'] = (string) ($e['visibility'] ?? 'gratuit');
+                }
+                unset($e);
+            } else {
+                $stmt = $pdo->query('SELECT id, slug, title, subtitle, visibility, is_published, published_at, created_at FROM tcf_ee_exams');
+                $exams = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                ee_sort_exams_by_title_date($exams);
+                foreach ($exams as &$e) {
+                    $s = $pdo->prepare('SELECT COUNT(*) FROM tcf_ee_combinations WHERE exam_id=?');
+                    $s->execute([$e['id']]);
+                    $e['combo_count'] = (int) $s->fetchColumn();
+                    $sv = $pdo->prepare('SELECT COUNT(*) FROM tcf_ee_exam_views WHERE exam_id=?');
+                    $sv->execute([$e['id']]);
+                    $e['view_count'] = (int) $sv->fetchColumn();
+                    $e['effective_visibility'] = (string) ($e['visibility'] ?? 'gratuit');
+                }
+                unset($e);
             }
-            unset($e);
+            ee_sort_exams_by_title_date($exams);
             ee_json(['success' => true, 'data' => $exams]);
         } catch (Throwable $e) {
             ee_json(['success' => false, 'message' => $e->getMessage()]);
@@ -767,9 +1043,7 @@ switch ($action) {
 
         ee_ensure_exams_visibility_column($pdo);
         ee_sync_exam_visibility($pdo);
-        $stmtEx = $pdo->prepare('SELECT * FROM tcf_ee_exams WHERE id=?');
-        $stmtEx->execute([$examId]);
-        $exam = $stmtEx->fetch(PDO::FETCH_ASSOC);
+        $exam = ee_fetch_exam_full($pdo, $examId);
         if (!$exam) {
             ee_json(['success' => false, 'message' => 'Épreuve introuvable.']);
         }
@@ -789,26 +1063,8 @@ switch ($action) {
         }
         ee_track_exam_view($pdo, $examId);
 
-        $stmtC = $pdo->prepare('SELECT * FROM tcf_ee_combinations WHERE exam_id=? ORDER BY sort_order ASC, combo_number ASC');
-        $stmtC->execute([$examId]);
-        $combos = $stmtC->fetchAll(PDO::FETCH_ASSOC);
-
-        foreach ($combos as &$combo) {
-            $stmtT = $pdo->prepare('SELECT * FROM tcf_ee_tasks WHERE combination_id=? ORDER BY sort_order ASC, task_number ASC');
-            $stmtT->execute([$combo['id']]);
-            $tasks = $stmtT->fetchAll(PDO::FETCH_ASSOC);
-            foreach ($tasks as &$task) {
-                $stmtD = $pdo->prepare('SELECT * FROM tcf_ee_task_documents WHERE task_id=? ORDER BY sort_order ASC, doc_number ASC');
-                $stmtD->execute([$task['id']]);
-                $task['documents'] = $stmtD->fetchAll(PDO::FETCH_ASSOC);
-            }
-            unset($task);
-            $combo['tasks'] = $tasks;
-        }
-        unset($combo);
-
-        $exam['combinations'] = $combos;
         $exam['is_free'] = $isFree;
+        unset($exam['content_json']);
         ee_json(['success' => true, 'data' => $exam]);
         break;
 
@@ -834,18 +1090,28 @@ switch ($action) {
 
         try {
             ee_ensure_exams_visibility_column($pdo);
-            $pdo->beginTransaction();
-            $pdo->prepare('INSERT INTO tcf_ee_exams (slug,title,subtitle,visibility,is_published,published_at,created_by) VALUES (?,?,?,?,?,?,?)')
-                ->execute([$slug, $title, $subtitle ?: null, $visibility, $is_published, $is_published ? date('Y-m-d H:i:s') : null, (int) $_SESSION['user_id']]);
-            $examId = (int) $pdo->lastInsertId();
-
-            ee_save_combinations($pdo, $examId, $combinationsData);
-            ee_sync_exam_visibility($pdo);
-
-            $pdo->commit();
+            if (tcf_schema_has_table($pdo, 'expression_ecrite')) {
+                $examId = tcf_exam_save($pdo, 'ee', [
+                    'slug' => ee_slug($title),
+                    'title' => $title,
+                    'subtitle' => $subtitle !== '' ? $subtitle : null,
+                    'visibility' => $visibility,
+                    'is_published' => $is_published,
+                    'duration_seconds' => 3600,
+                    'created_by' => (int) ($_SESSION['user_id'] ?? 0),
+                ], ['combinations' => ee_build_combinations_content($combinationsData)], null);
+                ee_sync_exam_visibility($pdo);
+            } else {
+                $pdo->beginTransaction();
+                $pdo->prepare('INSERT INTO tcf_ee_exams (slug,title,subtitle,visibility,is_published,published_at,created_by) VALUES (?,?,?,?,?,?,?)')
+                    ->execute([ee_slug($title), $title, $subtitle ?: null, $visibility, $is_published, $is_published ? date('Y-m-d H:i:s') : null, (int) $_SESSION['user_id']]);
+                $examId = (int) $pdo->lastInsertId();
+                ee_save_combinations($pdo, $examId, $combinationsData);
+                ee_sync_exam_visibility($pdo);
+                $pdo->commit();
+            }
             try {
-                $pdo->prepare('INSERT INTO activities (user_id,type,title,description,icon) VALUES (?,?,?,?,?)')
-                    ->execute([(int) $_SESSION['user_id'], 'topic', 'Épreuve EE publiée', "L'épreuve '$title' a été créée", 'bx bxs-book']);
+                tcf_log_activity($pdo, (int) $_SESSION['user_id'], 'topic', 'Épreuve EE publiée', "L'épreuve '$title' a été créée", 'bx bxs-book');
             } catch (Throwable $e) {
             }
             if ($is_published) {
@@ -890,22 +1156,34 @@ switch ($action) {
         try {
             ee_ensure_exams_visibility_column($pdo);
             $wasPublished = 0;
-            $stWas = $pdo->prepare('SELECT is_published FROM tcf_ee_exams WHERE id=?');
-            $stWas->execute([$examId]);
-            $wasPublished = (int) $stWas->fetchColumn();
-
-            $pdo->beginTransaction();
-            $pdo->prepare('UPDATE tcf_ee_exams SET title=?,subtitle=?,visibility=?,is_published=?,published_at=CASE WHEN ?=1 AND is_published=0 THEN NOW() ELSE published_at END WHERE id=?')
-                ->execute([$title, $subtitle ?: null, $visibility, $is_published, $is_published, $examId]);
-
-            $pdo->prepare('DELETE FROM tcf_ee_combinations WHERE exam_id=?')->execute([$examId]);
-            ee_save_combinations($pdo, $examId, $combinationsData);
-            ee_sync_exam_visibility($pdo);
-
-            $pdo->commit();
+            if (tcf_schema_has_table($pdo, 'expression_ecrite')) {
+                $stWas = $pdo->prepare("SELECT is_published FROM expression_ecrite WHERE id=? AND kind='exam'");
+                $stWas->execute([$examId]);
+                $wasPublished = (int) $stWas->fetchColumn();
+                tcf_exam_save($pdo, 'ee', [
+                    'slug' => ee_slug($title),
+                    'title' => $title,
+                    'subtitle' => $subtitle !== '' ? $subtitle : null,
+                    'visibility' => $visibility,
+                    'is_published' => $is_published,
+                    'duration_seconds' => 3600,
+                    'created_by' => (int) ($_SESSION['user_id'] ?? 0),
+                ], ['combinations' => ee_build_combinations_content($combinationsData)], $examId);
+                ee_sync_exam_visibility($pdo);
+            } else {
+                $stWas = $pdo->prepare('SELECT is_published FROM tcf_ee_exams WHERE id=?');
+                $stWas->execute([$examId]);
+                $wasPublished = (int) $stWas->fetchColumn();
+                $pdo->beginTransaction();
+                $pdo->prepare('UPDATE tcf_ee_exams SET title=?,subtitle=?,visibility=?,is_published=?,published_at=CASE WHEN ?=1 AND is_published=0 THEN NOW() ELSE published_at END WHERE id=?')
+                    ->execute([$title, $subtitle ?: null, $visibility, $is_published, $is_published, $examId]);
+                $pdo->prepare('DELETE FROM tcf_ee_combinations WHERE exam_id=?')->execute([$examId]);
+                ee_save_combinations($pdo, $examId, $combinationsData);
+                ee_sync_exam_visibility($pdo);
+                $pdo->commit();
+            }
             try {
-                $pdo->prepare('INSERT INTO activities (user_id,type,title,description,icon) VALUES (?,?,?,?,?)')
-                    ->execute([(int) $_SESSION['user_id'], 'topic', 'Épreuve EE modifiée', "L'épreuve '$title' a été mise à jour", 'bx bxs-book']);
+                tcf_log_activity($pdo, (int) $_SESSION['user_id'], 'topic', 'Épreuve EE modifiée', "L'épreuve '$title' a été mise à jour", 'bx bxs-book');
             } catch (Throwable $e) {
             }
             if ($is_published && !$wasPublished) {
@@ -939,17 +1217,26 @@ switch ($action) {
             ee_json(['success' => false, 'message' => 'ID invalide.']);
         }
         try {
-            $s = $pdo->prepare('SELECT title FROM tcf_ee_exams WHERE id=?');
-            $s->execute([$examId]);
-            $row = $s->fetch(PDO::FETCH_ASSOC);
-            if (!$row) {
-                ee_json(['success' => false, 'message' => 'Épreuve introuvable.']);
+            if (tcf_schema_has_table($pdo, 'expression_ecrite')) {
+                $exam = tcf_exam_fetch_by_id($pdo, 'ee', $examId);
+                if (!$exam) {
+                    ee_json(['success' => false, 'message' => 'Épreuve introuvable.']);
+                }
+                $title = (string) ($exam['title'] ?? '');
+                tcf_exam_delete($pdo, 'ee', $examId);
+            } else {
+                $s = $pdo->prepare('SELECT title FROM tcf_ee_exams WHERE id=?');
+                $s->execute([$examId]);
+                $row = $s->fetch(PDO::FETCH_ASSOC);
+                if (!$row) {
+                    ee_json(['success' => false, 'message' => 'Épreuve introuvable.']);
+                }
+                $title = (string) ($row['title'] ?? '');
+                $pdo->prepare('DELETE FROM tcf_ee_exams WHERE id=?')->execute([$examId]);
             }
-            $pdo->prepare('DELETE FROM tcf_ee_exams WHERE id=?')->execute([$examId]);
             tcf_delete_notifications_matching($pdo, 'epreuve_ee.php?id=' . $examId);
             try {
-                $pdo->prepare('INSERT INTO activities (user_id,type,title,description,icon) VALUES (?,?,?,?,?)')
-                    ->execute([(int) $_SESSION['user_id'], 'topic', 'Épreuve EE supprimée', "L'épreuve '{$row['title']}' supprimée", 'bx bxs-book']);
+                tcf_log_activity($pdo, (int) $_SESSION['user_id'], 'topic', 'Épreuve EE supprimée', "L'épreuve '$title' supprimée", 'bx bxs-book');
             } catch (Throwable $e) {
             }
             ee_json(['success' => true, 'message' => 'Épreuve supprimée.']);
@@ -967,31 +1254,10 @@ switch ($action) {
             ee_json(['success' => false, 'message' => 'ID invalide.']);
         }
         try {
-            $stmtEx = $pdo->prepare('SELECT * FROM tcf_ee_exams WHERE id=?');
-            $stmtEx->execute([$examId]);
-            $exam = $stmtEx->fetch(PDO::FETCH_ASSOC);
+            $exam = ee_fetch_exam_full($pdo, $examId);
             if (!$exam) {
                 ee_json(['success' => false, 'message' => 'Épreuve introuvable.']);
             }
-
-            $stmtC = $pdo->prepare('SELECT * FROM tcf_ee_combinations WHERE exam_id=? ORDER BY sort_order ASC, combo_number ASC');
-            $stmtC->execute([$examId]);
-            $combos = $stmtC->fetchAll(PDO::FETCH_ASSOC);
-            foreach ($combos as &$combo) {
-                $stmtT = $pdo->prepare('SELECT * FROM tcf_ee_tasks WHERE combination_id=? ORDER BY sort_order ASC, task_number ASC');
-                $stmtT->execute([$combo['id']]);
-                $tasks = $stmtT->fetchAll(PDO::FETCH_ASSOC);
-                foreach ($tasks as &$task) {
-                    $stmtD = $pdo->prepare('SELECT * FROM tcf_ee_task_documents WHERE task_id=? ORDER BY sort_order ASC, doc_number ASC');
-                    $stmtD->execute([$task['id']]);
-                    $task['documents'] = $stmtD->fetchAll(PDO::FETCH_ASSOC);
-                }
-                unset($task);
-                $combo['tasks'] = $tasks;
-            }
-            unset($combo);
-
-            $exam['combinations'] = $combos;
             ee_json(['success' => true, 'data' => $exam]);
         } catch (Throwable $e) {
             ee_json(['success' => false, 'message' => $e->getMessage()]);

@@ -25,37 +25,30 @@
     padding: 0.5rem 1rem 1rem;
 }
 
-.tcf-superadmin-app .sa-sub-platform-toggle {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    margin-bottom: 1.25rem;
-    padding: 1rem 1.15rem;
-    border: 1px solid var(--sa-border, #e2e8f0);
-    border-radius: 12px;
-    background: var(--sa-surface, #fff);
-}
-
-.tcf-superadmin-app .sa-sub-platform-toggle.is-free-mode {
-    border-color: rgba(34, 197, 94, 0.45);
-    background: rgba(34, 197, 94, 0.08);
-}
-
-.tcf-superadmin-app .sa-sub-platform-toggle__info p {
-    margin: 0.35rem 0 0;
-    font-size: 0.9rem;
-    color: var(--sa-muted, #64748b);
-    max-width: 42rem;
-}
-
 .tcf-superadmin-app .sa-sub-pro-toolbar {
     margin-bottom: 1.25rem;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 0.65rem;
+}
+
+.tcf-superadmin-app .sa-sub-pro-toolbar--inline {
+    margin: 0;
+}
+
+.tcf-superadmin-app #subscription-plans .section-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.tcf-superadmin-app #sa-sub-platform-toggle-btn.btn-outline {
+    border-color: rgba(211, 13, 13, 0.35);
+    color: #d30d0d;
+    background: #fff;
 }
 
 .tcf-superadmin-app .sa-plan-catalog-grid {
@@ -212,6 +205,25 @@
     width: 2.4rem;
     font-size: 0.95rem;
     padding: 0.2rem;
+}
+
+.tcf-superadmin-app .sa-plan-userlike__currency.sa-plan-currency-fixed {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    min-width: 1.5rem;
+    padding: 0.2rem 0.35rem;
+    pointer-events: none;
+    user-select: none;
+}
+
+.tcf-superadmin-app .sa-plan-userlike__price-hint {
+    margin: 0.15rem 0 0;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.72);
+    text-align: center;
 }
 
 .tcf-superadmin-app .sa-plan-userlike__price {

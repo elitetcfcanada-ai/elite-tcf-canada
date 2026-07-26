@@ -10,9 +10,13 @@
             $stProf->execute([(int) $_SESSION['user_id']]);
             $tcf_profile_panel_user = $stProf->fetch(PDO::FETCH_ASSOC) ?: null;
             if ($tcf_profile_panel_user) {
-                $avSync = tcf_sync_user_avatar_from_disk($pdo, (int) $tcf_profile_panel_user['id'], $tcf_profile_panel_user['avatar'] ?? null);
-                $tcf_profile_panel_user['avatar_resolved'] = $avSync;
-                $tcf_profile_panel_user['avatar_display_url'] = tcf_avatar_public_url($avSync);
+                $avUrl = tcf_user_avatar_display_url(
+                    $pdo,
+                    (int) $tcf_profile_panel_user['id'],
+                    $tcf_profile_panel_user['avatar'] ?? null
+                );
+                $tcf_profile_panel_user['avatar_resolved'] = $avUrl ? ($tcf_profile_panel_user['avatar'] ?? '1') : null;
+                $tcf_profile_panel_user['avatar_display_url'] = $avUrl;
             }
         } catch (Throwable $e) {
             $tcf_profile_panel_user = null;

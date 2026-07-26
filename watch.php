@@ -4,6 +4,7 @@ require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/site_contact.php';
 require_once __DIR__ . '/includes/video_duration.php';
 require_once __DIR__ . '/includes/video_player.php';
+require_once __DIR__ . '/includes/media_blob.php';
 
 $videoId = isset($_GET['v']) ? (int) $_GET['v'] : 0;
 if ($videoId <= 0) {
@@ -58,8 +59,8 @@ if (!empty($_SESSION['user_id'])) {
     }
 }
 
-$thumb = $video ? tcf_uploads_public_href($video['thumbnail_url'] ?? '') : '';
-$vidUrl = ($video && !$isLocked) ? tcf_uploads_public_href($video['video_url'] ?? '') : '';
+$thumb = $video ? tcf_video_media_href($pdo, (int) $video['id'], $video['thumbnail_url'] ?? '', 'thumbnail') : '';
+$vidUrl = ($video && !$isLocked) ? tcf_video_media_href($pdo, (int) $video['id'], $video['video_url'] ?? '', 'video') : '';
 $likesCount = $video ? (int) ($video['likes'] ?? 0) : 0;
 $videosPageHref = site_href('videos.php');
 $canInteract = !empty($tcfVideoUser);

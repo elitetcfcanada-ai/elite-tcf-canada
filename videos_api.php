@@ -6,6 +6,8 @@ require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/admin_notifications.php';
 require_once __DIR__ . '/includes/subscription_access.php';
 require_once __DIR__ . '/includes/channel_branding.php';
+require_once __DIR__ . '/includes/video_social.php';
+require_once __DIR__ . '/includes/tcf_schema.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -62,11 +64,14 @@ function tcf_videos_api_require_login(): int
 
 function tcf_videos_api_sync_likes_count(PDO $pdo, int $videoId): int
 {
-    $st = $pdo->prepare('SELECT COUNT(*) FROM video_likes WHERE video_id = ?');
+    $st = $pdo->prepare('SELECT likes_json, likes FROM videos WHERE id = ? LIMIT 1');
     $st->execute([$videoId]);
-    $n = (int) $st->fetchColumn();
-    $pdo->prepare('UPDATE videos SET likes = ? WHERE id = ?')->execute([$n, $videoId]);
-
+    $row = $st->fetch(PDO::FETCH_ASSOC) ?: [];
+    $likes = tcf_video_decode_likes(isset($row['likes_json']) ? (string) $row['likes_json'] : null);
+    $n = count($likes);
+    if ($n !== (int) ($row['likes'] ?? 0)) {
+        $pdo->prepare('UPDATE videos SET likes = ? WHERE id = ?')->execute([$n, $videoId]);
+    }
     return $n;
 }
 
@@ -172,17 +177,13 @@ try {
                 tcf_videos_api_json(['ok' => false, 'message' => 'Vidéo introuvable.'], 404);
             }
             $uid = !empty($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : 0;
-            $st = $pdo->prepare('SELECT likes, views FROM videos WHERE id = ?');
+            $st = $pdo->prepare('SELECT likes, views, likes_json FROM videos WHERE id = ?');
             $st->execute([$vid]);
             $row = $st->fetch(PDO::FETCH_ASSOC) ?: [];
-            $likes = (int) ($row['likes'] ?? 0);
+            $likesArr = tcf_video_decode_likes(isset($row['likes_json']) ? (string) $row['likes_json'] : null);
+            $likes = count($likesArr) > 0 ? count($likesArr) : (int) ($row['likes'] ?? 0);
             $views = (int) ($row['views'] ?? 0);
-            $userLiked = false;
-            if ($uid > 0) {
-                $st = $pdo->prepare('SELECT 1 FROM video_likes WHERE video_id = ? AND user_id = ?');
-                $st->execute([$vid, $uid]);
-                $userLiked = (bool) $st->fetchColumn();
-            }
+            $userLiked = $uid > 0 ? tcf_video_user_liked($likesArr, $uid) : false;
             tcf_videos_api_json([
                 'ok' => true,
                 'likes' => $likes,
@@ -230,32 +231,35 @@ try {
             if (!tcf_videos_api_video_exists($pdo, $vid)) {
                 tcf_videos_api_json(['ok' => false, 'message' => 'Vidéo introuvable.'], 404);
             }
-            $st = $pdo->prepare(
-                'SELECT c.id, c.video_id, c.user_id, c.parent_id, c.body, c.created_at, u.name AS user_name, u.role AS user_role
-                 FROM video_comments c
-                 INNER JOIN users u ON u.id = c.user_id
-                 WHERE c.video_id = ?
-                 ORDER BY c.parent_id IS NULL DESC, c.created_at ASC'
-            );
+            $st = $pdo->prepare('SELECT comments_json FROM videos WHERE id = ? LIMIT 1');
             $st->execute([$vid]);
-            $rows = $st->fetchAll(PDO::FETCH_ASSOC);
+            $raw = $st->fetchColumn();
+            $rows = tcf_video_comments_with_users($pdo, tcf_video_decode_comments(is_string($raw) ? $raw : null));
+            usort($rows, static function (array $a, array $b): int {
+                $ap = (($a['parent_id'] ?? null) === null || $a['parent_id'] === '') ? 0 : 1;
+                $bp = (($b['parent_id'] ?? null) === null || $b['parent_id'] === '') ? 0 : 1;
+                if ($ap !== $bp) {
+                    return $ap <=> $bp;
+                }
+                return strcmp((string) ($a['created_at'] ?? ''), (string) ($b['created_at'] ?? ''));
+            });
             $brand = tcf_channel_branding_front($pdo);
             $roots = [];
             $repliesByParent = [];
             foreach ($rows as $r) {
-                $pid = $r['parent_id'];
+                $pid = $r['parent_id'] ?? null;
                 $face = tcf_videos_api_comment_public_face(
                     $brand,
-                    (string) $r['user_name'],
-                    (string) $r['user_role'],
+                    (string) ($r['user_name'] ?? 'Utilisateur'),
+                    (string) ($r['user_role'] ?? 'user'),
                     $pid
                 );
                 $entry = [
-                    'id' => (int) $r['id'],
+                    'id' => (int) ($r['id'] ?? 0),
                     'user_name' => $face['user_name'],
                     'avatar_url' => $face['avatar_url'],
-                    'body' => (string) $r['body'],
-                    'created_at' => (string) $r['created_at'],
+                    'body' => (string) ($r['body'] ?? ''),
+                    'created_at' => (string) ($r['created_at'] ?? ''),
                     'is_staff' => $face['is_staff'],
                 ];
                 if ($pid === null || $pid === '') {
@@ -288,17 +292,8 @@ try {
             if (!tcf_videos_api_video_exists($pdo, $vid)) {
                 tcf_videos_api_json(['ok' => false, 'message' => 'Vidéo introuvable.'], 404);
             }
-            $st = $pdo->prepare('SELECT 1 FROM video_likes WHERE video_id = ? AND user_id = ?');
-            $st->execute([$vid, $uid]);
-            if ($st->fetchColumn()) {
-                $pdo->prepare('DELETE FROM video_likes WHERE video_id = ? AND user_id = ?')->execute([$vid, $uid]);
-                $userLiked = false;
-            } else {
-                $pdo->prepare('INSERT INTO video_likes (video_id, user_id) VALUES (?, ?)')->execute([$vid, $uid]);
-                $userLiked = true;
-            }
-            $likes = tcf_videos_api_sync_likes_count($pdo, $vid);
-            tcf_videos_api_json(['ok' => true, 'likes' => $likes, 'user_liked' => $userLiked]);
+            $tog = tcf_video_toggle_like($pdo, $vid, $uid);
+            tcf_videos_api_json(['ok' => true, 'likes' => $tog['likes'], 'user_liked' => $tog['user_liked']]);
         }
 
         case 'comment': {
@@ -320,9 +315,8 @@ try {
             $body = preg_replace("/[ \t]+/u", ' ', $body) ?? $body;
             $body = preg_replace("/\n{3,}/u", "\n\n", $body) ?? $body;
             $body = trim($body);
-            $pdo->prepare('INSERT INTO video_comments (video_id, user_id, parent_id, body) VALUES (?, ?, NULL, ?)')
-                ->execute([$vid, $uid, $body]);
-            $newId = (int) $pdo->lastInsertId();
+            $created = tcf_video_add_comment($pdo, $vid, $uid, $body, null);
+            $newId = (int) ($created['id'] ?? 0);
             if (!tcf_videos_api_staff()) {
                 $stT = $pdo->prepare('SELECT title FROM videos WHERE id = ?');
                 $stT->execute([$vid]);
@@ -363,17 +357,23 @@ try {
             $body = preg_replace("/[ \t]+/u", ' ', $body) ?? $body;
             $body = preg_replace("/\n{3,}/u", "\n\n", $body) ?? $body;
             $body = trim($body);
-            $st = $pdo->prepare('SELECT id, video_id, parent_id FROM video_comments WHERE id = ?');
-            $st->execute([$parentId]);
-            $parent = $st->fetch(PDO::FETCH_ASSOC);
-            if (!$parent || (int) $parent['video_id'] !== $vid) {
+            $st = $pdo->prepare('SELECT comments_json FROM videos WHERE id = ? LIMIT 1');
+            $st->execute([$vid]);
+            $comments = tcf_video_decode_comments((string) ($st->fetchColumn() ?: ''));
+            $parent = null;
+            foreach ($comments as $c) {
+                if ((int) ($c['id'] ?? 0) === $parentId) {
+                    $parent = $c;
+                    break;
+                }
+            }
+            if (!$parent) {
                 tcf_videos_api_json(['ok' => false, 'message' => 'Commentaire introuvable.'], 404);
             }
-            if ($parent['parent_id'] !== null) {
+            if (($parent['parent_id'] ?? null) !== null && $parent['parent_id'] !== '') {
                 tcf_videos_api_json(['ok' => false, 'message' => 'Vous ne pouvez répondre qu’au commentaire principal.'], 400);
             }
-            $pdo->prepare('INSERT INTO video_comments (video_id, user_id, parent_id, body) VALUES (?, ?, ?, ?)')
-                ->execute([$vid, $uid, $parentId, $body]);
+            tcf_video_add_comment($pdo, $vid, $uid, $body, $parentId);
             tcf_videos_api_json(['ok' => true, 'message' => 'Réponse publiée.']);
         }
 
@@ -381,16 +381,23 @@ try {
             if ($method !== 'GET') {
                 tcf_videos_api_json(['ok' => false, 'message' => 'Méthode non autorisée.'], 405);
             }
-            $st = $pdo->query('SELECT COUNT(*) FROM channel_subscribers');
-            $count = (int) $st->fetchColumn();
-            $videoCount = (int) $pdo->query('SELECT COUNT(*) FROM videos')->fetchColumn();
-            $uid = !empty($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : 0;
+            $count = 0;
             $subscribed = false;
-            if ($uid > 0) {
-                $st = $pdo->prepare('SELECT 1 FROM channel_subscribers WHERE user_id = ?');
-                $st->execute([$uid]);
-                $subscribed = (bool) $st->fetchColumn();
+            $uid = !empty($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : 0;
+            try {
+                if (tcf_schema_has_table($pdo, 'channel_subscribers')) {
+                    $count = (int) $pdo->query('SELECT COUNT(*) FROM channel_subscribers')->fetchColumn();
+                    if ($uid > 0) {
+                        $st = $pdo->prepare('SELECT 1 FROM channel_subscribers WHERE user_id = ?');
+                        $st->execute([$uid]);
+                        $subscribed = (bool) $st->fetchColumn();
+                    }
+                }
+            } catch (Throwable $e) {
+                $count = 0;
+                $subscribed = false;
             }
+            $videoCount = (int) $pdo->query('SELECT COUNT(*) FROM videos')->fetchColumn();
             tcf_videos_api_json([
                 'ok' => true,
                 'subscribers' => $count,

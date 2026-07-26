@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/subscription_plans_data.php';
 require_once __DIR__ . '/tcf_notifications_helper.php';
 require_once __DIR__ . '/subscription_access.php';
+require_once __DIR__ . '/tcf_legacy_tables.php';
 
 /**
  * Active l'abonnement après paiement confirmé.
@@ -13,7 +14,7 @@ require_once __DIR__ . '/subscription_access.php';
  */
 function tcf_subscription_activate_user(PDO $pdo, int $uid, string $planKey, string $paymentMethod, float $amountUsd, string $currencyDb = 'USD', ?string $notchReference = null): array
 {
-    $plan = tcf_subscription_plan_by_key($planKey);
+    $plan = tcf_subscription_plan_by_key($planKey, false);
     if ($plan === null) {
         return ['success' => false, 'message' => 'Formule invalide.'];
     }
@@ -42,28 +43,91 @@ function tcf_subscription_activate_user(PDO $pdo, int $uid, string $planKey, str
     $planLabel = trim(($plan['tier'] ?? '') . ' — ' . ($plan['badge'] ?? ''));
 
     try {
-        $pdo->exec(
-            "CREATE TABLE IF NOT EXISTS subscription_payments (
-                id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                user_id INT NOT NULL,
-                plan_key VARCHAR(32) NOT NULL,
-                plan_label VARCHAR(160) DEFAULT NULL,
-                amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
-                currency VARCHAR(8) NOT NULL DEFAULT 'USD',
-                payment_method VARCHAR(32) NOT NULL DEFAULT 'notchpay',
-                notch_reference VARCHAR(80) DEFAULT NULL,
-                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                KEY idx_subpay_user_created (user_id, created_at)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci"
-        );
-        try {
-            $pdo->exec('ALTER TABLE subscription_payments ADD COLUMN notch_reference VARCHAR(80) DEFAULT NULL AFTER payment_method');
-        } catch (Throwable $e) {
+        if (tcf_historique_abonnements_available($pdo)) {
+            // Conserver le montant réellement prélevé (XAF pending) ; USD en meta.
+            $histAmount = (int) round($amountUsd);
+            $histCurrency = $currencyDb !== '' ? $currencyDb : 'USD';
+            $pendId = 0;
+            if ($notchReference) {
+                $stPend = $pdo->prepare(
+                    'SELECT id, amount, currency FROM historique_abonnements WHERE reference = ? AND user_id = ? ORDER BY id DESC LIMIT 1'
+                );
+                $stPend->execute([$notchReference, $uid]);
+                $pendRow = $stPend->fetch(PDO::FETCH_ASSOC) ?: null;
+                if ($pendRow) {
+                    $pendId = (int) ($pendRow['id'] ?? 0);
+                    $pendAmount = (int) ($pendRow['amount'] ?? 0);
+                    $pendCur = strtoupper(trim((string) ($pendRow['currency'] ?? '')));
+                    if ($pendAmount > 0 && ($pendCur === 'XAF' || $pendCur === 'FCFA' || $pendCur === '')) {
+                        $histAmount = $pendAmount;
+                        $histCurrency = 'XAF';
+                    }
+                }
+            }
+            $meta = json_encode([
+                'plan_label' => $planLabel,
+                'payment_method' => $paymentMethod,
+                'channel' => $paymentMethod,
+                'amount_usd' => $amountUsd,
+                'display_currency' => 'USD',
+            ], JSON_UNESCAPED_UNICODE);
+            if ($meta === false) {
+                $meta = null;
+            }
+            $updated = false;
+            if ($pendId > 0) {
+                $pdo->prepare(
+                    'UPDATE historique_abonnements SET plan_key=?, amount=?, currency=?, status=?, provider=?, meta_json=?, paid_at=NOW(), updated_at=NOW() WHERE id=?'
+                )->execute([
+                    $planKey,
+                    $histAmount,
+                    $histCurrency,
+                    'complete',
+                    $paymentMethod,
+                    $meta,
+                    $pendId,
+                ]);
+                $updated = true;
+            }
+            if (!$updated) {
+                $pdo->prepare(
+                    'INSERT INTO historique_abonnements (user_id, plan_key, amount, currency, status, provider, reference, meta_json, paid_at, created_at)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())'
+                )->execute([
+                    $uid,
+                    $planKey,
+                    $histAmount,
+                    $histCurrency,
+                    'complete',
+                    $paymentMethod,
+                    $notchReference,
+                    $meta,
+                ]);
+            }
+        } else {
+            $pdo->exec(
+                "CREATE TABLE IF NOT EXISTS subscription_payments (
+                    id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    user_id INT NOT NULL,
+                    plan_key VARCHAR(32) NOT NULL,
+                    plan_label VARCHAR(160) DEFAULT NULL,
+                    amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+                    currency VARCHAR(8) NOT NULL DEFAULT 'USD',
+                    payment_method VARCHAR(32) NOT NULL DEFAULT 'notchpay',
+                    notch_reference VARCHAR(80) DEFAULT NULL,
+                    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    KEY idx_subpay_user_created (user_id, created_at)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci"
+            );
+            try {
+                $pdo->exec('ALTER TABLE subscription_payments ADD COLUMN notch_reference VARCHAR(80) DEFAULT NULL AFTER payment_method');
+            } catch (Throwable $e) {
+            }
+            $ins = $pdo->prepare(
+                'INSERT INTO subscription_payments (user_id, plan_key, plan_label, amount, currency, payment_method, notch_reference) VALUES (?, ?, ?, ?, ?, ?, ?)'
+            );
+            $ins->execute([$uid, $planKey, $planLabel, $amountUsd, $currencyDb, $paymentMethod, $notchReference]);
         }
-        $ins = $pdo->prepare(
-            'INSERT INTO subscription_payments (user_id, plan_key, plan_label, amount, currency, payment_method, notch_reference) VALUES (?, ?, ?, ?, ?, ?, ?)'
-        );
-        $ins->execute([$uid, $planKey, $planLabel, $amountUsd, $currencyDb, $paymentMethod, $notchReference]);
     } catch (Throwable $e) {
         // abonnement activé même si historique échoue
     }
@@ -88,11 +152,7 @@ function tcf_subscription_activate_user(PDO $pdo, int $uid, string $planKey, str
     tcf_notification_insert($pdo, $uid, 'subscription', 'Abonnement activé', $memberBody, site_href('abonnement.php'));
 
     try {
-        $pdo->prepare("INSERT INTO activities (user_id, type, title, description, icon) VALUES (?, 'subscription', ?, ?, 'bx bxs-crown')")->execute([
-            $uid,
-            'Abonnement activé',
-            $adminMsg,
-        ]);
+        tcf_log_activity($pdo, $uid, 'subscription', 'Abonnement activé', $adminMsg, 'bx bxs-crown');
     } catch (Throwable $e) {
     }
 
@@ -108,6 +168,10 @@ function tcf_subscription_activate_user(PDO $pdo, int $uid, string $planKey, str
 
 function tcf_subscription_payments_ensure_pending_table(PDO $pdo): void
 {
+    // Schéma consolidé : les pending vivent dans historique_abonnements (status=pending).
+    if (tcf_historique_abonnements_available($pdo)) {
+        return;
+    }
     $pdo->exec(
         "CREATE TABLE IF NOT EXISTS subscription_payment_pending (
             id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,

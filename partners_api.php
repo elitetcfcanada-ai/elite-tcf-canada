@@ -38,6 +38,7 @@ function partners_unlink_logo(?string $stored): void
 
 $action = trim((string) ($_POST['action'] ?? $_GET['action'] ?? ''));
 tcf_partners_ensure_tables($pdo);
+$ptTable = tcf_partners_table($pdo);
 
 try {
     switch ($action) {
@@ -108,7 +109,7 @@ try {
             }
 
             if ($id > 0) {
-                $st = $pdo->prepare('SELECT logo_url FROM partners WHERE id = ?');
+                $st = $pdo->prepare('SELECT logo_url FROM `' . $ptTable . '` WHERE id = ?');
                 $st->execute([$id]);
                 $old = $st->fetch(PDO::FETCH_ASSOC);
                 if (!$old) {
@@ -125,18 +126,54 @@ try {
                 if ($finalLogo === '') {
                     partners_json(['success' => false, 'message' => 'Un logo est obligatoire.'], 422);
                 }
-                $pdo->prepare(
-                    'UPDATE partners SET name=?, logo_url=?, website_url=?, sort_order=?, is_published=?, updated_at=NOW() WHERE id=?'
-                )->execute([$name, $finalLogo, $website, $sortOrder, $isPublished, $id]);
+                if ($ptTable === 'partenaires') {
+                    require_once __DIR__ . '/includes/tcf_schema.php';
+                    $abs = tcf_schema_resolve_upload_path($finalLogo);
+                    $blob = $abs !== '' ? tcf_schema_read_file_blob($abs) : null;
+                    $pdo->prepare(
+                        'UPDATE partenaires SET name=?, logo_url=?, logo_data=?, logo_mime=?, website_url=?, sort_order=?, is_published=?, updated_at=NOW() WHERE id=?'
+                    )->execute([
+                        $name,
+                        $finalLogo,
+                        $blob['data'] ?? null,
+                        $blob['mime'] ?? null,
+                        $website,
+                        $sortOrder,
+                        $isPublished,
+                        $id,
+                    ]);
+                } else {
+                    $pdo->prepare(
+                        'UPDATE `' . $ptTable . '` SET name=?, logo_url=?, website_url=?, sort_order=?, is_published=?, updated_at=NOW() WHERE id=?'
+                    )->execute([$name, $finalLogo, $website, $sortOrder, $isPublished, $id]);
+                }
                 partners_json(['success' => true, 'message' => 'Partenaire mis à jour.', 'id' => $id]);
             }
 
             if ($newLogo === null) {
                 partners_json(['success' => false, 'message' => 'Veuillez ajouter le logo de l’entreprise.'], 422);
             }
-            $pdo->prepare(
-                'INSERT INTO partners (name, logo_url, website_url, sort_order, is_published, created_by) VALUES (?,?,?,?,?,?)'
-            )->execute([$name, $newLogo, $website, $sortOrder, $isPublished, $uid > 0 ? $uid : null]);
+            if ($ptTable === 'partenaires') {
+                require_once __DIR__ . '/includes/tcf_schema.php';
+                $abs = tcf_schema_resolve_upload_path($newLogo);
+                $blob = $abs !== '' ? tcf_schema_read_file_blob($abs) : null;
+                $pdo->prepare(
+                    'INSERT INTO partenaires (name, logo_url, logo_data, logo_mime, website_url, sort_order, is_published, created_by) VALUES (?,?,?,?,?,?,?,?)'
+                )->execute([
+                    $name,
+                    $newLogo,
+                    $blob['data'] ?? null,
+                    $blob['mime'] ?? null,
+                    $website,
+                    $sortOrder,
+                    $isPublished,
+                    $uid > 0 ? $uid : null,
+                ]);
+            } else {
+                $pdo->prepare(
+                    'INSERT INTO `' . $ptTable . '` (name, logo_url, website_url, sort_order, is_published, created_by) VALUES (?,?,?,?,?,?)'
+                )->execute([$name, $newLogo, $website, $sortOrder, $isPublished, $uid > 0 ? $uid : null]);
+            }
             partners_json([
                 'success' => true,
                 'message' => 'Partenaire publié.',
@@ -152,13 +189,13 @@ try {
             if ($id <= 0) {
                 partners_json(['success' => false, 'message' => 'Identifiant invalide.'], 422);
             }
-            $st = $pdo->prepare('SELECT logo_url FROM partners WHERE id = ?');
+            $st = $pdo->prepare('SELECT logo_url FROM `' . $ptTable . '` WHERE id = ?');
             $st->execute([$id]);
             $old = $st->fetch(PDO::FETCH_ASSOC);
             if (!$old) {
                 partners_json(['success' => false, 'message' => 'Partenaire introuvable.'], 404);
             }
-            $pdo->prepare('DELETE FROM partners WHERE id = ?')->execute([$id]);
+            $pdo->prepare('DELETE FROM `' . $ptTable . '` WHERE id = ?')->execute([$id]);
             partners_unlink_logo((string) ($old['logo_url'] ?? ''));
             partners_json(['success' => true, 'message' => 'Partenaire supprimé.']);
         }

@@ -45,7 +45,7 @@
                 paymentPlanName.textContent = plan.label || '-';
             }
             if (paymentPlanPrice) {
-                paymentPlanPrice.textContent = (plan.currency || '$') + plan.price;
+                paymentPlanPrice.textContent = '$' + String(plan.price != null ? plan.price : '0');
             }
 
             if (paymentForm) {
@@ -215,13 +215,14 @@
                         return;
                     }
 
-                    if (data.success && data.status === 'complete') {
+                    var st = String(data.status || '').toLowerCase();
+                    if (data.success && (st === 'complete' || st === 'completed' || st === 'paid' || st === 'success' || st === 'successful')) {
                         handlePaymentComplete(data);
                         return;
                     }
 
-                    if (data.status === 'failed' || data.status === 'cancelled' || data.status === 'canceled' ||
-                        data.status === 'rejected' || data.status === 'declined' || data.status === 'expired') {
+                    if (st === 'failed' || st === 'failure' || st === 'cancelled' || st === 'canceled' ||
+                        st === 'rejected' || st === 'declined' || st === 'expired' || st === 'timeout' || st === 'abandoned') {
                         handlePaymentFailure(data);
                         return;
                     }
@@ -260,18 +261,23 @@
                 return;
             }
 
-            if (data.mode === 'redirect' && data.redirect_url) {
-                showStatus('loading', data.message || 'Ouverture de la page de paiement Notch Pay…');
-                window.setTimeout(function () {
-                    window.location.href = data.redirect_url;
-                }, 600);
+            // Mode direct (push USSD) : rester sur la page et suivre le statut.
+            if (data.mode === 'direct' || !data.redirect_url) {
+                beginStatusTracking(
+                    data.reference,
+                    data.message || 'Demande envoyée. Confirmez le paiement sur votre téléphone.'
+                );
                 return;
             }
 
-            beginStatusTracking(
-                data.reference,
-                data.message || 'Demande envoyée. Confirmez le paiement sur votre téléphone.'
-            );
+            // Fallback Collect : page Notch, retour via callback (?payment_ref= / payment_success=)
+            try {
+                sessionStorage.setItem('tcf_payment_ref', String(data.reference));
+            } catch (err) {}
+            showStatus('loading', data.message || 'Ouverture de la page de paiement Notch Pay…');
+            window.setTimeout(function () {
+                window.location.href = data.redirect_url;
+            }, 600);
         }
 
         if (paymentForm) {
@@ -366,7 +372,7 @@
                 key: planKey,
                 label: btn.getAttribute('data-plan-label') || 'Abonnement',
                 price: btn.getAttribute('data-plan-price') || '0',
-                currency: btn.getAttribute('data-plan-currency') || '$',
+                currency: '$',
             });
         });
 

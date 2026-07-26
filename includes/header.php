@@ -30,9 +30,8 @@ if ($is_logged_in) {
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($user) {
-        $syncedAvatar = tcf_sync_user_avatar_from_disk($pdo, (int) $user['id'], $user['avatar'] ?? null);
-        $user['avatar_resolved'] = $syncedAvatar;
-        $user['avatar_display_url'] = tcf_avatar_public_url($syncedAvatar);
+        $user['avatar_display_url'] = tcf_user_avatar_display_url($pdo, (int) $user['id'], $user['avatar'] ?? null);
+        $user['avatar_resolved'] = $user['avatar_display_url'] ? ($user['avatar'] ?? '1') : null;
         tcf_maybe_notify_subscription_reminders($pdo, $user);
         tcf_ensure_welcome_notification($pdo, $user);
     }

@@ -13,6 +13,7 @@ if (empty($user) || empty($user['id'])) {
 require_once __DIR__ . '/subscription_access.php';
 require_once __DIR__ . '/subscription_plans_data.php';
 require_once __DIR__ . '/platform_settings.php';
+require_once __DIR__ . '/tcf_legacy_tables.php';
 
 $tcf_sub_sales_enabled = isset($pdo) && tcf_subscription_sales_enabled($pdo);
 $tcf_sub_platform_free = isset($pdo) && tcf_subscriptions_platform_disabled($pdo);
@@ -62,8 +63,11 @@ $tcf_profile_panel_hide_notifications = !empty($tcf_profile_panel_hide_notificat
 $tcf_sub_payment_rows = [];
 if (($user['role'] ?? '') === 'user') {
     try {
+        $payTable = tcf_subscription_payments_table($pdo);
+        $paySel = tcf_subscription_payments_select_sql($payTable, 'sp');
+        $payWhere = tcf_subscription_payments_history_where($payTable, 'sp');
         $stp = $pdo->prepare(
-            'SELECT plan_key, plan_label, amount, currency, payment_method, created_at FROM subscription_payments WHERE user_id = ? ORDER BY created_at DESC LIMIT 30'
+            $paySel . " FROM `{$payTable}` sp WHERE sp.user_id = ? AND ({$payWhere}) ORDER BY sp.created_at DESC LIMIT 30"
         );
         $stp->execute([(int) $user['id']]);
         $tcf_sub_payment_rows = $stp->fetchAll(PDO::FETCH_ASSOC);
@@ -480,17 +484,17 @@ $tcf_notif_relative = static function (string $createdAt): string {
                     <a class="subscription-manage-link" href="<?php echo htmlspecialchars(site_href('abonnement.php')); ?>">Gérer mon abonnement</a>
                     <?php endif; ?>
                 </div>
+                <?php if ($tcf_sub_platform_free || $tcf_premium_ok || (($user['subscription_type'] ?? 'free') !== 'free')): ?>
                 <p class="profile-sub-v2__premium-status<?php echo $tcf_premium_ok ? ' is-active' : ' is-inactive'; ?>" role="status">
                     <?php if ($tcf_sub_platform_free): ?>
                         <i class="bx bx-check-circle" aria-hidden="true"></i> Mode gratuit plateforme : tout le contenu <strong>premium</strong> est accessible.
                     <?php elseif ($tcf_premium_ok): ?>
                         <i class="bx bx-check-circle" aria-hidden="true"></i> Accès au contenu <strong>premium</strong> actif (vidéos, etc.).
-                    <?php elseif (($user['subscription_type'] ?? 'free') === 'free'): ?>
-                        <i class="bx bx-info-circle" aria-hidden="true"></i> Sans formule payante : les vidéos marquées « premium » restent réservées aux abonnés.
                     <?php else: ?>
                         <i class="bx bx-error-circle" aria-hidden="true"></i> Votre accès payant n’est plus valide — renouvelez depuis la page Abonnement.
                     <?php endif; ?>
                 </p>
+                <?php endif; ?>
                 <?php if ($tcf_expires_fmt !== ''): ?>
                 <p class="profile-sub-v2__expiry">Fin d’accès prévue : <strong><?php echo htmlspecialchars($tcf_expires_fmt); ?></strong></p>
                 <?php endif; ?>

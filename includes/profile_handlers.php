@@ -137,6 +137,10 @@ if (isset($_POST['update_avatar'])) {
         } catch (Throwable $e) {
             $pdo->prepare('UPDATE users SET avatar = ? WHERE id = ?')->execute([$saved, $userId]);
         }
+        $abs = tcf_avatar_storage_dir() . DIRECTORY_SEPARATOR . $saved;
+        if (function_exists('tcf_user_store_avatar_blob_from_file')) {
+            tcf_user_store_avatar_blob_from_file($pdo, $userId, $abs);
+        }
         tcf_profile_set_flash('success', 'Photo de profil enregistrée.');
     } else {
         tcf_profile_set_flash('error', 'Image non valide ou trop volumineuse. Utilisez JPG, PNG ou WebP (max 3 Mo) et validez le recadrage avec OK.');

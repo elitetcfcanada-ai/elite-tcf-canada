@@ -388,7 +388,7 @@
 
 @media (max-width: 480px) {
     .tcf-superadmin-app .stats-container {
-        grid-template-columns: 1fr !important;
+        grid-template-columns: 1fr 1fr !important;
     }
 
     .tcf-superadmin-app .admin-nav-avatar-wrap,

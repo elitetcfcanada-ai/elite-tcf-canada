@@ -64,11 +64,91 @@ function tcf_avatar_delete_all_files_for_user(int $userId): void
 }
 
 /**
+ * True si users.avatar_data contient une image.
+ */
+function tcf_user_has_avatar_blob(PDO $pdo, int $userId): bool
+{
+    if ($userId <= 0) {
+        return false;
+    }
+    try {
+        $st = $pdo->prepare('SELECT OCTET_LENGTH(avatar_data) FROM users WHERE id = ? LIMIT 1');
+        $st->execute([$userId]);
+        $len = $st->fetchColumn();
+
+        return $len !== false && (int) $len > 0;
+    } catch (Throwable $e) {
+        return false;
+    }
+}
+
+/**
+ * Relie un fichier orphelin avatar_{id}_* si la colonne avatar est vide
+ * et qu’un seul fichier correspondant existe encore sur le disque.
+ */
+function tcf_avatar_recover_orphan_file(PDO $pdo, int $userId): ?string
+{
+    if ($userId <= 0) {
+        return null;
+    }
+    $dir = tcf_avatar_storage_dir();
+    if (!is_dir($dir)) {
+        return null;
+    }
+    $found = [];
+    foreach (['jpg', 'jpeg', 'png', 'webp'] as $ext) {
+        foreach (glob($dir . DIRECTORY_SEPARATOR . 'avatar_' . $userId . '_*.' . $ext) ?: [] as $path) {
+            $base = basename($path);
+            if (is_file($path) && tcf_avatar_belongs_to_user($userId, $base)) {
+                $found[$base] = $path;
+            }
+        }
+    }
+    if (count($found) !== 1) {
+        return null;
+    }
+    $bases = array_keys($found);
+    $base = (string) $bases[0];
+    try {
+        $pdo->prepare('UPDATE users SET avatar = ? WHERE id = ? AND (avatar IS NULL OR avatar = \'\')')->execute([$base, $userId]);
+    } catch (Throwable $e) {
+    }
+    // Persiste aussi en BLOB si colonne disponible
+    tcf_user_store_avatar_blob_from_file($pdo, $userId, $found[$base]);
+
+    return $base;
+}
+
+/**
+ * Enregistre avatar_data / avatar_mime depuis un fichier local.
+ */
+function tcf_user_store_avatar_blob_from_file(PDO $pdo, int $userId, string $absPath): void
+{
+    if ($userId <= 0 || $absPath === '' || !is_file($absPath)) {
+        return;
+    }
+    $raw = @file_get_contents($absPath);
+    if ($raw === false || $raw === '') {
+        return;
+    }
+    $mime = 'image/jpeg';
+    $fi = @getimagesize($absPath);
+    if (is_array($fi) && !empty($fi['mime'])) {
+        $mime = (string) $fi['mime'];
+    }
+    try {
+        $pdo->prepare('UPDATE users SET avatar_data = ?, avatar_mime = ? WHERE id = ?')
+            ->execute([$raw, $mime, $userId]);
+    } catch (Throwable $e) {
+        // Colonnes absentes sur anciens schémas
+    }
+}
+
+/**
  * Trouve le fichier réel sur le disque, corrige la BDD si besoin.
  *
- * Important : ne jamais « deviner » une photo sur le disque si users.avatar est vide.
- * Sinon, après suppression d'un compte, le même id AUTO_INCREMENT peut réutiliser d'anciens fichiers.
- * Seule la valeur en base (ou un upload explicite) lie un utilisateur à un fichier.
+ * Si le fichier manque mais qu’un BLOB avatar_data existe, on conserve la référence
+ * (servie via media_serve.php) au lieu de vider users.avatar.
  */
 function tcf_sync_user_avatar_from_disk(PDO $pdo, int $userId, ?string $dbAvatar): ?string
 {
@@ -76,26 +156,32 @@ function tcf_sync_user_avatar_from_disk(PDO $pdo, int $userId, ?string $dbAvatar
     if (!is_dir($dir)) {
         @mkdir($dir, 0755, true);
     }
-    if (!is_dir($dir)) {
-        return null;
-    }
 
     $dbTrim = trim((string) ($dbAvatar ?? ''));
     if ($dbTrim === '') {
-        return null;
+        return tcf_avatar_recover_orphan_file($pdo, $userId);
     }
 
     $base = basename($dbTrim);
     if (!tcf_avatar_belongs_to_user($userId, $base)) {
+        // Ne pas effacer si un BLOB est encore présent
+        if (tcf_user_has_avatar_blob($pdo, $userId)) {
+            return $base !== '' ? $base : null;
+        }
         try {
             $pdo->prepare('UPDATE users SET avatar = NULL WHERE id = ?')->execute([$userId]);
         } catch (Throwable $e) {
         }
-        return null;
+
+        return tcf_avatar_recover_orphan_file($pdo, $userId);
     }
 
     $pathPrimary = $dir . DIRECTORY_SEPARATOR . $base;
     if (is_file($pathPrimary)) {
+        if (!tcf_user_has_avatar_blob($pdo, $userId)) {
+            tcf_user_store_avatar_blob_from_file($pdo, $userId, $pathPrimary);
+        }
+
         return $base;
     }
 
@@ -127,8 +213,22 @@ function tcf_sync_user_avatar_from_disk(PDO $pdo, int $userId, ?string $dbAvatar
                 } catch (Throwable $e) {
                 }
             }
+            if (!tcf_user_has_avatar_blob($pdo, $userId)) {
+                tcf_user_store_avatar_blob_from_file($pdo, $userId, $path);
+            }
+
             return $fn;
         }
+    }
+
+    // Fichier absent : garder la ref si BLOB dispo (media_serve), sinon récupérer / nettoyer
+    if (tcf_user_has_avatar_blob($pdo, $userId)) {
+        return $base;
+    }
+
+    $recovered = tcf_avatar_recover_orphan_file($pdo, $userId);
+    if ($recovered !== null) {
+        return $recovered;
     }
 
     try {
@@ -153,5 +253,43 @@ function tcf_avatar_public_url(?string $resolvedFilename): ?string
     if (is_file($full)) {
         $url .= '?t=' . (string) filemtime($full);
     }
+
     return $url;
+}
+
+/**
+ * URL affichable pour un utilisateur (fichier uploads, sinon BLOB via media_serve).
+ */
+function tcf_user_avatar_display_url(PDO $pdo, int $userId, ?string $dbAvatar = null): ?string
+{
+    if ($userId <= 0) {
+        return null;
+    }
+    if ($dbAvatar === null) {
+        try {
+            $st = $pdo->prepare('SELECT avatar FROM users WHERE id = ? LIMIT 1');
+            $st->execute([$userId]);
+            $dbAvatar = $st->fetchColumn();
+            $dbAvatar = $dbAvatar !== false ? (string) $dbAvatar : null;
+        } catch (Throwable $e) {
+            $dbAvatar = null;
+        }
+    }
+
+    $resolved = tcf_sync_user_avatar_from_disk($pdo, $userId, $dbAvatar);
+    if ($resolved) {
+        $fileUrl = tcf_avatar_public_url($resolved);
+        $full = tcf_avatar_storage_dir() . DIRECTORY_SEPARATOR . basename($resolved);
+        if ($fileUrl && is_file($full)) {
+            return $fileUrl;
+        }
+    }
+
+    if (tcf_user_has_avatar_blob($pdo, $userId)) {
+        require_once __DIR__ . '/media_blob.php';
+
+        return tcf_media_serve_href('avatar', $userId) . '&t=' . (string) time();
+    }
+
+    return null;
 }

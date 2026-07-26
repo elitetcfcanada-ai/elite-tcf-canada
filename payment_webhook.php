@@ -62,16 +62,14 @@ if ($ref === '') {
 
 tcf_subscription_payments_ensure_pending_table($pdo);
 
-$st = $pdo->prepare('SELECT * FROM subscription_payment_pending WHERE notch_reference = ? LIMIT 1');
-$st->execute([$ref]);
-$pending = $st->fetch(PDO::FETCH_ASSOC);
+$pending = tcf_payment_pending_find_by_ref($pdo, $ref);
 if (!$pending) {
     http_response_code(200);
     echo json_encode(['ok' => true, 'ignored' => true, 'reason' => 'unknown_ref']);
     exit;
 }
 
-if (($pending['status'] ?? '') === 'complete') {
+if (tcf_payment_is_finalized_status($pending['status'] ?? '')) {
     http_response_code(200);
     echo json_encode(['ok' => true, 'already' => true]);
     exit;
@@ -90,8 +88,7 @@ $isCompleteEvent = str_contains($eventType, 'complete') || str_contains($eventTy
 
 if (tcf_notchpay_is_failure_status($payStatus)) {
     try {
-        $pdo->prepare('UPDATE subscription_payment_pending SET status = ? WHERE id = ?')
-            ->execute([$payStatus !== '' ? $payStatus : 'failed', (int) $pending['id']]);
+        tcf_payment_pending_update_status($pdo, (int) $pending['id'], $payStatus !== '' ? $payStatus : 'failed');
     } catch (Throwable $e) {
     }
     http_response_code(200);
@@ -115,14 +112,16 @@ if (!tcf_notchpay_is_success_status($payStatus)) {
 $uid = (int) ($pending['user_id'] ?? 0);
 $planKey = (string) ($pending['plan_key'] ?? '');
 $channel = (string) ($pending['channel'] ?? 'notchpay');
-$plan = tcf_subscription_plan_by_key($planKey);
+$plan = tcf_subscription_plan_by_key($planKey, false);
 $amountUsd = isset($plan['price']) ? (float) $plan['price'] : tcf_subscription_display_usd_amount();
+if ($plan && strtoupper((string) ($plan['currency'] ?? '')) === 'XAF' && $amountUsd >= 100) {
+    $amountUsd = round($amountUsd / 600, 2);
+}
 $result = tcf_subscription_activate_user($pdo, $uid, $planKey, $channel, $amountUsd, 'USD', $ref);
 
 if (!empty($result['success'])) {
     try {
-        $pdo->prepare('UPDATE subscription_payment_pending SET status = ? WHERE id = ?')
-            ->execute(['complete', (int) $pending['id']]);
+        tcf_payment_pending_update_status($pdo, (int) $pending['id'], 'complete');
     } catch (Throwable $e) {
     }
 }

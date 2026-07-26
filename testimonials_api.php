@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/admin_notifications.php';
+require_once __DIR__ . '/includes/tcf_legacy_tables.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -33,6 +34,7 @@ function tcf_is_admin(): bool
 }
 
 try {
+    $tTable = tcf_testimonials_table($pdo);
     switch ($action) {
 
         case 'list': {
@@ -40,7 +42,8 @@ try {
                 tcf_testimonials_json(['ok' => false, 'message' => 'Méthode non autorisée.'], 405);
             }
             $limit = min(50, max(1, (int) ($_GET['limit'] ?? 30)));
-            $st = $pdo->prepare('SELECT id, author_name, content, rating, created_at FROM testimonials ORDER BY created_at DESC LIMIT ?');
+            $publishedSql = $tTable === 'temoignages' ? ' WHERE is_published=1' : '';
+            $st = $pdo->prepare("SELECT id, author_name, content, rating, created_at FROM `$tTable`{$publishedSql} ORDER BY created_at DESC LIMIT ?");
             $st->bindValue(1, $limit, PDO::PARAM_INT);
             $st->execute();
             $rows = $st->fetchAll(PDO::FETCH_ASSOC);
@@ -70,7 +73,7 @@ try {
             $content = preg_replace('/\s+/u', ' ', $content) ?? $content;
             $ratingVal = $rating >= 1 && $rating <= 5 ? $rating : null;
 
-            $stmt = $pdo->prepare('INSERT INTO testimonials (author_name, content, user_id, rating) VALUES (?, ?, ?, ?)');
+            $stmt = $pdo->prepare("INSERT INTO `$tTable` (author_name, content, user_id, rating) VALUES (?, ?, ?, ?)");
             $stmt->execute([$author, $content, $uid, $ratingVal]);
             $tid = (int) $pdo->lastInsertId();
             $prev = mb_strlen($content) > 100 ? mb_substr($content, 0, 100) . '…' : $content;
@@ -111,7 +114,7 @@ try {
             $content = preg_replace('/\s+/u', ' ', $content) ?? $content;
             $ratingVal = $rating >= 1 && $rating <= 5 ? $rating : null;
 
-            $stmt = $pdo->prepare('UPDATE testimonials SET author_name=?, content=?, rating=? WHERE id=?');
+            $stmt = $pdo->prepare("UPDATE `$tTable` SET author_name=?, content=?, rating=? WHERE id=?");
             $stmt->execute([$author, $content, $ratingVal, $tid]);
             tcf_testimonials_json(['ok' => true, 'message' => 'Témoignage modifié.']);
         }
@@ -127,7 +130,7 @@ try {
             if ($tid <= 0) {
                 tcf_testimonials_json(['ok' => false, 'message' => 'ID invalide.'], 422);
             }
-            $stmt = $pdo->prepare('DELETE FROM testimonials WHERE id=?');
+            $stmt = $pdo->prepare("DELETE FROM `$tTable` WHERE id=?");
             $stmt->execute([$tid]);
             tcf_testimonials_json(['ok' => true, 'message' => 'Témoignage supprimé.']);
         }
@@ -137,7 +140,7 @@ try {
     }
 } catch (Throwable $e) {
     error_log('testimonials_api: ' . $e->getMessage());
-    if (strpos($e->getMessage(), 'testimonials') !== false) {
+    if (strpos($e->getMessage(), 'testimonials') !== false || strpos($e->getMessage(), 'temoignages') !== false) {
         tcf_testimonials_json(['ok' => false, 'message' => 'Table témoignages absente. Importez database/tcf.sql.'], 503);
     }
     tcf_testimonials_json(['ok' => false, 'message' => 'Erreur serveur.'], 500);

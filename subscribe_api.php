@@ -46,15 +46,13 @@ if ($paymentReference === '') {
 $uid = (int) $_SESSION['user_id'];
 tcf_subscription_payments_ensure_pending_table($pdo);
 
-$st = $pdo->prepare('SELECT * FROM subscription_payment_pending WHERE notch_reference = ? AND user_id = ? LIMIT 1');
-$st->execute([$paymentReference, $uid]);
-$pending = $st->fetch(PDO::FETCH_ASSOC);
+$pending = tcf_payment_pending_find_by_ref($pdo, $paymentReference, $uid);
 if (!$pending) {
     echo json_encode(['success' => false, 'message' => 'Référence de paiement introuvable.']);
     exit;
 }
 
-if (($pending['status'] ?? '') === 'complete') {
+if (tcf_payment_is_finalized_status($pending['status'] ?? '')) {
     $planKey = (string) ($pending['plan_key'] ?? '');
     echo json_encode([
         'success' => true,
@@ -84,8 +82,11 @@ if (!tcf_notchpay_is_success_status($payStatus)) {
 
 $planKey = (string) ($pending['plan_key'] ?? '');
 $channel = (string) ($pending['channel'] ?? 'notchpay');
-$plan = tcf_subscription_plan_by_key($planKey);
+$plan = tcf_subscription_plan_by_key($planKey, false);
 $amountUsd = isset($plan['price']) ? (float) $plan['price'] : tcf_subscription_display_usd_amount();
+if ($plan && strtoupper((string) ($plan['currency'] ?? '')) === 'XAF' && $amountUsd >= 100) {
+    $amountUsd = round($amountUsd / 600, 2);
+}
 
 $result = tcf_subscription_activate_user(
     $pdo,
@@ -103,8 +104,7 @@ if (!$result['success']) {
 }
 
 try {
-    $pdo->prepare('UPDATE subscription_payment_pending SET status = ? WHERE id = ?')
-        ->execute(['complete', (int) $pending['id']]);
+    tcf_payment_pending_update_status($pdo, (int) $pending['id'], 'complete');
 } catch (Throwable $e) {
 }
 

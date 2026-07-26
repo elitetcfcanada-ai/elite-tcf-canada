@@ -1,791 +1,390 @@
--- phpMyAdmin SQL Dump
--- Structure des tables uniquement (sans données)
--- Généré automatiquement
-
-SET SQL_MODE = "";
-START TRANSACTION;
-SET time_zone = "+00:00";
-
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!40101 SET NAMES utf8mb4 */;
-
---
--- Structure de la table `activities`
---
-
-CREATE TABLE IF NOT EXISTS `activities` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `user_id` int(11) DEFAULT NULL,
-  `type` varchar(32) NOT NULL,
-  `title` varchar(255) NOT NULL,
-  `description` text NOT NULL,
-  `icon` varchar(50) NOT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`),
-  KEY `idx_act_user` (`user_id`),
-  KEY `idx_act_created` (`created_at`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `analytics`
---
-
-CREATE TABLE IF NOT EXISTS `analytics` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `video_id` int(11) DEFAULT NULL,
-  `user_id` int(11) DEFAULT NULL,
-  `action` enum('view','watch','like','share') NOT NULL,
-  `duration` int(11) DEFAULT NULL,
-  `ip_address` varchar(45) DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`),
-  KEY `video_id` (`video_id`),
-  KEY `user_id` (`user_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `channel_branding`
---
-
-CREATE TABLE IF NOT EXISTS `channel_branding` (
-  `id` tinyint(3) unsigned NOT NULL DEFAULT 1,
-  `title` varchar(255) NOT NULL DEFAULT '',
-  `tagline` varchar(800) NOT NULL DEFAULT '',
-  `logo_url` varchar(512) DEFAULT NULL,
-  `banner_url` varchar(512) DEFAULT NULL,
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `channel_playlists`
---
-
-CREATE TABLE IF NOT EXISTS `channel_playlists` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `title` varchar(255) NOT NULL,
-  `description` text DEFAULT NULL,
-  `visibility` enum('public','private') NOT NULL DEFAULT 'public',
-  `created_by` int(11) NOT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`id`),
-  KEY `idx_chpl_created_by` (`created_by`),
-  KEY `idx_chpl_visibility` (`visibility`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `channel_post_comments`
---
-
-CREATE TABLE IF NOT EXISTS `channel_post_comments` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `post_id` int(11) NOT NULL,
-  `user_id` int(11) NOT NULL,
-  `parent_id` int(11) DEFAULT NULL,
-  `body` text NOT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`),
-  KEY `idx_cpc_post` (`post_id`),
-  KEY `idx_cpc_parent` (`parent_id`),
-  KEY `idx_cpc_user` (`user_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `channel_post_likes`
---
-
-CREATE TABLE IF NOT EXISTS `channel_post_likes` (
-  `post_id` int(11) NOT NULL,
-  `user_id` int(11) NOT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  PRIMARY KEY (`post_id`,`user_id`),
-  KEY `idx_cpl_user` (`user_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `channel_post_poll_votes`
---
-
-CREATE TABLE IF NOT EXISTS `channel_post_poll_votes` (
-  `post_id` int(11) NOT NULL,
-  `user_id` int(11) NOT NULL,
-  `option_index` smallint(6) NOT NULL,
-  `voted_at` datetime DEFAULT current_timestamp(),
-  PRIMARY KEY (`post_id`,`user_id`),
-  KEY `idx_cppv_user` (`user_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `channel_posts`
---
-
-CREATE TABLE IF NOT EXISTS `channel_posts` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `author_user_id` int(11) NOT NULL,
-  `post_type` enum('text','image','poll') NOT NULL DEFAULT 'text',
-  `title` varchar(255) DEFAULT NULL,
-  `body` text NOT NULL DEFAULT '',
-  `image_url` varchar(512) DEFAULT NULL,
-  `poll_options_json` text DEFAULT NULL,
-  `video_id` int(11) DEFAULT NULL,
-  `visibility` enum('public','private') NOT NULL DEFAULT 'public',
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`id`),
-  KEY `idx_chpost_author` (`author_user_id`),
-  KEY `idx_chpost_video` (`video_id`),
-  KEY `idx_chpost_vis` (`visibility`,`created_at`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `channel_subscribers`
---
-
-CREATE TABLE IF NOT EXISTS `channel_subscribers` (
-  `user_id` int(11) NOT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  PRIMARY KEY (`user_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `community_messages`
---
-
-CREATE TABLE IF NOT EXISTS `community_messages` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `subject` varchar(255) NOT NULL,
-  `content` text NOT NULL,
-  `recipients` enum('all','active','premium','new','admins') DEFAULT 'all',
-  `created_at` datetime DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `notifications`
---
-
-CREATE TABLE IF NOT EXISTS `notifications` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `user_id` int(11) DEFAULT NULL,
-  `type` varchar(64) NOT NULL,
-  `title` varchar(255) NOT NULL,
-  `content` text NOT NULL,
-  `deep_link` varchar(512) DEFAULT NULL,
-  `is_read` tinyint(1) DEFAULT 0,
-  `created_at` datetime DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`),
-  KEY `user_id` (`user_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `payments`
---
-
-CREATE TABLE IF NOT EXISTS `payments` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `user_id` int(11) NOT NULL,
-  `amount` decimal(10,2) NOT NULL,
-  `status` enum('pending','completed','failed','refunded') DEFAULT 'pending',
-  `payment_method` varchar(50) NOT NULL,
-  `plan_type` varchar(50) NOT NULL,
-  `transaction_id` varchar(100) DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`id`),
-  KEY `user_id` (`user_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `playlist_videos`
---
-
-CREATE TABLE IF NOT EXISTS `playlist_videos` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `playlist_id` int(11) NOT NULL,
-  `video_id` int(11) NOT NULL,
-  `sort_order` int(11) NOT NULL DEFAULT 0,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uniq_playlist_video` (`playlist_id`,`video_id`),
-  KEY `idx_pv_video` (`video_id`),
-  KEY `idx_pv_playlist_order` (`playlist_id`,`sort_order`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `site_visit_logs`
---
-
-CREATE TABLE IF NOT EXISTS `site_visit_logs` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `session_id` varchar(64) NOT NULL,
-  `user_id` int(11) DEFAULT NULL,
-  `page_path` varchar(512) DEFAULT '/',
-  `ip_address` varchar(45) DEFAULT NULL,
-  `user_agent` varchar(512) DEFAULT NULL,
-  `referrer` varchar(1024) DEFAULT NULL,
-  `traffic_source` varchar(32) NOT NULL DEFAULT 'other',
-  `utm_source` varchar(128) DEFAULT NULL,
-  `utm_medium` varchar(128) DEFAULT NULL,
-  `country_code` varchar(2) DEFAULT NULL,
-  `country_name` varchar(120) DEFAULT NULL,
-  `region_name` varchar(120) DEFAULT NULL,
-  `city` varchar(120) DEFAULT NULL,
-  `latitude` decimal(10,7) DEFAULT NULL,
-  `longitude` decimal(10,7) DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `subscription_payment_pending`
---
-
-CREATE TABLE IF NOT EXISTS `subscription_payment_pending` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `user_id` int(11) NOT NULL,
-  `plan_key` varchar(32) NOT NULL,
-  `notch_reference` varchar(80) NOT NULL,
-  `amount_xaf` int(11) NOT NULL DEFAULT 100,
-  `channel` varchar(32) DEFAULT NULL,
-  `status` varchar(24) NOT NULL DEFAULT 'pending',
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_notch_ref` (`notch_reference`),
-  KEY `idx_pending_user` (`user_id`,`status`)
-) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `subscription_payments`
---
-
-CREATE TABLE IF NOT EXISTS `subscription_payments` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `user_id` int(11) NOT NULL,
-  `plan_key` varchar(32) NOT NULL,
-  `plan_label` varchar(160) DEFAULT NULL,
-  `amount` decimal(10,2) NOT NULL DEFAULT 0.00,
-  `currency` varchar(8) NOT NULL DEFAULT 'USD',
-  `payment_method` varchar(32) NOT NULL DEFAULT 'demo',
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`),
-  KEY `idx_subpay_user_created` (`user_id`,`created_at`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `subscription_plan_catalog`
---
-
-CREATE TABLE IF NOT EXISTS `subscription_plan_catalog` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `plan_key` varchar(32) NOT NULL,
-  `tier` varchar(64) NOT NULL DEFAULT '',
-  `badge` varchar(160) NOT NULL DEFAULT '',
-  `price` decimal(10,2) NOT NULL DEFAULT 0.00,
-  `currency` varchar(8) NOT NULL DEFAULT '$',
-  `duration_days` int(10) unsigned NOT NULL DEFAULT 7,
-  `features_json` text DEFAULT NULL,
-  `sort_order` int(11) NOT NULL DEFAULT 0,
-  `is_active` tinyint(1) NOT NULL DEFAULT 1,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Structure de la table `tcf_ce_answers`
---
-
-CREATE TABLE IF NOT EXISTS `tcf_ce_answers` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `question_id` int(10) unsigned NOT NULL,
-  `answer_key` varchar(8) NOT NULL,
-  `answer_text` text NOT NULL,
-  `is_correct` tinyint(1) NOT NULL DEFAULT 0,
-  `sort_order` int(11) NOT NULL DEFAULT 0,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1877 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `tcf_ce_consignes`
---
-
-CREATE TABLE IF NOT EXISTS `tcf_ce_consignes` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `title` varchar(255) NOT NULL DEFAULT 'Consignes Compréhension Écrite',
-  `body` longtext NOT NULL,
-  `visibility` varchar(20) NOT NULL DEFAULT 'gratuit',
-  `is_published` tinyint(1) NOT NULL DEFAULT 1,
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `tcf_ce_exam_views`
---
-
-CREATE TABLE IF NOT EXISTS `tcf_ce_exam_views` (
-  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `exam_id` int(10) unsigned NOT NULL,
-  `user_id` int(11) NOT NULL,
-  `visitor_id` varchar(64) NOT NULL DEFAULT '',
-  `viewed_at` datetime NOT NULL DEFAULT current_timestamp(),
-  UNIQUE KEY `uq_ce_exam_viewer` (`exam_id`,`user_id`,`visitor_id`),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `tcf_ce_exams`
---
-
-CREATE TABLE IF NOT EXISTS `tcf_ce_exams` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `slug` varchar(140) NOT NULL,
-  `title` varchar(255) NOT NULL,
-  `subtitle` varchar(255) DEFAULT NULL,
-  `intro_html` text DEFAULT NULL,
-  `visibility` varchar(20) NOT NULL DEFAULT 'gratuit',
-  `is_published` tinyint(1) NOT NULL DEFAULT 1,
-  `duration_seconds` int(10) unsigned NOT NULL DEFAULT 3600,
-  `published_at` datetime DEFAULT NULL,
-  `created_by` int(11) DEFAULT NULL,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `tcf_ce_questions`
---
-
-CREATE TABLE IF NOT EXISTS `tcf_ce_questions` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `exam_id` int(10) unsigned NOT NULL,
-  `sort_order` int(11) NOT NULL DEFAULT 0,
-  `situation` text DEFAULT NULL,
-  `question_text` text NOT NULL,
-  `points` int(11) NOT NULL DEFAULT 3,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=470 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `tcf_co_answers`
---
-
-CREATE TABLE IF NOT EXISTS `tcf_co_answers` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `question_id` int(10) unsigned NOT NULL,
-  `answer_key` varchar(8) NOT NULL,
-  `answer_text` text NOT NULL,
-  `is_correct` tinyint(1) NOT NULL DEFAULT 0,
-  `sort_order` int(11) NOT NULL DEFAULT 0,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=36 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `tcf_co_consignes`
---
-
-CREATE TABLE IF NOT EXISTS `tcf_co_consignes` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `title` varchar(255) NOT NULL DEFAULT 'Consignes Compréhension Orale',
-  `body` longtext NOT NULL,
-  `visibility` varchar(20) NOT NULL DEFAULT 'gratuit',
-  `is_published` tinyint(1) NOT NULL DEFAULT 1,
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `tcf_co_exam_views`
---
-
-CREATE TABLE IF NOT EXISTS `tcf_co_exam_views` (
-  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `exam_id` int(10) unsigned NOT NULL,
-  `user_id` int(11) NOT NULL,
-  `visitor_id` varchar(64) NOT NULL DEFAULT '',
-  `viewed_at` datetime NOT NULL DEFAULT current_timestamp(),
-  UNIQUE KEY `uq_co_exam_viewer` (`exam_id`,`user_id`,`visitor_id`),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `tcf_co_exams`
---
-
-CREATE TABLE IF NOT EXISTS `tcf_co_exams` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `slug` varchar(140) NOT NULL,
-  `title` varchar(255) NOT NULL,
-  `subtitle` varchar(255) DEFAULT NULL,
-  `intro_html` text DEFAULT NULL,
-  `visibility` varchar(20) NOT NULL DEFAULT 'gratuit',
-  `is_published` tinyint(1) NOT NULL DEFAULT 1,
-  `duration_seconds` int(10) unsigned NOT NULL DEFAULT 1800,
-  `published_at` datetime DEFAULT NULL,
-  `created_by` int(11) DEFAULT NULL,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `tcf_co_questions`
---
-
-CREATE TABLE IF NOT EXISTS `tcf_co_questions` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `exam_id` int(10) unsigned NOT NULL,
-  `sort_order` int(11) NOT NULL DEFAULT 0,
-  `question_text` text NOT NULL,
-  `points` int(11) NOT NULL DEFAULT 1,
-  `image_src` text DEFAULT NULL,
-  `audio_src` text DEFAULT NULL,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `tcf_ee_combinations`
---
-
-CREATE TABLE IF NOT EXISTS `tcf_ee_combinations` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `exam_id` int(10) unsigned NOT NULL,
-  `combo_number` int(10) unsigned NOT NULL,
-  `title` varchar(180) NOT NULL DEFAULT '',
-  `sort_order` int(11) NOT NULL DEFAULT 0,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=639 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `tcf_ee_consignes`
---
-
-CREATE TABLE IF NOT EXISTS `tcf_ee_consignes` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `title` varchar(255) NOT NULL,
-  `body` text NOT NULL,
-  `task_key` varchar(20) NOT NULL DEFAULT 'general',
-  `visibility` varchar(20) NOT NULL DEFAULT 'gratuit',
-  `is_published` tinyint(1) NOT NULL DEFAULT 1,
-  `sort_order` int(11) NOT NULL DEFAULT 0,
-  `is_active` tinyint(1) NOT NULL DEFAULT 1,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT NULL ON UPDATE current_timestamp(),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `tcf_ee_exam_views`
---
-
-CREATE TABLE IF NOT EXISTS `tcf_ee_exam_views` (
-  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `exam_id` int(10) unsigned NOT NULL,
-  `user_id` int(11) NOT NULL,
-  `visitor_id` varchar(64) NOT NULL DEFAULT '',
-  `viewed_at` datetime NOT NULL DEFAULT current_timestamp(),
-  UNIQUE KEY `uq_ee_exam_viewer` (`exam_id`,`user_id`,`visitor_id`),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `tcf_ee_exams`
---
-
-CREATE TABLE IF NOT EXISTS `tcf_ee_exams` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `slug` varchar(140) NOT NULL,
-  `title` varchar(255) NOT NULL,
-  `subtitle` varchar(255) DEFAULT NULL,
-  `visibility` varchar(20) NOT NULL DEFAULT 'gratuit',
-  `is_published` tinyint(1) NOT NULL DEFAULT 1,
-  `published_at` datetime DEFAULT current_timestamp(),
-  `created_by` int(11) DEFAULT NULL,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `tcf_ee_task_documents`
---
-
-CREATE TABLE IF NOT EXISTS `tcf_ee_task_documents` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `task_id` int(10) unsigned NOT NULL,
-  `doc_number` tinyint(3) unsigned NOT NULL,
-  `title` varchar(180) DEFAULT NULL,
-  `content` longtext NOT NULL,
-  `sort_order` int(11) NOT NULL DEFAULT 0,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1303 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `tcf_ee_tasks`
---
-
-CREATE TABLE IF NOT EXISTS `tcf_ee_tasks` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `combination_id` int(10) unsigned NOT NULL,
-  `task_number` tinyint(3) unsigned NOT NULL,
-  `prompt` text NOT NULL,
-  `correction` longtext DEFAULT NULL,
-  `word_min` int(10) unsigned DEFAULT NULL,
-  `word_max` int(10) unsigned DEFAULT NULL,
-  `sort_order` int(11) NOT NULL DEFAULT 0,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1962 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `tcf_eo_consignes`
---
-
-CREATE TABLE IF NOT EXISTS `tcf_eo_consignes` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `title` varchar(255) NOT NULL,
-  `body` text NOT NULL,
-  `task_key` varchar(20) NOT NULL DEFAULT 'general',
-  `visibility` varchar(20) NOT NULL DEFAULT 'gratuit',
-  `is_published` tinyint(1) NOT NULL DEFAULT 1,
-  `sort_order` int(11) NOT NULL DEFAULT 0,
-  `is_active` tinyint(1) NOT NULL DEFAULT 1,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT NULL ON UPDATE current_timestamp(),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `tcf_eo_exam_views`
---
-
-CREATE TABLE IF NOT EXISTS `tcf_eo_exam_views` (
-  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `exam_id` int(10) unsigned NOT NULL,
-  `user_id` int(11) NOT NULL,
-  `visitor_id` varchar(64) NOT NULL DEFAULT '',
-  `viewed_at` datetime NOT NULL DEFAULT current_timestamp(),
-  UNIQUE KEY `uq_eo_exam_viewer` (`exam_id`,`user_id`,`visitor_id`),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `tcf_eo_exams`
---
-
-CREATE TABLE IF NOT EXISTS `tcf_eo_exams` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `slug` varchar(140) NOT NULL,
-  `title` varchar(255) NOT NULL,
-  `subtitle` varchar(255) DEFAULT NULL,
-  `visibility` varchar(20) NOT NULL DEFAULT 'gratuit',
-  `is_published` tinyint(1) NOT NULL DEFAULT 1,
-  `published_at` datetime DEFAULT current_timestamp(),
-  `created_by` int(11) DEFAULT NULL,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `tcf_eo_parts`
---
-
-CREATE TABLE IF NOT EXISTS `tcf_eo_parts` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `exam_id` int(10) unsigned NOT NULL,
-  `task_key` varchar(20) NOT NULL DEFAULT 'tache2',
-  `part_number` int(11) NOT NULL DEFAULT 1,
-  `part_title` varchar(255) DEFAULT NULL,
-  `sort_order` int(11) NOT NULL DEFAULT 1,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `tcf_eo_subjects`
---
-
-CREATE TABLE IF NOT EXISTS `tcf_eo_subjects` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `part_id` int(10) unsigned NOT NULL,
-  `subject_number` int(11) NOT NULL DEFAULT 1,
-  `title` varchar(255) NOT NULL,
-  `prompt` text NOT NULL,
-  `correction` mediumtext DEFAULT NULL,
-  `role_label` varchar(255) DEFAULT NULL,
-  `icon_class` varchar(80) DEFAULT 'bx bx-message-detail',
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `tcf_platform_settings`
---
-
-CREATE TABLE IF NOT EXISTS `tcf_platform_settings` (
-  `setting_key` varchar(64) NOT NULL,
-  `setting_value` varchar(255) NOT NULL DEFAULT '',
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`setting_key`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Structure de la table `testimonials`
---
-
-CREATE TABLE IF NOT EXISTS `testimonials` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `author_name` varchar(120) NOT NULL,
-  `content` text NOT NULL,
-  `user_id` int(11) DEFAULT NULL,
-  `rating` tinyint(4) DEFAULT NULL,
-  `is_published` tinyint(1) NOT NULL DEFAULT 1,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `topics`
---
-
-CREATE TABLE IF NOT EXISTS `topics` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `title` varchar(255) NOT NULL,
-  `type` enum('Compréhension Écrite','Compréhension Orale','Expression Écrite','Expression Orale') NOT NULL,
-  `visibility` enum('gratuit','premium') DEFAULT 'gratuit',
-  `json_file` varchar(255) NOT NULL,
-  `uses` int(11) DEFAULT 0,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `trainers`
---
-
-CREATE TABLE IF NOT EXISTS `trainers` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `name` varchar(128) NOT NULL DEFAULT '',
-  `role_title` varchar(160) NOT NULL DEFAULT '',
-  `photo_url` varchar(512) DEFAULT NULL,
-  `social_links_json` text DEFAULT NULL,
-  `sort_order` int(11) NOT NULL DEFAULT 0,
-  `is_active` tinyint(1) NOT NULL DEFAULT 1,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Structure de la table `user_activity_days`
---
-
-CREATE TABLE IF NOT EXISTS `user_activity_days` (
-  `user_id` int(11) NOT NULL,
-  `activity_date` date NOT NULL,
-  `created_at` timestamp NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`user_id`,`activity_date`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Structure de la table `user_email_codes`
---
-
-CREATE TABLE IF NOT EXISTS `user_email_codes` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `user_id` int(11) NOT NULL,
-  `code` varchar(10) NOT NULL,
-  `purpose` varchar(32) NOT NULL,
-  `expires_at` datetime NOT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Structure de la table `users`
---
-
+-- =============================================================================
+-- ELITE TCF CANADA — schéma consolidé (une seule source de vérité)
+-- Fichier unique : database/tcf.sql
+-- =============================================================================
+-- Tables :
+--   users, notifications, annonces, statistiques, videos,
+--   abonnements, historique_abonnements, partenaires, temoignages,
+--   activites, sujets, comprehension_ecrite, comprehension_orale,
+--   expression_ecrite, expression_orale, visiteurs, parametres
+-- =============================================================================
+
+SET NAMES utf8mb4;
+SET SQL_MODE = '';
+SET time_zone = '+00:00';
+
+-- -----------------------------------------------------------------------------
+-- users : comptes + rôles + abonnement courant + OTP / remember
+-- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `users` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `name` varchar(100) NOT NULL,
-  `email` varchar(100) NOT NULL,
-  `password` varchar(255) NOT NULL,
-  `role` enum('user','admin','super_admin') DEFAULT 'user',
-  `subscription_type` enum('free','monthly','annual','plan_1w','plan_2w','plan_1m','plan_2m') NOT NULL DEFAULT 'free',
-  `subscription_expires_at` datetime DEFAULT NULL,
-  `status` enum('active','inactive') DEFAULT 'active',
-  `permissions` text DEFAULT NULL,
-  `avatar` varchar(255) DEFAULT NULL,
-  `last_login` datetime DEFAULT NULL,
-  `last_activity` datetime DEFAULT NULL,
-  `reg_country_code` varchar(2) DEFAULT NULL,
-  `reg_country_name` varchar(120) DEFAULT NULL,
-  `reg_traffic_source` varchar(32) DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  UNIQUE KEY `uq_users_email` (`email`),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `video_comments`
---
-
-CREATE TABLE IF NOT EXISTS `video_comments` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `video_id` int(11) NOT NULL,
-  `user_id` int(11) NOT NULL,
-  `parent_id` int(11) DEFAULT NULL,
-  `body` varchar(2000) NOT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(100) NOT NULL,
+  `email` VARCHAR(100) NOT NULL,
+  `password` VARCHAR(255) NOT NULL,
+  `role` ENUM('user','admin','super_admin') NOT NULL DEFAULT 'user',
+  `subscription_type` ENUM('free','monthly','annual','plan_1w','plan_2w','plan_1m','plan_2m') NOT NULL DEFAULT 'free',
+  `subscription_expires_at` DATETIME DEFAULT NULL,
+  `status` ENUM('active','inactive') NOT NULL DEFAULT 'active',
+  `permissions` TEXT DEFAULT NULL,
+  `avatar` VARCHAR(255) DEFAULT NULL,
+  `avatar_data` MEDIUMBLOB DEFAULT NULL,
+  `avatar_mime` VARCHAR(80) DEFAULT NULL,
+  `otp_code` VARCHAR(12) DEFAULT NULL,
+  `otp_purpose` VARCHAR(40) DEFAULT NULL,
+  `otp_expires_at` DATETIME DEFAULT NULL,
+  `remember_token` VARCHAR(128) DEFAULT NULL,
+  `remember_expires_at` DATETIME DEFAULT NULL,
+  `last_login` DATETIME DEFAULT NULL,
+  `last_activity` DATETIME DEFAULT NULL,
+  `reg_country_code` VARCHAR(2) DEFAULT NULL,
+  `reg_country_name` VARCHAR(120) DEFAULT NULL,
+  `reg_traffic_source` VARCHAR(32) DEFAULT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  KEY `idx_vc_video` (`video_id`),
-  KEY `idx_vc_user` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Structure de la table `video_likes`
---
-
-CREATE TABLE IF NOT EXISTS `video_likes` (
-  `video_id` int(11) NOT NULL,
-  `user_id` int(11) NOT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  PRIMARY KEY (`video_id`,`user_id`),
-  KEY `idx_vl_user` (`user_id`)
+  UNIQUE KEY `uq_users_email` (`email`),
+  KEY `idx_users_role` (`role`),
+  KEY `idx_users_sub` (`subscription_type`, `subscription_expires_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Structure de la table `videos`
---
+-- -----------------------------------------------------------------------------
+-- notifications
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `notifications` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` INT UNSIGNED DEFAULT NULL,
+  `type` VARCHAR(40) NOT NULL DEFAULT 'update',
+  `title` VARCHAR(255) NOT NULL,
+  `content` TEXT NOT NULL,
+  `deep_link` VARCHAR(500) DEFAULT NULL,
+  `is_read` TINYINT(1) NOT NULL DEFAULT 0,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_notif_user` (`user_id`),
+  KEY `idx_notif_read` (`is_read`, `created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- -----------------------------------------------------------------------------
+-- annonces (posts communauté + messages diffusés)
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `annonces` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `kind` ENUM('post','message') NOT NULL DEFAULT 'post',
+  `body` TEXT NOT NULL,
+  `image_url` VARCHAR(500) DEFAULT NULL,
+  `image_data` MEDIUMBLOB DEFAULT NULL,
+  `image_mime` VARCHAR(80) DEFAULT NULL,
+  `link_url` VARCHAR(1000) DEFAULT NULL,
+  `visibility` ENUM('visitors','registered','premium','gratuit') NOT NULL DEFAULT 'registered',
+  `is_published` TINYINT(1) NOT NULL DEFAULT 1,
+  `likes_json` LONGTEXT DEFAULT NULL,
+  `views_json` LONGTEXT DEFAULT NULL,
+  `created_by` INT UNSIGNED DEFAULT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_annonces_pub` (`is_published`, `kind`, `created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- -----------------------------------------------------------------------------
+-- statistiques (événements analytics / métriques)
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `statistiques` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `kind` VARCHAR(40) NOT NULL DEFAULT 'event',
+  `ref_type` VARCHAR(40) DEFAULT NULL,
+  `ref_id` INT UNSIGNED DEFAULT NULL,
+  `user_id` INT UNSIGNED DEFAULT NULL,
+  `action` VARCHAR(40) DEFAULT NULL,
+  `value_num` INT DEFAULT NULL,
+  `meta_json` LONGTEXT DEFAULT NULL,
+  `ip_address` VARCHAR(45) DEFAULT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_stats_kind` (`kind`, `created_at`),
+  KEY `idx_stats_ref` (`ref_type`, `ref_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- -----------------------------------------------------------------------------
+-- videos (métadonnées + binaire vidéo/miniature en base)
+-- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `videos` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `title` varchar(255) NOT NULL,
-  `description` text DEFAULT NULL,
-  `thumbnail_url` varchar(255) DEFAULT NULL,
-  `video_url` varchar(255) NOT NULL,
-  `visibility` enum('public','private','premium') DEFAULT 'public',
-  `duration` time(3) DEFAULT NULL,
-  `views` int(11) DEFAULT 0,
-  `likes` int(11) DEFAULT 0,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `title` VARCHAR(255) NOT NULL,
+  `description` TEXT DEFAULT NULL,
+  `thumbnail_url` VARCHAR(500) DEFAULT NULL,
+  `thumbnail_data` LONGBLOB DEFAULT NULL,
+  `thumbnail_mime` VARCHAR(80) DEFAULT NULL,
+  `video_url` VARCHAR(500) DEFAULT NULL,
+  `video_data` LONGBLOB DEFAULT NULL,
+  `video_mime` VARCHAR(80) DEFAULT NULL,
+  `visibility` ENUM('public','private','premium') NOT NULL DEFAULT 'public',
+  `duration` VARCHAR(32) DEFAULT NULL,
+  `views` INT UNSIGNED NOT NULL DEFAULT 0,
+  `likes` INT UNSIGNED NOT NULL DEFAULT 0,
+  `likes_json` LONGTEXT DEFAULT NULL,
+  `comments_json` LONGTEXT DEFAULT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_videos_vis` (`visibility`, `created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-COMMIT;
+-- -----------------------------------------------------------------------------
+-- abonnements (catalogue des plans)
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `abonnements` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `plan_key` VARCHAR(40) NOT NULL,
+  `tier` VARCHAR(40) NOT NULL DEFAULT '',
+  `badge` VARCHAR(120) NOT NULL DEFAULT '',
+  `title` VARCHAR(160) NOT NULL DEFAULT '',
+  `price_label` VARCHAR(80) NOT NULL DEFAULT '',
+  `price_xaf` INT UNSIGNED NOT NULL DEFAULT 0,
+  `duration_days` INT UNSIGNED NOT NULL DEFAULT 30,
+  `features_json` LONGTEXT DEFAULT NULL,
+  `sort_order` INT NOT NULL DEFAULT 0,
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_abo_plan_key` (`plan_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- -----------------------------------------------------------------------------
+-- historique_abonnements (paiements + pending)
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `historique_abonnements` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` INT UNSIGNED DEFAULT NULL,
+  `plan_key` VARCHAR(40) DEFAULT NULL,
+  `amount` INT DEFAULT NULL,
+  `currency` VARCHAR(10) DEFAULT 'XAF',
+  `status` VARCHAR(40) NOT NULL DEFAULT 'pending',
+  `provider` VARCHAR(40) DEFAULT 'notchpay',
+  `reference` VARCHAR(120) DEFAULT NULL,
+  `provider_ref` VARCHAR(160) DEFAULT NULL,
+  `meta_json` LONGTEXT DEFAULT NULL,
+  `paid_at` DATETIME DEFAULT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_habo_user` (`user_id`),
+  KEY `idx_habo_status` (`status`),
+  KEY `idx_habo_ref` (`reference`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- -----------------------------------------------------------------------------
+-- partenaires
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `partenaires` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(160) NOT NULL,
+  `logo_url` VARCHAR(500) DEFAULT NULL,
+  `logo_data` MEDIUMBLOB DEFAULT NULL,
+  `logo_mime` VARCHAR(80) DEFAULT NULL,
+  `website_url` VARCHAR(1000) DEFAULT NULL,
+  `sort_order` INT NOT NULL DEFAULT 0,
+  `is_published` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_by` INT UNSIGNED DEFAULT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_part_pub` (`is_published`, `sort_order`, `id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- -----------------------------------------------------------------------------
+-- temoignages
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `temoignages` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` INT UNSIGNED DEFAULT NULL,
+  `author_name` VARCHAR(120) NOT NULL DEFAULT '',
+  `content` TEXT NOT NULL,
+  `rating` TINYINT UNSIGNED NOT NULL DEFAULT 5,
+  `is_published` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_tem_pub` (`is_published`, `created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- -----------------------------------------------------------------------------
+-- activites (journal admin + jours d'activité utilisateur)
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `activites` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `kind` ENUM('log','day') NOT NULL DEFAULT 'log',
+  `user_id` INT UNSIGNED DEFAULT NULL,
+  `type` VARCHAR(40) DEFAULT NULL,
+  `title` VARCHAR(255) DEFAULT NULL,
+  `description` TEXT DEFAULT NULL,
+  `icon` VARCHAR(50) DEFAULT NULL,
+  `activity_date` DATE DEFAULT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_act_user` (`user_id`, `kind`),
+  KEY `idx_act_day` (`user_id`, `activity_date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- -----------------------------------------------------------------------------
+-- sujets : passerelle catalogue CE / CO / EE / EO
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `sujets` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `type` ENUM('ce','co','ee','eo') NOT NULL,
+  `title` VARCHAR(255) NOT NULL,
+  `slug` VARCHAR(160) NOT NULL,
+  `subtitle` VARCHAR(255) DEFAULT NULL,
+  `visibility` VARCHAR(20) NOT NULL DEFAULT 'gratuit',
+  `is_published` TINYINT(1) NOT NULL DEFAULT 1,
+  `duration_seconds` INT UNSIGNED NOT NULL DEFAULT 3600,
+  `published_at` DATETIME DEFAULT NULL,
+  `created_by` INT UNSIGNED DEFAULT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_sujets_type_slug` (`type`, `slug`),
+  KEY `idx_sujets_type_pub` (`type`, `is_published`, `id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- -----------------------------------------------------------------------------
+-- comprehension_ecrite (examens + consignes en JSON)
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `comprehension_ecrite` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `sujet_id` INT UNSIGNED DEFAULT NULL,
+  `kind` ENUM('exam','consigne') NOT NULL DEFAULT 'exam',
+  `slug` VARCHAR(160) DEFAULT NULL,
+  `title` VARCHAR(255) NOT NULL DEFAULT '',
+  `subtitle` VARCHAR(255) DEFAULT NULL,
+  `intro_html` TEXT DEFAULT NULL,
+  `section_key` VARCHAR(40) DEFAULT NULL,
+  `visibility` VARCHAR(20) NOT NULL DEFAULT 'gratuit',
+  `is_published` TINYINT(1) NOT NULL DEFAULT 1,
+  `duration_seconds` INT UNSIGNED NOT NULL DEFAULT 3600,
+  `content_json` LONGTEXT DEFAULT NULL,
+  `views_count` INT UNSIGNED NOT NULL DEFAULT 0,
+  `published_at` DATETIME DEFAULT NULL,
+  `created_by` INT UNSIGNED DEFAULT NULL,
+  `legacy_exam_id` INT UNSIGNED DEFAULT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_ce_sujet` (`sujet_id`),
+  KEY `idx_ce_kind` (`kind`, `is_published`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- -----------------------------------------------------------------------------
+-- comprehension_orale
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `comprehension_orale` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `sujet_id` INT UNSIGNED DEFAULT NULL,
+  `kind` ENUM('exam','consigne') NOT NULL DEFAULT 'exam',
+  `slug` VARCHAR(160) DEFAULT NULL,
+  `title` VARCHAR(255) NOT NULL DEFAULT '',
+  `subtitle` VARCHAR(255) DEFAULT NULL,
+  `intro_html` TEXT DEFAULT NULL,
+  `section_key` VARCHAR(40) DEFAULT NULL,
+  `visibility` VARCHAR(20) NOT NULL DEFAULT 'gratuit',
+  `is_published` TINYINT(1) NOT NULL DEFAULT 1,
+  `duration_seconds` INT UNSIGNED NOT NULL DEFAULT 2100,
+  `content_json` LONGTEXT DEFAULT NULL,
+  `views_count` INT UNSIGNED NOT NULL DEFAULT 0,
+  `published_at` DATETIME DEFAULT NULL,
+  `created_by` INT UNSIGNED DEFAULT NULL,
+  `legacy_exam_id` INT UNSIGNED DEFAULT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_co_sujet` (`sujet_id`),
+  KEY `idx_co_kind` (`kind`, `is_published`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- -----------------------------------------------------------------------------
+-- expression_ecrite
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `expression_ecrite` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `sujet_id` INT UNSIGNED DEFAULT NULL,
+  `kind` ENUM('exam','consigne') NOT NULL DEFAULT 'exam',
+  `slug` VARCHAR(160) DEFAULT NULL,
+  `title` VARCHAR(255) NOT NULL DEFAULT '',
+  `subtitle` VARCHAR(255) DEFAULT NULL,
+  `intro_html` TEXT DEFAULT NULL,
+  `section_key` VARCHAR(40) DEFAULT NULL,
+  `visibility` VARCHAR(20) NOT NULL DEFAULT 'gratuit',
+  `is_published` TINYINT(1) NOT NULL DEFAULT 1,
+  `duration_seconds` INT UNSIGNED NOT NULL DEFAULT 3600,
+  `content_json` LONGTEXT DEFAULT NULL,
+  `views_count` INT UNSIGNED NOT NULL DEFAULT 0,
+  `published_at` DATETIME DEFAULT NULL,
+  `created_by` INT UNSIGNED DEFAULT NULL,
+  `legacy_exam_id` INT UNSIGNED DEFAULT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_ee_sujet` (`sujet_id`),
+  KEY `idx_ee_kind` (`kind`, `is_published`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- -----------------------------------------------------------------------------
+-- expression_orale
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `expression_orale` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `sujet_id` INT UNSIGNED DEFAULT NULL,
+  `kind` ENUM('exam','consigne') NOT NULL DEFAULT 'exam',
+  `slug` VARCHAR(160) DEFAULT NULL,
+  `title` VARCHAR(255) NOT NULL DEFAULT '',
+  `subtitle` VARCHAR(255) DEFAULT NULL,
+  `intro_html` TEXT DEFAULT NULL,
+  `section_key` VARCHAR(40) DEFAULT NULL,
+  `visibility` VARCHAR(20) NOT NULL DEFAULT 'gratuit',
+  `is_published` TINYINT(1) NOT NULL DEFAULT 1,
+  `duration_seconds` INT UNSIGNED NOT NULL DEFAULT 3600,
+  `content_json` LONGTEXT DEFAULT NULL,
+  `views_count` INT UNSIGNED NOT NULL DEFAULT 0,
+  `published_at` DATETIME DEFAULT NULL,
+  `created_by` INT UNSIGNED DEFAULT NULL,
+  `legacy_exam_id` INT UNSIGNED DEFAULT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_eo_sujet` (`sujet_id`),
+  KEY `idx_eo_kind` (`kind`, `is_published`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- -----------------------------------------------------------------------------
+-- visiteurs (visites site + vues d’épreuves)
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `visiteurs` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `kind` VARCHAR(40) NOT NULL DEFAULT 'site',
+  `visitor_key` VARCHAR(80) DEFAULT NULL,
+  `user_id` INT UNSIGNED DEFAULT NULL,
+  `ref_type` VARCHAR(40) DEFAULT NULL,
+  `ref_id` INT UNSIGNED DEFAULT NULL,
+  `path` VARCHAR(500) DEFAULT NULL,
+  `ip_address` VARCHAR(45) DEFAULT NULL,
+  `user_agent` VARCHAR(500) DEFAULT NULL,
+  `country_code` VARCHAR(2) DEFAULT NULL,
+  `country_name` VARCHAR(120) DEFAULT NULL,
+  `meta_json` LONGTEXT DEFAULT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_vis_kind` (`kind`, `created_at`),
+  KEY `idx_vis_ref` (`ref_type`, `ref_id`),
+  KEY `idx_vis_visitor` (`visitor_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- -----------------------------------------------------------------------------
+-- parametres (réglages plateforme / branding)
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `parametres` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `setting_key` VARCHAR(80) NOT NULL,
+  `setting_value` LONGTEXT DEFAULT NULL,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_param_key` (`setting_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

@@ -6,8 +6,21 @@ declare(strict_types=1);
  * Partenaires (logos affichés sur la page d'accueil).
  */
 
+function tcf_partners_table(PDO $pdo): string
+{
+    require_once __DIR__ . '/tcf_schema.php';
+    if (tcf_schema_has_table($pdo, 'partenaires')) {
+        return 'partenaires';
+    }
+    return 'partners';
+}
+
 function tcf_partners_ensure_tables(PDO $pdo): void
 {
+    $table = tcf_partners_table($pdo);
+    if ($table === 'partenaires') {
+        return;
+    }
     $pdo->exec(
         "CREATE TABLE IF NOT EXISTS partners (
             id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -86,10 +99,12 @@ function tcf_partners_enrich_row(array $row): array
 function tcf_partners_list_published(PDO $pdo, int $limit = 60): array
 {
     tcf_partners_ensure_tables($pdo);
+    $table = tcf_partners_table($pdo);
     $limit = max(1, min(100, $limit));
+    // Ne jamais SELECT logo_data (BLOB) : casse json_encode côté API admin/public.
     $st = $pdo->query(
         "SELECT id, name, logo_url, website_url, sort_order, is_published, created_at
-         FROM partners
+         FROM `$table`
          WHERE is_published = 1
          ORDER BY sort_order ASC, id DESC
          LIMIT $limit"
@@ -97,6 +112,7 @@ function tcf_partners_list_published(PDO $pdo, int $limit = 60): array
     $rows = $st->fetchAll(PDO::FETCH_ASSOC) ?: [];
     $out = [];
     foreach ($rows as $r) {
+        unset($r['logo_data'], $r['logo_mime']);
         $out[] = tcf_partners_enrich_row($r);
     }
 
@@ -111,12 +127,16 @@ function tcf_partners_list_published(PDO $pdo, int $limit = 60): array
 function tcf_partners_list_admin(PDO $pdo): array
 {
     tcf_partners_ensure_tables($pdo);
+    $table = tcf_partners_table($pdo);
+    // Colonnes scalaires uniquement — logo_data (MEDIUMBLOB) rend le JSON admin invalide.
     $st = $pdo->query(
-        'SELECT * FROM partners ORDER BY sort_order ASC, id DESC LIMIT 200'
+        "SELECT id, name, logo_url, website_url, sort_order, is_published, created_by, created_at, updated_at
+         FROM `$table` ORDER BY sort_order ASC, id DESC LIMIT 200"
     );
     $rows = $st->fetchAll(PDO::FETCH_ASSOC) ?: [];
     $out = [];
     foreach ($rows as $r) {
+        unset($r['logo_data'], $r['logo_mime']);
         $out[] = tcf_partners_enrich_row($r);
     }
 

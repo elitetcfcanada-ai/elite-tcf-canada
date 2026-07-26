@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/subscription_access.php';
+require_once __DIR__ . '/includes/tcf_schema.php';
+require_once __DIR__ . '/includes/tcf_exam_store.php';
 
 $viewer = null;
 if (!empty($_SESSION['user_id'])) {
@@ -46,14 +48,29 @@ function ee_title_rank_local(string $title): int
 
 $exams = [];
 try {
-    $exams = $pdo->query(
-        "SELECT id, slug, title, subtitle, visibility, published_at
-         FROM tcf_ee_exams
-         WHERE is_published = 1
-           AND title NOT REGEXP 'Part[0-9]+|[[:space:]]Data$'
-           AND slug NOT REGEXP 'part[0-9]+|_data'
-         ORDER BY id DESC"
-    )->fetchAll(PDO::FETCH_ASSOC);
+    if (tcf_schema_has_table($pdo, 'expression_ecrite')) {
+        $exams = tcf_exam_list($pdo, 'ee', true);
+        $exams = array_values(array_filter($exams, static function (array $e): bool {
+            $title = (string) ($e['title'] ?? '');
+            $slug = (string) ($e['slug'] ?? '');
+            if (preg_match('/Part[0-9]+|\sData$/u', $title)) {
+                return false;
+            }
+            if (preg_match('/part[0-9]+|_data/i', $slug)) {
+                return false;
+            }
+            return true;
+        }));
+    } else {
+        $exams = $pdo->query(
+            "SELECT id, slug, title, subtitle, visibility, published_at
+             FROM tcf_ee_exams
+             WHERE is_published = 1
+               AND title NOT REGEXP 'Part[0-9]+|[[:space:]]Data$'
+               AND slug NOT REGEXP 'part[0-9]+|_data'
+             ORDER BY id DESC"
+        )->fetchAll(PDO::FETCH_ASSOC);
+    }
     usort($exams, static function (array $a, array $b): int {
         $ra = ee_title_rank_local((string) ($a['title'] ?? ''));
         $rb = ee_title_rank_local((string) ($b['title'] ?? ''));
