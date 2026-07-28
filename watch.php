@@ -5,6 +5,7 @@ require_once __DIR__ . '/includes/site_contact.php';
 require_once __DIR__ . '/includes/video_duration.php';
 require_once __DIR__ . '/includes/video_player.php';
 require_once __DIR__ . '/includes/media_blob.php';
+require_once __DIR__ . '/includes/subscription_access.php';
 
 $videoId = isset($_GET['v']) ? (int) $_GET['v'] : 0;
 if ($videoId <= 0) {
@@ -26,14 +27,24 @@ try {
     $video = null;
 }
 
+$viewer = null;
+if (!empty($_SESSION['user_id'])) {
+    try {
+        $stU = $pdo->prepare('SELECT * FROM users WHERE id = ? LIMIT 1');
+        $stU->execute([(int) $_SESSION['user_id']]);
+        $viewer = $stU->fetch(PDO::FETCH_ASSOC) ?: null;
+    } catch (Throwable $e) {
+        $viewer = null;
+    }
+}
+
 $isLocked = false;
 $isPublic = false;
 if ($video !== null) {
     $vis = strtolower((string) ($video['visibility'] ?? 'public'));
-    // Lecture ouverte à tous (public + premium) — likes/commentaires restent liés au compte
     if ($vis === 'public' || $vis === 'premium') {
         $isPublic = true;
-        $isLocked = false;
+        $isLocked = tcf_video_is_premium_locked_for_user($video, $viewer);
     } else {
         $video = null;
     }
@@ -46,21 +57,12 @@ if ($video !== null && mb_strlen($pageTitle) > 100) {
 }
 
 $tcfVideoUser = null;
-if (!empty($_SESSION['user_id'])) {
-    try {
-        $stU = $pdo->prepare('SELECT id, name, role FROM users WHERE id = ?');
-        $stU->execute([(int) $_SESSION['user_id']]);
-        $row = $stU->fetch(PDO::FETCH_ASSOC) ?: null;
-        if ($row) {
-            $tcfVideoUser = [
-                'id' => (int) $row['id'],
-                'name' => (string) ($row['name'] ?? ($_SESSION['username'] ?? '')),
-                'is_staff' => in_array($row['role'] ?? '', ['admin', 'super_admin'], true),
-            ];
-        }
-    } catch (Throwable $e) {
-        $tcfVideoUser = null;
-    }
+if ($viewer) {
+    $tcfVideoUser = [
+        'id' => (int) $viewer['id'],
+        'name' => (string) ($viewer['name'] ?? ($_SESSION['username'] ?? '')),
+        'is_staff' => in_array($viewer['role'] ?? '', ['admin', 'super_admin'], true),
+    ];
 }
 
 $thumb = $video ? tcf_video_media_href($pdo, (int) $video['id'], $video['thumbnail_url'] ?? '', 'thumbnail') : '';
@@ -68,6 +70,9 @@ $vidUrl = ($video && !$isLocked) ? tcf_video_media_href($pdo, (int) $video['id']
 $likesCount = $video ? (int) ($video['likes'] ?? 0) : 0;
 $videosPageHref = site_href('videos.php');
 $canInteract = !empty($tcfVideoUser);
+$subscribeHref = empty($_SESSION['user_id'])
+    ? site_href('login.php?next=' . rawurlencode('abonnement.php'))
+    : site_href('abonnement.php');
 
 ?>
 <!DOCTYPE html>
@@ -103,10 +108,10 @@ $canInteract = !empty($tcfVideoUser);
     <div class="tcf-watch-player-wrap is-landscape" data-format="landscape">
         <?php if ($isLocked): ?>
         <div class="tcf-watch-premium-lock">
-            <i class="bx bx-lock-alt" aria-hidden="true"></i>
-            <p style="margin:0;font-weight:600;">Vidéo réservée aux abonnés</p>
+            <i class="bx bxs-lock-alt" aria-hidden="true"></i>
+            <p style="margin:0;font-weight:600;">Vidéo Premium verrouillée</p>
             <p style="margin:0;font-size:0.875rem;color:#ccc;">Abonnez-vous pour lire cette vidéo.</p>
-            <a href="<?php echo htmlspecialchars(site_href(empty($_SESSION['user_id']) ? 'login.php' : 'abonnement.php')); ?>"><?php echo empty($_SESSION['user_id']) ? 'Se connecter' : 'Voir les abonnements'; ?></a>
+            <a href="<?php echo htmlspecialchars($subscribeHref); ?>"><?php echo empty($_SESSION['user_id']) ? 'Se connecter' : 'Voir les abonnements'; ?></a>
         </div>
         <?php else: ?>
         <?php tcf_render_video_player($vidUrl, ['id' => 'tcf-watch-player', 'poster' => $thumb, 'controls' => true]); ?>

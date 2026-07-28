@@ -1316,7 +1316,66 @@
     justify-content: center;
     color: #fff;
     font-size: 2.75rem;
-    opacity: 0.85;
+    opacity: 0.9;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.28));
+    pointer-events: none;
+}
+
+.tcf-videos-simple__play-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.tcf-videos-simple__lock {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.55rem;
+    height: 1.55rem;
+    border-radius: 999px;
+    background: var(--main-color, #d30d0d);
+    color: #fff;
+    font-size: 0.85rem;
+    box-shadow: 0 2px 10px rgba(211, 13, 13, 0.5);
+    z-index: 1;
+}
+
+.tcf-videos-simple__card.is-premium-locked .tcf-videos-simple__thumb img {
+    filter: brightness(0.78);
+}
+
+.tcf-videos-simple__card.is-premium-locked .tcf-videos-simple__play {
+    background: rgba(0, 0, 0, 0.38);
+}
+
+.tcf-videos-simple__card.is-premium-locked .tcf-videos-simple__play-wrap > .bx-play-circle {
+    opacity: 0.92;
+}
+
+/* Bandeau oblique Premium (coin haut droit) */
+.tcf-videos-simple__ribbon {
+    position: absolute;
+    top: 14px;
+    right: -34px;
+    z-index: 3;
+    width: 120px;
+    padding: 0.28rem 0;
+    background: var(--main-color, #d30d0d);
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-align: center;
+    transform: rotate(45deg);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
     pointer-events: none;
 }
 

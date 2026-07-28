@@ -58,9 +58,13 @@
         var bodyHtml = '';
         if (p.body) {
             var clipped = clipText(p.body, 160);
+            var premiumPill = String(p.visibility || '') === 'premium'
+                ? '<span class="tcp-card__premium-pill">Premium</span>'
+                : '';
             if (clipped.clipped) {
                 bodyHtml =
                     '<div class="tcp-card__body" data-expanded="0">' +
+                    premiumPill +
                     '<span class="tcp-card__body-short">' +
                     esc(clipped.short) +
                     '…</span>' +
@@ -70,8 +74,15 @@
                     '<button type="button" class="tcp-card__see-more" aria-expanded="false">Voir plus</button>' +
                     '</div>';
             } else {
-                bodyHtml = '<div class="tcp-card__body"><span class="tcp-card__body-full">' + esc(clipped.full) + '</span></div>';
+                bodyHtml =
+                    '<div class="tcp-card__body">' +
+                    premiumPill +
+                    '<span class="tcp-card__body-full">' +
+                    esc(clipped.full) +
+                    '</span></div>';
             }
+        } else if (String(p.visibility || '') === 'premium') {
+            bodyHtml = '<div class="tcp-card__body"><span class="tcp-card__premium-pill">Premium</span></div>';
         }
         var link = (p.link_url || '').trim();
         var linkHtml = link

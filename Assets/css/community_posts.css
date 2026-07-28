@@ -77,6 +77,19 @@ body.tcf-posts-page {
     color: #1f2937;
 }
 
+.tcp-card__premium-pill {
+    display: inline-block;
+    margin: 0 0 0.45rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    background: rgba(211, 13, 13, 0.1);
+    color: var(--main-color, #d30d0d);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
 .tcp-card__media-wrap + .tcp-card__body {
     padding-top: 0.85rem;
 }

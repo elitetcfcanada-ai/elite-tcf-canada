@@ -4,6 +4,18 @@ require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/site_contact.php';
 require_once __DIR__ . '/includes/video_duration.php';
 require_once __DIR__ . '/includes/media_blob.php';
+require_once __DIR__ . '/includes/subscription_access.php';
+
+$viewer = null;
+if (!empty($_SESSION['user_id'])) {
+    try {
+        $stU = $pdo->prepare('SELECT * FROM users WHERE id = ? LIMIT 1');
+        $stU->execute([(int) $_SESSION['user_id']]);
+        $viewer = $stU->fetch(PDO::FETCH_ASSOC) ?: null;
+    } catch (Throwable $e) {
+        $viewer = null;
+    }
+}
 
 $videosList = [];
 try {
@@ -48,6 +60,10 @@ function tcf_video_duration_label(array $v): string
     return trim($dur);
 }
 
+$subscribeHref = empty($_SESSION['user_id'])
+    ? site_href('login.php?next=' . rawurlencode('abonnement.php'))
+    : site_href('abonnement.php');
+
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -61,7 +77,7 @@ function tcf_video_duration_label(array $v): string
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/theme-vars.css')); ?>">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/header_footer.css')); ?>">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/style_tcf.css')); ?>">
-    <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/tcf-videos.css')); ?>?v=tv-red-1">
+    <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/tcf-videos.css')); ?>?v=premium-lock-2">
     <link rel="stylesheet" href="https://unpkg.com/boxicons@latest/css/boxicons.min.css">
 </head>
 <body class="tcf-videos-simple">
@@ -79,18 +95,33 @@ function tcf_video_duration_label(array $v): string
             $vidId = (int) ($v['id'] ?? 0);
             $thumb = tcf_video_media_href($pdo, $vidId, $v['thumbnail_url'] ?? '', 'thumbnail');
             $durLabel = tcf_video_duration_label($v);
-            $watchHref = tcf_video_watch_href($vidId);
+            $isPremium = strtolower((string) ($v['visibility'] ?? 'public')) === 'premium';
+            $isLocked = tcf_video_is_premium_locked_for_user($v, $viewer);
+            $cardHref = $isLocked ? $subscribeHref : tcf_video_watch_href($vidId);
+            $cardClass = 'tcf-videos-simple__card' . ($isLocked ? ' is-premium-locked' : '') . ($isPremium ? ' is-premium' : '');
             ?>
-            <article class="tcf-videos-simple__card">
-                <a class="tcf-videos-simple__link" href="<?php echo htmlspecialchars($watchHref); ?>">
+            <article class="<?php echo htmlspecialchars($cardClass); ?>">
+                <a class="tcf-videos-simple__link" href="<?php echo htmlspecialchars($cardHref); ?>"<?php echo $isLocked ? ' title="Abonnement requis"' : ''; ?>>
                     <div class="tcf-videos-simple__thumb">
                         <?php if ($thumb !== ''): ?>
                             <img src="<?php echo htmlspecialchars($thumb); ?>" alt="" loading="lazy">
                         <?php endif; ?>
+                        <?php if ($isPremium): ?>
+                            <span class="tcf-videos-simple__ribbon" aria-hidden="true">Premium</span>
+                        <?php endif; ?>
                         <?php if ($durLabel !== ''): ?>
                             <span class="tcf-tv-duration"><?php echo htmlspecialchars($durLabel); ?></span>
                         <?php endif; ?>
-                        <span class="tcf-videos-simple__play"><i class="bx bx-play-circle"></i></span>
+                        <span class="tcf-videos-simple__play" aria-hidden="true">
+                            <span class="tcf-videos-simple__play-wrap">
+                                <i class="bx bx-play-circle"></i>
+                                <?php if ($isLocked): ?>
+                                    <span class="tcf-videos-simple__lock" title="Verrouillé">
+                                        <i class="bx bxs-lock-alt"></i>
+                                    </span>
+                                <?php endif; ?>
+                            </span>
+                        </span>
                     </div>
                     <h2 class="tcf-videos-simple__card-title"><?php echo htmlspecialchars($v['title'] ?? ''); ?></h2>
                 </a>
