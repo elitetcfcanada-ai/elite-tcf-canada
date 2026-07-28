@@ -1,8 +1,8 @@
 (function () {
     'use strict';
 
-    var POLL_INTERVAL_MS = 3500;
-    var POLL_MAX_ATTEMPTS = 90;
+    var POLL_INTERVAL_MS = 1500;
+    var POLL_MAX_ATTEMPTS = 120;
 
     function initPaymentModal() {
         var paymentModal = document.getElementById('payment-modal');
@@ -21,6 +21,8 @@
         var pollTimer = null;
         var pollAttempts = 0;
         var activeReference = null;
+        var pollInFlight = false;
+        var pollStopped = false;
 
         if (!paymentModal) {
             return;
@@ -31,11 +33,22 @@
         }
 
         function clearPoll() {
+            pollStopped = true;
             if (pollTimer) {
-                clearInterval(pollTimer);
+                clearTimeout(pollTimer);
                 pollTimer = null;
             }
             pollAttempts = 0;
+            pollInFlight = false;
+        }
+
+        function scheduleNextPoll(reference) {
+            if (pollStopped || activeReference !== reference) {
+                return;
+            }
+            pollTimer = setTimeout(function () {
+                pollStatus(reference);
+            }, POLL_INTERVAL_MS);
         }
 
         function openPaymentModal(plan) {
@@ -187,7 +200,7 @@
                 } else {
                     window.location.reload();
                 }
-            }, 2000);
+            }, 400);
         }
 
         function handlePaymentFailure(data) {
@@ -197,6 +210,9 @@
         }
 
         function pollStatus(reference) {
+            if (pollStopped || pollInFlight || activeReference !== reference) {
+                return;
+            }
             pollAttempts += 1;
 
             if (pollAttempts > POLL_MAX_ATTEMPTS) {
@@ -206,12 +222,18 @@
                 return;
             }
 
+            pollInFlight = true;
             postJson({
                 action: 'status',
                 reference: reference,
             })
                 .then(function (data) {
+                    pollInFlight = false;
+                    if (pollStopped || activeReference !== reference) {
+                        return;
+                    }
                     if (!data) {
+                        scheduleNextPoll(reference);
                         return;
                     }
 
@@ -228,22 +250,24 @@
                     }
 
                     showStatus('loading', data.message || 'En attente de confirmation sur votre téléphone…');
+                    scheduleNextPoll(reference);
                 })
                 .catch(function (error) {
+                    pollInFlight = false;
                     console.error('Erreur lors du suivi du paiement:', error);
                     if (pollAttempts > 3) {
                         showStatus('loading', 'Vérification du paiement en cours…');
                     }
+                    scheduleNextPoll(reference);
                 });
         }
 
         function startPoll(reference) {
             clearPoll();
+            pollStopped = false;
             activeReference = reference;
+            pollAttempts = 0;
             pollStatus(reference);
-            pollTimer = setInterval(function () {
-                pollStatus(reference);
-            }, POLL_INTERVAL_MS);
         }
 
         function beginStatusTracking(reference, message) {
@@ -277,7 +301,7 @@
             showStatus('loading', data.message || 'Ouverture de la page de paiement Notch Pay…');
             window.setTimeout(function () {
                 window.location.href = data.redirect_url;
-            }, 600);
+            }, 150);
         }
 
         if (paymentForm) {
@@ -396,7 +420,7 @@
             showStatus('success', 'Paiement confirmé ! Votre abonnement est activé.');
             setTimeout(function () {
                 window.location.href = window.location.pathname;
-            }, 2500);
+            }, 500);
             return;
         }
 

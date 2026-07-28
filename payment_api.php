@@ -82,7 +82,34 @@ function tcf_payment_try_finalize(PDO $pdo, int $uid, array $pending, string $ch
     $statusRow = (string) ($pending['status'] ?? 'pending');
 
     if (tcf_payment_is_finalized_status($statusRow)) {
-        return ['success' => true, 'status' => 'complete', 'already' => true];
+        return ['success' => true, 'status' => 'complete', 'already' => true, 'message' => 'Abonnement déjà activé.'];
+    }
+
+    // Si le webhook a déjà activé l'utilisateur, finaliser sans rappeler Notch (plus rapide)
+    try {
+        $stU = $pdo->prepare('SELECT subscription_type, subscription_expires_at, role FROM users WHERE id = ? LIMIT 1');
+        $stU->execute([$uid]);
+        $uRow = $stU->fetch(PDO::FETCH_ASSOC) ?: null;
+        if ($uRow && function_exists('tcf_user_has_premium_access') && tcf_user_has_premium_access($uRow)) {
+            $subType = (string) ($uRow['subscription_type'] ?? '');
+            if ($subType !== '' && $subType !== 'free' && ($planKey === '' || $subType === $planKey || preg_match('/^plan_/', $subType))) {
+                try {
+                    tcf_payment_pending_update_status($pdo, (int) ($pending['id'] ?? 0), 'complete', $channel);
+                } catch (Throwable $e) {
+                }
+                return [
+                    'success' => true,
+                    'status' => 'complete',
+                    'already' => true,
+                    'message' => 'Votre abonnement est activé.',
+                    'subscription_type' => $subType,
+                    'subscription_label' => function_exists('tcf_subscription_label') ? tcf_subscription_label($subType) : $subType,
+                    'subscription_expires_at' => $uRow['subscription_expires_at'] ?? null,
+                    'premium_access' => true,
+                ];
+            }
+        }
+    } catch (Throwable $e) {
     }
 
     $check = tcf_notchpay_get_payment($ref);

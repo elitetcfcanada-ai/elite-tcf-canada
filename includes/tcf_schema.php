@@ -45,16 +45,21 @@ function tcf_schema_is_consolidated(PDO $pdo): bool
 
 function tcf_schema_has_table(PDO $pdo, string $table): bool
 {
+    static $cache = [];
     $table = trim($table);
     if ($table === '' || !preg_match('/^[A-Za-z0-9_]+$/', $table)) {
         return false;
     }
+    if (array_key_exists($table, $cache)) {
+        return $cache[$table];
+    }
     try {
         $st = $pdo->query("SHOW TABLES LIKE '" . str_replace("'", "''", $table) . "'");
-        return (bool) ($st && $st->fetchColumn());
+        $cache[$table] = (bool) ($st && $st->fetchColumn());
     } catch (Throwable $e) {
-        return false;
+        $cache[$table] = false;
     }
+    return $cache[$table];
 }
 
 function tcf_schema_apply_sql_file(PDO $pdo, string $sqlFile): void

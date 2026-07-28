@@ -37,8 +37,9 @@ function tcf_notchpay_request(string $method, string $path, ?array $body = null)
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_CUSTOMREQUEST => strtoupper($method),
         CURLOPT_HTTPHEADER => $headers,
-        CURLOPT_TIMEOUT => 60,
-        CURLOPT_CONNECTTIMEOUT => 30,
+        // Timeouts courts : évite de bloquer l'utilisateur 60–75s sur Hostinger
+        CURLOPT_TIMEOUT => 18,
+        CURLOPT_CONNECTTIMEOUT => 8,
         CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
         CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
         CURLOPT_SSL_VERIFYPEER => true,
@@ -78,8 +79,8 @@ function tcf_notchpay_request(string $method, string $path, ?array $body = null)
         if ($sslRelated) {
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 75);
-            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 40);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 12);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
             $raw = curl_exec($ch);
             $http = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
             $err = curl_error($ch);
