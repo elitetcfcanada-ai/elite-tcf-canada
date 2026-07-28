@@ -40,6 +40,10 @@ if ($video !== null) {
 }
 
 $pageTitle = $video !== null ? (string) ($video['title'] ?? 'Vidéo') : 'Vidéo introuvable';
+if ($video !== null && mb_strlen($pageTitle) > 100) {
+    $pageTitle = mb_substr($pageTitle, 0, 100);
+    $video['title'] = $pageTitle;
+}
 
 $tcfVideoUser = null;
 if (!empty($_SESSION['user_id'])) {
@@ -79,7 +83,7 @@ $canInteract = !empty($tcfVideoUser);
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/theme-vars.css')); ?>">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/header_footer.css')); ?>">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/style_tcf.css')); ?>">
-    <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/tcf-videos.css')); ?>?v=watch-back-scroll-2">
+    <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/tcf-videos.css')); ?>?v=watch-aspect-3">
     <link rel="stylesheet" href="https://unpkg.com/boxicons@latest/css/boxicons.min.css">
 </head>
 <body class="tcf-watch-page tcf-watch-page--minimal">
@@ -96,7 +100,7 @@ $canInteract = !empty($tcfVideoUser);
 </main>
 <?php else: ?>
 <main class="tcf-watch-minimal">
-    <div class="tcf-watch-player-wrap">
+    <div class="tcf-watch-player-wrap is-landscape" data-format="landscape">
         <?php if ($isLocked): ?>
         <div class="tcf-watch-premium-lock">
             <i class="bx bx-lock-alt" aria-hidden="true"></i>
@@ -153,6 +157,6 @@ window.TCF_VIDEOS_API = <?php echo json_encode(site_href('videos_api.php')); ?>;
 window.TCF_LOGIN_HREF = <?php echo json_encode(site_href('login.php')); ?>;
 window.TCF_WATCH_VIDEO_ID = <?php echo (int) $videoId; ?>;
 </script>
-<script src="<?php echo htmlspecialchars(site_href('Assets/javascript/tcf-watch.js')); ?>?v=video-play-3"></script>
+<script src="<?php echo htmlspecialchars(site_href('Assets/javascript/tcf-watch.js')); ?>?v=watch-aspect-3"></script>
 </body>
 </html>

@@ -460,6 +460,10 @@ function addVideo()
             echo json_encode(['success' => false, 'message' => 'Le titre de la vidéo est obligatoire.']);
             exit();
         }
+        if (mb_strlen($title) > 100) {
+            echo json_encode(['success' => false, 'message' => 'Le titre ne doit pas dépasser 100 caractères.']);
+            exit();
+        }
 
         // Gérer l'upload de la miniature
         $thumbnail_url = '';
@@ -565,6 +569,10 @@ function updateVideo()
         }
         if ($id <= 0 || $title === '') {
             echo json_encode(['success' => false, 'message' => 'Vidéo invalide (id/titre).']);
+            exit();
+        }
+        if (mb_strlen($title) > 100) {
+            echo json_encode(['success' => false, 'message' => 'Le titre ne doit pas dépasser 100 caractères.']);
             exit();
         }
 
@@ -2500,7 +2508,7 @@ $notifications_json = json_encode($notifications);
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="../Assets/css/sa-theme.css">
     <script src="../Assets/javascript/sa-theme.js"></script>
-    <link rel="stylesheet" href="../Assets/css/superAdmin.css?v=sa-ui-v7">
+    <link rel="stylesheet" href="../Assets/css/superAdmin.css?v=sa-ui-v9">
     <link rel="stylesheet" href="../Assets/css/tcf-brand-logo.css">
     <link rel="stylesheet" href="../Assets/css/sa_subscription_plans.css?v=usd-fixed-2">
     <link rel="stylesheet" href="../Assets/css/sa-partners.css?v=partners-16x9-contain-5">
@@ -3099,9 +3107,13 @@ $notifications_json = json_encode($notifications);
                 <!-- Formulaire d'ajout/modification de vidéo -->
                 <form id="video-form" enctype="multipart/form-data" style="display: none;">
                     <input type="hidden" id="video-edit-id">
-                    <div class="form-group">
-                        <label class="form-label">Titre de la vidéo</label>
-                        <input type="text" class="form-control" id="video-title" name="title" required>
+                    <div class="form-group sa-video-title-group">
+                        <label class="form-label" for="video-title">Titre de la vidéo</label>
+                        <input type="text" class="form-control" id="video-title" name="title" required autocomplete="off" aria-describedby="video-title-counter">
+                        <div class="sa-video-title-meta">
+                            <span id="video-title-hint" class="sa-video-title-hint">Comme YouTube : maximum 100 caractères</span>
+                            <span id="video-title-counter" class="sa-video-title-counter" aria-live="polite">100</span>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Description <span style="font-weight:400;color:#64748b;">(optionnel)</span></label>
@@ -4220,7 +4232,7 @@ $notifications_json = json_encode($notifications);
         window.TCF_PARTNERS_API = <?php echo json_encode(site_href('partners_api.php')); ?>;
     </script>
     <script src="../Assets/javascript/tcf-tts.js?v=6"></script>
-    <script src="../Assets/javascript/superAdmin.ui.js?v=sa-ui-v7"></script>
+    <script src="../Assets/javascript/superAdmin.ui.js?v=sa-ui-v9"></script>
     <script src="../Assets/javascript/admin-mobile-nav.js?v=sa-ui-v7"></script>
 
     <div class="tcf-ai-assistant" id="tcf-ai-assistant" data-greeting="Bonjour, je suis votre assistant administration. Comment puis-je vous aider sur la plateforme ?">

@@ -20,9 +20,21 @@ function tcf_render_video_player(string $videoUrl, array $opts = []): void
         return;
     }
 
+    // YouTube Shorts → format vertical (type TikTok)
+    if (preg_match('#youtube\.com/shorts/([a-zA-Z0-9_-]{6,})#i', $url, $m)) {
+        $embed = 'https://www.youtube.com/embed/' . $m[1] . '?rel=0';
+        echo '<div class="tcf-video-embed-wrap tcf-video-embed-wrap--portrait" data-format="portrait">';
+        echo '<iframe class="tcf-video-embed' . ($class !== '' ? ' ' . htmlspecialchars($class) : '') . '"';
+        echo ' id="' . htmlspecialchars($id) . '"';
+        echo ' src="' . htmlspecialchars($embed) . '"';
+        echo ' title="Lecteur vidéo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>';
+        echo '</div>';
+        return;
+    }
+
     if (preg_match('#(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/embed/)([a-zA-Z0-9_-]{6,})#', $url, $m)) {
         $embed = 'https://www.youtube.com/embed/' . $m[1] . '?rel=0';
-        echo '<div class="tcf-video-embed-wrap">';
+        echo '<div class="tcf-video-embed-wrap tcf-video-embed-wrap--landscape" data-format="landscape">';
         echo '<iframe class="tcf-video-embed' . ($class !== '' ? ' ' . htmlspecialchars($class) : '') . '"';
         echo ' id="' . htmlspecialchars($id) . '"';
         echo ' src="' . htmlspecialchars($embed) . '"';

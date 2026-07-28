@@ -671,21 +671,67 @@
     background: #fff;
 }
 
+/* Lecteur adaptatif : paysage (YouTube) / vertical (TikTok) / carré */
 .tcf-watch-player-wrap {
     position: relative;
     width: 100%;
     background: #000;
     aspect-ratio: 16 / 9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    max-height: min(80vh, 810px);
+    transition: max-height 0.2s ease, width 0.2s ease, aspect-ratio 0.2s ease;
+}
+
+.tcf-watch-player-wrap.is-landscape {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    max-height: min(80vh, 810px);
+}
+
+.tcf-watch-player-wrap.is-square {
+    width: min(100%, min(80vh, 640px));
+    max-width: 640px;
+    margin-inline: auto;
+    aspect-ratio: 1 / 1;
+    max-height: min(80vh, 640px);
+}
+
+/* Format vertical type TikTok / Shorts (taille fine en JS ; desktop plus compact) */
+.tcf-watch-player-wrap.is-portrait {
+    width: min(100%, 300px);
+    max-width: 300px;
+    margin-inline: auto;
+    aspect-ratio: 9 / 16;
+    max-height: min(52vh, 480px);
+    border-radius: 12px;
+}
+
+@media (max-width: 1024px) and (min-width: 601px) {
+    .tcf-watch-player-wrap.is-portrait,
+    .tcf-video-embed-wrap--portrait {
+        max-width: 320px;
+        max-height: min(58vh, 520px);
+    }
 }
 
 .tcf-watch-player-wrap video,
 .tcf-watch-player-wrap .tcf-html5-video {
     width: 100% !important;
     height: 100% !important;
-    max-width: none !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
     display: block;
     object-fit: contain;
     background: #000;
+}
+
+.tcf-watch-player-wrap.is-portrait video,
+.tcf-watch-player-wrap.is-portrait .tcf-html5-video {
+    object-fit: contain;
+    border-radius: 12px;
 }
 
 .tcf-video-embed-wrap {
@@ -693,6 +739,22 @@
     width: 100%;
     aspect-ratio: 16 / 9;
     background: #000;
+}
+
+.tcf-video-embed-wrap--landscape {
+    aspect-ratio: 16 / 9;
+    max-height: min(80vh, 810px);
+}
+
+.tcf-video-embed-wrap--portrait {
+    width: min(100%, calc(min(52vh, 480px) * 9 / 16));
+    max-width: 300px;
+    margin-inline: auto;
+    aspect-ratio: 9 / 16;
+    height: min(52vh, 480px);
+    max-height: min(52vh, 480px);
+    border-radius: 12px;
+    overflow: hidden;
 }
 
 .tcf-video-embed-wrap iframe,
@@ -1268,14 +1330,39 @@
 
 /* Lecture minimale */
 .tcf-watch-minimal {
-    max-width: 900px;
+    max-width: 1100px;
     margin: 0 auto;
     padding: 0 0 2rem;
+}
+
+.tcf-watch-minimal.is-watch-portrait {
+    max-width: 560px;
 }
 
 .tcf-watch-page--minimal .tcf-watch-player-wrap {
     border-radius: 0;
     background: #000;
+}
+
+.tcf-watch-page--minimal .tcf-watch-player-wrap.is-portrait {
+    margin-top: 0.75rem;
+    border-radius: 12px;
+}
+
+@media (max-width: 600px) {
+    .tcf-watch-player-wrap.is-portrait,
+    .tcf-video-embed-wrap--portrait {
+        max-width: min(100vw - 1.5rem, 320px);
+        height: min(62vh, 560px);
+        max-height: min(62vh, 560px);
+        width: min(100%, calc(min(62vh, 560px) * 9 / 16));
+        border-radius: 10px;
+    }
+
+    .tcf-watch-page--minimal .tcf-watch-player-wrap.is-landscape {
+        border-radius: 0;
+        max-height: min(56vh, 480px);
+    }
 }
 
 .tcf-watch-minimal__head {

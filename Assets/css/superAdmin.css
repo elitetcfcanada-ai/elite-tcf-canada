@@ -1081,6 +1081,45 @@
     box-shadow: 0 0 0 3px rgba(211, 13, 13, 0.2);
 }
 
+.tcf-superadmin-app .sa-video-title-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 0.35rem;
+}
+
+.tcf-superadmin-app .sa-video-title-hint {
+    font-size: 0.78rem;
+    color: var(--sa-muted, #64748b);
+}
+
+.tcf-superadmin-app .sa-video-title-counter {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #64748b;
+    font-variant-numeric: tabular-nums;
+    min-width: 2.2rem;
+    text-align: right;
+}
+
+.tcf-superadmin-app #video-title.is-over-limit,
+.tcf-superadmin-app #video-title.sa-title-over {
+    border-color: #dc2626 !important;
+    background: #fef2f2;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.18);
+}
+
+.tcf-superadmin-app .sa-video-title-counter.is-over,
+.tcf-superadmin-app .sa-video-title-counter.is-warn {
+    color: #dc2626;
+}
+
+.tcf-superadmin-app .sa-video-title-hint.is-over {
+    color: #dc2626;
+    font-weight: 600;
+}
+
 .tcf-superadmin-app .form-buttons {
     display: flex;
     gap: 0.65rem;

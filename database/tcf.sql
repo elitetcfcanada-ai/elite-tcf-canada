@@ -110,10 +110,7 @@ CREATE TABLE IF NOT EXISTS `statistiques` (
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `videos` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `title` VARCHAR(255) NOT NULL,
-  `description` TEXT DEFAULT NULL,
-  `thumbnail_url` VARCHAR(500) DEFAULT NULL,
-  `thumbnail_data` LONGBLOB DEFAULT NULL,
+  `title` VARCHAR(100) NOT NULL,
   `thumbnail_mime` VARCHAR(80) DEFAULT NULL,
   `video_url` VARCHAR(500) DEFAULT NULL,
   `video_data` LONGBLOB DEFAULT NULL,

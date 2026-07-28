@@ -17,6 +17,14 @@ try {
     $videosList = [];
 }
 
+foreach ($videosList as &$tcfVidRow) {
+    $t = (string) ($tcfVidRow['title'] ?? '');
+    if (mb_strlen($t) > 100) {
+        $tcfVidRow['title'] = mb_substr($t, 0, 100);
+    }
+}
+unset($tcfVidRow);
+
 function tcf_video_watch_href(int $videoId): string
 {
     return site_href('watch.php?v=' . max(0, $videoId));

@@ -6378,6 +6378,32 @@
         return resolveUploadHref(v.video_href || v.video_url || '');
     }
 
+    function updateVideoTitleCounter() {
+        var input = document.getElementById('video-title');
+        var counter = document.getElementById('video-title-counter');
+        var hint = document.getElementById('video-title-hint');
+        if (!input) return;
+        var max = 100;
+        var len = String(input.value || '').length;
+        var left = max - len;
+        if (counter) {
+            counter.textContent = String(left);
+            counter.classList.toggle('is-over', left < 0);
+            counter.classList.toggle('is-warn', left >= 0 && left <= 10);
+        }
+        input.classList.toggle('is-over-limit', left < 0);
+        input.classList.toggle('sa-title-over', left < 0);
+        if (hint) {
+            if (left < 0) {
+                hint.textContent = 'Trop long : retirez ' + Math.abs(left) + ' caractère' + (Math.abs(left) > 1 ? 's' : '');
+                hint.classList.add('is-over');
+            } else {
+                hint.textContent = 'Comme YouTube : maximum 100 caractères';
+                hint.classList.remove('is-over');
+            }
+        }
+    }
+
     function resetVideoForm() {
         var form = document.getElementById('video-form');
         if (!form) return;
@@ -6405,6 +6431,7 @@
         if (subBtn) subBtn.textContent = 'Enregistrer';
         var plBox = document.getElementById('video-playlist-checkboxes');
         if (plBox) renderVideoPlaylistCheckboxes([]);
+        updateVideoTitleCounter();
     }
 
     function openVideoEditById(id) {
@@ -6438,7 +6465,8 @@
         if (!form) return;
         form.style.display = 'block';
         document.getElementById('video-edit-id').value = String(v.id || '');
-        document.getElementById('video-title').value = v.title || '';
+        document.getElementById('video-title').value = String(v.title || '');
+        updateVideoTitleCounter();
         document.getElementById('video-description').value = v.description || '';
         document.getElementById('video-visibility').value = normalizeVis(v.visibility || 'public');
 
@@ -6534,6 +6562,13 @@
     function initVideoForm() {
         var form = document.getElementById('video-form');
         if (!form) return;
+        var titleInput = document.getElementById('video-title');
+        if (titleInput) {
+            titleInput.addEventListener('input', updateVideoTitleCounter);
+            titleInput.addEventListener('keyup', updateVideoTitleCounter);
+            titleInput.addEventListener('change', updateVideoTitleCounter);
+            updateVideoTitleCounter();
+        }
         var thInput = document.getElementById('thumbnail-file');
         var vidInput = document.getElementById('video-file');
         var thLabel = document.getElementById('thumbnail-label');
@@ -6580,6 +6615,17 @@
 
         form.addEventListener('submit', function (e) {
             e.preventDefault();
+            var titleInput = document.getElementById('video-title');
+            var titleVal = titleInput ? String(titleInput.value || '').trim() : '';
+            if (!titleVal) {
+                toast('Le titre de la vidéo est obligatoire.', true);
+                return;
+            }
+            if (titleVal.length > 100) {
+                toast('Le titre ne doit pas dépasser 100 caractères.', true);
+                if (titleInput) titleInput.focus();
+                return;
+            }
             var submitBtn = document.getElementById('video-form-submit');
             if (submitBtn) {
                 submitBtn.disabled = true;

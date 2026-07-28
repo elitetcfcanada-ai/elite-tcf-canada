@@ -58,6 +58,25 @@ body.tcf-posts-page {
     word-break: break-word;
 }
 
+.tcp-card__see-more {
+    display: inline;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    color: #65676b;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.tcp-card__see-more:hover,
+.tcp-card__see-more:focus-visible {
+    text-decoration: underline;
+    color: #1f2937;
+}
+
 .tcp-card__media-wrap + .tcp-card__body {
     padding-top: 0.85rem;
 }

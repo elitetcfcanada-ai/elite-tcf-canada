@@ -34,13 +34,45 @@
         }
     }
 
+    function clipText(text, maxChars) {
+        var raw = String(text || '');
+        var limit = maxChars || 160;
+        if (raw.length <= limit) {
+            return { short: raw, full: raw, clipped: false };
+        }
+        // Couper sur un espace proche pour un rendu type Facebook
+        var cut = raw.slice(0, limit);
+        var sp = cut.lastIndexOf(' ');
+        if (sp > Math.floor(limit * 0.55)) {
+            cut = cut.slice(0, sp);
+        }
+        return { short: cut.replace(/\s+$/, ''), full: raw, clipped: true };
+    }
+
     function renderPost(p) {
         var liked = !!p.liked_by_me;
         var imgSrc = p.image_href || p.image_url || '';
         var img = imgSrc
             ? '<div class="tcp-card__media-wrap"><img class="tcp-card__media" src="' + esc(imgSrc) + '" alt="" loading="lazy"></div>'
             : '';
-        var body = p.body ? '<div class="tcp-card__body">' + esc(p.body) + '</div>' : '';
+        var bodyHtml = '';
+        if (p.body) {
+            var clipped = clipText(p.body, 160);
+            if (clipped.clipped) {
+                bodyHtml =
+                    '<div class="tcp-card__body" data-expanded="0">' +
+                    '<span class="tcp-card__body-short">' +
+                    esc(clipped.short) +
+                    '…</span>' +
+                    '<span class="tcp-card__body-full" hidden>' +
+                    esc(clipped.full) +
+                    '</span> ' +
+                    '<button type="button" class="tcp-card__see-more" aria-expanded="false">Voir plus</button>' +
+                    '</div>';
+            } else {
+                bodyHtml = '<div class="tcp-card__body"><span class="tcp-card__body-full">' + esc(clipped.full) + '</span></div>';
+            }
+        }
         var link = (p.link_url || '').trim();
         var linkHtml = link
             ? '<a class="tcp-card__link" href="' +
@@ -56,7 +88,7 @@
             esc(p.id) +
             '">' +
             img +
-            body +
+            bodyHtml +
             linkHtml +
             '<div class="tcp-card__actions">' +
             '<button type="button" class="tcp-like-btn' +
@@ -105,6 +137,31 @@
     }
 
     root.addEventListener('click', function (e) {
+        var seeMore = e.target.closest('.tcp-card__see-more');
+        if (seeMore) {
+            e.preventDefault();
+            var bodyEl = seeMore.closest('.tcp-card__body');
+            if (!bodyEl) return;
+            var shortEl = bodyEl.querySelector('.tcp-card__body-short');
+            var fullEl = bodyEl.querySelector('.tcp-card__body-full');
+            if (!shortEl || !fullEl) return;
+            var expanded = bodyEl.getAttribute('data-expanded') === '1';
+            if (expanded) {
+                shortEl.hidden = false;
+                fullEl.hidden = true;
+                seeMore.textContent = 'Voir plus';
+                seeMore.setAttribute('aria-expanded', 'false');
+                bodyEl.setAttribute('data-expanded', '0');
+            } else {
+                shortEl.hidden = true;
+                fullEl.hidden = false;
+                seeMore.textContent = 'Voir moins';
+                seeMore.setAttribute('aria-expanded', 'true');
+                bodyEl.setAttribute('data-expanded', '1');
+            }
+            return;
+        }
+
         var btn = e.target.closest('[data-like]');
         if (!btn) return;
         if (!logged) {
