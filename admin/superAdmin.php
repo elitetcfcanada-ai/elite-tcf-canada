@@ -10,6 +10,7 @@ require_once __DIR__ . '/../includes/tcf_notifications_helper.php';
 require_once __DIR__ . '/../includes/community_posts_helper.php';
 require_once __DIR__ . '/../includes/tcf_legacy_tables.php';
 require_once __DIR__ . '/../includes/media_blob.php';
+require_once __DIR__ . '/../includes/video_optimize.php';
 require_once __DIR__ . '/../includes/video_social.php';
 require_once __DIR__ . '/../includes/tcf_schema.php';
 require_once __DIR__ . '/../includes/partners_helper.php';
@@ -501,6 +502,11 @@ function addVideo()
             echo json_encode(['success' => false, 'message' => 'Erreur lors de l\'upload de la vidéo. Vérifiez le format (MP4, WebM, MOV, AVI, MKV…) et les droits du dossier uploads/videos.']);
             exit();
         }
+        // Compression légère H.264 / faststart si ffmpeg disponible (qualité préservée)
+        $optimized = tcf_video_optimize_uploaded_file($video_url);
+        if (is_string($optimized) && $optimized !== '') {
+            $video_url = $optimized;
+        }
         $duration = tcf_probe_video_duration_for_db(tcf_uploads_fs_path($video_url));
 
         $stmt = $pdo->prepare("INSERT INTO videos (title, description, thumbnail_url, video_url, visibility, duration) VALUES (?, ?, ?, ?, ?, ?)");
@@ -611,6 +617,10 @@ function updateVideo()
             if (!$video_url) {
                 echo json_encode(['success' => false, 'message' => 'Erreur lors de l\'upload de la vidéo. Vérifiez le format et le dossier uploads/videos.']);
                 exit();
+            }
+            $optimized = tcf_video_optimize_uploaded_file($video_url);
+            if (is_string($optimized) && $optimized !== '') {
+                $video_url = $optimized;
             }
             $duration = tcf_probe_video_duration_for_db(tcf_uploads_fs_path($video_url));
         }

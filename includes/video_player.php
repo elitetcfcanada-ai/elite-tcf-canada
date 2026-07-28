@@ -72,22 +72,18 @@ function tcf_render_video_player(string $videoUrl, array $opts = []): void
     if ($controls) {
         echo ' controls';
     }
-    // src direct + source : meilleure compat desktop (Chrome) / mobile
+    // src unique (pas de double source) — évite certains erreurs Chrome
     echo ' playsinline webkit-playsinline preload="metadata" controlslist="nodownload"';
     echo ' src="' . htmlspecialchars($url) . '"';
     if ($poster !== '') {
         echo ' poster="' . htmlspecialchars($poster) . '"';
     }
     echo '>';
-    echo '<source src="' . htmlspecialchars($url) . '"';
-    if ($mime !== '') {
-        echo ' type="' . htmlspecialchars($mime) . '"';
+    // Ne pas forcer type= pour media_serve.php (extension absente) — laisse le navigateur suivre Content-Type
+    if ($mime !== '' && strpos($url, 'media_serve.php') === false) {
+        echo '<source src="' . htmlspecialchars($url) . '" type="' . htmlspecialchars($mime) . '">';
     }
-    echo '>';
     echo 'Votre navigateur ne supporte pas la lecture vidéo.';
     echo '</video>';
-    echo '<div class="tcf-video-error-msg" id="' . htmlspecialchars($id) . '-error" hidden role="alert">';
-    echo '<i class="bx bx-error-circle"></i>';
-    echo '<p>Impossible de lire cette vidéo. Vérifiez que le fichier est bien sur le serveur (dossier uploads/videos) et de préférence en MP4 (H.264).</p>';
-    echo '</div>';
+    // Pas de message d'erreur technique affiché à l'utilisateur
 }

@@ -228,24 +228,14 @@
     }
 
     if (player && videoId > 0 && player.tagName === 'VIDEO') {
-        var watchErrShown = false;
-        function showWatchPlayerError() {
-            if (watchErrShown) return;
-            var mediaErr = player.error;
-            // 1 = MEDIA_ERR_ABORTED (ignorer)
-            if (mediaErr && mediaErr.code === 1) return;
-            watchErrShown = true;
-            player.style.display = 'none';
-            var err = document.getElementById('tcf-watch-player-error')
-                || document.getElementById(player.id + '-error');
-            if (err) err.hidden = false;
-        }
-        player.addEventListener('error', showWatchPlayerError);
-        // Si <source> échoue, l’événement peut être sur le source ; remonter aussi
-        var srcEl = player.querySelector('source');
-        if (srcEl) {
-            srcEl.addEventListener('error', showWatchPlayerError);
-        }
+        // Ne plus afficher de message d'erreur technique à l'utilisateur.
+        // On journalise seulement pour le debug navigateur.
+        player.addEventListener('error', function () {
+            try {
+                var code = player.error && player.error.code ? player.error.code : '?';
+                console.warn('[TCF watch] lecture vidéo impossible (code ' + code + ')');
+            } catch (e) {}
+        });
         player.addEventListener('loadedmetadata', syncPlayerAspect);
         player.addEventListener('loadeddata', syncPlayerAspect);
         if (player.readyState >= 1) {
