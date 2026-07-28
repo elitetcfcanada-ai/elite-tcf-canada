@@ -77,19 +77,25 @@ $subscribeHref = empty($_SESSION['user_id'])
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/theme-vars.css')); ?>">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/header_footer.css')); ?>">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/style_tcf.css')); ?>">
-    <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/tcf-videos.css')); ?>?v=premium-lock-2">
+    <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/tcf-videos.css')); ?>?v=video-filters-1">
     <link rel="stylesheet" href="https://unpkg.com/boxicons@latest/css/boxicons.min.css">
 </head>
 <body class="tcf-videos-simple">
 <?php include __DIR__ . '/includes/header.php'; ?>
 
 <main class="tcf-videos-simple__main">
-    <h1 class="tcf-videos-simple__title">Vidéos</h1>
+    <div class="tcf-videos-simple__toolbar">
+        <h1 class="tcf-videos-simple__title">Vidéos</h1>
+        <div class="tcf-videos-simple__filters" role="tablist" aria-label="Filtrer les vidéos">
+            <button type="button" class="tcf-videos-simple__filter is-active" data-filter="gratuit" role="tab" aria-selected="true">Gratuit</button>
+            <button type="button" class="tcf-videos-simple__filter" data-filter="premium" role="tab" aria-selected="false">Premium</button>
+        </div>
+    </div>
 
     <?php if (count($videosList) === 0): ?>
         <p class="tcf-videos-simple__empty">Aucune vidéo publique pour le moment.</p>
     <?php else: ?>
-        <div class="tcf-videos-simple__grid">
+        <div class="tcf-videos-simple__grid" id="tcfVideosGrid">
             <?php foreach ($videosList as $v): ?>
             <?php
             $vidId = (int) ($v['id'] ?? 0);
@@ -98,9 +104,10 @@ $subscribeHref = empty($_SESSION['user_id'])
             $isPremium = strtolower((string) ($v['visibility'] ?? 'public')) === 'premium';
             $isLocked = tcf_video_is_premium_locked_for_user($v, $viewer);
             $cardHref = $isLocked ? $subscribeHref : tcf_video_watch_href($vidId);
+            $filterKey = $isPremium ? 'premium' : 'gratuit';
             $cardClass = 'tcf-videos-simple__card' . ($isLocked ? ' is-premium-locked' : '') . ($isPremium ? ' is-premium' : '');
             ?>
-            <article class="<?php echo htmlspecialchars($cardClass); ?>">
+            <article class="<?php echo htmlspecialchars($cardClass); ?>" data-visibility="<?php echo htmlspecialchars($filterKey); ?>">
                 <a class="tcf-videos-simple__link" href="<?php echo htmlspecialchars($cardHref); ?>"<?php echo $isLocked ? ' title="Abonnement requis"' : ''; ?>>
                     <div class="tcf-videos-simple__thumb">
                         <?php if ($thumb !== ''): ?>
@@ -128,11 +135,43 @@ $subscribeHref = empty($_SESSION['user_id'])
             </article>
             <?php endforeach; ?>
         </div>
+        <p class="tcf-videos-simple__empty tcf-videos-simple__filter-empty" id="tcfVideosFilterEmpty" hidden>Aucune vidéo dans cette catégorie.</p>
     <?php endif; ?>
 </main>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>
 <?php include __DIR__ . '/includes/cookie_banner.php'; ?>
 <script src="<?php echo htmlspecialchars(site_href('Assets/javascript/script_tcf.js')); ?>"></script>
+<script>
+(function () {
+    var filters = document.querySelectorAll('.tcf-videos-simple__filter');
+    var cards = document.querySelectorAll('#tcfVideosGrid .tcf-videos-simple__card');
+    var emptyEl = document.getElementById('tcfVideosFilterEmpty');
+    if (!filters.length || !cards.length) return;
+
+    function applyFilter(key) {
+        var visible = 0;
+        cards.forEach(function (card) {
+            var match = card.getAttribute('data-visibility') === key;
+            card.hidden = !match;
+            if (match) visible += 1;
+        });
+        filters.forEach(function (btn) {
+            var on = btn.getAttribute('data-filter') === key;
+            btn.classList.toggle('is-active', on);
+            btn.setAttribute('aria-selected', on ? 'true' : 'false');
+        });
+        if (emptyEl) emptyEl.hidden = visible > 0;
+    }
+
+    filters.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            applyFilter(btn.getAttribute('data-filter') || 'gratuit');
+        });
+    });
+
+    applyFilter('gratuit');
+})();
+</script>
 </body>
 </html>
