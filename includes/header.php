@@ -267,12 +267,17 @@ header.header .logo h1 {
     letter-spacing: 0.5px;
     flex-shrink: 0;
     font-size: clamp(0.95rem, 1.35vw, 1.55rem);
+    font-weight: 800 !important;
+    color: #0f0f0f;
 }
 header.header .logo h1 .tcf-brand-logo {
     margin-right: 0 !important;
 }
 header.header .logo h1 img.tcf-brand-logo { flex-shrink: 0; }
-header.header .logo h1 span { color: var(--main-color, #d30d0d); }
+header.header .logo h1 span {
+    color: var(--main-color, #d30d0d);
+    font-weight: 800 !important;
+}
 header.header nav {
     flex: 1 1 auto;
     min-width: 0;

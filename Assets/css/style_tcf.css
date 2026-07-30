@@ -204,6 +204,7 @@ h1.hero-skill-title::before {
     justify-content: center;
     align-items: center;
     gap: 5px;
+    font-weight: 800;
  }
 
  .logo h1 i{
@@ -213,6 +214,7 @@ h1.hero-skill-title::before {
 
 .header .logo span {
     color: var(--main-color);
+    font-weight: 800;
 }
 
 nav {

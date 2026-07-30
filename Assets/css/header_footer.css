@@ -393,6 +393,7 @@ section h1 span{
     justify-content: flex-start;
     align-items: center;
     gap: 5px;
+    font-weight: 800;
  }
 
  .logo h1 .tcf-brand-logo{
@@ -401,6 +402,7 @@ section h1 span{
 
 .header .logo span {
     color: var(--main-color);
+    font-weight: 800;
 }
 
 nav {

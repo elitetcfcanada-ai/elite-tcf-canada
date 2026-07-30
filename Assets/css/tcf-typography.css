@@ -12,9 +12,14 @@ body {
     line-height: 1.55 !important;
 }
 
-/* Barre du haut — proportions équilibrées */
+/* Barre du haut — proportions équilibrées + nom plateforme toujours en gras */
 header.header .logo h1 {
     font-size: clamp(1.15rem, 1.4vw, 1.5rem) !important;
+    font-weight: 800 !important;
+}
+
+header.header .logo h1 span {
+    font-weight: 800 !important;
 }
 
 nav .navbar .navLinks li,

@@ -100,6 +100,11 @@ body {
 /* Safety: keep site brand readable in global navbar */
 .header .logo h1 {
     color: #141622 !important;
+    font-weight: 800 !important;
+}
+
+.header .logo h1 span {
+    font-weight: 800 !important;
 }
 
 .container {
