@@ -321,7 +321,7 @@ $tcf_show_register = ($tcf_flash_form === 'register');
                     <span class="error-message" aria-live="polite"></span>
                 </div>
                 <div class="forgot-link">
-                    <a href="<?php echo htmlspecialchars(site_href('resetPassword.php')); ?>">Mot de passe oublié ?</a>
+                    <!-- <a href="<?php echo htmlspecialchars(site_href('resetPassword.php')); ?>">Mot de passe oublié ?</a> -->
                 </div>
                 <button type="submit" class="btn">Connexion</button>
             </form>
