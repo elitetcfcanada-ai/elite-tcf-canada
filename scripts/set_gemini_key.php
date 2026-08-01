@@ -32,7 +32,8 @@ if ($apiKey === '') {
     $apiKey = trim((string) ($_POST['api_key'] ?? ''));
 }
 
-if ($apiKey === '' || !preg_match('/^AIza[0-9A-Za-z_\-]{20,}$/', $apiKey)) {
+// Formats Google : AIza… (classique) ou AQ.… (clés récentes)
+if ($apiKey === '' || strlen($apiKey) < 20 || strlen($apiKey) > 200 || preg_match('/\s/', $apiKey)) {
     http_response_code(422);
     echo json_encode(['ok' => false, 'message' => 'Clé Gemini invalide (format).']);
     exit;
