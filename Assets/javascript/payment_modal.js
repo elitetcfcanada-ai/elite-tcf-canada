@@ -216,9 +216,29 @@
             pollAttempts += 1;
 
             if (pollAttempts > POLL_MAX_ATTEMPTS) {
-                handlePaymentFailure({
-                    message: 'Délai dépassé. Si vous avez confirmé sur votre téléphone, rechargez la page. Sinon, réessayez.',
-                });
+                // Dernière chance : sync Notch (paiement peut avoir été validé hors navigateur)
+                pollInFlight = true;
+                postJson({ action: 'sync', reference: reference })
+                    .then(function (data) {
+                        pollInFlight = false;
+                        if (data && (data.activated || (data.success && String(data.status || '').toLowerCase() === 'complete'))) {
+                            handlePaymentComplete(data);
+                            return;
+                        }
+                        showStatus(
+                            'loading',
+                            'Délai dépassé côté page, mais si vous avez validé sur votre téléphone le paiement peut encore être confirmé. Rechargez la page Abonnement dans quelques secondes.'
+                        );
+                        setSubmitButtonLoading(false);
+                    })
+                    .catch(function () {
+                        pollInFlight = false;
+                        showStatus(
+                            'loading',
+                            'Si vous avez validé sur votre téléphone, rechargez la page Abonnement : la vérification Notch se relancera automatiquement.'
+                        );
+                        setSubmitButtonLoading(false);
+                    });
                 return;
             }
 
@@ -238,7 +258,7 @@
                     }
 
                     var st = String(data.status || '').toLowerCase();
-                    if (data.success && (st === 'complete' || st === 'completed' || st === 'paid' || st === 'success' || st === 'successful')) {
+                    if (data.success && (st === 'complete' || st === 'completed' || st === 'paid' || st === 'success' || st === 'successful' || st === 'approved' || st === 'confirmed')) {
                         handlePaymentComplete(data);
                         return;
                     }
@@ -439,7 +459,25 @@
             }
             setSubmitButtonLoading(true);
             beginStatusTracking(returnRef, 'Vérification du paiement après retour Notch Pay…');
+            return;
         }
+
+        // Retour sans query string mais ref en sessionStorage (Collect Notch)
+        try {
+            var storedRef = sessionStorage.getItem('tcf_payment_ref');
+            if (storedRef) {
+                sessionStorage.removeItem('tcf_payment_ref');
+                postJson({ action: 'sync', reference: storedRef }).then(function (data) {
+                    if (data && (data.activated || (data.success && String(data.status || '') === 'complete'))) {
+                        paymentModal.hidden = false;
+                        paymentModal.style.display = 'flex';
+                        document.body.style.overflow = 'hidden';
+                        if (paymentForm) paymentForm.style.display = 'none';
+                        handlePaymentComplete(data);
+                    }
+                }).catch(function () {});
+            }
+        } catch (e) {}
     }
 
     if (document.readyState === 'loading') {

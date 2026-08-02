@@ -10,6 +10,7 @@ require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/payment_config.php';
 require_once __DIR__ . '/includes/notchpay_client.php';
 require_once __DIR__ . '/includes/subscription_activate.php';
+require_once __DIR__ . '/includes/payment_reconcile.php';
 
 $ref = isset($_GET['reference']) ? trim((string) $_GET['reference']) : '';
 if ($ref === '' && isset($_GET['trxref'])) {
@@ -25,51 +26,37 @@ if ($ref !== '') {
     if ($pending) {
         $uid = (int) ($pending['user_id'] ?? 0);
 
-        // Restaurer la session si perdue après redirection Notch Pay
         if ($uid > 0 && (empty($_SESSION['user_id']) || (int) $_SESSION['user_id'] !== $uid)) {
             try {
                 $uSt = $pdo->prepare('SELECT id, name, email, role FROM users WHERE id = ? LIMIT 1');
                 $uSt->execute([$uid]);
                 $user = $uSt->fetch(PDO::FETCH_ASSOC);
-                if ($user) {
+                if ($user && ($user['role'] ?? '') === 'user') {
                     $_SESSION['user_id'] = (int) $user['id'];
                     $_SESSION['username'] = (string) ($user['name'] ?? '');
                     $_SESSION['email'] = (string) ($user['email'] ?? '');
-                    $_SESSION['role'] = (string) ($user['role'] ?? 'user');
-                    $_SESSION['is_admin'] = in_array($user['role'] ?? '', ['admin', 'super_admin'], true);
+                    $_SESSION['role'] = 'user';
+                    $_SESSION['is_admin'] = false;
                 }
             } catch (Throwable $e) {
             }
         }
 
-        if (tcf_payment_is_finalized_status($pending['status'] ?? '')) {
+        $channel = (string) ($pending['channel'] ?? 'notchpay');
+        $result = tcf_payment_try_finalize($pdo, $uid, $pending, $channel);
+        if (!empty($result['success']) && tcf_payment_is_finalized_status($result['status'] ?? '')) {
             $target .= (strpos($target, '?') !== false ? '&' : '?') . 'payment_success=1';
             header('Location: ' . $target);
             exit;
         }
 
-        $check = tcf_notchpay_get_payment($ref);
-        if ($check['ok'] && is_array($check['data'])) {
-            $payStatus = tcf_notchpay_payment_status_from_response($check['data']);
-            if (tcf_notchpay_is_success_status($payStatus)) {
-                $planKey = (string) ($pending['plan_key'] ?? '');
-                $channel = (string) ($pending['channel'] ?? 'notchpay');
-                $plan = tcf_subscription_plan_by_key($planKey, false);
-                $amountUsd = isset($plan['price']) ? (float) $plan['price'] : tcf_subscription_display_usd_amount();
-                // Prix catalogue abonnements peut être stocké en XAF : normaliser l’historique en USD affiché
-                if ($plan && strtoupper((string) ($plan['currency'] ?? '')) === 'XAF' && $amountUsd >= 100) {
-                    $amountUsd = round($amountUsd / 600, 2);
-                }
-                $result = tcf_subscription_activate_user($pdo, $uid, $planKey, $channel, $amountUsd, 'USD', $ref);
-                if (!empty($result['success'])) {
-                    try {
-                        tcf_payment_pending_update_status($pdo, (int) $pending['id'], 'complete');
-                    } catch (Throwable $e) {
-                    }
-                    $target .= (strpos($target, '?') !== false ? '&' : '?') . 'payment_success=1';
-                    header('Location: ' . $target);
-                    exit;
-                }
+        // Dernière chance : toutes les transactions du user
+        if ($uid > 0) {
+            $sync = tcf_payment_reconcile_user($pdo, $uid);
+            if (!empty($sync['activated'])) {
+                $target .= (strpos($target, '?') !== false ? '&' : '?') . 'payment_success=1';
+                header('Location: ' . $target);
+                exit;
             }
         }
     }

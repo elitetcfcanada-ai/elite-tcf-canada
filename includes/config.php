@@ -314,6 +314,12 @@ if (!empty($_SESSION['user_id']) && ($_SERVER['REQUEST_METHOD'] ?? '') === 'GET'
         }
     }
     tcf_maybe_log_daily_activity($pdo, (int) $_SESSION['user_id']);
+    // Rattrapage paiement Notch (USSD validé hors navigateur / webhook manqué)
+    try {
+        require_once __DIR__ . '/payment_reconcile.php';
+        tcf_payment_reconcile_session_user($pdo);
+    } catch (Throwable $e) {
+    }
 }
 
 require_once __DIR__ . '/profile_handlers.php';

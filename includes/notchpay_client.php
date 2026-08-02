@@ -194,17 +194,33 @@ function tcf_notchpay_get_payment(string $paymentReference): array
  */
 function tcf_notchpay_payment_status_from_response(array $payload): string
 {
-    $status = '';
+    $candidates = [];
     if (isset($payload['transaction']) && is_array($payload['transaction'])) {
-        $status = (string) ($payload['transaction']['status'] ?? '');
+        $candidates[] = (string) ($payload['transaction']['status'] ?? '');
     }
-    if ($status === '' && isset($payload['payment']) && is_array($payload['payment'])) {
-        $status = (string) ($payload['payment']['status'] ?? '');
+    if (isset($payload['payment']) && is_array($payload['payment'])) {
+        $candidates[] = (string) ($payload['payment']['status'] ?? '');
     }
-    if ($status === '' && isset($payload['status'])) {
-        $status = (string) $payload['status'];
+    if (isset($payload['data']) && is_array($payload['data'])) {
+        $candidates[] = (string) ($payload['data']['status'] ?? '');
+        if (isset($payload['data']['transaction']) && is_array($payload['data']['transaction'])) {
+            $candidates[] = (string) ($payload['data']['transaction']['status'] ?? '');
+        }
+        if (isset($payload['data']['payment']) && is_array($payload['data']['payment'])) {
+            $candidates[] = (string) ($payload['data']['payment']['status'] ?? '');
+        }
     }
-    return strtolower(trim($status));
+    if (isset($payload['status'])) {
+        $candidates[] = (string) $payload['status'];
+    }
+    foreach ($candidates as $status) {
+        $status = strtolower(trim($status));
+        if ($status !== '') {
+            return $status;
+        }
+    }
+
+    return '';
 }
 
 function tcf_notchpay_extract_reference(array $payload): string
@@ -235,7 +251,17 @@ function tcf_notchpay_extract_authorization_url(array $payload): string
 /** @return list<string> */
 function tcf_notchpay_success_statuses(): array
 {
-    return ['complete', 'completed', 'success', 'successful', 'paid'];
+    return [
+        'complete',
+        'completed',
+        'success',
+        'successful',
+        'paid',
+        'approved',
+        'captured',
+        'settled',
+        'confirmed',
+    ];
 }
 
 /** @return list<string> */

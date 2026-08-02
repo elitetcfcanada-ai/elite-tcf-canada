@@ -3,18 +3,15 @@
 declare(strict_types=1);
 
 /**
- * Webhook Notch Pay — activation abonnement côté serveur (prod + local si tunnel).
- * À enregistrer dans le dashboard Notch Pay : https://votredomaine/payment_webhook.php
- *
- * Sécurité :
- * - Si NOTCHPAY_WEBHOOK_HASH / $tcf_notchpay_webhook_hash est défini : vérifie X-Notch-Signature
- * - Dans tous les cas : re-vérifie le statut via l'API Notch avant d'activer
+ * Webhook Notch Pay — activation abonnement côté serveur.
+ * Re-vérifie toujours via l’API Notch avant d’activer.
  */
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/payment_config.php';
 require_once __DIR__ . '/includes/notchpay_client.php';
 require_once __DIR__ . '/includes/subscription_activate.php';
 require_once __DIR__ . '/includes/subscription_plans_data.php';
+require_once __DIR__ . '/includes/payment_reconcile.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -69,66 +66,29 @@ if (!$pending) {
     exit;
 }
 
-if (tcf_payment_is_finalized_status($pending['status'] ?? '')) {
-    http_response_code(200);
-    echo json_encode(['ok' => true, 'already' => true]);
-    exit;
-}
-
-// Re-vérification API (ne jamais faire confiance uniquement au webhook)
-$check = tcf_notchpay_get_payment($ref);
-if (!$check['ok'] || !is_array($check['data'])) {
-    http_response_code(200);
-    echo json_encode(['ok' => false, 'message' => $check['error'] ?? 'verify_failed']);
-    exit;
-}
-
-$payStatus = tcf_notchpay_payment_status_from_response($check['data']);
-$isCompleteEvent = str_contains($eventType, 'complete') || str_contains($eventType, 'success');
-
-if (tcf_notchpay_is_failure_status($payStatus)) {
-    try {
-        tcf_payment_pending_update_status($pdo, (int) $pending['id'], $payStatus !== '' ? $payStatus : 'failed');
-    } catch (Throwable $e) {
-    }
-    http_response_code(200);
-    echo json_encode(['ok' => true, 'status' => $payStatus]);
-    exit;
-}
-
-if (!tcf_notchpay_is_success_status($payStatus) && !$isCompleteEvent) {
-    http_response_code(200);
-    echo json_encode(['ok' => true, 'status' => $payStatus !== '' ? $payStatus : 'pending']);
-    exit;
-}
-
-if (!tcf_notchpay_is_success_status($payStatus)) {
-    // Event dit complete mais API pas encore à jour : on laisse le polling/callback finir
-    http_response_code(200);
-    echo json_encode(['ok' => true, 'status' => 'pending_sync']);
-    exit;
-}
-
 $uid = (int) ($pending['user_id'] ?? 0);
-$planKey = (string) ($pending['plan_key'] ?? '');
 $channel = (string) ($pending['channel'] ?? 'notchpay');
-$plan = tcf_subscription_plan_by_key($planKey, false);
-$amountUsd = isset($plan['price']) ? (float) $plan['price'] : tcf_subscription_display_usd_amount();
-if ($plan && strtoupper((string) ($plan['currency'] ?? '')) === 'XAF' && $amountUsd >= 100) {
-    $amountUsd = round($amountUsd / 600, 2);
-}
-$result = tcf_subscription_activate_user($pdo, $uid, $planKey, $channel, $amountUsd, 'USD', $ref);
 
-if (!empty($result['success'])) {
-    try {
-        tcf_payment_pending_update_status($pdo, (int) $pending['id'], 'complete');
-    } catch (Throwable $e) {
+// Même si déjà « complete » en base : forcer finalize si l’utilisateur n’a pas le premium
+$result = tcf_payment_try_finalize($pdo, $uid, $pending, $channel);
+
+// Event complete même si API un peu en retard : 2e tentative via reconcile
+$isCompleteEvent = str_contains($eventType, 'complete') || str_contains($eventType, 'success');
+if (empty($result['premium_access']) && $isCompleteEvent && $uid > 0) {
+    $sync = tcf_payment_reconcile_user($pdo, $uid);
+    if (!empty($sync['activated'])) {
+        $result = [
+            'success' => true,
+            'status' => 'complete',
+            'message' => $sync['message'] ?? 'Abonnement activé.',
+            'premium_access' => true,
+        ];
     }
 }
 
 http_response_code(200);
 echo json_encode([
-    'ok' => !empty($result['success']),
-    'status' => 'complete',
+    'ok' => !empty($result['success']) && tcf_payment_is_finalized_status($result['status'] ?? ''),
+    'status' => $result['status'] ?? 'pending',
     'message' => $result['message'] ?? null,
 ]);

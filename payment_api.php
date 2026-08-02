@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 /**
  * API paiement abonnement via Notch Pay (Mobile Money).
- * Actions JSON : init, process, status
+ * Actions JSON : init, process, status, sync
  */
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/subscription_plans_data.php';
@@ -12,6 +12,7 @@ require_once __DIR__ . '/includes/platform_settings.php';
 require_once __DIR__ . '/includes/payment_config.php';
 require_once __DIR__ . '/includes/notchpay_client.php';
 require_once __DIR__ . '/includes/subscription_activate.php';
+require_once __DIR__ . '/includes/payment_reconcile.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -75,101 +76,41 @@ function tcf_payment_pending_by_ref(PDO $pdo, string $ref, int $uid): ?array
     return tcf_payment_pending_find_by_ref($pdo, $ref, $uid);
 }
 
-function tcf_payment_try_finalize(PDO $pdo, int $uid, array $pending, string $channel): array
-{
-    $ref = (string) ($pending['notch_reference'] ?? '');
-    $planKey = (string) ($pending['plan_key'] ?? '');
-    $statusRow = (string) ($pending['status'] ?? 'pending');
-
-    if (tcf_payment_is_finalized_status($statusRow)) {
-        // Ne pas mentir : si le pending est « complete » mais l’utilisateur n’est pas premium, réactiver.
-        try {
-            $stU = $pdo->prepare('SELECT subscription_type, subscription_expires_at, role, created_at FROM users WHERE id = ? LIMIT 1');
-            $stU->execute([$uid]);
-            $uRow = $stU->fetch(PDO::FETCH_ASSOC) ?: null;
-            if ($uRow && function_exists('tcf_user_has_premium_access') && tcf_user_has_premium_access($uRow)) {
-                return [
+if ($action === 'sync') {
+    // Force reconcile (ignore throttle session)
+    unset($_SESSION['tcf_pay_reconcile_at']);
+    $ref = isset($input['reference']) ? trim((string) $input['reference']) : '';
+    if ($ref !== '') {
+        $pending = tcf_payment_pending_by_ref($pdo, $ref, $uid);
+        if ($pending) {
+            $final = tcf_payment_try_finalize($pdo, $uid, $pending, (string) ($pending['channel'] ?? ''));
+            if (!empty($final['success']) && tcf_payment_is_finalized_status($final['status'] ?? '')) {
+                echo json_encode([
                     'success' => true,
                     'status' => 'complete',
-                    'already' => true,
-                    'message' => 'Abonnement déjà activé.',
-                    'subscription_type' => $uRow['subscription_type'] ?? $planKey,
+                    'activated' => true,
+                    'message' => $final['message'] ?? 'Abonnement activé.',
+                    'subscription_type' => $final['subscription_type'] ?? null,
+                    'subscription_label' => $final['subscription_label'] ?? null,
                     'premium_access' => true,
-                ];
-            }
-        } catch (Throwable $e) {
-        }
-        // Continuer vers vérification Notch + réactivation
-    }
-
-    // Si le webhook a déjà activé l'utilisateur, finaliser sans rappeler Notch (plus rapide)
-    try {
-        $stU = $pdo->prepare('SELECT subscription_type, subscription_expires_at, role FROM users WHERE id = ? LIMIT 1');
-        $stU->execute([$uid]);
-        $uRow = $stU->fetch(PDO::FETCH_ASSOC) ?: null;
-        if ($uRow && function_exists('tcf_user_has_premium_access') && tcf_user_has_premium_access($uRow)) {
-            $subType = (string) ($uRow['subscription_type'] ?? '');
-            if ($subType !== '' && $subType !== 'free' && ($planKey === '' || $subType === $planKey || preg_match('/^plan_/', $subType))) {
-                try {
-                    tcf_payment_pending_update_status($pdo, (int) ($pending['id'] ?? 0), 'complete', $channel);
-                } catch (Throwable $e) {
-                }
-                return [
-                    'success' => true,
-                    'status' => 'complete',
-                    'already' => true,
-                    'message' => 'Votre abonnement est activé.',
-                    'subscription_type' => $subType,
-                    'subscription_label' => function_exists('tcf_subscription_label') ? tcf_subscription_label($subType) : $subType,
-                    'subscription_expires_at' => $uRow['subscription_expires_at'] ?? null,
-                    'premium_access' => true,
-                ];
+                ], JSON_UNESCAPED_UNICODE);
+                exit;
             }
         }
-    } catch (Throwable $e) {
     }
-
-    $check = tcf_notchpay_get_payment($ref);
-    if (!$check['ok'] || !is_array($check['data'])) {
-        return ['success' => false, 'status' => 'pending', 'message' => $check['error'] ?? 'Impossible de vérifier le paiement.'];
-    }
-
-    $payStatus = tcf_notchpay_payment_status_from_response($check['data']);
-    if (tcf_notchpay_is_failure_status($payStatus)) {
-        try {
-            tcf_payment_pending_update_status($pdo, (int) ($pending['id'] ?? 0), $payStatus !== '' ? $payStatus : 'failed');
-        } catch (Throwable $e) {
-        }
-
-        return [
-            'success' => false,
-            'status' => $payStatus !== '' ? $payStatus : 'failed',
-            'message' => 'Le paiement a été refusé, annulé ou a expiré.',
-        ];
-    }
-
-    if (!tcf_notchpay_is_success_status($payStatus)) {
-        return ['success' => true, 'status' => $payStatus !== '' ? $payStatus : 'pending', 'message' => 'Paiement en cours…'];
-    }
-
-    $plan = tcf_subscription_plan_by_key($planKey, false);
-    $amountUsd = isset($plan['price']) ? (float) $plan['price'] : tcf_subscription_display_usd_amount();
-    if ($plan && strtoupper((string) ($plan['currency'] ?? '')) === 'XAF' && $amountUsd >= 100) {
-        $amountUsd = round($amountUsd / 600, 2);
-    }
-    $method = $channel !== '' ? $channel : (string) ($pending['channel'] ?? 'notchpay');
-    $result = tcf_subscription_activate_user($pdo, $uid, $planKey, $method, $amountUsd, 'USD', $ref);
-
-    if (!$result['success']) {
-        return ['success' => false, 'status' => 'complete', 'message' => $result['message']];
-    }
-
-    try {
-        tcf_payment_pending_update_status($pdo, (int) ($pending['id'] ?? 0), 'complete', $channel);
-    } catch (Throwable $e) {
-    }
-
-    return array_merge($result, ['success' => true, 'status' => 'complete']);
+    $sync = tcf_payment_reconcile_user($pdo, $uid);
+    echo json_encode([
+        'success' => !empty($sync['activated']),
+        'status' => !empty($sync['activated']) ? 'complete' : 'pending',
+        'activated' => !empty($sync['activated']),
+        'checked' => (int) ($sync['checked'] ?? 0),
+        'message' => $sync['message'] !== ''
+            ? $sync['message']
+            : 'Aucune transaction confirmée pour le moment.',
+        'subscription_type' => $sync['subscription_type'] ?? null,
+        'premium_access' => !empty($sync['activated']),
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
 }
 
 if ($action === 'init') {
@@ -182,6 +123,20 @@ if ($action === 'init') {
 
     if (!tcf_notchpay_is_configured()) {
         echo json_encode(['success' => false, 'message' => 'Paiement non configuré (clés Notch Pay manquantes sur le serveur).']);
+        exit;
+    }
+
+    // Avant un nouvel init : tenter de rattraper un paiement déjà validé
+    $pre = tcf_payment_reconcile_user($pdo, $uid);
+    if (!empty($pre['activated'])) {
+        echo json_encode([
+            'success' => true,
+            'status' => 'complete',
+            'already' => true,
+            'message' => 'Un paiement Notch déjà confirmé a activé votre abonnement.',
+            'premium_access' => true,
+            'subscription_type' => $pre['subscription_type'] ?? null,
+        ], JSON_UNESCAPED_UNICODE);
         exit;
     }
 
@@ -202,13 +157,11 @@ if ($action === 'init') {
 
     $provider = isset($input['provider']) ? trim((string) $input['provider']) : 'auto';
     $channel = tcf_notchpay_resolve_channel($phone, $provider);
-    // Local / test : toujours 100 XAF (comportement historique qui marchait).
     if (tcf_is_local_host()) {
         $amountXaf = tcf_subscription_payment_xaf_amount();
     } else {
         $amountXaf = isset($plan['payment_xaf']) ? (int) $plan['payment_xaf'] : tcf_subscription_payment_xaf_amount();
     }
-    // Notch Pay Mobile Money exige au moins 100 XAF (ex. prix 0,02 $ → ~12 XAF).
     if ($amountXaf < 100) {
         $amountXaf = 100;
     }
@@ -276,7 +229,6 @@ if ($action === 'init') {
         $chargeError = (string) ($charge['error'] ?? '');
     }
 
-    // Si le push USSD échoue, on garde le fallback Collect (page Notch) pour MTN et Orange.
     if ($mode !== 'direct' && $chargeError !== '') {
         $message = 'Ouverture de la page Notch Pay pour finaliser (MTN / Orange)…';
     }
@@ -306,6 +258,17 @@ if ($action === 'status') {
 
     $pending = tcf_payment_pending_by_ref($pdo, $reference, $uid);
     if ($pending === null) {
+        // Référence inconnue localement : tenter reconcile globale (autre ref du même user)
+        $sync = tcf_payment_reconcile_user($pdo, $uid);
+        if (!empty($sync['activated'])) {
+            echo json_encode([
+                'success' => true,
+                'status' => 'complete',
+                'message' => $sync['message'] ?: 'Abonnement activé.',
+                'premium_access' => true,
+            ], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
         echo json_encode(['success' => false, 'message' => 'Transaction introuvable.']);
         exit;
     }

@@ -244,6 +244,22 @@ if (isset($_POST['login_start'])) {
 
         tcf_login_apply_session($user, $pdo);
         tcf_remember_issue($pdo, (int) $user['id']);
+        // Rattrapage : paiement Notch validé pendant que l’utilisateur n’était plus sur le site
+        if (($user['role'] ?? '') === 'user') {
+            try {
+                require_once __DIR__ . '/includes/payment_reconcile.php';
+                unset($_SESSION['tcf_pay_reconcile_at']);
+                $paySync = tcf_payment_reconcile_user($pdo, (int) $user['id']);
+                if (!empty($paySync['activated'])) {
+                    tcf_auth_flash(
+                        'success',
+                        'Connexion réussie. Votre paiement a été confirmé : accès premium activé.'
+                    );
+                    tcf_login_redirect_logged_user($user, isset($_POST['login_next']) ? (string) $_POST['login_next'] : null);
+                }
+            } catch (Throwable $e) {
+            }
+        }
         $welcomeName = trim((string) ($user['name'] ?? ''));
         tcf_auth_flash(
             'success',

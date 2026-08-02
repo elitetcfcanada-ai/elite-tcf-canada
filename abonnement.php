@@ -1,5 +1,21 @@
 <?php
 require_once __DIR__ . '/includes/config.php';
+require_once __DIR__ . '/includes/payment_reconcile.php';
+
+// Force une vérif Notch à l’arrivée (paiement validé au téléphone pendant que la page était fermée)
+$tcf_pay_sync_flash = '';
+if (!empty($_SESSION['user_id']) && (($_SESSION['role'] ?? 'user') === 'user')) {
+    unset($_SESSION['tcf_pay_reconcile_at']);
+    try {
+        $sync = tcf_payment_reconcile_user($pdo, (int) $_SESSION['user_id']);
+        if (!empty($sync['activated'])) {
+            $tcf_pay_sync_flash = 'Votre paiement Notch a été confirmé : l’accès premium est maintenant actif.';
+        } elseif (!empty($_GET['payment_ref']) || !empty($_GET['payment_success'])) {
+            $tcf_pay_sync_flash = (string) ($sync['message'] ?? '');
+        }
+    } catch (Throwable $e) {
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -34,6 +50,11 @@ require_once __DIR__ . '/includes/config.php';
     <?php include __DIR__ . '/includes/header.php'; ?>
 
     <main class="tcf-abonnement-main">
+        <?php if ($tcf_pay_sync_flash !== ''): ?>
+        <div class="tcf-toast tcf-toast--success" role="status" style="margin:1rem auto;max-width:720px;">
+            <?php echo htmlspecialchars($tcf_pay_sync_flash); ?>
+        </div>
+        <?php endif; ?>
         <?php
         require_once __DIR__ . '/includes/platform_settings.php';
         if (tcf_subscription_sales_enabled($pdo)) {
