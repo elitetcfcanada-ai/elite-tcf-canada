@@ -4091,9 +4091,7 @@
                             '</td><td>' +
                             escHtml((r.plan_label || r.plan_key || '') + '') +
                             '</td><td>' +
-                            escHtml(String(r.amount != null ? r.amount : '')) +
-                            ' ' +
-                            escHtml(r.currency || 'USD') +
+                            escHtml(r.amount_display || formatSaUsd(r.amount)) +
                             '</td><td>' +
                             escHtml(r.payment_method || '') +
                             '</td></tr>'

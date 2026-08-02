@@ -6,6 +6,33 @@ require_once __DIR__ . '/subscription_plans_data.php';
 require_once __DIR__ . '/tcf_notifications_helper.php';
 require_once __DIR__ . '/subscription_access.php';
 require_once __DIR__ . '/tcf_legacy_tables.php';
+require_once __DIR__ . '/tcf_schema.php';
+
+/**
+ * Assure que historique_abonnements.amount accepte les décimales USD.
+ */
+function tcf_historique_ensure_amount_decimal(PDO $pdo): void
+{
+    static $done = false;
+    if ($done || !tcf_historique_abonnements_available($pdo)) {
+        return;
+    }
+    $done = true;
+    try {
+        $st = $pdo->query("SHOW COLUMNS FROM historique_abonnements LIKE 'amount'");
+        $col = $st ? $st->fetch(PDO::FETCH_ASSOC) : false;
+        if (!$col) {
+            return;
+        }
+        $type = strtolower((string) ($col['Type'] ?? ''));
+        if (str_contains($type, 'decimal') || str_contains($type, 'numeric') || str_contains($type, 'float') || str_contains($type, 'double')) {
+            return;
+        }
+        $pdo->exec('ALTER TABLE historique_abonnements MODIFY amount DECIMAL(12,2) NULL DEFAULT NULL');
+    } catch (Throwable $e) {
+        error_log('tcf_historique_ensure_amount_decimal: ' . $e->getMessage());
+    }
+}
 
 /**
  * Active l'abonnement après paiement confirmé.
@@ -28,15 +55,26 @@ function tcf_subscription_activate_user(PDO $pdo, int $uid, string $planKey, str
 
     $userName = (string) ($row['name'] ?? 'Utilisateur');
     $days = max(1, (int) ($plan['duration_days'] ?? 7));
+    $expiresAt = (new DateTimeImmutable('now'))->modify('+' . $days . ' days')->format('Y-m-d H:i:s');
 
     try {
-        $sql = 'UPDATE users SET subscription_type = ?, subscription_expires_at = DATE_ADD(NOW(), INTERVAL ' . $days . ' DAY) WHERE id = ? AND role = \'user\'';
-        $pdo->prepare($sql)->execute([$planKey, $uid]);
+        $pdo->prepare(
+            'UPDATE users SET subscription_type = ?, subscription_expires_at = ? WHERE id = ? AND role = \'user\''
+        )->execute([$planKey, $expiresAt, $uid]);
     } catch (Throwable $e) {
         try {
+            // Fallback si la colonne expires est absente
             $pdo->prepare('UPDATE users SET subscription_type = ? WHERE id = ? AND role = \'user\'')->execute([$planKey, $uid]);
         } catch (Throwable $e2) {
             return ['success' => false, 'message' => 'Impossible d’enregistrer l’abonnement.'];
+        }
+        try {
+            $pdo->exec('ALTER TABLE users ADD COLUMN subscription_expires_at DATETIME NULL DEFAULT NULL');
+            $pdo->prepare(
+                'UPDATE users SET subscription_type = ?, subscription_expires_at = ? WHERE id = ? AND role = \'user\''
+            )->execute([$planKey, $expiresAt, $uid]);
+        } catch (Throwable $e3) {
+            // type déjà enregistré ; accès premium sera accordé via fallback sans date
         }
     }
 
@@ -44,10 +82,12 @@ function tcf_subscription_activate_user(PDO $pdo, int $uid, string $planKey, str
 
     try {
         if (tcf_historique_abonnements_available($pdo)) {
-            // Conserver le montant réellement prélevé (XAF pending) ; USD en meta.
-            $histAmount = (int) round($amountUsd);
-            $histCurrency = $currencyDb !== '' ? $currencyDb : 'USD';
+            tcf_historique_ensure_amount_decimal($pdo);
+            // Toujours stocker le montant affiché en USD pour les revenus admin.
+            $histAmount = round($amountUsd, 2);
+            $histCurrency = 'USD';
             $pendId = 0;
+            $amountXafPaid = 0;
             if ($notchReference) {
                 $stPend = $pdo->prepare(
                     'SELECT id, amount, currency FROM historique_abonnements WHERE reference = ? AND user_id = ? ORDER BY id DESC LIMIT 1'
@@ -56,19 +96,22 @@ function tcf_subscription_activate_user(PDO $pdo, int $uid, string $planKey, str
                 $pendRow = $stPend->fetch(PDO::FETCH_ASSOC) ?: null;
                 if ($pendRow) {
                     $pendId = (int) ($pendRow['id'] ?? 0);
-                    $pendAmount = (int) ($pendRow['amount'] ?? 0);
+                    $pendAmount = (float) ($pendRow['amount'] ?? 0);
                     $pendCur = strtoupper(trim((string) ($pendRow['currency'] ?? '')));
-                    if ($pendAmount > 0 && ($pendCur === 'XAF' || $pendCur === 'FCFA' || $pendCur === '')) {
-                        $histAmount = $pendAmount;
-                        $histCurrency = 'XAF';
+                    if ($pendAmount > 0 && in_array($pendCur, ['XAF', 'FCFA', 'CFA', ''], true)) {
+                        $amountXafPaid = (int) round($pendAmount);
                     }
                 }
+            }
+            if ($amountXafPaid <= 0) {
+                $amountXafPaid = (int) max(100, round($amountUsd * 600));
             }
             $meta = json_encode([
                 'plan_label' => $planLabel,
                 'payment_method' => $paymentMethod,
                 'channel' => $paymentMethod,
                 'amount_usd' => $amountUsd,
+                'amount_xaf' => $amountXafPaid,
                 'display_currency' => 'USD',
             ], JSON_UNESCAPED_UNICODE);
             if ($meta === false) {
@@ -137,10 +180,9 @@ function tcf_subscription_activate_user(PDO $pdo, int $uid, string $planKey, str
     $uFull = $st->fetch(PDO::FETCH_ASSOC) ?: [];
 
     $adminMsg = sprintf(
-        'Formule %s — %s %s (%s). Membre : %s (id %d).',
+        'Formule %s — $%s (%s). Membre : %s (id %d).',
         $planKey,
         number_format($amountUsd, 2, '.', ''),
-        $currencyDb,
         $paymentMethod,
         $userName,
         $uid

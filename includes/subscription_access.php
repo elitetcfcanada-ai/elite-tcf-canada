@@ -5,7 +5,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/platform_settings.php';
 
 /**
- * Accès contenu « premium » (vidéos chaîne, etc.) selon abonnement actif.
+ * Accès contenu « premium » (sujets, vidéos, etc.) selon abonnement actif.
  */
 function tcf_user_has_premium_access(?array $user): bool
 {
@@ -20,15 +20,23 @@ function tcf_user_has_premium_access(?array $user): bool
     if (in_array($role, ['admin', 'super_admin'], true)) {
         return true;
     }
-    $type = (string) ($user['subscription_type'] ?? 'free');
+
+    $type = strtolower(trim((string) ($user['subscription_type'] ?? 'free')));
     if ($type === '' || $type === 'free') {
         return false;
     }
-    $expRaw = $user['subscription_expires_at'] ?? null;
-    if ($expRaw !== null && $expRaw !== '') {
-        $ts = strtotime((string) $expRaw);
-        return $ts !== false && $ts > time();
+
+    $expRaw = trim((string) ($user['subscription_expires_at'] ?? ''));
+    if ($expRaw !== '' && $expRaw !== '0000-00-00 00:00:00') {
+        $ts = strtotime($expRaw);
+        if ($ts === false) {
+            // Type payant + date illisible : ne pas bloquer l’accès
+            return true;
+        }
+        return $ts > time();
     }
+
+    // Compat anciens comptes monthly/annual sans expires_at
     if (in_array($type, ['monthly', 'annual'], true)) {
         $created = $user['created_at'] ?? null;
         if ($created === null || $created === '') {
@@ -47,17 +55,10 @@ function tcf_user_has_premium_access(?array $user): bool
             return true;
         }
     }
-    if (preg_match('/^plan_[a-z0-9]+$/', $type)) {
-        $expPlan = $user['subscription_expires_at'] ?? null;
-        if ($expPlan === null || $expPlan === '') {
-            return false;
-        }
-        $tsP = strtotime((string) $expPlan);
 
-        return $tsP !== false && $tsP > time();
-    }
-
-    return false;
+    // Forfait payant (plan_*, etc.) sans date d’expiration renseignée :
+    // accès accordé pour éviter le blocage après paiement (échec DATE_ADD / colonne).
+    return true;
 }
 
 function tcf_video_is_premium_locked_for_user(array $video, ?array $user): bool

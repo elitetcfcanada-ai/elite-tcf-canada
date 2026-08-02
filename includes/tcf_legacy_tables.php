@@ -56,12 +56,50 @@ function tcf_subscription_payments_select_sql(string $table, string $alias = 'sp
     if ($table === 'historique_abonnements') {
         return "SELECT {$alias}.id, {$alias}.user_id, {$alias}.plan_key,
                 COALESCE(JSON_UNQUOTE(JSON_EXTRACT({$alias}.meta_json, '$.plan_label')), {$alias}.plan_key) AS plan_label,
-                {$alias}.amount, {$alias}.currency, {$alias}.status,
+                {$alias}.amount, {$alias}.currency, {$alias}.status, {$alias}.meta_json,
                 {$alias}.provider AS payment_method, {$alias}.reference, {$alias}.paid_at, {$alias}.created_at";
     }
 
     return "SELECT {$alias}.id, {$alias}.user_id, {$alias}.plan_key, {$alias}.plan_label,
             {$alias}.amount, {$alias}.currency, 'paid' AS status, {$alias}.payment_method, {$alias}.created_at";
+}
+
+/**
+ * Convertit un montant de paiement en USD pour l’admin (jamais XAF affiché).
+ */
+function tcf_payment_row_amount_usd(array $row): float
+{
+    if (!empty($row['meta_json'])) {
+        $meta = json_decode((string) $row['meta_json'], true);
+        if (is_array($meta) && isset($meta['amount_usd']) && is_numeric($meta['amount_usd'])) {
+            return round((float) $meta['amount_usd'], 2);
+        }
+    }
+    $amount = (float) ($row['amount'] ?? 0);
+    $cur = strtoupper(trim((string) ($row['currency'] ?? 'USD')));
+    if (in_array($cur, ['XAF', 'FCFA', 'CFA'], true)) {
+        return round($amount / 600, 2);
+    }
+    return round($amount, 2);
+}
+
+/** Expression SQL SUM en USD (historique XAF → /600, sinon amount). */
+function tcf_subscription_payments_sum_usd_sql(string $table, string $alias = ''): string
+{
+    $p = $alias !== '' ? ($alias . '.') : '';
+    if ($table === 'historique_abonnements') {
+        return "COALESCE(SUM(
+            CASE
+              WHEN JSON_EXTRACT({$p}meta_json, '$.amount_usd') IS NOT NULL
+                THEN CAST(JSON_UNQUOTE(JSON_EXTRACT({$p}meta_json, '$.amount_usd')) AS DECIMAL(12,2))
+              WHEN UPPER(TRIM(COALESCE({$p}currency,''))) IN ('XAF','FCFA','CFA')
+                THEN ROUND({$p}amount / 600, 2)
+              ELSE {$p}amount
+            END
+        ), 0)";
+    }
+
+    return "COALESCE(SUM({$p}amount), 0)";
 }
 
 /**

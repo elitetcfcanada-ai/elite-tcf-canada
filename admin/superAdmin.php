@@ -1741,8 +1741,9 @@ function getStats()
             $payTable = tcf_subscription_payments_table($pdo);
             $payWhereRev = tcf_subscription_payments_revenue_where($payTable);
             $payWhereHist = tcf_subscription_payments_history_where($payTable);
+            $sumUsd = tcf_subscription_payments_sum_usd_sql($payTable);
             $stmt = $pdo->query(
-                "SELECT COALESCE(SUM(amount), 0) FROM `{$payTable}`
+                "SELECT {$sumUsd} FROM `{$payTable}`
                  WHERE ({$payWhereRev})
                    AND MONTH(created_at) = MONTH(CURDATE())
                    AND YEAR(created_at) = YEAR(CURDATE())"
@@ -1879,6 +1880,14 @@ function getSubscriptionPaymentsAdmin(): void
              LIMIT 500"
         );
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($rows as &$r) {
+            $usd = tcf_payment_row_amount_usd($r);
+            $r['amount'] = $usd;
+            $r['currency'] = '$';
+            $r['amount_display'] = '$' . number_format($usd, 2, '.', '');
+            unset($r['meta_json']);
+        }
+        unset($r);
         echo json_encode(['success' => true, 'data' => $rows], JSON_UNESCAPED_UNICODE);
     } catch (Throwable $e) {
         error_log('getSubscriptionPaymentsAdmin: ' . $e->getMessage());
@@ -1903,8 +1912,9 @@ function tcf_sa_subscription_revenue_chart_last12m(PDO $pdo): array
     try {
         $payTable = tcf_subscription_payments_table($pdo);
         $payWhere = tcf_subscription_payments_revenue_where($payTable);
+        $sumUsd = tcf_subscription_payments_sum_usd_sql($payTable);
         $stM = $pdo->query(
-            "SELECT DATE_FORMAT(created_at, '%Y-%m') AS ym, COALESCE(SUM(amount), 0) AS total
+            "SELECT DATE_FORMAT(created_at, '%Y-%m') AS ym, {$sumUsd} AS total
              FROM `{$payTable}`
              WHERE ({$payWhere})
              GROUP BY DATE_FORMAT(created_at, '%Y-%m')"
@@ -1934,9 +1944,10 @@ function getSubscriptionRevenueStatsAdmin(): void
     try {
         $payTable = tcf_subscription_payments_table($pdo);
         $payWhere = tcf_subscription_payments_revenue_where($payTable);
-        $total = (float) $pdo->query("SELECT COALESCE(SUM(amount), 0) FROM `{$payTable}` WHERE ({$payWhere})")->fetchColumn();
+        $sumUsd = tcf_subscription_payments_sum_usd_sql($payTable);
+        $total = (float) $pdo->query("SELECT {$sumUsd} FROM `{$payTable}` WHERE ({$payWhere})")->fetchColumn();
         $month = (float) $pdo->query(
-            "SELECT COALESCE(SUM(amount), 0) FROM `{$payTable}` WHERE ({$payWhere}) AND MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE())"
+            "SELECT {$sumUsd} FROM `{$payTable}` WHERE ({$payWhere}) AND MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE())"
         )->fetchColumn();
         $count = (int) $pdo->query("SELECT COUNT(*) FROM `{$payTable}` WHERE ({$payWhere})")->fetchColumn();
         $chart = tcf_sa_subscription_revenue_chart_last12m($pdo);
