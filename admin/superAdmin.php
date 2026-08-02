@@ -4249,7 +4249,7 @@ $notifications_json = json_encode($notifications);
     </script>
     <script src="../Assets/javascript/tcf-tts.js?v=6"></script>
     <script src="<?php echo htmlspecialchars(site_href('Assets/javascript/tcf_confirm_dialog.js')); ?>?v=confirm-1"></script>
-    <script src="../Assets/javascript/superAdmin.ui.js?v=sa-ui-v11"></script>
+    <script src="../Assets/javascript/superAdmin.ui.js?v=sa-ui-v12"></script>
     <script src="../Assets/javascript/admin-mobile-nav.js?v=sa-ui-v7"></script>
 
     <div class="tcf-ai-assistant" id="tcf-ai-assistant" data-greeting="Bonjour, je suis votre assistant administration. Comment puis-je vous aider sur la plateforme ?">

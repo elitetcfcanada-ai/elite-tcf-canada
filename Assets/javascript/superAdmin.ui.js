@@ -3792,9 +3792,8 @@
             '<input type="hidden" class="sa-plan-currency-input" value="$">' +
             '<input type="text" inputmode="decimal" class="sa-plan-userlike__price sa-plan-price-input" value="' +
             escAttr(price) +
-            '" placeholder="49,99" aria-label="Prix (USD, virgule acceptée)">' +
+            '" aria-label="Prix (USD)">' +
             '</div>' +
-            '<p class="sa-plan-userlike__price-hint">Prix en dollars (USD) — décimales OK (ex. 49,99)</p>' +
             '<div class="sa-plan-userlike__wave" aria-hidden="true">' +
             '<svg viewBox="0 0 400 40" preserveAspectRatio="none"><path d="M0,20 Q100,0 200,20 T400,20 L400,40 L0,40 Z" fill="#141622"/></svg>' +
             '</div></div>' +

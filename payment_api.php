@@ -191,9 +191,9 @@ if ($action === 'init') {
     } else {
         $amountXaf = isset($plan['payment_xaf']) ? (int) $plan['payment_xaf'] : tcf_subscription_payment_xaf_amount();
     }
+    // Notch Pay Mobile Money exige au moins 100 XAF (ex. prix 0,02 $ → ~12 XAF).
     if ($amountXaf < 100) {
-        echo json_encode(['success' => false, 'message' => 'Montant du forfait invalide. Contactez l’administrateur.']);
-        exit;
+        $amountXaf = 100;
     }
     $reference = 'tcf_' . $uid . '_' . preg_replace('/[^a-z0-9_]/i', '', $planKey) . '_' . time() . '_' . bin2hex(random_bytes(4));
     $description = 'Abonnement ' . ($plan['tier'] ?? '') . ' — ' . ($plan['badge'] ?? $planKey);
