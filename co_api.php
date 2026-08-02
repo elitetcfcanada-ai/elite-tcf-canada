@@ -247,21 +247,21 @@ function co_track_view(PDO $pdo, int $examId): void
     }
 }
 
-/** URL absolue pour médias (chemin site ou URL externe). */
+/** URL absolue pour médias (chemin site ou URL externe) — BLOB durable si fichier absent. */
 function co_resolve_media_url(string $ref): string
 {
+    global $pdo;
     $ref = trim($ref);
     if ($ref === '') {
         return '';
     }
-    if (preg_match('#^https?://#i', $ref)) {
+    if (preg_match('#^https?://#i', $ref) && !preg_match('#/(uploads/)#i', $ref)) {
         return $ref;
     }
-    if (str_starts_with($ref, '/')) {
-        return $ref;
-    }
+    require_once __DIR__ . '/includes/persistent_media.php';
+    $kind = preg_match('/\.(mp3|wav|ogg|m4a|aac)$/i', $ref) ? 'co_audio' : 'co_image';
 
-    return site_href($ref);
+    return tcf_persistent_media_public_href($pdo, $ref, $kind);
 }
 
 function co_fetch_exam_full(PDO $pdo, int $examId): ?array
@@ -509,6 +509,19 @@ function co_normalize_questions_input($questions): array
         $pts = (int) ($q['points'] ?? 1);
         $img = trim((string) ($q['image_src'] ?? $q['image'] ?? ''));
         $aud = trim((string) ($q['audio_src'] ?? $q['audio'] ?? ''));
+        // Normaliser vers uploads/… (évite localhost / chemins absolus cassés en prod)
+        if ($img !== '' && function_exists('tcf_uploads_relative_path')) {
+            $normImg = tcf_uploads_relative_path($img);
+            if ($normImg !== '' && !preg_match('#^https?://#i', $normImg)) {
+                $img = $normImg;
+            }
+        }
+        if ($aud !== '' && function_exists('tcf_uploads_relative_path')) {
+            $normAud = tcf_uploads_relative_path($aud);
+            if ($normAud !== '' && !preg_match('#^https?://#i', $normAud)) {
+                $aud = $normAud;
+            }
+        }
         $audText = trim((string) ($q['audio_text'] ?? $q['tts'] ?? $q['script'] ?? ''));
 
         $answersIn = $q['answers'] ?? [];
@@ -584,9 +597,32 @@ function co_normalize_questions_input($questions): array
 }
 
 /**
+ * Garantit une copie BLOB en base pour chaque média CO (image/audio) du payload.
+ *
+ * @param list<array<string,mixed>> $questions
+ */
+function co_persist_questions_media_blobs(PDO $pdo, array $questions): void
+{
+    require_once __DIR__ . '/includes/persistent_media.php';
+    foreach ($questions as $q) {
+        if (!is_array($q)) {
+            continue;
+        }
+        $img = trim((string) ($q['image_src'] ?? ''));
+        $aud = trim((string) ($q['audio_src'] ?? ''));
+        if ($img !== '') {
+            tcf_persistent_media_store_from_path($pdo, $img, 'co_image');
+        }
+        if ($aud !== '') {
+            tcf_persistent_media_store_from_path($pdo, $aud, 'co_audio');
+        }
+    }
+}
+
+/**
  * Upload média compréhension orale (admin) → uploads/co_media/
  *
- * @return array{ok:bool, path?:string, message?:string}
+ * @return array{ok:bool, path?:string, url?:string, message?:string}
  */
 function co_handle_media_upload(string $kind): array
 {
@@ -664,7 +700,23 @@ function co_handle_media_upload(string $kind): array
 
     $rel = 'uploads/co_media/' . $base;
 
-    return ['ok' => true, 'path' => $rel];
+    try {
+        require_once __DIR__ . '/includes/persistent_media.php';
+        global $pdo;
+        if (isset($pdo) && $pdo instanceof PDO) {
+            tcf_persistent_media_store_from_path($pdo, $rel, $kind === 'audio' ? 'co_audio' : 'co_image');
+        }
+    } catch (Throwable $e) {
+        error_log('co_handle_media_upload blob: ' . $e->getMessage());
+    }
+
+    return [
+        'ok' => true,
+        'path' => $rel,
+        'url' => function_exists('tcf_persistent_media_public_href') && isset($pdo) && $pdo instanceof PDO
+            ? tcf_persistent_media_public_href($pdo, $rel, $kind === 'audio' ? 'co_audio' : 'co_image')
+            : (function_exists('site_href') ? site_href($rel) : '/' . $rel),
+    ];
 }
 
 co_ensure_tables($pdo);
@@ -937,6 +989,7 @@ try {
                         site_href('comprehension_orale_quiz.php?exam_id=' . $examId)
                     );
                 }
+                co_persist_questions_media_blobs($pdo, $questions);
                 co_sync_exam_visibility($pdo);
                 co_json(['success' => true, 'message' => 'Épreuve enregistrée.', 'exam_id' => $examId]);
             }
@@ -1043,6 +1096,7 @@ try {
                 }
                 co_json(['success' => false, 'message' => $e->getMessage()], 500);
             }
+            co_persist_questions_media_blobs($pdo, $questions);
             if ($isPublished && ($isNewExam || !$wasPublished)) {
                 tcf_notify_users_registered_before(
                     $pdo,
@@ -1201,10 +1255,14 @@ try {
                 co_json(['success' => false, 'message' => $up['message'] ?? 'Erreur'], 422);
             }
             $path = (string) ($up['path'] ?? '');
+            $url = (string) ($up['url'] ?? '');
+            if ($url === '' && $path !== '') {
+                $url = co_resolve_media_url($path);
+            }
             co_json([
                 'success' => true,
                 'path' => $path,
-                'url' => $path !== '' ? site_href($path) : '',
+                'url' => $url,
             ]);
         }
 

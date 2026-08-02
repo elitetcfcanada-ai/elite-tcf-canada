@@ -87,6 +87,23 @@ CREATE TABLE IF NOT EXISTS `annonces` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- -----------------------------------------------------------------------------
+-- persistent_media (copie BLOB des uploads — survit aux déploiements git)
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `persistent_media` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `path_key` VARCHAR(500) NOT NULL,
+  `kind` VARCHAR(32) NOT NULL DEFAULT 'file',
+  `mime` VARCHAR(80) NOT NULL DEFAULT 'application/octet-stream',
+  `data` LONGBLOB NOT NULL,
+  `byte_size` INT UNSIGNED NOT NULL DEFAULT 0,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_pm_path` (`path_key`(191)),
+  KEY `idx_pm_kind` (`kind`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- -----------------------------------------------------------------------------
 -- statistiques (événements analytics / métriques)
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `statistiques` (

@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/subscription_access.php';
 require_once __DIR__ . '/includes/community_posts_helper.php';
+require_once __DIR__ . '/includes/persistent_media.php';
 require_once __DIR__ . '/includes/tcf_notifications_helper.php';
 require_once __DIR__ . '/includes/admin_roles.php';
 if (is_file(__DIR__ . '/includes/visitor_id.php')) {
@@ -131,7 +132,7 @@ try {
                     $r['likes_count'] = is_array($likes) ? count($likes) : 0;
                     $r['views_count'] = is_array($views) ? count($views) : 0;
                     $img = trim((string) ($r['image_url'] ?? ''));
-                    $r['image_href'] = $img !== '' ? site_href(ltrim($img, '/')) : '';
+                    $r['image_href'] = tcf_annonce_image_href($pdo, (int) ($r['id'] ?? 0), $img);
                     $r['visibility_label'] = tcf_community_visibility_label((string) ($r['visibility'] ?? 'registered'));
                     unset($r['likes_json'], $r['views_json'], $r['image_data']);
                 }
@@ -148,10 +149,11 @@ try {
                 $rows = $st->fetchAll(PDO::FETCH_ASSOC) ?: [];
                 foreach ($rows as &$r) {
                     $img = trim((string) ($r['image_url'] ?? ''));
-                    $r['image_href'] = $img !== '' ? site_href(ltrim($img, '/')) : '';
+                    $r['image_href'] = tcf_annonce_image_href($pdo, (int) ($r['id'] ?? 0), $img);
                     $r['visibility_label'] = tcf_community_visibility_label((string) ($r['visibility'] ?? 'registered'));
                     $r['likes_count'] = (int) ($r['likes_count'] ?? 0);
                     $r['views_count'] = (int) ($r['views_count'] ?? 0);
+                    unset($r['image_data']);
                 }
                 unset($r);
             }
@@ -209,6 +211,7 @@ try {
                 $finalImg = (string) ($old['image_url'] ?? '');
                 if ($clearImage) {
                     $finalImg = '';
+                    tcf_annonce_clear_image_blob($pdo, $id);
                 }
                 if ($imageUrl !== null) {
                     $finalImg = $imageUrl;
@@ -217,6 +220,9 @@ try {
                 $pdo->prepare(
                     'UPDATE `' . $cpTable . '` SET body=?, image_url=?, link_url=?, visibility=?, is_published=?, updated_at=NOW() WHERE id=?'
                 )->execute([$body, $finalImg !== '' ? $finalImg : null, $linkUrl, $visibility, $isPublished, $id]);
+                if ($finalImg !== '') {
+                    tcf_annonce_store_image_blob($pdo, $id, $finalImg);
+                }
                 if ($isPublished && !$wasPublished) {
                     $excerpt = function_exists('mb_substr') ? mb_substr($body, 0, 140) : substr($body, 0, 140);
                     if ((function_exists('mb_strlen') ? mb_strlen($body) : strlen($body)) > 140) {
@@ -247,6 +253,9 @@ try {
                 )->execute([$body, $imageUrl, $linkUrl, $visibility, $isPublished, $uid > 0 ? $uid : null]);
             }
             $newId = (int) $pdo->lastInsertId();
+            if ($newId > 0 && $imageUrl) {
+                tcf_annonce_store_image_blob($pdo, $newId, $imageUrl);
+            }
 
             if ($isPublished && $newId > 0) {
                 $excerpt = function_exists('mb_substr') ? mb_substr($body, 0, 140) : substr($body, 0, 140);

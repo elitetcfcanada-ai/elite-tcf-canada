@@ -224,7 +224,10 @@ function tcf_community_posts_list_for_viewer(PDO $pdo, ?array $user, int $limit 
                 $likes = [];
             }
             $img = trim((string) ($r['image_url'] ?? ''));
-            $r['image_href'] = $img !== '' ? (function_exists('site_href') ? site_href(ltrim($img, '/')) : '/' . ltrim($img, '/')) : '';
+            if (!function_exists('tcf_annonce_image_href')) {
+                require_once __DIR__ . '/persistent_media.php';
+            }
+            $r['image_href'] = tcf_annonce_image_href($pdo, $pid, $img);
             $r['liked_by_me'] = $uid > 0 && in_array($uid, array_map('intval', $likes), true);
             $r['likes_count'] = count($likes);
             $r['visibility_label'] = tcf_community_visibility_label($vis);
@@ -261,12 +264,15 @@ function tcf_community_posts_list_for_viewer(PDO $pdo, ?array $user, int $limit 
         $pid = (int) $r['id'];
         tcf_community_record_view($pdo, $pid, $user);
         $img = trim((string) ($r['image_url'] ?? ''));
-        $r['image_href'] = $img !== '' ? (function_exists('site_href') ? site_href(ltrim($img, '/')) : '/' . ltrim($img, '/')) : '';
+        if (!function_exists('tcf_annonce_image_href')) {
+            require_once __DIR__ . '/persistent_media.php';
+        }
+        $r['image_href'] = tcf_annonce_image_href($pdo, $pid, $img);
         $r['liked_by_me'] = !empty($liked[$pid]);
         $r['likes_count'] = (int) ($r['likes_count'] ?? 0);
         $r['visibility_label'] = tcf_community_visibility_label($vis);
         /* Pas d’auteur / avatar côté public */
-        unset($r['author_name'], $r['created_by']);
+        unset($r['author_name'], $r['created_by'], $r['image_data']);
         $out[] = $r;
     }
 

@@ -2400,6 +2400,12 @@
         var s = String(rel).trim();
         if (/^https?:\/\//i.test(s)) return s;
         var base = typeof window.TCF_SITE_PUBLIC !== 'undefined' ? String(window.TCF_SITE_PUBLIC) : '';
+        // media_serve.php?type=pm&id=… (URL durable)
+        if (/media_serve\.php/i.test(s)) {
+            if (s.charAt(0) === '/') return s;
+            return (base ? base + '/' : '/') + s.replace(/^\/+/, '');
+        }
+        if (s.charAt(0) === '/') return s;
         s = s.replace(/^\/+/, '');
         if (!base) return '/' + s;
         return base + '/' + s;
@@ -2777,9 +2783,19 @@
                         return;
                     }
                     var t = blk && blk.querySelector('[data-co-q-image]');
+                    // Toujours stocker le chemin relatif uploads/… (pas l’URL media_serve)
                     if (t) t.value = j.path || '';
                     refreshCoQuestionMediaPreviews(blk);
-                    toast('Image importée — aperçu ci-dessus');
+                    // Aperçu via URL durable si fournie
+                    if (j.url && blk) {
+                        var imgEl = blk.querySelector('[data-co-img-preview]');
+                        var imgWrap = blk.querySelector('[data-co-img-preview-wrap]');
+                        if (imgEl && imgWrap) {
+                            imgEl.src = j.url;
+                            imgWrap.style.display = 'block';
+                        }
+                    }
+                    toast('Image importée et sauvegardée en base');
                     imgIn.value = '';
                 });
             }
