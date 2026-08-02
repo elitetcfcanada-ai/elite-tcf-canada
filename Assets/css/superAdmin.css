@@ -2,6 +2,25 @@
  * Super Admin — TCF Canada
  * Variables de thème : Assets/css/sa-theme.css (html[data-sa-theme])
  */
+/* Bouton publication verrouillé (anti double-clic / déjà publié) */
+.tcf-superadmin-app .sa-btn-busy,
+.tcf-superadmin-app .sa-btn-published,
+.tcf-superadmin-app button.sa-btn-published:disabled {
+    opacity: 0.55 !important;
+    cursor: not-allowed !important;
+    filter: grayscale(0.35);
+    pointer-events: none;
+}
+.tcf-superadmin-app .sa-published-hint {
+    color: #64748b;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+.tcf-superadmin-app .sa-publish-locked {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
 .tcf-superadmin-app {
     --transition: all 0.3s ease;
     --sa-radius: 12px;
