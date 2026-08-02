@@ -58,6 +58,7 @@
 
             function close(val) {
                 dlg.hidden = true;
+                dlg.classList.remove('is-open');
                 dlg.setAttribute('aria-hidden', 'true');
                 document.body.classList.remove('tcf-qdlg-open');
                 okBtn.removeEventListener('click', onOk);
@@ -84,10 +85,17 @@
             document.addEventListener('keydown', onKey);
 
             dlg.hidden = false;
+            dlg.classList.add('is-open');
             dlg.setAttribute('aria-hidden', 'false');
             document.body.classList.add('tcf-qdlg-open');
+            // Remonter au-dessus de tout overlay admin (profil, sheets…)
+            try {
+                document.body.appendChild(dlg.parentNode || dlg);
+            } catch (e) {}
             setTimeout(function () {
-                cancelBtn.focus();
+                try {
+                    cancelBtn.focus();
+                } catch (e2) {}
             }, 30);
         });
     }

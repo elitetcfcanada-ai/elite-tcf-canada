@@ -6,15 +6,21 @@ body.tcf-qdlg-open {
 .tcf-qdlg {
     position: fixed;
     inset: 0;
-    z-index: 12000;
+    /* Au-dessus profil admin (≈300000), toasts et sheets */
+    z-index: 400000 !important;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 1.25rem;
 }
 
-.tcf-qdlg[hidden] {
+.tcf-qdlg[hidden],
+.tcf-qdlg:not(.is-open) {
     display: none !important;
+}
+
+.tcf-qdlg.is-open {
+    display: flex !important;
 }
 
 .tcf-qdlg__backdrop {

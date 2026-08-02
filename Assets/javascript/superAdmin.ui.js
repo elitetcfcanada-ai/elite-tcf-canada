@@ -122,54 +122,9 @@
 
     /**
      * Confirmation interne (carte) — jamais window.confirm / alert navigateur.
-     * Fallback intégré si tcf_confirm_dialog.js n’est pas chargé (ex. deploy incomplet).
+     * Fallback intégré si tcf_confirm_dialog.js n’est pas chargé (cache Hostinger).
      * @returns {Promise<boolean>}
      */
-    function saConfirmFallback(opts) {
-        opts = opts || {};
-        return new Promise(function (resolve) {
-            var existing = document.getElementById('tcf-qdlg-sa-fallback');
-            if (existing) existing.remove();
-            var wrap = document.createElement('div');
-            wrap.id = 'tcf-qdlg-sa-fallback';
-            wrap.className = 'tcf-qdlg tcf-qdlg--' + (opts.variant === 'info' ? 'info' : 'danger');
-            wrap.setAttribute('role', 'dialog');
-            wrap.innerHTML =
-                '<div class="tcf-qdlg__backdrop" data-cancel></div>' +
-                '<div class="tcf-qdlg__panel">' +
-                '<div class="tcf-qdlg__icon" aria-hidden="true"><i class="bx ' +
-                (opts.variant === 'info' ? 'bx-info-circle' : 'bx-trash') +
-                '"></i></div>' +
-                '<h3 class="tcf-qdlg__title"></h3>' +
-                '<p class="tcf-qdlg__msg"></p>' +
-                '<div class="tcf-qdlg__actions">' +
-                '<button type="button" class="tcf-qdlg__btn tcf-qdlg__btn--ghost" data-cancel></button>' +
-                '<button type="button" class="tcf-qdlg__btn tcf-qdlg__btn--primary" data-ok></button>' +
-                '</div></div>';
-            wrap.querySelector('.tcf-qdlg__title').textContent = opts.title || 'Confirmer';
-            wrap.querySelector('.tcf-qdlg__msg').textContent = opts.message || '';
-            wrap.querySelector('[data-ok]').textContent = opts.confirmLabel || 'Supprimer';
-            wrap.querySelectorAll('[data-cancel]').forEach(function (el) {
-                if (el.tagName === 'BUTTON') el.textContent = opts.cancelLabel || 'Annuler';
-            });
-            function close(val) {
-                document.body.classList.remove('tcf-qdlg-open');
-                wrap.remove();
-                resolve(!!val);
-            }
-            wrap.querySelector('[data-ok]').addEventListener('click', function () {
-                close(true);
-            });
-            wrap.querySelectorAll('[data-cancel]').forEach(function (el) {
-                el.addEventListener('click', function () {
-                    close(false);
-                });
-            });
-            document.body.classList.add('tcf-qdlg-open');
-            document.body.appendChild(wrap);
-        });
-    }
-
     function saConfirm(message, opts) {
         opts = opts || {};
         var payload = {
@@ -183,98 +138,189 @@
         if (typeof window.tcfConfirm === 'function') {
             return window.tcfConfirm(payload);
         }
-        return saConfirmFallback(payload);
+        // Fallback minimal (même UX) si le script externe est en cache/404
+        return new Promise(function (resolve) {
+            var root = document.getElementById('tcf-confirm-dialog-root');
+            if (!root) {
+                root = document.createElement('div');
+                root.id = 'tcf-confirm-dialog-root';
+                root.innerHTML =
+                    '<div class="tcf-qdlg is-open" id="tcf-qdlg" role="presentation">' +
+                    '<div class="tcf-qdlg__backdrop" data-qdlg-cancel></div>' +
+                    '<div class="tcf-qdlg__panel" role="dialog" aria-modal="true">' +
+                    '<div class="tcf-qdlg__icon" aria-hidden="true"><i class="bx bx-trash"></i></div>' +
+                    '<h3 class="tcf-qdlg__title" id="tcf-qdlg-title"></h3>' +
+                    '<p class="tcf-qdlg__msg" id="tcf-qdlg-msg"></p>' +
+                    '<div class="tcf-qdlg__actions">' +
+                    '<button type="button" class="tcf-qdlg__btn tcf-qdlg__btn--ghost" id="tcf-qdlg-cancel"></button>' +
+                    '<button type="button" class="tcf-qdlg__btn tcf-qdlg__btn--primary" id="tcf-qdlg-ok"></button>' +
+                    '</div></div></div>';
+                document.body.appendChild(root);
+            }
+            var dlg = document.getElementById('tcf-qdlg');
+            var titleEl = document.getElementById('tcf-qdlg-title');
+            var msgEl = document.getElementById('tcf-qdlg-msg');
+            var okBtn = document.getElementById('tcf-qdlg-ok');
+            var cancelBtn = document.getElementById('tcf-qdlg-cancel');
+            if (!dlg || !okBtn || !cancelBtn) {
+                resolve(window.confirm(payload.message || payload.title));
+                return;
+            }
+            if (titleEl) titleEl.textContent = payload.title;
+            if (msgEl) msgEl.textContent = payload.message;
+            okBtn.textContent = payload.confirmLabel;
+            cancelBtn.textContent = payload.cancelLabel;
+            dlg.hidden = false;
+            dlg.classList.add('is-open');
+            document.body.classList.add('tcf-qdlg-open');
+            document.body.appendChild(root);
+            function done(v) {
+                dlg.hidden = true;
+                dlg.classList.remove('is-open');
+                document.body.classList.remove('tcf-qdlg-open');
+                okBtn.onclick = null;
+                cancelBtn.onclick = null;
+                resolve(!!v);
+            }
+            okBtn.onclick = function () {
+                done(true);
+            };
+            cancelBtn.onclick = function () {
+                done(false);
+            };
+            var bd = dlg.querySelector('[data-qdlg-cancel]');
+            if (bd) bd.onclick = function () {
+                done(false);
+            };
+        });
     }
     window.TCF_ADMIN_CONFIRM = saConfirm;
 
-    /** Empêche les doubles clics Publier / Enregistrer. */
-    function saLockForm(form) {
-        if (!form) return false;
-        if (form.getAttribute('data-sa-busy') === '1') return false;
-        form.setAttribute('data-sa-busy', '1');
-        $all('button[type="submit"], input[type="submit"]', form).forEach(function (b) {
-            if (!b.dataset.saPrevLabel) b.dataset.saPrevLabel = b.textContent || b.value || '';
+    /**
+     * Empêche les doubles clics / doubles publications.
+     * @param {HTMLElement|null} form
+     * @param {HTMLElement|null} triggerBtn
+     * @returns {boolean} false si déjà en cours
+     */
+    function saBeginBusy(form, triggerBtn) {
+        var el = form || (triggerBtn && triggerBtn.closest && triggerBtn.closest('form')) || null;
+        if (el && el.dataset && el.dataset.saBusy === '1') {
+            return false;
+        }
+        if (el && el.dataset) el.dataset.saBusy = '1';
+        var buttons = [];
+        if (triggerBtn) buttons.push(triggerBtn);
+        if (el) {
+            $all('button[type="submit"], button.btn-primary, .sa-topic-top-save, [data-sa-publish]', el).forEach(function (b) {
+                buttons.push(b);
+            });
+        }
+        // Boutons barre du haut liés aux sujets
+        $all('#topic-top-save-btn, #ee-exam-save-top, #eo-exam-save-top, #ce-exam-save-top, #co-exam-save-top, [data-sa-top-save]').forEach(function (b) {
+            buttons.push(b);
+        });
+        buttons.forEach(function (b) {
+            if (!b) return;
             b.disabled = true;
-            b.classList.add('sa-btn-busy');
-            if (/publier/i.test(b.dataset.saPrevLabel || b.textContent || '')) {
+            b.classList.add('is-sa-busy');
+            if (!b.dataset.saBusyLabel) b.dataset.saBusyLabel = b.textContent || '';
+            if (/publier/i.test(b.textContent || '') || b.dataset.saPublish === '1') {
                 b.textContent = 'Publication…';
             }
         });
         return true;
     }
 
-    function saUnlockForm(form, opts) {
+    function saEndBusy(form, triggerBtn, opts) {
         opts = opts || {};
-        if (!form) return;
-        form.removeAttribute('data-sa-busy');
-        $all('button[type="submit"], input[type="submit"]', form).forEach(function (b) {
-            b.classList.remove('sa-btn-busy');
-            if (opts.publishedLock) {
-                b.disabled = true;
-                b.classList.add('sa-btn-published');
-                b.textContent = opts.publishedLabel || 'Déjà publié';
-                return;
-            }
-            b.disabled = false;
-            b.classList.remove('sa-btn-published');
-            if (b.dataset.saPrevLabel) b.textContent = b.dataset.saPrevLabel;
-        });
-        if (opts.publishedLock) {
-            $all(
-                'input[type="checkbox"][id$="-exam-published"], input[type="checkbox"][id$="-published"], select[id$="-published"], #message-published',
-                form
-            ).forEach(function (el) {
-                el.disabled = true;
-                el.classList.add('sa-publish-locked');
+        var el = form || (triggerBtn && triggerBtn.closest && triggerBtn.closest('form')) || null;
+        if (el && el.dataset) el.dataset.saBusy = '0';
+        var keepDisabled = !!opts.keepDisabled;
+        var doneLabel = opts.doneLabel || 'Publié';
+        var buttons = [];
+        if (triggerBtn) buttons.push(triggerBtn);
+        if (el) {
+            $all('button[type="submit"], button.btn-primary, .sa-topic-top-save, [data-sa-publish]', el).forEach(function (b) {
+                buttons.push(b);
             });
         }
-    }
-
-    function saClearPublishedLocks(form) {
-        if (!form) return;
-        form.removeAttribute('data-sa-busy');
-        $all('.sa-publish-locked', form).forEach(function (el) {
-            el.disabled = false;
-            el.classList.remove('sa-publish-locked');
+        $all('#topic-top-save-btn, #ee-exam-save-top, #eo-exam-save-top, #ce-exam-save-top, #co-exam-save-top, [data-sa-top-save]').forEach(function (b) {
+            buttons.push(b);
         });
-        $all('.sa-published-hint', form).forEach(function (el) {
-            el.remove();
-        });
-        $all('button[type="submit"]', form).forEach(function (b) {
-            b.disabled = false;
-            b.classList.remove('sa-btn-published', 'sa-btn-busy');
-            if (b.dataset.saPrevLabel) b.textContent = b.dataset.saPrevLabel;
-            else if (/déjà publié/i.test(b.textContent || '')) b.textContent = 'Enregistrer l\'épreuve';
-        });
-    }
-
-    function saMarkPublishedControls(form) {
-        if (!form) return;
-        $all('input[type="checkbox"][id$="-exam-published"]', form).forEach(function (el) {
-            el.checked = true;
-            el.disabled = true;
-            el.classList.add('sa-publish-locked');
-            var lab = el.closest('label') || el.parentElement;
-            if (lab && !lab.querySelector('.sa-published-hint')) {
-                var hint = document.createElement('span');
-                hint.className = 'sa-published-hint';
-                hint.textContent = ' — déjà publié';
-                lab.appendChild(hint);
+        buttons.forEach(function (b) {
+            if (!b) return;
+            b.classList.remove('is-sa-busy');
+            if (keepDisabled) {
+                b.disabled = true;
+                b.classList.add('is-sa-published');
+                b.textContent = doneLabel;
+            } else {
+                b.disabled = false;
+                b.classList.remove('is-sa-published');
+                if (b.dataset.saBusyLabel) {
+                    b.textContent = b.dataset.saBusyLabel;
+                    delete b.dataset.saBusyLabel;
+                }
             }
         });
-        var msgPub = form.querySelector('#message-published');
-        if (msgPub) {
-            msgPub.value = '1';
-            msgPub.disabled = true;
-            msgPub.classList.add('sa-publish-locked');
-        }
-        $all('button[type="submit"]', form).forEach(function (b) {
-            if (!b.dataset.saPrevLabel) b.dataset.saPrevLabel = b.textContent || '';
-            b.disabled = true;
-            b.classList.add('sa-btn-published');
-            b.textContent = 'Déjà publié';
-        });
     }
+
+    function saResetPublishBusy(form) {
+        if (!form) return;
+        form.dataset.saBusy = '0';
+        saEndBusy(form, null, { keepDisabled: false });
+    }
+
+    /**
+     * Exécute un fetch de publication avec verrou anti double-clic.
+     * @param {HTMLFormElement} form
+     * @param {Event|null} e
+     * @param {boolean} isPublished
+     * @param {() => Promise<any>} runFetch
+     */
+    function saRunLockedPublish(form, e, isPublished, runFetch) {
+        var submitter = (e && e.submitter) || null;
+        if (!saBeginBusy(form, submitter)) {
+            toast('Publication déjà en cours…', true);
+            return Promise.resolve(null);
+        }
+        return Promise.resolve()
+            .then(runFetch)
+            .then(function (j) {
+                if (j && j.success) {
+                    saEndBusy(form, submitter, {
+                        keepDisabled: !!isPublished,
+                        doneLabel: isPublished ? 'Publié' : 'Enregistré'
+                    });
+                    if (!isPublished) {
+                        saEndBusy(form, submitter, { keepDisabled: false });
+                    }
+                } else {
+                    saEndBusy(form, submitter, { keepDisabled: false });
+                }
+                return j;
+            })
+            .catch(function (err) {
+                saEndBusy(form, submitter, { keepDisabled: false });
+                throw err;
+            });
+    }
+
+    /** Bloque un 2e submit pendant une publication async. */
+    document.addEventListener(
+        'submit',
+        function (e) {
+            var form = e.target;
+            if (!form || form.nodeName !== 'FORM') return;
+            if (!document.body || !document.body.classList.contains('tcf-superadmin-app')) return;
+            if (form.dataset.saBusy === '1') {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                toast('Publication déjà en cours…', true);
+            }
+        },
+        true
+    );
 
     function postForm(action, fields) {
         var fd = new FormData();
@@ -1266,7 +1312,6 @@
                 document.getElementById('ee-exam-subtitle').value = e.subtitle || '';
                 document.getElementById('ee-exam-visibility').value = (e.visibility === 'premium' ? 'premium' : 'gratuit');
                 document.getElementById('ee-exam-published').checked = Number(e.is_published || 0) === 1;
-                if (Number(e.is_published || 0) === 1) saMarkPublishedControls(form);
                 var combos = Array.isArray(e.combinations) && e.combinations.length ? e.combinations : [{}];
                 resetEeCombos(combos.length);
                 var comboEls = $all('[data-ee-combo]');
@@ -1386,15 +1431,12 @@
 
         form.addEventListener('submit', function (e) {
             e.preventDefault();
-            if (!saLockForm(form)) return;
             var examId = document.getElementById('ee-exam-id').value;
             var title = (document.getElementById('ee-exam-title').value || '').trim();
             if (!title) {
                 toast("Le titre de l'épreuve est requis.", true);
-                saUnlockForm(form);
                 return;
             }
-            var published = document.getElementById('ee-exam-published').checked ? '1' : '0';
             var combos = collectEeCombinations();
             var fd = new FormData();
             fd.append('action', examId ? 'update_exam' : 'create_exam');
@@ -1402,31 +1444,25 @@
             fd.append('title', title);
             fd.append('subtitle', document.getElementById('ee-exam-subtitle').value || '');
             fd.append('visibility', document.getElementById('ee-exam-visibility').value || 'gratuit');
-            fd.append('is_published', published);
+            var published = document.getElementById('ee-exam-published').checked;
+            fd.append('is_published', published ? '1' : '0');
             fd.append('combinations', JSON.stringify(combos));
-            fetch(EE_ENDPOINT, { method: 'POST', body: fd, credentials: 'same-origin' })
-                .then(function (r) { return r.json(); })
-                .then(function (j) {
-                    if (j && j.success) {
-                        toast(j.message || 'Épreuve enregistrée');
-                        if (published === '1') {
-                            saUnlockForm(form, { publishedLock: true });
-                            saMarkPublishedControls(form);
+            saRunLockedPublish(form, e, published, function () {
+                return fetch(EE_ENDPOINT, { method: 'POST', body: fd, credentials: 'same-origin' })
+                    .then(function (r) { return r.json(); })
+                    .then(function (j) {
+                        if (j && j.success) {
+                            toast(j.message || 'Épreuve enregistrée');
+                            form.style.display = 'none';
+                            saResetPublishBusy(form);
+                            updateTopicTopActions();
+                            loadEeExamsTable();
                         } else {
-                            saUnlockForm(form);
+                            toast((j && j.message) || 'Erreur', true);
                         }
-                        form.style.display = 'none';
-                        updateTopicTopActions();
-                        loadEeExamsTable();
-                    } else {
-                        saUnlockForm(form);
-                        toast((j && j.message) || 'Erreur', true);
-                    }
-                })
-                .catch(function () {
-                    saUnlockForm(form);
-                    toast('Erreur réseau', true);
-                });
+                        return j;
+                    });
+            }).catch(function () { toast('Erreur réseau', true); });
         });
     }
 
@@ -1626,7 +1662,6 @@
                 document.getElementById('eo-exam-subtitle').value = e.subtitle || '';
                 document.getElementById('eo-exam-visibility').value = (e.visibility === 'premium' ? 'premium' : 'gratuit');
                 document.getElementById('eo-exam-published').checked = Number(e.is_published || 0) === 1;
-                if (Number(e.is_published || 0) === 1) saMarkPublishedControls(form);
                 var grouped = eoGroupPartsForAdmin(Array.isArray(e.parts) ? e.parts : []);
                 if (!grouped.length) grouped = [{ part_number: 1, part_title: '', tasks: {} }];
                 resetEoParts(grouped.length);
@@ -1697,14 +1732,9 @@
         });
         form.addEventListener('submit', function (e) {
             e.preventDefault();
-            if (!saLockForm(form)) return;
             var examId = document.getElementById('eo-exam-id').value;
             var title = (document.getElementById('eo-exam-title').value || '').trim();
-            if (!title) {
-                saUnlockForm(form);
-                return toast("Le titre de l'épreuve est requis.", true);
-            }
-            var published = document.getElementById('eo-exam-published').checked ? '1' : '0';
+            if (!title) return toast("Le titre de l'épreuve est requis.", true);
             var parts = collectEoPartsPayload();
             var fd = new FormData();
             fd.append('action', 'save_exam');
@@ -1712,31 +1742,25 @@
             fd.append('title', title);
             fd.append('subtitle', document.getElementById('eo-exam-subtitle').value || '');
             fd.append('visibility', document.getElementById('eo-exam-visibility').value || 'gratuit');
-            fd.append('is_published', published);
+            var published = document.getElementById('eo-exam-published').checked;
+            fd.append('is_published', published ? '1' : '0');
             fd.append('parts_json', JSON.stringify(parts));
-            fetch(EO_ENDPOINT, { method: 'POST', body: fd, credentials: 'same-origin' })
-                .then(function (r) { return r.json(); })
-                .then(function (j) {
-                    if (j && j.success) {
-                        toast(j.message || 'Épreuve orale enregistrée');
-                        if (published === '1') {
-                            saUnlockForm(form, { publishedLock: true });
-                            saMarkPublishedControls(form);
+            saRunLockedPublish(form, e, published, function () {
+                return fetch(EO_ENDPOINT, { method: 'POST', body: fd, credentials: 'same-origin' })
+                    .then(function (r) { return r.json(); })
+                    .then(function (j) {
+                        if (j && j.success) {
+                            toast(j.message || 'Épreuve orale enregistrée');
+                            form.style.display = 'none';
+                            saResetPublishBusy(form);
+                            updateTopicTopActions();
+                            loadEoExamsTable();
                         } else {
-                            saUnlockForm(form);
+                            toast((j && j.message) || 'Erreur', true);
                         }
-                        form.style.display = 'none';
-                        updateTopicTopActions();
-                        loadEoExamsTable();
-                    } else {
-                        saUnlockForm(form);
-                        toast((j && j.message) || 'Erreur', true);
-                    }
-                })
-                .catch(function () {
-                    saUnlockForm(form);
-                    toast('Erreur réseau', true);
-                });
+                        return j;
+                    });
+            }).catch(function () { toast('Erreur réseau', true); });
         });
     }
 
@@ -2418,7 +2442,6 @@
                 titleEl.value = d.title || '';
                 if (visEl) visEl.value = (d.visibility === 'premium' ? 'premium' : 'gratuit');
                 if (pubEl) pubEl.checked = Number(d.is_published || 0) === 1;
-                if (Number(d.is_published || 0) === 1) saMarkPublishedControls(form);
                 var sec = Number(d.duration_seconds || 3600);
                 if (durEl) durEl.value = String(Math.max(1, Math.round(sec / 60)));
                 var qs = d.quiz_questions || [];
@@ -2506,12 +2529,10 @@
         }
         form.addEventListener('submit', function (e) {
             e.preventDefault();
-            if (!saLockForm(form)) return;
             var examId = (document.getElementById('ce-exam-id').value || '').trim();
             var title = (document.getElementById('ce-exam-title').value || '').trim();
             if (!title) {
                 toast("Le titre de l'épreuve est requis.", true);
-                saUnlockForm(form);
                 return;
             }
             var payload = collectCeQuestionsPayload();
@@ -2534,14 +2555,10 @@
                     ok = false;
                 }
             });
-            if (!ok) {
-                saUnlockForm(form);
-                return;
-            }
+            if (!ok) return;
             var mins = parseInt(document.getElementById('ce-duration-minutes').value, 10);
             if (!mins || mins < 1) mins = 60;
             var durSec = Math.min(86400, Math.max(60, mins * 60));
-            var published = document.getElementById('ce-exam-published').checked ? '1' : '0';
             var fd = new FormData();
             fd.append('action', 'save_exam');
             if (examId) fd.append('exam_id', examId);
@@ -2549,32 +2566,26 @@
             fd.append('subtitle', '');
             fd.append('intro_html', '');
             fd.append('visibility', document.getElementById('ce-exam-visibility').value || 'gratuit');
-            fd.append('is_published', published);
+            var published = document.getElementById('ce-exam-published').checked;
+            fd.append('is_published', published ? '1' : '0');
             fd.append('duration_seconds', String(durSec));
             appendCeQuestionsToFormData(fd, payload);
-            fetch(CE_ENDPOINT, { method: 'POST', body: fd, credentials: 'same-origin' })
-                .then(function (r) { return r.json(); })
-                .then(function (j) {
-                    if (j && j.success) {
-                        toast(j.message || 'Épreuve enregistrée');
-                        if (published === '1') {
-                            saUnlockForm(form, { publishedLock: true });
-                            saMarkPublishedControls(form);
+            saRunLockedPublish(form, e, published, function () {
+                return fetch(CE_ENDPOINT, { method: 'POST', body: fd, credentials: 'same-origin' })
+                    .then(function (r) { return r.json(); })
+                    .then(function (j) {
+                        if (j && j.success) {
+                            toast(j.message || 'Épreuve enregistrée');
+                            form.style.display = 'none';
+                            saResetPublishBusy(form);
+                            updateTopicTopActions();
+                            loadCeExamsTable();
                         } else {
-                            saUnlockForm(form);
+                            toast((j && j.message) || 'Erreur', true);
                         }
-                        form.style.display = 'none';
-                        updateTopicTopActions();
-                        loadCeExamsTable();
-                    } else {
-                        saUnlockForm(form);
-                        toast((j && j.message) || 'Erreur', true);
-                    }
-                })
-                .catch(function () {
-                    saUnlockForm(form);
-                    toast('Erreur réseau', true);
-                });
+                        return j;
+                    });
+            }).catch(function () { toast('Erreur réseau', true); });
         });
     }
 
@@ -2800,15 +2811,11 @@
         var pubEl = document.getElementById('co-exam-published');
         var durEl = document.getElementById('co-duration-minutes');
         if (!idEl || !titleEl) return;
-        saClearPublishedLocks(form);
         if (!examId) {
             idEl.value = '';
             titleEl.value = '';
             if (visEl) visEl.value = 'gratuit';
-            if (pubEl) {
-                pubEl.checked = true;
-                pubEl.disabled = false;
-            }
+            if (pubEl) pubEl.checked = true;
             if (durEl) durEl.value = '35';
             resetCoQuestions(1);
             return;
@@ -2828,7 +2835,6 @@
                 titleEl.value = d.title || '';
                 if (visEl) visEl.value = (d.visibility === 'premium' ? 'premium' : 'gratuit');
                 if (pubEl) pubEl.checked = Number(d.is_published || 0) === 1;
-                if (Number(d.is_published || 0) === 1) saMarkPublishedControls(form);
                 var sec = Number(d.duration_seconds || 2100);
                 if (durEl) durEl.value = String(Math.max(1, Math.round(sec / 60)));
                 var qs = d.quiz_questions || [];
@@ -3024,12 +3030,10 @@
         }
         form.addEventListener('submit', function (e) {
             e.preventDefault();
-            if (!saLockForm(form)) return;
             var examId = (document.getElementById('co-exam-id').value || '').trim();
             var title = (document.getElementById('co-exam-title').value || '').trim();
             if (!title) {
                 toast("Le titre de l'épreuve est requis.", true);
-                saUnlockForm(form);
                 return;
             }
             var payload = collectCoQuestionsPayload();
@@ -3051,14 +3055,10 @@
                     ok = false;
                 }
             });
-            if (!ok) {
-                saUnlockForm(form);
-                return;
-            }
+            if (!ok) return;
             var mins = parseInt(document.getElementById('co-duration-minutes').value, 10);
             if (!mins || mins < 1) mins = 35;
             var durSec = Math.min(86400, Math.max(60, mins * 60));
-            var published = document.getElementById('co-exam-published').checked ? '1' : '0';
             var fd = new FormData();
             fd.append('action', 'save_exam');
             if (examId) fd.append('exam_id', examId);
@@ -3066,32 +3066,26 @@
             fd.append('subtitle', '');
             fd.append('intro_html', '');
             fd.append('visibility', document.getElementById('co-exam-visibility').value || 'gratuit');
-            fd.append('is_published', published);
+            var published = document.getElementById('co-exam-published').checked;
+            fd.append('is_published', published ? '1' : '0');
             fd.append('duration_seconds', String(durSec));
             appendCoQuestionsToFormData(fd, payload);
-            fetch(CO_ENDPOINT, { method: 'POST', body: fd, credentials: 'same-origin' })
-                .then(function (r) { return r.json(); })
-                .then(function (j) {
-                    if (j && j.success) {
-                        toast(j.message || 'Épreuve enregistrée');
-                        if (published === '1') {
-                            saUnlockForm(form, { publishedLock: true });
-                            saMarkPublishedControls(form);
+            saRunLockedPublish(form, e, published, function () {
+                return fetch(CO_ENDPOINT, { method: 'POST', body: fd, credentials: 'same-origin' })
+                    .then(function (r) { return r.json(); })
+                    .then(function (j) {
+                        if (j && j.success) {
+                            toast(j.message || 'Épreuve enregistrée');
+                            form.style.display = 'none';
+                            saResetPublishBusy(form);
+                            updateTopicTopActions();
+                            loadCoExamsTable();
                         } else {
-                            saUnlockForm(form);
+                            toast((j && j.message) || 'Erreur', true);
                         }
-                        form.style.display = 'none';
-                        updateTopicTopActions();
-                        loadCoExamsTable();
-                    } else {
-                        saUnlockForm(form);
-                        toast((j && j.message) || 'Erreur', true);
-                    }
-                })
-                .catch(function () {
-                    saUnlockForm(form);
-                    toast('Erreur réseau', true);
-                });
+                        return j;
+                    });
+            }).catch(function () { toast('Erreur réseau', true); });
         });
     }
 
@@ -5176,9 +5170,7 @@
         if (form) {
             form.addEventListener('submit', function (e) {
                 e.preventDefault();
-                if (!saLockForm(form)) return;
                 var editId = document.getElementById('message-edit-id').value;
-                var published = document.getElementById('message-published').value;
                 var fd = new FormData();
                 fd.append('action', 'admin_save');
                 if (editId) fd.append('id', editId);
@@ -5186,37 +5178,33 @@
                 var linkField = document.getElementById('message-link');
                 fd.append('link_url', linkField ? linkField.value : '');
                 fd.append('visibility', document.getElementById('message-visibility').value);
-                fd.append('is_published', published);
+                var published = String(document.getElementById('message-published').value || '') === '1';
+                fd.append('is_published', published ? '1' : '0');
                 if (imgInput && imgInput.files && imgInput.files[0]) {
                     fd.append('image', imgInput.files[0]);
                 }
                 var clear = document.getElementById('message-clear-image');
                 if (clear && clear.checked) fd.append('clear_image', '1');
-                fetch(COMMUNITY_API, { method: 'POST', body: fd, credentials: 'same-origin' })
-                    .then(function (r) {
-                        return r.json();
-                    })
-                    .then(function (j) {
-                        if (j && j.success) {
-                            toast(j.message || 'OK');
-                            if (String(published) === '1') {
-                                saUnlockForm(form, { publishedLock: true });
-                                saMarkPublishedControls(form);
+                saRunLockedPublish(form, e, published, function () {
+                    return fetch(COMMUNITY_API, { method: 'POST', body: fd, credentials: 'same-origin' })
+                        .then(function (r) {
+                            return r.json();
+                        })
+                        .then(function (j) {
+                            if (j && j.success) {
+                                toast(j.message || 'OK');
+                                form.style.display = 'none';
+                                saResetPublishBusy(form);
+                                resetCommunityPostForm();
+                                reloadMessages();
                             } else {
-                                saUnlockForm(form);
+                                toast((j && j.message) || 'Erreur', true);
                             }
-                            form.style.display = 'none';
-                            resetCommunityPostForm();
-                            reloadMessages();
-                        } else {
-                            saUnlockForm(form);
-                            toast((j && j.message) || 'Erreur', true);
-                        }
-                    })
-                    .catch(function () {
-                        saUnlockForm(form);
-                        toast('Erreur réseau', true);
-                    });
+                            return j;
+                        });
+                }).catch(function () {
+                    toast('Erreur réseau', true);
+                });
             });
         }
         document.body.addEventListener('click', function (e) {
@@ -6953,46 +6941,39 @@
                 return;
             }
             var submitBtn = document.getElementById('video-form-submit');
-            if (submitBtn) {
-                submitBtn.disabled = true;
-                submitBtn.style.opacity = '0.5';
-                submitBtn.style.cursor = 'not-allowed';
-            }
             var fd = new FormData(form);
             var editId = document.getElementById('video-edit-id').value;
             fd.append('action', editId ? 'update_video' : 'add_video');
             if (editId) fd.append('id', editId);
-            fetch(ENDPOINT, { method: 'POST', body: fd, credentials: 'same-origin' })
-                .then(function (r) {
-                    return r.json();
-                })
-                .then(function (j) {
-                    if (j && j.success) {
-                        toast(j.message || (editId ? 'Vidéo mise à jour.' : 'Vidéo mise en ligne.'));
-                        resetVideoForm();
-                        fetchVideosFromServer(function (err, data) {
-                            if (!err && data) {
-                                window.videosFromDB = data;
-                                renderVideosGrid(data);
-                            }
-                        });
-                    } else {
-                        toast((j && j.message) || 'Échec : la vidéo n’a pas été enregistrée.', true);
-                    }
-                    if (submitBtn) {
-                        submitBtn.disabled = false;
-                        submitBtn.style.opacity = '1';
-                        submitBtn.style.cursor = 'pointer';
-                    }
-                })
-                .catch(function () {
-                    toast('Échec réseau : publication vidéo interrompue. Réessayez.', true);
-                    if (submitBtn) {
-                        submitBtn.disabled = false;
-                        submitBtn.style.opacity = '1';
-                        submitBtn.style.cursor = 'pointer';
-                    }
-                });
+            saRunLockedPublish(form, e, true, function () {
+                return fetch(ENDPOINT, { method: 'POST', body: fd, credentials: 'same-origin' })
+                    .then(function (r) {
+                        return r.json();
+                    })
+                    .then(function (j) {
+                        if (j && j.success) {
+                            toast(j.message || (editId ? 'Vidéo mise à jour.' : 'Vidéo mise en ligne.'));
+                            saResetPublishBusy(form);
+                            resetVideoForm();
+                            fetchVideosFromServer(function (err, data) {
+                                if (!err && data) {
+                                    window.videosFromDB = data;
+                                    renderVideosGrid(data);
+                                }
+                            });
+                        } else {
+                            toast((j && j.message) || 'Échec : la vidéo n’a pas été enregistrée.', true);
+                        }
+                        return j;
+                    });
+            }).catch(function () {
+                toast('Échec réseau : publication vidéo interrompue. Réessayez.', true);
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.style.opacity = '1';
+                    submitBtn.style.cursor = 'pointer';
+                }
+            });
         });
     }
 

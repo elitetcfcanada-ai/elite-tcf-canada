@@ -51,7 +51,7 @@ $aboUrl = site_href('abonnement.php');
     <link rel="stylesheet" href="Assets/css/comprehesion_Ecrite.css?v=7">
     <link rel="stylesheet" href="Assets/css/header_footer.css">
     <link rel="stylesheet" href="Assets/css/tcf-responsive-pills.css">
-    <link rel="stylesheet" href="Assets/css/quiz-site-chrome.css?v=17">
+    <link rel="stylesheet" href="Assets/css/quiz-site-chrome.css?v=18">
     <link rel="stylesheet" href="Assets/css/tcf-quiz-pro.css?v=results-board-pro-13">
 </head>
 
@@ -250,7 +250,9 @@ $aboUrl = site_href('abonnement.php');
         window.TCF_ABO_URL = <?php echo json_encode($aboUrl); ?>;
         window.TCF_BACK_URL = <?php echo json_encode($backList); ?>;
     </script>
-    <script src="Assets/javascript/tcf_quiz_dialog.js?v=1"></script>
+    <link rel="stylesheet" href="Assets/css/tcf-confirm-dialog.css?v=confirm-2">
+    <script src="Assets/javascript/tcf_confirm_dialog.js?v=confirm-2"></script>
+    <script src="Assets/javascript/tcf_quiz_dialog.js?v=2"></script>
     <script src="Assets/javascript/comprehesion_quiz_dynamic.js?v=9"></script>
 </div>
 
