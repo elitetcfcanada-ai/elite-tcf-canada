@@ -6,7 +6,7 @@ require_once __DIR__ . '/../bootstrap.php';
 $currentPage = 'users';
 
 try {
-    $stmt = $pdo->query("SELECT id, name, email, subscription_type, status, created_at FROM users WHERE role = 'user' ORDER BY created_at DESC");
+    $stmt = $pdo->query("SELECT id, name, email, subscription_type, status, created_at FROM users WHERE role = 'user' ORDER BY created_at DESC, id DESC");
     $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
     $users = [];

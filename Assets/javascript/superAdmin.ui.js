@@ -108,7 +108,6 @@
         var toastEl = document.getElementById('notification-toast');
         var text = document.getElementById('notification-text');
         if (!toastEl || !text) {
-            window.alert(message);
             return;
         }
         text.textContent = message;
@@ -117,9 +116,29 @@
         window.clearTimeout(toast._t);
         toast._t = window.setTimeout(function () {
             toastEl.classList.remove('show');
-        }, 3200);
+        }, 3800);
     }
     window.TCF_ADMIN_TOAST = toast;
+
+    /**
+     * Confirmation interne (carte) — jamais window.confirm / alert navigateur.
+     * @returns {Promise<boolean>}
+     */
+    function saConfirm(message, opts) {
+        opts = opts || {};
+        if (typeof window.tcfConfirm === 'function') {
+            return window.tcfConfirm({
+                title: opts.title || 'Confirmer la suppression',
+                message: message || '',
+                confirmLabel: opts.confirmLabel || 'Supprimer',
+                cancelLabel: opts.cancelLabel || 'Annuler',
+                variant: opts.variant || 'danger',
+                icon: opts.icon
+            });
+        }
+        return Promise.resolve(false);
+    }
+    window.TCF_ADMIN_CONFIRM = saConfirm;
 
     function postForm(action, fields) {
         var fd = new FormData();
@@ -739,21 +758,24 @@
                         return;
                     }
                     var eeId2 = tr.getAttribute('data-id');
-                    if (!eeId2 || !window.confirm("Supprimer cette épreuve d'expression écrite ?")) return;
-                    var fd = new FormData();
-                    fd.append('action', 'delete_exam');
-                    fd.append('exam_id', eeId2);
-                    fetch(EE_ENDPOINT, { method: 'POST', body: fd, credentials: 'same-origin' })
-                        .then(function (r) { return r.json(); })
-                        .then(function (j) {
-                            if (j && j.success) {
-                                toast(j.message || 'Épreuve supprimée');
-                                loadEeExamsTable();
-                            } else {
-                                toast((j && j.message) || 'Erreur', true);
-                            }
-                        })
-                        .catch(function () { toast('Erreur réseau', true); });
+                    if (!eeId2) return;
+                    saConfirm("Supprimer cette épreuve d'expression écrite ?", { title: "Supprimer l'épreuve" }).then(function (ok) {
+                        if (!ok) return;
+                        var fd = new FormData();
+                        fd.append('action', 'delete_exam');
+                        fd.append('exam_id', eeId2);
+                        fetch(EE_ENDPOINT, { method: 'POST', body: fd, credentials: 'same-origin' })
+                            .then(function (r) { return r.json(); })
+                            .then(function (j) {
+                                if (j && j.success) {
+                                    toast(j.message || 'Épreuve supprimée');
+                                    loadEeExamsTable();
+                                } else {
+                                    toast((j && j.message) || 'Échec : suppression impossible.', true);
+                                }
+                            })
+                            .catch(function () { toast('Échec réseau : réessayez.', true); });
+                    });
                 }
                 return;
             }
@@ -768,21 +790,24 @@
                         return;
                     }
                     var eoId2 = tr.getAttribute('data-id');
-                    if (!eoId2 || !window.confirm("Supprimer cette épreuve d'expression orale ?")) return;
-                    var fde = new FormData();
-                    fde.append('action', 'delete_exam');
-                    fde.append('exam_id', eoId2);
-                    fetch(EO_ENDPOINT, { method: 'POST', body: fde, credentials: 'same-origin' })
-                        .then(function (r) { return r.json(); })
-                        .then(function (j) {
-                            if (j && j.success) {
-                                toast(j.message || 'Épreuve supprimée');
-                                loadEoExamsTable();
-                            } else {
-                                toast((j && j.message) || 'Erreur', true);
-                            }
-                        })
-                        .catch(function () { toast('Erreur réseau', true); });
+                    if (!eoId2) return;
+                    saConfirm("Supprimer cette épreuve d'expression orale ?", { title: "Supprimer l'épreuve" }).then(function (ok) {
+                        if (!ok) return;
+                        var fde = new FormData();
+                        fde.append('action', 'delete_exam');
+                        fde.append('exam_id', eoId2);
+                        fetch(EO_ENDPOINT, { method: 'POST', body: fde, credentials: 'same-origin' })
+                            .then(function (r) { return r.json(); })
+                            .then(function (j) {
+                                if (j && j.success) {
+                                    toast(j.message || 'Épreuve supprimée');
+                                    loadEoExamsTable();
+                                } else {
+                                    toast((j && j.message) || 'Échec : suppression impossible.', true);
+                                }
+                            })
+                            .catch(function () { toast('Échec réseau : réessayez.', true); });
+                    });
                 }
                 return;
             }
@@ -797,21 +822,24 @@
                         return;
                     }
                     var ceId2 = tr.getAttribute('data-id');
-                    if (!ceId2 || !window.confirm("Supprimer cette épreuve de compréhension écrite ?")) return;
-                    var fdc = new FormData();
-                    fdc.append('action', 'delete_exam');
-                    fdc.append('exam_id', ceId2);
-                    fetch(CE_ENDPOINT, { method: 'POST', body: fdc, credentials: 'same-origin' })
-                        .then(function (r) { return r.json(); })
-                        .then(function (j) {
-                            if (j && j.success) {
-                                toast(j.message || 'Épreuve supprimée');
-                                loadCeExamsTable();
-                            } else {
-                                toast((j && j.message) || 'Erreur', true);
-                            }
-                        })
-                        .catch(function () { toast('Erreur réseau', true); });
+                    if (!ceId2) return;
+                    saConfirm("Supprimer cette épreuve de compréhension écrite ?", { title: "Supprimer l'épreuve" }).then(function (ok) {
+                        if (!ok) return;
+                        var fdc = new FormData();
+                        fdc.append('action', 'delete_exam');
+                        fdc.append('exam_id', ceId2);
+                        fetch(CE_ENDPOINT, { method: 'POST', body: fdc, credentials: 'same-origin' })
+                            .then(function (r) { return r.json(); })
+                            .then(function (j) {
+                                if (j && j.success) {
+                                    toast(j.message || 'Épreuve supprimée');
+                                    loadCeExamsTable();
+                                } else {
+                                    toast((j && j.message) || 'Échec : suppression impossible.', true);
+                                }
+                            })
+                            .catch(function () { toast('Échec réseau : réessayez.', true); });
+                    });
                 }
                 return;
             }
@@ -826,21 +854,24 @@
                         return;
                     }
                     var coid2 = tr.getAttribute('data-id');
-                    if (!coid2 || !window.confirm("Supprimer cette épreuve de compréhension orale ?")) return;
-                    var fdco = new FormData();
-                    fdco.append('action', 'delete_exam');
-                    fdco.append('exam_id', coid2);
-                    fetch(CO_ENDPOINT, { method: 'POST', body: fdco, credentials: 'same-origin' })
-                        .then(function (r) { return r.json(); })
-                        .then(function (j) {
-                            if (j && j.success) {
-                                toast(j.message || 'Épreuve supprimée');
-                                loadCoExamsTable();
-                            } else {
-                                toast((j && j.message) || 'Erreur', true);
-                            }
-                        })
-                        .catch(function () { toast('Erreur réseau', true); });
+                    if (!coid2) return;
+                    saConfirm("Supprimer cette épreuve de compréhension orale ?", { title: "Supprimer l'épreuve" }).then(function (ok) {
+                        if (!ok) return;
+                        var fdco = new FormData();
+                        fdco.append('action', 'delete_exam');
+                        fdco.append('exam_id', coid2);
+                        fetch(CO_ENDPOINT, { method: 'POST', body: fdco, credentials: 'same-origin' })
+                            .then(function (r) { return r.json(); })
+                            .then(function (j) {
+                                if (j && j.success) {
+                                    toast(j.message || 'Épreuve supprimée');
+                                    loadCoExamsTable();
+                                } else {
+                                    toast((j && j.message) || 'Échec : suppression impossible.', true);
+                                }
+                            })
+                            .catch(function () { toast('Échec réseau : réessayez.', true); });
+                    });
                 }
                 return;
             }
@@ -861,19 +892,22 @@
                     return;
                 }
                 var id2 = tr.getAttribute('data-id');
-                if (!id2 || !window.confirm('Supprimer ce sujet ?')) return;
-                postForm('delete_topic', { id: id2 })
-                    .then(function (j) {
-                        if (j && j.success) {
-                            toast(j.message || 'Supprimé');
-                            setTopicContext(state.topicsTarget);
-                        } else {
-                            toast((j && j.message) || 'Erreur', true);
-                        }
-                    })
-                    .catch(function () {
-                        toast('Erreur réseau', true);
-                    });
+                if (!id2) return;
+                saConfirm('Supprimer ce sujet ?', { title: 'Supprimer le sujet' }).then(function (ok) {
+                    if (!ok) return;
+                    postForm('delete_topic', { id: id2 })
+                        .then(function (j) {
+                            if (j && j.success) {
+                                toast(j.message || 'Sujet supprimé');
+                                setTopicContext(state.topicsTarget);
+                            } else {
+                                toast((j && j.message) || 'Échec : suppression impossible.', true);
+                            }
+                        })
+                        .catch(function () {
+                            toast('Échec réseau : réessayez.', true);
+                        });
+                });
             }
         });
         initEeExamFormUi();
@@ -3707,14 +3741,31 @@
         });
     }
 
+    function saFormatPlanPrice(n) {
+        var num = Number(n);
+        if (!isFinite(num)) num = 0;
+        num = Math.round(num * 100) / 100;
+        if (Math.abs(num - Math.round(num)) < 0.001) {
+            return String(Math.round(num));
+        }
+        return num.toFixed(2).replace('.', ',');
+    }
+
+    function saParsePlanPrice(v) {
+        var s = String(v == null ? '0' : v)
+            .trim()
+            .replace(/\s/g, '')
+            .replace(',', '.');
+        var n = parseFloat(s);
+        return isFinite(n) ? Math.round(n * 100) / 100 : 0;
+    }
+
     function renderSaPlanCatalogCard(p) {
         var feats = Array.isArray(p.features) ? p.features.join('\n') : '';
         var id = escAttr(String(p.id));
         var key = escHtml(String(p.key || ''));
         var dur = p.duration_days != null ? String(p.duration_days) : '7';
-        var priceNum = Number(p.price);
-        if (!isFinite(priceNum)) priceNum = 0;
-        var price = String(priceNum);
+        var price = saFormatPlanPrice(p.price);
         var active = p.is_active === 1 || p.is_active === true ? ' checked' : '';
         var isOn = p.is_active === 1 || p.is_active === true;
         return (
@@ -3739,11 +3790,11 @@
             '<div class="sa-plan-userlike__price-row">' +
             '<span class="sa-plan-userlike__currency sa-plan-currency-fixed" aria-hidden="true">$</span>' +
             '<input type="hidden" class="sa-plan-currency-input" value="$">' +
-            '<input type="number" class="sa-plan-userlike__price sa-plan-price-input" min="0" step="0.01" value="' +
+            '<input type="text" inputmode="decimal" class="sa-plan-userlike__price sa-plan-price-input" value="' +
             escAttr(price) +
-            '" aria-label="Prix (USD)">' +
+            '" placeholder="49,99" aria-label="Prix (USD, virgule acceptée)">' +
             '</div>' +
-            '<p class="sa-plan-userlike__price-hint">Prix affiché en dollars (USD)</p>' +
+            '<p class="sa-plan-userlike__price-hint">Prix en dollars (USD) — décimales OK (ex. 49,99)</p>' +
             '<div class="sa-plan-userlike__wave" aria-hidden="true">' +
             '<svg viewBox="0 0 400 40" preserveAspectRatio="none"><path d="M0,20 Q100,0 200,20 T400,20 L400,40 L0,40 Z" fill="#141622"/></svg>' +
             '</div></div>' +
@@ -3786,7 +3837,7 @@
             id: id,
             tier: tierEl ? tierEl.value : '',
             badge: badgeEl ? badgeEl.value : '',
-            price: priceEl ? priceEl.value : '0',
+            price: String(saParsePlanPrice(priceEl ? priceEl.value : '0')),
             currency: '$',
             duration_days: durEl ? durEl.value : '7',
             sort_order: sortEl ? sortEl.value : '0',
@@ -3844,23 +3895,30 @@
         var confirmMsg = nextDisabled
             ? 'Désactiver tous les abonnements ? Le contenu premium deviendra gratuit et les cartes d’abonnement disparaîtront côté utilisateur.'
             : 'Réactiver les abonnements ? Les cartes et paiements réapparaîtront ; les abonnements des membres reprennent leur état habituel.';
-        if (!window.confirm(confirmMsg)) return;
-        btn.disabled = true;
-        postForm('set_subscriptions_platform_mode', { disabled: nextDisabled ? '1' : '0' })
-            .then(function (j) {
-                if (j && j.success) {
-                    toast(j.message || 'Mode mis à jour');
-                    loadSubscriptionsPlatformMode();
-                } else {
-                    toast((j && j.message) || 'Erreur', true);
-                }
-            })
-            .catch(function () {
-                toast('Erreur réseau', true);
-            })
-            .finally(function () {
-                btn.disabled = false;
-            });
+        saConfirm(confirmMsg, {
+            title: nextDisabled ? 'Désactiver les abonnements' : 'Réactiver les abonnements',
+            confirmLabel: nextDisabled ? 'Désactiver' : 'Réactiver',
+            variant: 'info',
+            icon: 'bx bx-power-off'
+        }).then(function (ok) {
+            if (!ok) return;
+            btn.disabled = true;
+            postForm('set_subscriptions_platform_mode', { disabled: nextDisabled ? '1' : '0' })
+                .then(function (j) {
+                    if (j && j.success) {
+                        toast(j.message || 'Mode mis à jour');
+                        loadSubscriptionsPlatformMode();
+                    } else {
+                        toast((j && j.message) || 'Échec : mode abonnements non modifié.', true);
+                    }
+                })
+                .catch(function () {
+                    toast('Échec réseau : réessayez.', true);
+                })
+                .finally(function () {
+                    btn.disabled = false;
+                });
+        });
     }
 
     function loadSubscriptionPlansAdmin() {
@@ -3895,29 +3953,28 @@
                         var c = btn.closest('.sa-plan-userlike, .sa-plan-pro-card, .sa-plan-orbit-card');
                         var id = c ? c.getAttribute('data-plan-id') : null;
                         if (!id) return;
-                        if (
-                            !window.confirm(
-                                'Supprimer définitivement ce forfait ? Cette action est irréversible si aucun membre n’y est rattaché.'
-                            )
-                        ) {
-                            return;
-                        }
-                        btn.disabled = true;
-                        postForm('delete_subscription_plan', { id: id })
-                            .then(function (dj) {
-                                if (dj && dj.success) {
-                                    toast(dj.message || 'Forfait supprimé');
-                                    loadSubscriptionPlansAdmin();
-                                } else {
-                                    toast((dj && dj.message) || 'Erreur', true);
-                                }
-                            })
-                            .catch(function () {
-                                toast('Erreur réseau', true);
-                            })
-                            .finally(function () {
-                                btn.disabled = false;
-                            });
+                        saConfirm(
+                            'Supprimer définitivement ce forfait ? Cette action est irréversible si aucun membre n’y est rattaché.',
+                            { title: 'Supprimer le forfait' }
+                        ).then(function (ok) {
+                            if (!ok) return;
+                            btn.disabled = true;
+                            postForm('delete_subscription_plan', { id: id })
+                                .then(function (dj) {
+                                    if (dj && dj.success) {
+                                        toast(dj.message || 'Forfait supprimé');
+                                        loadSubscriptionPlansAdmin();
+                                    } else {
+                                        toast((dj && dj.message) || 'Échec : forfait non supprimé.', true);
+                                    }
+                                })
+                                .catch(function () {
+                                    toast('Échec réseau : réessayez.', true);
+                                })
+                                .finally(function () {
+                                    btn.disabled = false;
+                                });
+                        });
                     });
                 });
             })
@@ -4365,6 +4422,13 @@
             tb.innerHTML = '<tr><td colspan="9" style="padding:12px;color:var(--sa-muted);">Aucun utilisateur.</td></tr>';
             return;
         }
+        // Plus récent en haut (ordre d’arrivée inversé)
+        rows = (rows || []).slice().sort(function (a, b) {
+            var ta = new Date(a.created_at || 0).getTime() || 0;
+            var tb2 = new Date(b.created_at || 0).getTime() || 0;
+            if (tb2 !== ta) return tb2 - ta;
+            return (parseInt(b.id, 10) || 0) - (parseInt(a.id, 10) || 0);
+        });
         tb.innerHTML = rows
             .map(function (u) {
                 var sub = u.subscription_type || 'free';
@@ -4478,19 +4542,22 @@
             if (!tr) return;
             var id = tr.getAttribute('data-id');
             if (e.target.closest('.sa-user-del')) {
-                if (!id || !window.confirm('Supprimer cet utilisateur ?')) return;
-                postForm('delete_user', { id: id })
-                    .then(function (j) {
-                        if (j && j.success) {
-                            toast(j.message || 'Supprimé');
-                            reloadUsers();
-                        } else {
-                            toast((j && j.message) || 'Erreur', true);
-                        }
-                    })
-                    .catch(function () {
-                        toast('Erreur réseau', true);
-                    });
+                if (!id) return;
+                saConfirm('Supprimer cet utilisateur ?', { title: 'Supprimer l’utilisateur' }).then(function (ok) {
+                    if (!ok) return;
+                    postForm('delete_user', { id: id })
+                        .then(function (j) {
+                            if (j && j.success) {
+                                toast(j.message || 'Utilisateur supprimé');
+                                reloadUsers();
+                            } else {
+                                toast((j && j.message) || 'Échec : utilisateur non supprimé.', true);
+                            }
+                        })
+                        .catch(function () {
+                            toast('Échec réseau : réessayez.', true);
+                        });
+                });
             }
             if (e.target.closest('.sa-user-edit')) {
                 if (!modal) return;
@@ -4691,34 +4758,45 @@
             if (!tr) return;
             var id = tr.getAttribute('data-id');
             if (e.target.closest('.sa-admin-del')) {
-                if (!id || !window.confirm('Supprimer cet administrateur ?')) return;
-                postForm('delete_admin', { id: id })
-                    .then(function (j) {
-                        if (j && j.success) {
-                            toast(j.message || 'Supprimé');
-                            reloadAdmins();
-                        } else {
-                            toast((j && j.message) || 'Erreur', true);
-                        }
-                    })
-                    .catch(function () {
-                        toast('Erreur réseau', true);
-                    });
+                if (!id) return;
+                saConfirm('Supprimer cet administrateur ?', { title: 'Supprimer l’administrateur' }).then(function (ok) {
+                    if (!ok) return;
+                    postForm('delete_admin', { id: id })
+                        .then(function (j) {
+                            if (j && j.success) {
+                                toast(j.message || 'Administrateur supprimé');
+                                reloadAdmins();
+                            } else {
+                                toast((j && j.message) || 'Échec : administrateur non supprimé.', true);
+                            }
+                        })
+                        .catch(function () {
+                            toast('Échec réseau : réessayez.', true);
+                        });
+                });
             }
             if (e.target.closest('.sa-admin-demote')) {
-                if (!id || !window.confirm('Rétrograder cet administrateur en utilisateur ?')) return;
-                postForm('demote_to_user', { id: id })
-                    .then(function (j) {
-                        if (j && j.success) {
-                            toast(j.message || 'OK');
-                            reloadAdmins();
-                        } else {
-                            toast((j && j.message) || 'Erreur', true);
-                        }
-                    })
-                    .catch(function () {
-                        toast('Erreur réseau', true);
-                    });
+                if (!id) return;
+                saConfirm('Rétrograder cet administrateur en utilisateur ?', {
+                    title: 'Rétrograder',
+                    confirmLabel: 'Rétrograder',
+                    variant: 'info',
+                    icon: 'bx bx-user'
+                }).then(function (ok) {
+                    if (!ok) return;
+                    postForm('demote_to_user', { id: id })
+                        .then(function (j) {
+                            if (j && j.success) {
+                                toast(j.message || 'Administrateur rétrogradé');
+                                reloadAdmins();
+                            } else {
+                                toast((j && j.message) || 'Échec : rétrogradation impossible.', true);
+                            }
+                        })
+                        .catch(function () {
+                            toast('Échec réseau : réessayez.', true);
+                        });
+                });
             }
             if (e.target.closest('.sa-admin-edit')) {
                 openAdminFormPanel('edit', tr);
@@ -4957,23 +5035,30 @@
                 }
                 var card2 = del.closest('.sa-msg-row');
                 var raw2 = card2 && card2.getAttribute('data-msg');
-                if (!raw2 || !window.confirm('Supprimer cette annonce ?')) return;
-                try {
-                    var m2 = JSON.parse(raw2);
-                    var fd2 = new FormData();
-                    fd2.append('action', 'admin_delete');
-                    fd2.append('id', String(m2.id));
-                    fetch(COMMUNITY_API, { method: 'POST', body: fd2, credentials: 'same-origin' }).then(function (r) {
-                        return r.json();
-                    }).then(function (j) {
-                        if (j && j.success) {
-                            toast(j.message || 'OK');
-                            reloadMessages();
-                        } else {
-                            toast((j && j.message) || 'Erreur', true);
-                        }
-                    });
-                } catch (e2) {}
+                if (!raw2) return;
+                saConfirm('Supprimer cette annonce ?', { title: 'Supprimer l’annonce' }).then(function (ok) {
+                    if (!ok) return;
+                    try {
+                        var m2 = JSON.parse(raw2);
+                        var fd2 = new FormData();
+                        fd2.append('action', 'admin_delete');
+                        fd2.append('id', String(m2.id));
+                        fetch(COMMUNITY_API, { method: 'POST', body: fd2, credentials: 'same-origin' }).then(function (r) {
+                            return r.json();
+                        }).then(function (j) {
+                            if (j && j.success) {
+                                toast(j.message || 'Annonce supprimée');
+                                reloadMessages();
+                            } else {
+                                toast((j && j.message) || 'Échec : annonce non supprimée.', true);
+                            }
+                        }).catch(function () {
+                            toast('Échec réseau : réessayez.', true);
+                        });
+                    } catch (e2) {
+                        toast('Échec : données annonce invalides.', true);
+                    }
+                });
             }
         });
     }
@@ -5165,25 +5250,33 @@
             if (del) {
                 var card2 = del.closest('.sa-partner-card');
                 var raw2 = card2 && card2.getAttribute('data-partner');
-                if (!raw2 || !window.confirm('Supprimer ce partenaire ?')) return;
-                try {
-                    var p2 = JSON.parse(raw2);
-                    var fd2 = new FormData();
-                    fd2.append('action', 'admin_delete');
-                    fd2.append('id', String(p2.id));
-                    fetch(PARTNERS_API, { method: 'POST', body: fd2, credentials: 'same-origin' })
-                        .then(function (r) {
-                            return r.json();
-                        })
-                        .then(function (j) {
-                            if (j && j.success) {
-                                toast(j.message || 'OK');
-                                reloadPartners();
-                            } else {
-                                toast((j && j.message) || 'Erreur', true);
-                            }
-                        });
-                } catch (e2) {}
+                if (!raw2) return;
+                saConfirm('Supprimer ce partenaire ?', { title: 'Supprimer le partenaire' }).then(function (ok) {
+                    if (!ok) return;
+                    try {
+                        var p2 = JSON.parse(raw2);
+                        var fd2 = new FormData();
+                        fd2.append('action', 'admin_delete');
+                        fd2.append('id', String(p2.id));
+                        fetch(PARTNERS_API, { method: 'POST', body: fd2, credentials: 'same-origin' })
+                            .then(function (r) {
+                                return r.json();
+                            })
+                            .then(function (j) {
+                                if (j && j.success) {
+                                    toast(j.message || 'Partenaire supprimé');
+                                    reloadPartners();
+                                } else {
+                                    toast((j && j.message) || 'Échec : partenaire non supprimé.', true);
+                                }
+                            })
+                            .catch(function () {
+                                toast('Échec réseau : réessayez.', true);
+                            });
+                    } catch (e2) {
+                        toast('Échec : données partenaire invalides.', true);
+                    }
+                });
             }
         });
     }
@@ -5584,15 +5677,19 @@
             if (delBtn) {
                 e.stopPropagation();
                 var id = delBtn.getAttribute('data-id');
-                if (!id || !window.confirm('Supprimer ce témoignage ?')) return;
-                deleteTestimonialById(id);
+                if (!id) return;
+                saConfirm('Supprimer ce témoignage ?', { title: 'Supprimer le témoignage' }).then(function (ok) {
+                    if (ok) deleteTestimonialById(id);
+                });
                 return;
             }
             // Delete inside modal
             var modalDel = e.target.closest && e.target.closest('#sa-testi-modal-delete');
             if (modalDel) {
-                if (!saTestiOpenId || !window.confirm('Supprimer ce témoignage ?')) return;
-                deleteTestimonialById(saTestiOpenId);
+                if (!saTestiOpenId) return;
+                saConfirm('Supprimer ce témoignage ?', { title: 'Supprimer le témoignage' }).then(function (ok) {
+                    if (ok) deleteTestimonialById(saTestiOpenId);
+                });
                 return;
             }
             // Edit button
@@ -6222,8 +6319,10 @@
                 }
                 var card = del.closest('.tcf-admin-video-card');
                 var id = card ? card.getAttribute('data-id') : '';
-                if (!id || !window.confirm('Supprimer cette vidéo ?')) return;
-                deleteVideoById(id);
+                if (!id) return;
+                saConfirm('Supprimer cette vidéo ?', { title: 'Supprimer la vidéo' }).then(function (ok) {
+                    if (ok) deleteVideoById(id);
+                });
                 return;
             }
             var edit = e.target.closest && e.target.closest('.js-edit-video');
@@ -6642,7 +6741,7 @@
                 })
                 .then(function (j) {
                     if (j && j.success) {
-                        toast(j.message || 'Enregistré');
+                        toast(j.message || (editId ? 'Vidéo mise à jour.' : 'Vidéo mise en ligne.'));
                         resetVideoForm();
                         fetchVideosFromServer(function (err, data) {
                             if (!err && data) {
@@ -6651,7 +6750,7 @@
                             }
                         });
                     } else {
-                        toast((j && j.message) || 'Erreur', true);
+                        toast((j && j.message) || 'Échec : la vidéo n’a pas été enregistrée.', true);
                     }
                     if (submitBtn) {
                         submitBtn.disabled = false;
@@ -6660,7 +6759,7 @@
                     }
                 })
                 .catch(function () {
-                    toast('Erreur réseau', true);
+                    toast('Échec réseau : publication vidéo interrompue. Réessayez.', true);
                     if (submitBtn) {
                         submitBtn.disabled = false;
                         submitBtn.style.opacity = '1';
@@ -7032,22 +7131,25 @@
             var del = e.target.closest && e.target.closest('.js-del-channel-playlist');
             if (!del) return;
             var id = del.getAttribute('data-id');
-            if (!id || !window.confirm('Supprimer cette playlist ?')) return;
-            postForm('delete_playlist', { id: id })
-                .then(function (j) {
-                    if (j && j.success) {
-                        toast(j.message || 'Supprimé');
-                        loadChannelPlaylistsAdmin();
-                        loadPlaylistsCache(function () {
-                            renderVideoPlaylistCheckboxes([]);
-                        });
-                    } else {
-                        toast((j && j.message) || 'Erreur', true);
-                    }
-                })
-                .catch(function () {
-                    toast('Erreur réseau', true);
-                });
+            if (!id) return;
+            saConfirm('Supprimer cette playlist ?', { title: 'Supprimer la playlist' }).then(function (ok) {
+                if (!ok) return;
+                postForm('delete_playlist', { id: id })
+                    .then(function (j) {
+                        if (j && j.success) {
+                            toast(j.message || 'Playlist supprimée');
+                            loadChannelPlaylistsAdmin();
+                            loadPlaylistsCache(function () {
+                                renderVideoPlaylistCheckboxes([]);
+                            });
+                        } else {
+                            toast((j && j.message) || 'Échec : playlist non supprimée.', true);
+                        }
+                    })
+                    .catch(function () {
+                        toast('Échec réseau : réessayez.', true);
+                    });
+            });
         });
         document.body.addEventListener('click', function (e) {
             var ed = e.target.closest && e.target.closest('.js-edit-channel-playlist');
@@ -7327,19 +7429,22 @@
             var del = e.target.closest && e.target.closest('.js-del-channel-post');
             if (!del) return;
             var id = del.getAttribute('data-id');
-            if (!id || !window.confirm('Supprimer cette publication ?')) return;
-            postForm('delete_channel_post', { id: id })
-                .then(function (j) {
-                    if (j && j.success) {
-                        toast(j.message || 'Supprimé');
-                        loadChannelPostsAdmin();
-                    } else {
-                        toast((j && j.message) || 'Erreur', true);
-                    }
-                })
-                .catch(function () {
-                    toast('Erreur réseau', true);
-                });
+            if (!id) return;
+            saConfirm('Supprimer cette publication ?', { title: 'Supprimer la publication' }).then(function (ok) {
+                if (!ok) return;
+                postForm('delete_channel_post', { id: id })
+                    .then(function (j) {
+                        if (j && j.success) {
+                            toast(j.message || 'Publication supprimée');
+                            loadChannelPostsAdmin();
+                        } else {
+                            toast((j && j.message) || 'Échec : publication non supprimée.', true);
+                        }
+                    })
+                    .catch(function () {
+                        toast('Échec réseau : réessayez.', true);
+                    });
+            });
         });
         document.body.addEventListener('click', function (e) {
             var ed = e.target.closest && e.target.closest('.js-edit-channel-post');

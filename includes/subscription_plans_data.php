@@ -13,9 +13,52 @@ function tcf_subscription_plans_table(PDO $pdo): string
 {
     require_once __DIR__ . '/tcf_schema.php';
     if (tcf_schema_has_table($pdo, 'abonnements')) {
+        tcf_subscription_plans_ensure_price_decimal($pdo);
         return 'abonnements';
     }
     return 'subscription_plan_catalog';
+}
+
+/**
+ * Autorise les prix décimaux (ex. 49,99 $) dans abonnements.price_xaf.
+ */
+function tcf_subscription_plans_ensure_price_decimal(PDO $pdo): void
+{
+    static $done = false;
+    if ($done) {
+        return;
+    }
+    $done = true;
+    try {
+        if (!tcf_schema_has_table($pdo, 'abonnements')) {
+            return;
+        }
+        $st = $pdo->query("SHOW COLUMNS FROM abonnements LIKE 'price_xaf'");
+        $col = $st ? $st->fetch(PDO::FETCH_ASSOC) : false;
+        if (!$col) {
+            return;
+        }
+        $type = strtolower((string) ($col['Type'] ?? ''));
+        if (str_contains($type, 'decimal') || str_contains($type, 'numeric') || str_contains($type, 'float') || str_contains($type, 'double')) {
+            return;
+        }
+        $pdo->exec('ALTER TABLE abonnements MODIFY price_xaf DECIMAL(10,2) UNSIGNED NOT NULL DEFAULT 0.00');
+    } catch (Throwable $e) {
+        error_log('tcf_subscription_plans_ensure_price_decimal: ' . $e->getMessage());
+    }
+}
+
+/**
+ * Parse un montant saisi (accepte virgule ou point).
+ */
+function tcf_subscription_parse_price(string $raw): float
+{
+    $raw = trim(str_replace(["\xc2\xa0", ' '], '', $raw));
+    $raw = str_replace(',', '.', $raw);
+    if ($raw === '' || !is_numeric($raw)) {
+        return -1.0;
+    }
+    return round((float) $raw, 2);
 }
 
 /**
@@ -305,7 +348,7 @@ function tcf_subscription_plans_seed_if_empty(): void
                     (string) ($p['badge'] ?? ''),
                     (string) ($p['badge'] ?? ($p['key'] ?? 'Plan')),
                     (string) (($p['currency'] ?? '') !== '' ? $p['currency'] : '$'),
-                    (int) round((float) ($p['price'] ?? 0)),
+                    round((float) ($p['price'] ?? 0), 2),
                     (int) ($p['duration_days'] ?? 7),
                     $feats,
                     $order,
@@ -315,7 +358,7 @@ function tcf_subscription_plans_seed_if_empty(): void
                     (string) ($p['key'] ?? ('plan_' . $order)),
                     (string) ($p['tier'] ?? 'STANDARD'),
                     (string) ($p['badge'] ?? ''),
-                    (float) ($p['price'] ?? 0),
+                    round((float) ($p['price'] ?? 0), 2),
                     (string) (($p['currency'] ?? '') !== '' ? $p['currency'] : '$'),
                     (int) ($p['duration_days'] ?? 7),
                     $feats,

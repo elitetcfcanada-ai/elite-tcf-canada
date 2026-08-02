@@ -218,10 +218,10 @@ function getUsers()
     saRequireSuperAdminJson();
     global $pdo;
     try {
-        $stmt = $pdo->query("SELECT id, name, email, role, subscription_type, status, avatar, created_at, last_activity FROM users WHERE role = 'user'");
+        $stmt = $pdo->query("SELECT id, name, email, role, subscription_type, status, avatar, created_at, last_activity FROM users WHERE role = 'user' ORDER BY created_at DESC, id DESC");
         $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
-        $stmt = $pdo->query("SELECT id, name, email, role, subscription_type, status, avatar, created_at FROM users WHERE role = 'user'");
+        $stmt = $pdo->query("SELECT id, name, email, role, subscription_type, status, avatar, created_at FROM users WHERE role = 'user' ORDER BY created_at DESC, id DESC");
         $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     $users = tcf_enrich_users_with_activity_days($pdo, $users);
@@ -549,15 +549,20 @@ function addVideo()
                 error_log('Erreur lors de l\'envoi des notifications vidéo: ' . $e->getMessage());
             }
             
-            echo json_encode(['success' => true, 'message' => 'Vidéo publiée avec succès.', 'id' => $newVid]);
+            $pubMsg = match ($visibility) {
+                'public' => 'Vidéo publique mise en ligne avec succès.',
+                'premium' => 'Vidéo premium mise en ligne avec succès.',
+                default => 'Vidéo enregistrée (visibilité privée).',
+            };
+            echo json_encode(['success' => true, 'message' => $pubMsg, 'id' => $newVid]);
         } else {
             tcf_admin_unlink_upload($thumbnail_url);
             tcf_admin_unlink_upload($video_url);
-            echo json_encode(['success' => false, 'message' => 'Erreur lors de la publication de la vidéo.']);
+            echo json_encode(['success' => false, 'message' => 'Échec : la vidéo n’a pas pu être publiée. Vérifiez les fichiers et réessayez.']);
         }
     } catch (PDOException $e) {
         error_log("Erreur base de données: " . $e->getMessage());
-        echo json_encode(['success' => false, 'message' => 'Erreur base de données: ' . $e->getMessage()]);
+        echo json_encode(['success' => false, 'message' => 'Échec base de données lors de la publication vidéo.']);
     }
     exit();
 }
@@ -2099,8 +2104,8 @@ function saveSubscriptionPlanAdmin(): void
     }
     $tier = trim((string) ($_POST['tier'] ?? ''));
     $badge = trim((string) ($_POST['badge'] ?? ''));
-    $priceRaw = str_replace(',', '.', trim((string) ($_POST['price'] ?? '0')));
-    $price = is_numeric($priceRaw) ? (float) $priceRaw : -1.0;
+    require_once dirname(__DIR__) . '/includes/subscription_plans_data.php';
+    $price = tcf_subscription_parse_price((string) ($_POST['price'] ?? '0'));
     // Devise catalogue : toujours le dollar (affichage plateforme).
     $currency = '$';
     $duration = (int) ($_POST['duration_days'] ?? 7);
@@ -2135,7 +2140,7 @@ function saveSubscriptionPlanAdmin(): void
         exit();
     }
     if ($price < 0 || $price > 999999.99) {
-        echo json_encode(['success' => false, 'message' => 'Montant invalide.']);
+        echo json_encode(['success' => false, 'message' => 'Montant invalide. Utilisez un nombre (ex. 49,99 ou 49.99).']);
         exit();
     }
 
@@ -2151,7 +2156,7 @@ function saveSubscriptionPlanAdmin(): void
             $st = $pdo->prepare(
                 'UPDATE abonnements SET tier = ?, badge = ?, title = ?, price_label = ?, price_xaf = ?, duration_days = ?, features_json = ?, sort_order = ?, is_active = ? WHERE id = ?'
             );
-            $st->execute([$tier, $badge, $badge !== '' ? $badge : $tier, $currency, (int) round($price), $duration, $featuresJson, $sortOrder, $isActive, $id]);
+            $st->execute([$tier, $badge, $badge !== '' ? $badge : $tier, $currency, $price, $duration, $featuresJson, $sortOrder, $isActive, $id]);
         } else {
             $st = $pdo->prepare(
                 'UPDATE subscription_plan_catalog SET tier = ?, badge = ?, price = ?, currency = ?, duration_days = ?, features_json = ?, sort_order = ?, is_active = ? WHERE id = ?'
@@ -2409,9 +2414,9 @@ if ($tcf_profile_panel_user) {
 try {
     // Charger les données initiales
     try {
-        $users = $pdo->query("SELECT id, name, email, role, subscription_type, status, avatar, created_at, last_activity FROM users WHERE role = 'user'")->fetchAll(PDO::FETCH_ASSOC);
+        $users = $pdo->query("SELECT id, name, email, role, subscription_type, status, avatar, created_at, last_activity FROM users WHERE role = 'user' ORDER BY created_at DESC, id DESC")->fetchAll(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
-        $users = $pdo->query("SELECT id, name, email, role, subscription_type, status, avatar, created_at FROM users WHERE role = 'user'")->fetchAll(PDO::FETCH_ASSOC);
+        $users = $pdo->query("SELECT id, name, email, role, subscription_type, status, avatar, created_at FROM users WHERE role = 'user' ORDER BY created_at DESC, id DESC")->fetchAll(PDO::FETCH_ASSOC);
     }
     $users = tcf_enrich_users_with_activity_days($pdo, $users);
     foreach ($users as &$u) {
@@ -2527,6 +2532,7 @@ $notifications_json = json_encode($notifications);
     <link rel="stylesheet" href="../Assets/css/admin-mobile-nav.css?v=sa-notif-nav-15">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/tcf-ui-layers.css')); ?>?v=sa-notif-layers-14">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/tcf-assistant-widget.css')); ?>">
+    <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/tcf-confirm-dialog.css')); ?>?v=confirm-1">
     <link rel="stylesheet" href="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
@@ -4242,7 +4248,8 @@ $notifications_json = json_encode($notifications);
         window.TCF_PARTNERS_API = <?php echo json_encode(site_href('partners_api.php')); ?>;
     </script>
     <script src="../Assets/javascript/tcf-tts.js?v=6"></script>
-    <script src="../Assets/javascript/superAdmin.ui.js?v=sa-ui-v9"></script>
+    <script src="<?php echo htmlspecialchars(site_href('Assets/javascript/tcf_confirm_dialog.js')); ?>?v=confirm-1"></script>
+    <script src="../Assets/javascript/superAdmin.ui.js?v=sa-ui-v11"></script>
     <script src="../Assets/javascript/admin-mobile-nav.js?v=sa-ui-v7"></script>
 
     <div class="tcf-ai-assistant" id="tcf-ai-assistant" data-greeting="Bonjour, je suis votre assistant administration. Comment puis-je vous aider sur la plateforme ?">

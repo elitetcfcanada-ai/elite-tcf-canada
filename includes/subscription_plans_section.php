@@ -55,7 +55,10 @@ $__tcf_sub_active_until = '';
                 ? $plan['features']
                 : tcf_subscription_default_features();
             $priceNum = isset($plan['price']) ? (float) $plan['price'] : 0.0;
-            $priceDisplay = fmod($priceNum, 1.0) < 0.001 ? (string) (int) round($priceNum) : number_format($priceNum, 2, '.', '');
+            // Affichage FR : virgule pour les décimales (ex. 49,99)
+            $priceDisplay = fmod($priceNum, 1.0) < 0.001
+                ? (string) (int) round($priceNum)
+                : number_format($priceNum, 2, ',', '');
             ?>
             <article class="<?php echo htmlspecialchars($cardClass); ?>" data-plan-key="<?php echo htmlspecialchars($plan['key']); ?>" style="flex: 0 0 calc(50% - 0.5rem); min-width: 280px; max-width: 400px;" data-responsive-card="true">
                 <div class="card-header">
