@@ -469,22 +469,26 @@ $tcf_notif_relative = static function (string $createdAt): string {
             <?php
             $tcf_premium_ok = tcf_user_has_premium_access($user);
             $tcf_expires_fmt = '';
-            if (!empty($user['subscription_expires_at'])) {
+            if ($expiration_date instanceof DateTimeInterface) {
+                $tcf_expires_fmt = $expiration_date->format('d/m/Y à H:i');
+            } elseif (!empty($user['subscription_expires_at'])) {
                 try {
                     $tcf_expires_fmt = (new DateTime((string) $user['subscription_expires_at']))->format('d/m/Y à H:i');
                 } catch (Throwable $e) {
                     $tcf_expires_fmt = '';
                 }
             }
+            $tcf_sub_type_raw = trim((string) ($user['subscription_type'] ?? 'free'));
+            $tcf_has_paid_period = $tcf_premium_ok || $tcf_expires_fmt !== '' || ($tcf_sub_type_raw !== '' && $tcf_sub_type_raw !== 'free');
             ?>
             <div class="profile-sub-v2">
                 <div class="profile-sub-v2__row">
-                    <span class="subscription-badge"><?php echo htmlspecialchars(tcf_subscription_label($user['subscription_type'] ?? 'free')); ?></span>
+                    <span class="subscription-badge"><?php echo htmlspecialchars(tcf_subscription_label($tcf_sub_type_raw !== '' ? $tcf_sub_type_raw : 'free')); ?></span>
                     <?php if ($tcf_sub_sales_enabled): ?>
                     <a class="subscription-manage-link" href="<?php echo htmlspecialchars(site_href('abonnement.php')); ?>">Gérer mon abonnement</a>
                     <?php endif; ?>
                 </div>
-                <?php if ($tcf_sub_platform_free || $tcf_premium_ok || (($user['subscription_type'] ?? 'free') !== 'free')): ?>
+                <?php if ($tcf_sub_platform_free || $tcf_has_paid_period): ?>
                 <p class="profile-sub-v2__premium-status<?php echo $tcf_premium_ok ? ' is-active' : ' is-inactive'; ?>" role="status">
                     <?php if ($tcf_sub_platform_free): ?>
                         <i class="bx bx-check-circle" aria-hidden="true"></i> Mode gratuit plateforme : tout le contenu <strong>premium</strong> est accessible.
@@ -498,7 +502,7 @@ $tcf_notif_relative = static function (string $createdAt): string {
                 <?php if ($tcf_expires_fmt !== ''): ?>
                 <p class="profile-sub-v2__expiry">Fin d’accès prévue : <strong><?php echo htmlspecialchars($tcf_expires_fmt); ?></strong></p>
                 <?php endif; ?>
-                <?php if (($user['subscription_type'] ?? 'free') !== 'free'): ?>
+                <?php if ($tcf_premium_ok || ($tcf_sub_type_raw !== '' && $tcf_sub_type_raw !== 'free')): ?>
                 <div class="progress-container">
                     <div class="progress-info">
                         <span>Temps restant sur la période en cours</span>

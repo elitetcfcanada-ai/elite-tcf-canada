@@ -2,7 +2,8 @@
 declare(strict_types=1);
 
 /**
- * Réactive les abonnements payés (Notch complete) encore bloqués en free/pending.
+ * 1) Migre ENUM → VARCHAR + répare type vide avec expires_at futur
+ * 2) Réactive les paiements Notch aboutis encore bloqués
  * Web : /scripts/repair_stuck_subscriptions.php?key=REPAIR_TCF_2026
  */
 
@@ -19,11 +20,21 @@ require_once __DIR__ . '/../includes/payment_config.php';
 require_once __DIR__ . '/../includes/notchpay_client.php';
 require_once __DIR__ . '/../includes/subscription_activate.php';
 require_once __DIR__ . '/../includes/tcf_legacy_tables.php';
+require_once __DIR__ . '/../includes/subscription_access.php';
 
 echo "=== Repair stuck subscriptions ===\n";
 
+tcf_users_ensure_subscription_type_varchar($pdo);
+$stCol = $pdo->query("SHOW COLUMNS FROM users LIKE 'subscription_type'");
+$col = $stCol ? $stCol->fetch(PDO::FETCH_ASSOC) : [];
+echo 'subscription_type=' . ($col['Type'] ?? '?') . "\n";
+
+$repairedTypes = tcf_repair_users_with_active_expiry($pdo);
+echo "repaired_empty_type_with_future_expiry={$repairedTypes}\n";
+
 if (!tcf_historique_abonnements_available($pdo)) {
     echo "No historique_abonnements table.\n";
+    echo "OK\n";
     exit(0);
 }
 
@@ -36,9 +47,14 @@ $st = $pdo->query(
        AND (
          LOWER(COALESCE(h.status,'')) IN ('pending','','processing')
          OR u.subscription_type IS NULL
+         OR TRIM(u.subscription_type) = ''
          OR u.subscription_type = 'free'
          OR u.subscription_expires_at IS NULL
          OR u.subscription_expires_at < NOW()
+         OR NOT (
+           u.subscription_expires_at IS NOT NULL
+           AND u.subscription_expires_at > NOW()
+         )
        )
      ORDER BY h.id DESC
      LIMIT 80"
@@ -54,6 +70,27 @@ foreach ($rows as $row) {
     if ($ref === '' || $uid <= 0 || $planKey === '') {
         continue;
     }
+
+    // Déjà premium avec date future : juste corriger le type si besoin
+    $uCheck = [
+        'role' => 'user',
+        'subscription_type' => $row['subscription_type'] ?? 'free',
+        'subscription_expires_at' => $row['subscription_expires_at'] ?? null,
+        'created_at' => null,
+    ];
+    if (tcf_user_has_premium_access($uCheck)) {
+        $stype = trim((string) ($row['subscription_type'] ?? ''));
+        if ($stype === '' || $stype === 'free') {
+            try {
+                $pdo->prepare('UPDATE users SET subscription_type = ? WHERE id = ?')->execute([$planKey, $uid]);
+                $fixed++;
+                echo "type_fixed user={$uid} plan={$planKey}\n";
+            } catch (Throwable $e) {
+            }
+        }
+        continue;
+    }
+
     $check = tcf_notchpay_get_payment($ref);
     if (!$check['ok'] || !is_array($check['data'])) {
         echo "skip #{$row['id']} verify_fail\n";

@@ -9,34 +9,6 @@ require_once __DIR__ . '/tcf_legacy_tables.php';
 require_once __DIR__ . '/tcf_schema.php';
 
 /**
- * Les forfaits admin (plan_c_*) dépassent l’ancien ENUM users.subscription_type.
- */
-function tcf_users_ensure_subscription_type_varchar(PDO $pdo): void
-{
-    static $done = false;
-    if ($done) {
-        return;
-    }
-    $done = true;
-    try {
-        $st = $pdo->query("SHOW COLUMNS FROM users LIKE 'subscription_type'");
-        $col = $st ? $st->fetch(PDO::FETCH_ASSOC) : false;
-        if (!$col) {
-            return;
-        }
-        $type = strtolower((string) ($col['Type'] ?? ''));
-        if (str_starts_with($type, 'varchar') || str_starts_with($type, 'char') || str_contains($type, 'text')) {
-            return;
-        }
-        $pdo->exec(
-            "ALTER TABLE users MODIFY subscription_type VARCHAR(64) NOT NULL DEFAULT 'free'"
-        );
-    } catch (Throwable $e) {
-        error_log('tcf_users_ensure_subscription_type_varchar: ' . $e->getMessage());
-    }
-}
-
-/**
  * Assure que historique_abonnements.amount accepte les décimales USD.
  */
 function tcf_historique_ensure_amount_decimal(PDO $pdo): void

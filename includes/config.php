@@ -86,9 +86,14 @@ try {
 }
 
 require_once __DIR__ . '/platform_settings.php';
+require_once __DIR__ . '/subscription_access.php';
 require_once __DIR__ . '/tcf_brand_logo.php';
 require_once __DIR__ . '/auth_remember.php';
 tcf_platform_settings_ensure($pdo);
+try {
+    tcf_users_ensure_subscription_type_varchar($pdo);
+} catch (Throwable $e) {
+}
 tcf_remember_try_resume($pdo);
 
 /**
