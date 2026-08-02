@@ -2,10 +2,8 @@
 declare(strict_types=1);
 
 /**
- * Installe / met à jour includes/gemini_key.php sur le serveur.
- * Web (POST JSON) : /scripts/set_gemini_key.php?key=REPAIR_TCF_2026
- * Body : {"api_key":"AIza..."}
- * Ne renvoie jamais la clé.
+ * Installe includes/gemini_key.php sur le serveur (sans renvoyer la clé).
+ * POST JSON : {"api_key":"..."}  + ?key=REPAIR_TCF_2026
  */
 
 header('Content-Type: application/json; charset=utf-8');
@@ -24,15 +22,11 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
 
 $raw = (string) file_get_contents('php://input');
 $payload = json_decode($raw, true);
-$apiKey = '';
-if (is_array($payload)) {
-    $apiKey = trim((string) ($payload['api_key'] ?? ''));
-}
+$apiKey = is_array($payload) ? trim((string) ($payload['api_key'] ?? '')) : '';
 if ($apiKey === '') {
     $apiKey = trim((string) ($_POST['api_key'] ?? ''));
 }
 
-// Formats Google : AIza… (classique) ou AQ.… (clés récentes)
 if ($apiKey === '' || strlen($apiKey) < 20 || strlen($apiKey) > 200 || preg_match('/\s/', $apiKey)) {
     http_response_code(422);
     echo json_encode(['ok' => false, 'message' => 'Clé Gemini invalide (format).']);
@@ -44,10 +38,9 @@ $content = "<?php\ndeclare(strict_types=1);\n\nreturn " . var_export($apiKey, tr
 
 if (@file_put_contents($target, $content) === false) {
     http_response_code(500);
-    echo json_encode(['ok' => false, 'message' => 'Impossible d’écrire gemini_key.php (droits).']);
+    echo json_encode(['ok' => false, 'message' => 'Impossible d’écrire gemini_key.php (droits fichier).']);
     exit;
 }
 
 @chmod($target, 0640);
-
 echo json_encode(['ok' => true, 'message' => 'Clé Gemini installée.']);

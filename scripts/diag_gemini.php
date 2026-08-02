@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 /**
  * Diagnostic Gemini (aucune clé affichée).
- * CLI : php scripts/diag_gemini.php
  * Web : /scripts/diag_gemini.php?key=REPAIR_TCF_2026
  */
 
@@ -15,7 +14,6 @@ if (!$cli && (string) ($_GET['key'] ?? '') !== 'REPAIR_TCF_2026') {
 }
 
 header('Content-Type: text/plain; charset=utf-8');
-
 require_once __DIR__ . '/../includes/gemini_client.php';
 
 $key = tcf_gemini_api_key();
@@ -24,7 +22,6 @@ echo 'curl=' . (function_exists('curl_init') ? 'yes' : 'no') . "\n";
 
 if ($key === '') {
     echo "status=NO_KEY\n";
-    echo "hint=Créer includes/gemini_key.php avec: <?php return 'VOTRE_CLE';\n";
     exit(1);
 }
 
