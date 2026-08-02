@@ -82,7 +82,24 @@ function tcf_payment_try_finalize(PDO $pdo, int $uid, array $pending, string $ch
     $statusRow = (string) ($pending['status'] ?? 'pending');
 
     if (tcf_payment_is_finalized_status($statusRow)) {
-        return ['success' => true, 'status' => 'complete', 'already' => true, 'message' => 'Abonnement déjà activé.'];
+        // Ne pas mentir : si le pending est « complete » mais l’utilisateur n’est pas premium, réactiver.
+        try {
+            $stU = $pdo->prepare('SELECT subscription_type, subscription_expires_at, role, created_at FROM users WHERE id = ? LIMIT 1');
+            $stU->execute([$uid]);
+            $uRow = $stU->fetch(PDO::FETCH_ASSOC) ?: null;
+            if ($uRow && function_exists('tcf_user_has_premium_access') && tcf_user_has_premium_access($uRow)) {
+                return [
+                    'success' => true,
+                    'status' => 'complete',
+                    'already' => true,
+                    'message' => 'Abonnement déjà activé.',
+                    'subscription_type' => $uRow['subscription_type'] ?? $planKey,
+                    'premium_access' => true,
+                ];
+            }
+        } catch (Throwable $e) {
+        }
+        // Continuer vers vérification Notch + réactivation
     }
 
     // Si le webhook a déjà activé l'utilisateur, finaliser sans rappeler Notch (plus rapide)

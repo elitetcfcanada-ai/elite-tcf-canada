@@ -9,6 +9,34 @@ require_once __DIR__ . '/tcf_legacy_tables.php';
 require_once __DIR__ . '/tcf_schema.php';
 
 /**
+ * Les forfaits admin (plan_c_*) dépassent l’ancien ENUM users.subscription_type.
+ */
+function tcf_users_ensure_subscription_type_varchar(PDO $pdo): void
+{
+    static $done = false;
+    if ($done) {
+        return;
+    }
+    $done = true;
+    try {
+        $st = $pdo->query("SHOW COLUMNS FROM users LIKE 'subscription_type'");
+        $col = $st ? $st->fetch(PDO::FETCH_ASSOC) : false;
+        if (!$col) {
+            return;
+        }
+        $type = strtolower((string) ($col['Type'] ?? ''));
+        if (str_starts_with($type, 'varchar') || str_starts_with($type, 'char') || str_contains($type, 'text')) {
+            return;
+        }
+        $pdo->exec(
+            "ALTER TABLE users MODIFY subscription_type VARCHAR(64) NOT NULL DEFAULT 'free'"
+        );
+    } catch (Throwable $e) {
+        error_log('tcf_users_ensure_subscription_type_varchar: ' . $e->getMessage());
+    }
+}
+
+/**
  * Assure que historique_abonnements.amount accepte les décimales USD.
  */
 function tcf_historique_ensure_amount_decimal(PDO $pdo): void
@@ -57,25 +85,61 @@ function tcf_subscription_activate_user(PDO $pdo, int $uid, string $planKey, str
     $days = max(1, (int) ($plan['duration_days'] ?? 7));
     $expiresAt = (new DateTimeImmutable('now'))->modify('+' . $days . ' days')->format('Y-m-d H:i:s');
 
+    tcf_users_ensure_subscription_type_varchar($pdo);
+
     try {
-        $pdo->prepare(
+        $upd = $pdo->prepare(
             'UPDATE users SET subscription_type = ?, subscription_expires_at = ? WHERE id = ? AND role = \'user\''
-        )->execute([$planKey, $expiresAt, $uid]);
+        );
+        $upd->execute([$planKey, $expiresAt, $uid]);
+        if ($upd->rowCount() < 1) {
+            // Même valeur déjà en place, ou colonne expires absente
+            try {
+                $pdo->prepare(
+                    'UPDATE users SET subscription_type = ?, subscription_expires_at = ? WHERE id = ? AND role = \'user\''
+                )->execute([$planKey, $expiresAt, $uid]);
+            } catch (Throwable $eExpire) {
+                $pdo->exec('ALTER TABLE users ADD COLUMN subscription_expires_at DATETIME NULL DEFAULT NULL');
+                $pdo->prepare(
+                    'UPDATE users SET subscription_type = ?, subscription_expires_at = ? WHERE id = ? AND role = \'user\''
+                )->execute([$planKey, $expiresAt, $uid]);
+            }
+        }
     } catch (Throwable $e) {
         try {
-            // Fallback si la colonne expires est absente
-            $pdo->prepare('UPDATE users SET subscription_type = ? WHERE id = ? AND role = \'user\'')->execute([$planKey, $uid]);
-        } catch (Throwable $e2) {
-            return ['success' => false, 'message' => 'Impossible d’enregistrer l’abonnement.'];
-        }
-        try {
             $pdo->exec('ALTER TABLE users ADD COLUMN subscription_expires_at DATETIME NULL DEFAULT NULL');
+        } catch (Throwable $eCol) {
+        }
+        tcf_users_ensure_subscription_type_varchar($pdo);
+        try {
             $pdo->prepare(
                 'UPDATE users SET subscription_type = ?, subscription_expires_at = ? WHERE id = ? AND role = \'user\''
             )->execute([$planKey, $expiresAt, $uid]);
-        } catch (Throwable $e3) {
-            // type déjà enregistré ; accès premium sera accordé via fallback sans date
+        } catch (Throwable $e2) {
+            return ['success' => false, 'message' => 'Impossible d’enregistrer l’abonnement.'];
         }
+    }
+
+    // Vérifier que le type a bien été persisté (ENUM trop strict sinon).
+    try {
+        $chk = $pdo->prepare('SELECT subscription_type, subscription_expires_at, role, created_at FROM users WHERE id = ? LIMIT 1');
+        $chk->execute([$uid]);
+        $after = $chk->fetch(PDO::FETCH_ASSOC) ?: [];
+        $storedType = strtolower(trim((string) ($after['subscription_type'] ?? '')));
+        if ($storedType === '' || $storedType === 'free' || $storedType !== strtolower($planKey)) {
+            tcf_users_ensure_subscription_type_varchar($pdo);
+            $pdo->prepare(
+                'UPDATE users SET subscription_type = ?, subscription_expires_at = ? WHERE id = ? AND role = \'user\''
+            )->execute([$planKey, $expiresAt, $uid]);
+            $chk->execute([$uid]);
+            $after = $chk->fetch(PDO::FETCH_ASSOC) ?: [];
+            $storedType = strtolower(trim((string) ($after['subscription_type'] ?? '')));
+            if ($storedType !== strtolower($planKey)) {
+                return ['success' => false, 'message' => 'Paiement reçu mais abonnement non enregistré. Contactez le support.'];
+            }
+        }
+    } catch (Throwable $e) {
+        return ['success' => false, 'message' => 'Impossible de vérifier l’abonnement.'];
     }
 
     $planLabel = trim(($plan['tier'] ?? '') . ' — ' . ($plan['badge'] ?? ''));
@@ -179,6 +243,16 @@ function tcf_subscription_activate_user(PDO $pdo, int $uid, string $planKey, str
     $st->execute([$uid]);
     $uFull = $st->fetch(PDO::FETCH_ASSOC) ?: [];
 
+    if (!tcf_user_has_premium_access($uFull)) {
+        return [
+            'success' => false,
+            'message' => 'Paiement reçu mais accès premium non actif. Contactez le support.',
+            'subscription_type' => (string) ($uFull['subscription_type'] ?? ''),
+            'subscription_expires_at' => $uFull['subscription_expires_at'] ?? null,
+            'premium_access' => false,
+        ];
+    }
+
     $adminMsg = sprintf(
         'Formule %s — $%s (%s). Membre : %s (id %d).',
         $planKey,
@@ -204,7 +278,7 @@ function tcf_subscription_activate_user(PDO $pdo, int $uid, string $planKey, str
         'subscription_type' => $planKey,
         'subscription_label' => tcf_subscription_label($planKey),
         'subscription_expires_at' => $expiresAt,
-        'premium_access' => tcf_user_has_premium_access($uFull),
+        'premium_access' => true,
     ];
 }
 

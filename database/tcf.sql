@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `email` VARCHAR(100) NOT NULL,
   `password` VARCHAR(255) NOT NULL,
   `role` ENUM('user','admin','super_admin') NOT NULL DEFAULT 'user',
-  `subscription_type` ENUM('free','monthly','annual','plan_1w','plan_2w','plan_1m','plan_2m') NOT NULL DEFAULT 'free',
+  `subscription_type` VARCHAR(64) NOT NULL DEFAULT 'free',
   `subscription_expires_at` DATETIME DEFAULT NULL,
   `status` ENUM('active','inactive') NOT NULL DEFAULT 'active',
   `permissions` TEXT DEFAULT NULL,

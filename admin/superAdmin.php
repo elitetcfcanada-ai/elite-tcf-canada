@@ -2028,6 +2028,12 @@ function createSubscriptionPlanAdmin(): void
 {
     global $pdo;
     try {
+        if (function_exists('tcf_users_ensure_subscription_type_varchar')) {
+            tcf_users_ensure_subscription_type_varchar($pdo);
+        } elseif (is_file(__DIR__ . '/../includes/subscription_activate.php')) {
+            require_once __DIR__ . '/../includes/subscription_activate.php';
+            tcf_users_ensure_subscription_type_varchar($pdo);
+        }
         $planKey = 'plan_c_' . bin2hex(random_bytes(5));
         if (strlen($planKey) > 32) {
             $planKey = 'plan_c_' . substr(sha1((string) microtime(true)), 0, 24);

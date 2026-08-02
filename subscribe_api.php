@@ -54,14 +54,20 @@ if (!$pending) {
 
 if (tcf_payment_is_finalized_status($pending['status'] ?? '')) {
     $planKey = (string) ($pending['plan_key'] ?? '');
-    echo json_encode([
-        'success' => true,
-        'message' => 'Votre abonnement est déjà actif.',
-        'subscription_type' => $planKey,
-        'subscription_label' => tcf_subscription_label($planKey),
-        'premium_access' => true,
-    ], JSON_UNESCAPED_UNICODE);
-    exit;
+    $stU = $pdo->prepare('SELECT subscription_type, subscription_expires_at, role, created_at FROM users WHERE id = ? LIMIT 1');
+    $stU->execute([$uid]);
+    $uRow = $stU->fetch(PDO::FETCH_ASSOC) ?: null;
+    if ($uRow && tcf_user_has_premium_access($uRow)) {
+        echo json_encode([
+            'success' => true,
+            'message' => 'Votre abonnement est déjà actif.',
+            'subscription_type' => (string) ($uRow['subscription_type'] ?? $planKey),
+            'subscription_label' => tcf_subscription_label((string) ($uRow['subscription_type'] ?? $planKey)),
+            'premium_access' => true,
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+    // Pending marqué complete mais user non premium → poursuivre la réactivation
 }
 
 $check = tcf_notchpay_get_payment($paymentReference);
