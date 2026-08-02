@@ -1742,14 +1742,15 @@ function getStats()
             $payWhereRev = tcf_subscription_payments_revenue_where($payTable);
             $payWhereHist = tcf_subscription_payments_history_where($payTable);
             $sumUsd = tcf_subscription_payments_sum_usd_sql($payTable);
+            $learnersOnly = tcf_subscription_payments_learners_only_sql('');
             $stmt = $pdo->query(
                 "SELECT {$sumUsd} FROM `{$payTable}`
-                 WHERE ({$payWhereRev})
+                 WHERE ({$payWhereRev}) AND ({$learnersOnly})
                    AND MONTH(created_at) = MONTH(CURDATE())
                    AND YEAR(created_at) = YEAR(CURDATE())"
             );
             $revenueSubsMonth = (float) $stmt->fetchColumn();
-            $paymentsCount = sa_safe_count($pdo, "SELECT COUNT(*) FROM `{$payTable}` WHERE ({$payWhereHist})");
+            $paymentsCount = sa_safe_count($pdo, "SELECT COUNT(*) FROM `{$payTable}` WHERE ({$payWhereHist}) AND ({$learnersOnly})");
         } catch (Throwable $e) {
             $revenueSubsMonth = 0.0;
             $paymentsCount = 0;
@@ -1871,11 +1872,13 @@ function getSubscriptionPaymentsAdmin(): void
         $payTable = tcf_subscription_payments_table($pdo);
         $paySel = tcf_subscription_payments_select_sql($payTable, 'sp');
         $payWhere = tcf_subscription_payments_history_where($payTable, 'sp');
+        $learnersOnly = tcf_subscription_payments_learners_only_sql('sp');
         $stmt = $pdo->query(
             $paySel . ", u.name AS user_name, u.email AS user_email
              FROM `{$payTable}` sp
              LEFT JOIN users u ON u.id = sp.user_id
              WHERE ({$payWhere})
+               AND ({$learnersOnly})
              ORDER BY sp.created_at DESC
              LIMIT 500"
         );
@@ -1913,10 +1916,11 @@ function tcf_sa_subscription_revenue_chart_last12m(PDO $pdo): array
         $payTable = tcf_subscription_payments_table($pdo);
         $payWhere = tcf_subscription_payments_revenue_where($payTable);
         $sumUsd = tcf_subscription_payments_sum_usd_sql($payTable);
+        $learnersOnly = tcf_subscription_payments_learners_only_sql('');
         $stM = $pdo->query(
             "SELECT DATE_FORMAT(created_at, '%Y-%m') AS ym, {$sumUsd} AS total
              FROM `{$payTable}`
-             WHERE ({$payWhere})
+             WHERE ({$payWhere}) AND ({$learnersOnly})
              GROUP BY DATE_FORMAT(created_at, '%Y-%m')"
         );
         foreach ($stM->fetchAll(PDO::FETCH_ASSOC) as $r) {
@@ -1945,11 +1949,12 @@ function getSubscriptionRevenueStatsAdmin(): void
         $payTable = tcf_subscription_payments_table($pdo);
         $payWhere = tcf_subscription_payments_revenue_where($payTable);
         $sumUsd = tcf_subscription_payments_sum_usd_sql($payTable);
-        $total = (float) $pdo->query("SELECT {$sumUsd} FROM `{$payTable}` WHERE ({$payWhere})")->fetchColumn();
+        $learnersOnly = tcf_subscription_payments_learners_only_sql('');
+        $total = (float) $pdo->query("SELECT {$sumUsd} FROM `{$payTable}` WHERE ({$payWhere}) AND ({$learnersOnly})")->fetchColumn();
         $month = (float) $pdo->query(
-            "SELECT {$sumUsd} FROM `{$payTable}` WHERE ({$payWhere}) AND MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE())"
+            "SELECT {$sumUsd} FROM `{$payTable}` WHERE ({$payWhere}) AND ({$learnersOnly}) AND MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE())"
         )->fetchColumn();
-        $count = (int) $pdo->query("SELECT COUNT(*) FROM `{$payTable}` WHERE ({$payWhere})")->fetchColumn();
+        $count = (int) $pdo->query("SELECT COUNT(*) FROM `{$payTable}` WHERE ({$payWhere}) AND ({$learnersOnly})")->fetchColumn();
         $chart = tcf_sa_subscription_revenue_chart_last12m($pdo);
         echo json_encode([
             'success' => true,

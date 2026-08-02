@@ -40,10 +40,11 @@ function tcf_login_redirect_logged_user(array $user, ?string $nextPost = null): 
     switch ($user['role'] ?? 'user') {
         case 'super_admin':
         case 'admin':
-            header('Location: admin/superAdmin.php');
+            // Jamais de redirection vers le site apprenant (next ignoré)
+            header('Location: ' . site_href('admin/superAdmin.php'));
             break;
         default:
-            header('Location: index.php');
+            header('Location: ' . site_href('index.php'));
     }
     exit;
 }

@@ -122,6 +122,14 @@ function tcf_subscription_payments_revenue_where(string $table, string $alias = 
     return tcf_subscription_payments_paid_status_where($table, $alias);
 }
 
+/** Exclut admin / super_admin de l’historique et des revenus abonnements. */
+function tcf_subscription_payments_learners_only_sql(string $alias = 'sp'): string
+{
+    $p = $alias !== '' ? ($alias . '.') : '';
+
+    return "EXISTS (SELECT 1 FROM users ux WHERE ux.id = {$p}user_id AND ux.role = 'user')";
+}
+
 /**
  * Historique admin / profil : uniquement paiements finalisés / approuvés.
  * Les pending (init Notch sans confirmation) n’apparaissent pas ici.

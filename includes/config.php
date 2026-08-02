@@ -143,6 +143,9 @@ function site_href(string $path): string
     return $base . '/' . $p;
 }
 
+require_once __DIR__ . '/staff_guard.php';
+tcf_staff_enforce_admin_only_space();
+
 /**
  * URL absolue (schéma + hôte + chemin app) — requise par les APIs externes (ex. Notch Pay callback).
  */

@@ -455,17 +455,19 @@ $tcf_notif_relative = static function (string $createdAt): string {
         </section>
 
         <?php $tcf_is_staff_profile = in_array($user['role'] ?? '', ['admin', 'super_admin'], true); ?>
+        <?php if ($tcf_is_staff_profile): ?>
         <section class="profile-card-v2">
-            <h3 class="profile-card-v2__heading"><i class="bx bx-crown"></i> Abonnement</h3>
-            <?php if ($tcf_is_staff_profile): ?>
+            <h3 class="profile-card-v2__heading"><i class="bx bx-shield-quarter"></i> Compte staff</h3>
             <div class="profile-sub-v2 profile-sub-v2--staff">
-                <p class="profile-staff-note"><i class="bx bx-shield-quarter"></i> Compte <?php echo $user['role'] === 'super_admin' ? 'super administrateur' : 'administrateur'; ?> : l’abonnement premium n’est pas requis pour accéder aux outils d’administration.</p>
+                <p class="profile-staff-note"><i class="bx bx-lock-alt" aria-hidden="true"></i> Compte <?php echo ($user['role'] ?? '') === 'super_admin' ? 'super administrateur' : 'administrateur'; ?> : accès réservé au tableau de bord. Pas d’abonnement, pas d’historique de paiement, pas d’accès aux pages apprenants.</p>
                 <div class="profile-sub-v2__row">
-                    <span class="subscription-badge subscription-badge--staff">Accès staff</span>
-                    <a class="subscription-manage-link" href="<?php echo htmlspecialchars(site_href('index.php')); ?>">Accueil du site</a>
+                    <span class="subscription-badge subscription-badge--staff">Espace admin uniquement</span>
                 </div>
             </div>
-            <?php else: ?>
+        </section>
+        <?php else: ?>
+        <section class="profile-card-v2">
+            <h3 class="profile-card-v2__heading"><i class="bx bx-crown"></i> Abonnement</h3>
             <?php
             $tcf_premium_ok = tcf_user_has_premium_access($user);
             $tcf_expires_fmt = '';
@@ -539,8 +541,8 @@ $tcf_notif_relative = static function (string $createdAt): string {
                 </div>
                 <?php endif; ?>
             </div>
-            <?php endif; ?>
         </section>
+        <?php endif; ?>
 
         <section class="profile-card-v2">
             <h3 class="profile-card-v2__heading"><i class="bx bx-cog"></i> Paramètres du compte</h3>

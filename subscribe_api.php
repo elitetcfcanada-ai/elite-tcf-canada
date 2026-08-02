@@ -33,6 +33,25 @@ if (empty($_SESSION['user_id'])) {
     exit;
 }
 
+if (function_exists('tcf_session_is_staff') && tcf_session_is_staff()) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'Les comptes administrateur n’utilisent pas les abonnements.',
+    ]);
+    exit;
+}
+
+$stRole = $pdo->prepare('SELECT role FROM users WHERE id = ? LIMIT 1');
+$stRole->execute([(int) $_SESSION['user_id']]);
+$roleNow = (string) ($stRole->fetchColumn() ?: '');
+if ($roleNow !== 'user') {
+    echo json_encode([
+        'success' => false,
+        'message' => 'Seuls les comptes apprenants peuvent souscrire.',
+    ]);
+    exit;
+}
+
 $paymentReference = isset($_POST['payment_reference']) ? trim((string) $_POST['payment_reference']) : '';
 if ($paymentReference === '') {
     echo json_encode([
