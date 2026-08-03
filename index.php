@@ -130,7 +130,7 @@ unset($_SESSION['contact_flash']);
                 </div>
 
                 <div class="tcf-cta">
-                    <a href="#" class="tcf-cta-btn">
+                    <a href="<?php echo htmlspecialchars(site_href('programmes.php')); ?>" class="tcf-cta-btn">
                         Programme de la Formation
                         <i class='bx bx-chevron-right'></i>
                     </a>

@@ -141,9 +141,9 @@ if (isset($_POST['update_avatar'])) {
         if (function_exists('tcf_user_store_avatar_blob_from_file')) {
             tcf_user_store_avatar_blob_from_file($pdo, $userId, $abs);
         }
-        tcf_profile_set_flash('success', 'Photo de profil enregistrée.');
+        tcf_profile_set_flash('success', 'Photo modifiée avec succès.');
     } else {
-        tcf_profile_set_flash('error', 'Image non valide ou trop volumineuse. Utilisez JPG, PNG ou WebP (max 3 Mo) et validez le recadrage avec OK.');
+        tcf_profile_set_flash('error', 'Échec : photo non enregistrée. Utilisez JPG, PNG ou WebP (max 3 Mo) et validez le recadrage.');
     }
     tcf_profile_redirect_back();
 }

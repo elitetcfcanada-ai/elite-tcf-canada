@@ -301,9 +301,9 @@ function tcf_media_stream_video_blob(PDO $pdo, string $type, int $id): bool
             $st = $pdo->prepare('SELECT video_url, video_data, video_mime FROM videos WHERE id = ? LIMIT 1');
         } else {
             $st = $pdo->prepare('SELECT thumbnail_url, thumbnail_data, thumbnail_mime FROM videos WHERE id = ? LIMIT 1');
-        }
-        $st->execute([$id]);
-        $row = $st->fetch(PDO::FETCH_ASSOC);
+    }
+    $st->execute([$id]);
+    $row = $st->fetch(PDO::FETCH_ASSOC);
     } catch (Throwable $e) {
         return false;
     }

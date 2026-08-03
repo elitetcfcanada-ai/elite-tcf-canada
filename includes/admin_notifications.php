@@ -20,7 +20,9 @@ function tcf_add_staff_notification(PDO $pdo, string $type, string $title, strin
 
 {
 
-    if (!in_array($type, ['video_comment', 'testimonial', 'user'], true)) {
+    // Signaux staff : inscriptions, commentaires, témoignages, mises en ligne.
+    // Jamais photo/profil (ceux-ci restent des toasts locaux uniquement).
+    if (!in_array($type, ['video_comment', 'testimonial', 'user', 'video', 'exam', 'message', 'topic'], true)) {
 
         return;
 

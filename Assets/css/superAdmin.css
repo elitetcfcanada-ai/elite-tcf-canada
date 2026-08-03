@@ -984,8 +984,8 @@
     color: #cbd5e1;
 }
 .tcf-superadmin-app .sa-badge--monthly {
-    background: rgba(59, 130, 246, 0.2);
-    color: #93c5fd;
+    background: rgba(211, 13, 13, 0.2);
+    color: #fecaca;
 }
 .tcf-superadmin-app .sa-badge--annual {
     background: rgba(168, 85, 247, 0.2);
@@ -1016,8 +1016,8 @@
     color: #fde047;
 }
 .tcf-superadmin-app .sa-badge--public {
-    background: rgba(59, 130, 246, 0.2);
-    color: #93c5fd;
+    background: rgba(211, 13, 13, 0.2);
+    color: #fecaca;
 }
 .tcf-superadmin-app .sa-badge--private {
     background: rgba(100, 116, 139, 0.25);

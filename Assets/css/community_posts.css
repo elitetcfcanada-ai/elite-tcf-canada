@@ -103,7 +103,7 @@ body.tcf-posts-page {
     padding: 0;
     border: 0;
     background: transparent;
-    color: #2563eb;
+    color: #d30d0d;
     font-size: 0.9rem;
     font-weight: 600;
     text-decoration: none;
@@ -113,7 +113,7 @@ body.tcf-posts-page {
 
 .tcp-card__link:hover,
 .tcp-card__link:focus-visible {
-    color: #1d4ed8;
+    color: #b40b0b;
     text-decoration: underline;
 }
 
@@ -175,8 +175,8 @@ body.tcf-posts-page {
 }
 
 .tcp-like-btn:hover {
-    background: #eef2ff;
-    color: #2563eb;
+    background: #fef2f2;
+    color: #d30d0d;
 }
 
 .tcp-like-btn.is-liked {

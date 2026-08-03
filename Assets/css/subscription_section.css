@@ -280,7 +280,7 @@
 }
 
 .tfc-checkout-status-msg.is-info {
-    color: #93c5fd;
+    color: #fecaca;
 }
 
 .tfc-checkout-status-msg.is-error {
@@ -712,9 +712,9 @@ body.tcf-checkout-open {
 }
 
 .payment-status--loading {
-    background: #dbeafe;
-    color: #1e40af;
-    border: 1px solid #3b82f6;
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
 }
 
 .payment-status-message {

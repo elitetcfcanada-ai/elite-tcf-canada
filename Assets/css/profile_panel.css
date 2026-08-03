@@ -68,9 +68,9 @@
 }
 
 .tcf-toast--info {
-    background: #eff6ff;
-    color: #1e40af;
-    border-bottom: 1px solid #bfdbfe;
+    background: #fef2f2;
+    color: #991b1b;
+    border-bottom: 1px solid #fecaca;
 }
 
 @keyframes tcfToastIn {

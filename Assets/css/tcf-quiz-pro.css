@@ -7,8 +7,8 @@
     --qpro-ink: #121826;
     --qpro-muted: #5b6472;
     --qpro-line: #e4e7ec;
-    --qpro-accent: #c8102e;
-    --qpro-accent-soft: rgba(200, 16, 46, 0.08);
+    --qpro-accent: #d30d0d;
+    --qpro-accent-soft: rgba(211, 13, 13, 0.08);
     --qpro-ok: #15803d;
     --qpro-ok-soft: rgba(21, 128, 61, 0.12);
     --qpro-bad: #b91c1c;
@@ -358,7 +358,7 @@ body.tcf-quiz-with-site-nav .tcf-quiz-standalone-wrap .app-container.tcf-qpro-re
 
 .tcf-qpro-results .tcf-qpro-metric--time .stat-icon,
 .tcf-qpro-results .tcf-qpro-metric:nth-child(3) .stat-icon {
-    background: #2563eb !important;
+    background: #d30d0d !important;
 }
 
 .tcf-qpro-results .tcf-qpro-metric--pts .stat-icon,

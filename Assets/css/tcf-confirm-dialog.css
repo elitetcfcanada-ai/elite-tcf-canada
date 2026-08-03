@@ -64,8 +64,8 @@ body.tcf-qdlg-open {
 }
 
 .tcf-qdlg--info .tcf-qdlg__icon {
-    background: rgba(37, 99, 235, 0.12);
-    color: #2563eb;
+    background: rgba(211, 13, 13, 0.1);
+    color: #d30d0d;
 }
 
 .tcf-qdlg__title {
@@ -118,12 +118,12 @@ body.tcf-qdlg-open {
 }
 
 .tcf-qdlg--info .tcf-qdlg__btn--primary {
-    background: #2563eb;
+    background: #d30d0d;
     color: #fff;
 }
 
 .tcf-qdlg--info .tcf-qdlg__btn--primary:hover {
-    background: #1d4ed8;
+    background: #b40b0b;
 }
 
 /* Dark admin */

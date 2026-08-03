@@ -153,9 +153,9 @@ form {
 }
 
 .tcf-auth-alert--info {
-    background: #eff6ff;
-    color: #1e40af;
-    border: 1px solid #bfdbfe;
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
 }
 
 .tcf-remember-row {

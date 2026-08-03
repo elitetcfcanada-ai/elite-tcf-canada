@@ -1,0 +1,141 @@
+/* Page programmes — léger, réutilise le shell support */
+
+.prog-pillars {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.prog-pillar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 1rem 0.95rem;
+    border-radius: 14px;
+    text-decoration: none;
+    color: inherit;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.prog-pillar:hover {
+    transform: translateY(-2px);
+    border-color: rgba(211, 13, 13, 0.55);
+    background: rgba(211, 13, 13, 0.12);
+}
+
+.prog-pillar i {
+    font-size: 1.45rem;
+    color: var(--main-color, #d30d0d);
+    margin-bottom: 0.15rem;
+}
+
+.prog-pillar strong {
+    font-size: 0.98rem;
+    font-weight: 750;
+}
+
+.prog-pillar span {
+    font-size: 0.86rem;
+    line-height: 1.45;
+    opacity: 0.82;
+}
+
+.prog-steps {
+    list-style: none;
+    margin: 0.85rem 0 0;
+    padding: 0;
+    display: grid;
+    gap: 0.7rem;
+    counter-reset: prog-step;
+}
+
+.prog-steps li {
+    counter-increment: prog-step;
+    display: grid;
+    grid-template-columns: 2rem 1fr;
+    gap: 0.65rem 0.85rem;
+    align-items: start;
+    padding: 0.85rem 0.9rem;
+    border-radius: 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+
+.prog-steps li::before {
+    content: counter(prog-step);
+    width: 2rem;
+    height: 2rem;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.9rem;
+    color: #fff;
+    background: var(--main-color, #d30d0d);
+    grid-row: 1 / span 2;
+}
+
+.prog-steps strong {
+    font-size: 0.98rem;
+    font-weight: 750;
+    color: #141622;
+}
+
+.prog-steps span {
+    grid-column: 2;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: #64748b;
+}
+
+.prog-cta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    margin-top: 1rem;
+}
+
+.prog-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.7rem 1rem;
+    border-radius: 999px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.92rem;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.prog-cta:hover {
+    background: rgba(255, 255, 255, 0.18);
+}
+
+.prog-cta--primary {
+    background: var(--main-color, #d30d0d);
+    border-color: transparent;
+}
+
+.prog-cta--primary:hover {
+    background: #b40b0b;
+}
+
+@media (max-width: 640px) {
+    .prog-pillars {
+        grid-template-columns: 1fr;
+    }
+
+    .prog-cta-row {
+        flex-direction: column;
+    }
+
+    .prog-cta {
+        justify-content: center;
+    }
+}

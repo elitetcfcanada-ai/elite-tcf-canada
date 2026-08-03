@@ -66,7 +66,7 @@ switch ($action) {
             $pdo->prepare('UPDATE users SET name = ? WHERE id = ?')->execute([$name, $userId]);
         }
         $_SESSION['username'] = $name;
-        echo json_encode(['ok' => true, 'message' => 'Nom enregistré.', 'name' => $name]);
+        echo json_encode(['ok' => true, 'message' => 'Profil modifié avec succès.', 'name' => $name]);
         break;
 
     case 'activity_calendar_month': {
