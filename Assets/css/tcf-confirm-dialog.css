@@ -58,14 +58,11 @@ body.tcf-qdlg-open {
     font-size: 1.55rem;
 }
 
-.tcf-qdlg--danger .tcf-qdlg__icon {
-    background: rgba(211, 13, 13, 0.1);
-    color: #d30d0d;
-}
-
+.tcf-qdlg__icon,
+.tcf-qdlg--danger .tcf-qdlg__icon,
 .tcf-qdlg--info .tcf-qdlg__icon {
-    background: rgba(211, 13, 13, 0.1);
-    color: #d30d0d;
+    background: rgba(211, 13, 13, 0.1) !important;
+    color: #d30d0d !important;
 }
 
 .tcf-qdlg__title {
@@ -108,22 +105,17 @@ body.tcf-qdlg-open {
     background: #e2e8f0;
 }
 
-.tcf-qdlg--danger .tcf-qdlg__btn--primary {
-    background: #d30d0d;
-    color: #fff;
-}
-
-.tcf-qdlg--danger .tcf-qdlg__btn--primary:hover {
-    background: #b40b0b;
-}
-
+.tcf-qdlg__btn--primary,
+.tcf-qdlg--danger .tcf-qdlg__btn--primary,
 .tcf-qdlg--info .tcf-qdlg__btn--primary {
-    background: #d30d0d;
-    color: #fff;
+    background: #d30d0d !important;
+    color: #fff !important;
 }
 
+.tcf-qdlg__btn--primary:hover,
+.tcf-qdlg--danger .tcf-qdlg__btn--primary:hover,
 .tcf-qdlg--info .tcf-qdlg__btn--primary:hover {
-    background: #b40b0b;
+    background: #b40b0b !important;
 }
 
 /* Dark admin */

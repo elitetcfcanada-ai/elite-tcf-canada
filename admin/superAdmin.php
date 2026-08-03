@@ -2554,7 +2554,7 @@ $notifications_json = json_encode($notifications);
     <link rel="stylesheet" href="../Assets/css/admin-mobile-nav.css?v=sa-notif-nav-15">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/tcf-ui-layers.css')); ?>?v=sa-notif-layers-14">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/tcf-assistant-widget.css')); ?>">
-    <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/tcf-confirm-dialog.css')); ?>?v=confirm-2">
+    <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/tcf-confirm-dialog.css')); ?>?v=confirm-4">
     <link rel="stylesheet" href="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
@@ -4270,7 +4270,7 @@ $notifications_json = json_encode($notifications);
         window.TCF_PARTNERS_API = <?php echo json_encode(site_href('partners_api.php')); ?>;
     </script>
     <script src="../Assets/javascript/tcf-tts.js?v=6"></script>
-    <script src="<?php echo htmlspecialchars(site_href('Assets/javascript/tcf_confirm_dialog.js')); ?>?v=confirm-2"></script>
+    <script src="<?php echo htmlspecialchars(site_href('Assets/javascript/tcf_confirm_dialog.js')); ?>?v=confirm-4"></script>
     <script src="../Assets/javascript/superAdmin.ui.js?v=sa-ui-v13"></script>
     <script src="../Assets/javascript/admin-mobile-nav.js?v=sa-ui-v7"></script>
 

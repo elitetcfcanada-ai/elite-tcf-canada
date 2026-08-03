@@ -979,17 +979,54 @@
                 navigateToQuestion(currentQuestion + 1);
             });
         if (finishBtn)
-            finishBtn.addEventListener('click', function () {
+            finishBtn.addEventListener('click', function (e) {
+                if (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
                 askConfirm({
                     title: 'Terminer l’épreuve ?',
                     message:
                         'Afficher votre score ? Vous pourrez ensuite choisir de voir la correction.',
                     confirmLabel: 'Oui, terminer',
                     cancelLabel: 'Continuer',
+                    variant: 'info',
+                    icon: 'bx bx-flag'
                 }).then(function (ok) {
                     if (ok) finishQuiz();
                 });
             });
+
+        document.addEventListener(
+            'click',
+            function (e) {
+                var t = e.target;
+                if (!t || !t.closest) return;
+                var btn = t.closest('#finish-btn');
+                if (!btn || btn.disabled || btn.classList.contains('hidden')) return;
+                if (!quizScreen || quizScreen.classList.contains('hidden')) return;
+                if (btn.getAttribute('data-tcf-finishing') === '1') return;
+                btn.setAttribute('data-tcf-finishing', '1');
+                e.preventDefault();
+                e.stopPropagation();
+                askConfirm({
+                    title: 'Terminer l’épreuve ?',
+                    message:
+                        'Afficher votre score ? Vous pourrez ensuite choisir de voir la correction.',
+                    confirmLabel: 'Oui, terminer',
+                    cancelLabel: 'Continuer',
+                    variant: 'info',
+                    icon: 'bx bx-flag'
+                })
+                    .then(function (ok) {
+                        if (ok) finishQuiz();
+                    })
+                    .finally(function () {
+                        btn.removeAttribute('data-tcf-finishing');
+                    });
+            },
+            true
+        );
         if (restartBtn) restartBtn.addEventListener('click', startQuiz);
         if (showCorrectionBtn)
             showCorrectionBtn.addEventListener('click', toggleCorrectionPanel);

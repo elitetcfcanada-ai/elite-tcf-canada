@@ -1,22 +1,18 @@
 /**
- * Compat quiz CE/CO — délègue au dialogue interne partagé.
- * Préférer Assets/javascript/tcf_confirm_dialog.js
+ * Compat quiz CE/CO — ne remplace PAS tcfQuizConfirm si déjà fourni
+ * par tcf_confirm_dialog.js (chargé avant).
  */
 (function (global) {
     'use strict';
+    if (typeof global.tcfConfirm === 'function') {
+        global.tcfQuizConfirm = global.tcfConfirm;
+        return;
+    }
     function tcfQuizConfirm(opts) {
         opts = opts || {};
-        if (typeof global.tcfConfirm === 'function') {
-            return global.tcfConfirm({
-                title: opts.title || 'Confirmer',
-                message: opts.message || '',
-                confirmLabel: opts.confirmLabel || 'Valider',
-                cancelLabel: opts.cancelLabel || 'Annuler',
-                variant: opts.variant || 'info',
-                icon: opts.icon || 'bx bx-flag'
-            });
-        }
-        return Promise.resolve(false);
+        return Promise.resolve(
+            !!window.confirm(opts.message || opts.title || 'Confirmer ?')
+        );
     }
     global.tcfQuizConfirm = tcfQuizConfirm;
 })(window);

@@ -1,11 +1,15 @@
 /**
  * Dialogue de confirmation interne (carte) — site + admin.
  * window.tcfConfirm({ title, message, confirmLabel, cancelLabel, variant, icon }).then(bool)
- * variant: 'danger' | 'info' (défaut danger pour suppressions)
+ * variant: 'danger' | 'info' (même rouge plateforme)
  * Alias: window.tcfQuizConfirm (quiz CE/CO)
  */
 (function (global) {
     'use strict';
+
+    var BRAND = '#d30d0d';
+    var BRAND_SOFT = 'rgba(211, 13, 13, 0.1)';
+    var BRAND_HOVER = '#b40b0b';
 
     function ensureRoot() {
         var root = document.getElementById('tcf-confirm-dialog-root');
@@ -27,6 +31,23 @@
         return root;
     }
 
+    function applyBrandColors(iconWrap, okBtn) {
+        if (iconWrap) {
+            iconWrap.style.background = BRAND_SOFT;
+            iconWrap.style.color = BRAND;
+        }
+        if (okBtn) {
+            okBtn.style.background = BRAND;
+            okBtn.style.color = '#fff';
+            okBtn.onmouseenter = function () {
+                okBtn.style.background = BRAND_HOVER;
+            };
+            okBtn.onmouseleave = function () {
+                okBtn.style.background = BRAND;
+            };
+        }
+    }
+
     function tcfConfirm(opts) {
         opts = opts || {};
         return new Promise(function (resolve) {
@@ -38,7 +59,7 @@
             var cancelBtn = document.getElementById('tcf-qdlg-cancel');
             var iconWrap = document.getElementById('tcf-qdlg-icon');
             if (!dlg || !okBtn || !cancelBtn) {
-                resolve(false);
+                resolve(!!window.confirm((opts && opts.message) || 'Confirmer ?'));
                 return;
             }
 
@@ -46,17 +67,21 @@
             dlg.classList.remove('tcf-qdlg--danger', 'tcf-qdlg--info');
             dlg.classList.add(variant === 'info' ? 'tcf-qdlg--info' : 'tcf-qdlg--danger');
 
-            var iconClass = opts.icon || (variant === 'info' ? 'bx bx-info-circle' : 'bx bx-trash');
+            var iconClass = opts.icon || (variant === 'info' ? 'bx bx-flag' : 'bx bx-trash');
             if (iconWrap) {
                 iconWrap.innerHTML = '<i class="' + iconClass + '"></i>';
             }
+            applyBrandColors(iconWrap, okBtn);
 
             titleEl.textContent = opts.title || 'Confirmer';
             msgEl.textContent = opts.message || '';
             okBtn.textContent = opts.confirmLabel || (variant === 'danger' ? 'Supprimer' : 'Confirmer');
             cancelBtn.textContent = opts.cancelLabel || 'Annuler';
 
+            var settled = false;
             function close(val) {
+                if (settled) return;
+                settled = true;
                 dlg.hidden = true;
                 dlg.classList.remove('is-open');
                 dlg.setAttribute('aria-hidden', 'true');
@@ -68,14 +93,22 @@
                 document.removeEventListener('keydown', onKey);
                 resolve(!!val);
             }
-            function onOk() {
+            function onOk(e) {
+                if (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
                 close(true);
             }
-            function onCancel() {
+            function onCancel(e) {
+                if (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
                 close(false);
             }
             function onKey(e) {
-                if (e.key === 'Escape') onCancel();
+                if (e.key === 'Escape') onCancel(e);
             }
 
             okBtn.addEventListener('click', onOk);
@@ -88,13 +121,12 @@
             dlg.classList.add('is-open');
             dlg.setAttribute('aria-hidden', 'false');
             document.body.classList.add('tcf-qdlg-open');
-            // Remonter au-dessus de tout overlay admin (profil, sheets…)
             try {
                 document.body.appendChild(dlg.parentNode || dlg);
             } catch (e) {}
             setTimeout(function () {
                 try {
-                    cancelBtn.focus();
+                    okBtn.focus();
                 } catch (e2) {}
             }, 30);
         });
