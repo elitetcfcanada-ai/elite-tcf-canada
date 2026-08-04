@@ -47,10 +47,10 @@ $aboUrl = site_href('abonnement.php');
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Source+Sans+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="Assets/css/theme-vars.css">
-    <link rel="stylesheet" href="Assets/css/comprehesion_Orale.css?v=21">
+    <link rel="stylesheet" href="Assets/css/comprehesion_Orale.css?v=23">
     <link rel="stylesheet" href="Assets/css/header_footer.css">
     <link rel="stylesheet" href="Assets/css/tcf-responsive-pills.css">
-    <link rel="stylesheet" href="Assets/css/quiz-site-chrome.css?v=19">
+    <link rel="stylesheet" href="Assets/css/quiz-site-chrome.css?v=21">
     <link rel="stylesheet" href="Assets/css/tcf-quiz-pro.css?v=results-board-pro-14">
 </head>
 <body class="tcf-quiz-with-site-nav">
@@ -101,18 +101,6 @@ $aboUrl = site_href('abonnement.php');
                             <div class="progress" id="time-progress"></div>
                         </div>
                     </div>
-                </div>
-
-                <div class="co-exam-nav-panel">
-                    <h3 class="co-exam-nav-panel__title">Navigation des questions</h3>
-                    <div class="indicators-container">
-                        <div class="indicators" id="question-indicators"></div>
-                    </div>
-                    <ul class="co-exam-legend" aria-label="Légende">
-                        <li><span class="co-exam-legend__swatch is-current"></span> Actuelle</li>
-                        <li><span class="co-exam-legend__swatch is-answered"></span> Répondue</li>
-                        <li><span class="co-exam-legend__swatch is-todo"></span> Non rép.</li>
-                    </ul>
                 </div>
 
                 <button type="button" id="quit-btn" class="btn btn-danger co-exam-quit">
@@ -185,6 +173,14 @@ $aboUrl = site_href('abonnement.php');
                             <i class='bx bx-flag'></i> Terminer
                         </button>
                     </div>
+                    <div class="indicators-container">
+                        <div class="indicators" id="question-indicators" aria-label="Navigation des questions"></div>
+                    </div>
+                    <ul class="co-exam-legend co-exam-legend--footer" aria-label="Légende">
+                        <li><span class="co-exam-legend__swatch is-current"></span> Actuelle</li>
+                        <li><span class="co-exam-legend__swatch is-answered"></span> Répondue</li>
+                        <li><span class="co-exam-legend__swatch is-todo"></span> Non rép.</li>
+                    </ul>
                 </footer>
             </div>
         </div>

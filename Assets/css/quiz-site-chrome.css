@@ -20,7 +20,7 @@ body.tcf-quiz-with-site-nav .tcf-quiz-standalone-wrap .app-container {
     overflow: visible !important;
 }
 
-/* Pied quiz cliquable — au-dessus de la barre mobile */
+/* Pied quiz cliquable — au-dessus de la barre mobile (CE + CO) */
 body.tcf-quiz-with-site-nav #quiz-screen .quiz-footer {
     position: sticky !important;
     left: auto !important;
@@ -89,7 +89,7 @@ body.tcf-quiz-with-site-nav #quiz-screen:not(.hidden) {
     }
 
     body.tcf-quiz-with-site-nav #quiz-screen:not(.hidden) {
-        padding-bottom: calc(5.5rem + var(--tcf-mobile-nav-h, 4.6rem) + env(safe-area-inset-bottom, 0px)) !important;
+        padding-bottom: calc(7.5rem + var(--tcf-mobile-nav-h, 4.6rem) + env(safe-area-inset-bottom, 0px)) !important;
     }
 
     body.tcf-quiz-with-site-nav .tcf-qpro-review-nav {

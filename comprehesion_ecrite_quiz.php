@@ -51,7 +51,7 @@ $aboUrl = site_href('abonnement.php');
     <link rel="stylesheet" href="Assets/css/comprehesion_Ecrite.css?v=7">
     <link rel="stylesheet" href="Assets/css/header_footer.css">
     <link rel="stylesheet" href="Assets/css/tcf-responsive-pills.css">
-    <link rel="stylesheet" href="Assets/css/quiz-site-chrome.css?v=19">
+    <link rel="stylesheet" href="Assets/css/quiz-site-chrome.css?v=21">
     <link rel="stylesheet" href="Assets/css/tcf-quiz-pro.css?v=results-board-pro-14">
 </head>
 
