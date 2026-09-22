@@ -47,10 +47,10 @@ $aboUrl = site_href('abonnement.php');
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Source+Sans+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="Assets/css/theme-vars.css">
-    <link rel="stylesheet" href="Assets/css/comprehesion_Orale.css?v=24">
+    <link rel="stylesheet" href="Assets/css/comprehesion_Orale.css?v=25">
     <link rel="stylesheet" href="Assets/css/header_footer.css">
     <link rel="stylesheet" href="Assets/css/tcf-responsive-pills.css">
-    <link rel="stylesheet" href="Assets/css/quiz-site-chrome.css?v=21">
+    <link rel="stylesheet" href="Assets/css/quiz-site-chrome.css?v=22">
     <link rel="stylesheet" href="Assets/css/tcf-quiz-pro.css?v=results-board-pro-17">
 </head>
 <body class="tcf-quiz-with-site-nav">
@@ -137,6 +137,18 @@ $aboUrl = site_href('abonnement.php');
                     </div>
                 </div>
 
+                <div class="co-exam-nav-panel">
+                    <h3 class="co-exam-nav-panel__title">Navigation des questions</h3>
+                    <div class="indicators-container">
+                        <div class="indicators" id="question-indicators"></div>
+                    </div>
+                    <ul class="co-exam-legend" aria-label="Légende">
+                        <li><span class="co-exam-legend__swatch is-current"></span> Actuelle</li>
+                        <li><span class="co-exam-legend__swatch is-answered"></span> Répondue</li>
+                        <li><span class="co-exam-legend__swatch is-todo"></span> Non rép.</li>
+                    </ul>
+                </div>
+
                 <button type="button" id="quit-btn" class="btn btn-danger co-exam-quit">
                     <i class='bx bx-log-out'></i> Quitter l’examen
                 </button>
@@ -149,12 +161,12 @@ $aboUrl = site_href('abonnement.php');
                             <span>Question : 1</span>
                         </div>
 
-                        <div class="situation-container" id="situation-container" hidden>
+                        <div class="situation-container">
                             <div class="situation-title">
                                 <i class='bx bx-image'></i>
                                 <span>Situation visuelle</span>
                             </div>
-                            <img id="situation-image" class="situation-image" alt="">
+                            <img id="situation-image" class="situation-image" src="" alt="">
                         </div>
 
                         <p class="question-text" id="co-question-text"></p>
@@ -207,14 +219,6 @@ $aboUrl = site_href('abonnement.php');
                             <i class='bx bx-flag'></i> Terminer
                         </button>
                     </div>
-                    <div class="indicators-container">
-                        <div class="indicators" id="question-indicators" aria-label="Navigation des questions"></div>
-                    </div>
-                    <ul class="co-exam-legend co-exam-legend--footer" aria-label="Légende">
-                        <li><span class="co-exam-legend__swatch is-current"></span> Actuelle</li>
-                        <li><span class="co-exam-legend__swatch is-answered"></span> Répondue</li>
-                        <li><span class="co-exam-legend__swatch is-todo"></span> Non rép.</li>
-                    </ul>
                 </footer>
             </div>
         </div>
@@ -326,7 +330,7 @@ $aboUrl = site_href('abonnement.php');
     <link rel="stylesheet" href="Assets/css/tcf-confirm-dialog.css?v=confirm-4">
     <script src="Assets/javascript/tcf_confirm_dialog.js?v=confirm-4"></script>
     <script src="Assets/javascript/tcf_quiz_dialog.js?v=4"></script>
-    <script src="Assets/javascript/comprehension_quiz_dynamic.js?v=24"></script>
+    <script src="Assets/javascript/comprehension_quiz_dynamic.js?v=25"></script>
 </div>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>
