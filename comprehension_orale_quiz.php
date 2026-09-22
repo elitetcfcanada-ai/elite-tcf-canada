@@ -47,10 +47,10 @@ $aboUrl = site_href('abonnement.php');
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Source+Sans+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="Assets/css/theme-vars.css">
-    <link rel="stylesheet" href="Assets/css/comprehesion_Orale.css?v=26">
+    <link rel="stylesheet" href="Assets/css/comprehesion_Orale.css?v=27">
     <link rel="stylesheet" href="Assets/css/header_footer.css">
     <link rel="stylesheet" href="Assets/css/tcf-responsive-pills.css">
-    <link rel="stylesheet" href="Assets/css/quiz-site-chrome.css?v=23">
+    <link rel="stylesheet" href="Assets/css/quiz-site-chrome.css?v=24">
     <link rel="stylesheet" href="Assets/css/tcf-quiz-pro.css?v=results-board-pro-17">
 </head>
 <body class="tcf-quiz-with-site-nav">

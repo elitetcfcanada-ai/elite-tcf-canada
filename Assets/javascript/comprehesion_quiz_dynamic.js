@@ -443,11 +443,13 @@ function createIndicators() {
 // Mettre à jour les indicateurs de questions
 function updateIndicators() {
   const indicators = questionIndicators.querySelectorAll(".indicator");
+  let currentEl = null;
   indicators.forEach((indicator, index) => {
     indicator.classList.remove("current", "unanswered", "answered");
 
     if (index === currentQuestionIndex) {
       indicator.classList.add("current");
+      currentEl = indicator;
     }
 
     const questionId = questions[index].id;
@@ -457,6 +459,13 @@ function updateIndicators() {
       indicator.classList.add("unanswered");
     }
   });
+  if (currentEl && typeof currentEl.scrollIntoView === "function") {
+    try {
+      currentEl.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    } catch (e) {
+      currentEl.scrollIntoView(false);
+    }
+  }
 }
 
 function getTimeTaken() {
