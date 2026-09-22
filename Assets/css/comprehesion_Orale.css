@@ -529,6 +529,13 @@ a.btn {
     font-size: 0.95rem;
 }
 
+.situation-image-error {
+    margin: 0.5rem 0 0;
+    color: #b91c1c;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
 .situation-image {
     position: relative;
     z-index: 1;

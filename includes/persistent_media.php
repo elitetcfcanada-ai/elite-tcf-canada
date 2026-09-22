@@ -41,12 +41,52 @@ function tcf_persistent_media_ensure_table(PDO $pdo): void
 
 function tcf_persistent_media_normalize_path(?string $stored): string
 {
-    $rel = tcf_uploads_relative_path($stored);
+    $raw = trim((string) ($stored ?? ''));
+    if ($raw === '') {
+        return '';
+    }
+    // Ne jamais traiter media_serve.php comme un chemin fichier
+    if (preg_match('/media_serve\.php/i', $raw)) {
+        return '';
+    }
+    $rel = tcf_uploads_relative_path($raw);
     if ($rel === '' || preg_match('#^https?://#i', $rel)) {
+        return '';
+    }
+    if (!str_starts_with(strtolower($rel), 'uploads/')) {
         return '';
     }
 
     return $rel;
+}
+
+/**
+ * Résout une référence (uploads/…, URL locale, media_serve?type=pm&id=) vers path_key uploads/…
+ */
+function tcf_persistent_media_resolve_path_key(PDO $pdo, ?string $stored): string
+{
+    $raw = trim((string) ($stored ?? ''));
+    if ($raw === '') {
+        return '';
+    }
+    if (preg_match('/media_serve\.php/i', $raw)
+        && preg_match('/(?:\?|&)type=pm(?:&|$)/i', $raw)
+        && preg_match('/(?:\?|&)id=(\d+)/i', $raw, $m)
+    ) {
+        tcf_persistent_media_ensure_table($pdo);
+        try {
+            $st = $pdo->prepare('SELECT path_key FROM persistent_media WHERE id = ? LIMIT 1');
+            $st->execute([(int) $m[1]]);
+            $pk = $st->fetchColumn();
+            if (is_string($pk) && $pk !== '') {
+                return tcf_persistent_media_normalize_path($pk);
+            }
+        } catch (Throwable $e) {
+        }
+        return '';
+    }
+
+    return tcf_persistent_media_normalize_path($raw);
 }
 
 /**
@@ -57,7 +97,10 @@ function tcf_persistent_media_normalize_path(?string $stored): string
 function tcf_persistent_media_store_from_path(PDO $pdo, string $relativeOrAbs, string $kind = 'file'): int
 {
     tcf_persistent_media_ensure_table($pdo);
-    $rel = tcf_persistent_media_normalize_path($relativeOrAbs);
+    $rel = tcf_persistent_media_resolve_path_key($pdo, $relativeOrAbs);
+    if ($rel === '') {
+        $rel = tcf_persistent_media_normalize_path($relativeOrAbs);
+    }
     $abs = '';
     if ($rel !== '') {
         $abs = tcf_uploads_fs_path($rel);
@@ -71,6 +114,7 @@ function tcf_persistent_media_store_from_path(PDO $pdo, string $relativeOrAbs, s
                 $absReal = realpath($abs);
                 if ($root && $absReal && str_starts_with($absReal, $root)) {
                     $rel = ltrim(str_replace('\\', '/', substr($absReal, strlen($root))), '/');
+                    $rel = tcf_persistent_media_normalize_path($rel);
                 }
             }
         }
@@ -91,6 +135,11 @@ function tcf_persistent_media_store_from_path(PDO $pdo, string $relativeOrAbs, s
     }
 
     try {
+        // Évite les échecs silencieux sur gros fichiers
+        try {
+            @$pdo->exec('SET SESSION max_allowed_packet = 67108864');
+        } catch (Throwable $e) {
+        }
         $st = $pdo->prepare(
             'INSERT INTO persistent_media (path_key, kind, mime, data, byte_size)
              VALUES (?, ?, ?, ?, ?)
@@ -109,7 +158,10 @@ function tcf_persistent_media_store_from_path(PDO $pdo, string $relativeOrAbs, s
 
 function tcf_persistent_media_id_for_path(PDO $pdo, ?string $stored): int
 {
-    $rel = tcf_persistent_media_normalize_path($stored);
+    $rel = tcf_persistent_media_resolve_path_key($pdo, $stored);
+    if ($rel === '') {
+        $rel = tcf_persistent_media_normalize_path($stored);
+    }
     if ($rel === '') {
         return 0;
     }
@@ -160,9 +212,12 @@ function tcf_persistent_media_restore_file(PDO $pdo, ?string $stored): bool
  */
 function tcf_persistent_media_public_href(PDO $pdo, ?string $stored, string $kind = 'file'): string
 {
-    $rel = tcf_persistent_media_normalize_path($stored);
+    $rel = tcf_persistent_media_resolve_path_key($pdo, $stored);
     if ($rel === '') {
-        if ($stored !== null && preg_match('#^https?://#i', trim((string) $stored))) {
+        if ($stored !== null && preg_match('#^https?://#i', trim((string) $stored))
+            && !preg_match('#/(uploads/)#i', (string) $stored)
+            && !preg_match('/media_serve\.php/i', (string) $stored)
+        ) {
             return trim((string) $stored);
         }
         return '';
@@ -177,7 +232,7 @@ function tcf_persistent_media_public_href(PDO $pdo, ?string $stored, string $kin
     }
     if ($pmId > 0 && !$hasFile) {
         tcf_persistent_media_restore_file($pdo, $rel);
-        $hasFile = is_file($abs);
+        $hasFile = $abs !== '' && is_file($abs);
     }
     if ($pmId > 0) {
         return tcf_media_serve_href('pm', $pmId);
@@ -187,6 +242,38 @@ function tcf_persistent_media_public_href(PDO $pdo, ?string $stored, string $kin
     }
 
     return tcf_uploads_public_href($rel);
+}
+
+/**
+ * Indexe tous les fichiers déjà présents dans uploads/co_media/ (réparation).
+ *
+ * @return int nombre de médias synchronisés
+ */
+function tcf_persistent_media_backfill_co_dir(PDO $pdo): int
+{
+    $dir = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'co_media';
+    if (!is_dir($dir)) {
+        return 0;
+    }
+    $n = 0;
+    $files = @scandir($dir) ?: [];
+    foreach ($files as $f) {
+        if ($f === '.' || $f === '..' || $f === '.htaccess' || $f === '.gitkeep') {
+            continue;
+        }
+        $abs = $dir . DIRECTORY_SEPARATOR . $f;
+        if (!is_file($abs)) {
+            continue;
+        }
+        $rel = 'uploads/co_media/' . $f;
+        $ext = strtolower(pathinfo($f, PATHINFO_EXTENSION));
+        $kind = in_array($ext, ['mp3', 'wav', 'ogg', 'm4a', 'aac'], true) ? 'co_audio' : 'co_image';
+        if (tcf_persistent_media_store_from_path($pdo, $rel, $kind) > 0) {
+            $n++;
+        }
+    }
+
+    return $n;
 }
 
 function tcf_media_stream_persistent(PDO $pdo, int $id): bool

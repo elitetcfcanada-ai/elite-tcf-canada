@@ -1685,17 +1685,94 @@
         }).join('');
     }
 
-    function eoSubjectFieldsHtml(taskKey, n) {
-        var html = '';
-        for (var i = 1; i <= 5; i++) {
-            html += '<div style="margin-top:8px;padding:8px;border:1px dashed #cbd5e1;border-radius:10px;">' +
-                '<h5 style="margin:0 0 6px;">Sujet ' + i + '</h5>' +
-                '<div class="form-group"><label class="form-label">Titre</label><input class="form-control" data-eo-subject-title="' + i + '" data-eo-task-key="' + taskKey + '" type="text"></div>' +
-                '<div class="form-group"><label class="form-label">Sujet (énoncé)</label><textarea class="form-control" rows="3" data-eo-subject-prompt="' + i + '" data-eo-task-key="' + taskKey + '"></textarea></div>' +
-                '<div class="form-group"><label class="form-label">Correction (exemple de réponse)</label><textarea class="form-control" rows="4" data-eo-subject-correction="' + i + '" data-eo-task-key="' + taskKey + '" placeholder="Exemple de réponse — bouton « Voir / Masquer la correction » côté site"></textarea></div>' +
-                '</div>';
+    var EO_SUBJECT_MAX = 5;
+
+    function eoSubjectCardHtml(taskKey, i, isActive) {
+        return '<div class="eo-subject-card' + (isActive ? ' is-active' : '') + '" data-eo-subject-card="' + i + '" data-eo-task-key="' + taskKey + '"' + (isActive ? '' : ' hidden') + '>' +
+            '<div class="eo-subject-card__head">' +
+            '<strong data-eo-subject-label>Question ' + i + ' / ' + EO_SUBJECT_MAX + '</strong>' +
+            '</div>' +
+            '<div class="form-group"><label class="form-label">Titre</label><input class="form-control" data-eo-subject-title="' + i + '" data-eo-task-key="' + taskKey + '" type="text" placeholder="Titre du sujet"></div>' +
+            '<div class="form-group"><label class="form-label">Sujet (énoncé)</label><textarea class="form-control" rows="4" data-eo-subject-prompt="' + i + '" data-eo-task-key="' + taskKey + '" placeholder="Énoncé présenté au candidat"></textarea></div>' +
+            '<div class="form-group"><label class="form-label">Correction (exemple de réponse)</label><textarea class="form-control" rows="4" data-eo-subject-correction="' + i + '" data-eo-task-key="' + taskKey + '" placeholder="Exemple de réponse — bouton « Voir / Masquer la correction » côté site"></textarea></div>' +
+            '</div>';
+    }
+
+    function eoSubjectFieldsHtml(taskKey) {
+        var indicators = '';
+        var cards = '';
+        for (var i = 1; i <= EO_SUBJECT_MAX; i++) {
+            indicators += '<button type="button" class="eo-q-dot' + (i === 1 ? ' is-current' : '') + '" data-eo-q-goto="' + i + '" data-eo-task-key="' + taskKey + '" aria-label="Question ' + i + '">' + i + '</button>';
+            cards += eoSubjectCardHtml(taskKey, i, i === 1);
         }
-        return html;
+        return '<div class="eo-q-wizard" data-eo-q-wizard data-eo-task-key="' + taskKey + '" data-eo-q-index="1">' +
+            '<div class="eo-q-wizard__toolbar">' +
+            '<div class="eo-q-wizard__meta"><span class="eo-q-wizard__title">Questions</span> <span class="eo-q-wizard__count" data-eo-q-count>1 / ' + EO_SUBJECT_MAX + '</span></div>' +
+            '<div class="eo-q-dots" data-eo-q-dots role="tablist" aria-label="Navigation des questions">' + indicators + '</div>' +
+            '</div>' +
+            '<div class="eo-q-wizard__cards">' + cards + '</div>' +
+            '<div class="eo-q-wizard__nav">' +
+            '<button type="button" class="btn btn-outline eo-q-nav-btn" data-eo-q-prev data-eo-task-key="' + taskKey + '"><i class="bx bx-chevron-left"></i> Précédent</button>' +
+            '<button type="button" class="btn btn-outline eo-q-nav-btn" data-eo-q-next data-eo-task-key="' + taskKey + '">Suivant <i class="bx bx-chevron-right"></i></button>' +
+            '<button type="button" class="btn btn-primary eo-q-nav-btn eo-q-nav-btn--new" data-eo-q-new data-eo-task-key="' + taskKey + '"><i class="bx bx-plus"></i> Nouvelle question</button>' +
+            '</div>' +
+            '<p class="eo-q-wizard__hint">Chaque tâche publiée doit contenir exactement ' + EO_SUBJECT_MAX + ' questions (titre + énoncé).</p>' +
+            '</div>';
+    }
+
+    function eoIsSubjectFilled(card) {
+        if (!card) return false;
+        var t = card.querySelector('[data-eo-subject-title]');
+        var pr = card.querySelector('[data-eo-subject-prompt]');
+        return !!(String((t && t.value) || '').trim() || String((pr && pr.value) || '').trim());
+    }
+
+    function eoRefreshSubjectWizard(wizard) {
+        if (!wizard) return;
+        var idx = Math.max(1, Math.min(EO_SUBJECT_MAX, Number(wizard.getAttribute('data-eo-q-index') || 1)));
+        wizard.setAttribute('data-eo-q-index', String(idx));
+        var countEl = wizard.querySelector('[data-eo-q-count]');
+        if (countEl) countEl.textContent = idx + ' / ' + EO_SUBJECT_MAX;
+        wizard.querySelectorAll('[data-eo-subject-card]').forEach(function (card) {
+            var n = Number(card.getAttribute('data-eo-subject-card') || 0);
+            var on = n === idx;
+            card.classList.toggle('is-active', on);
+            if (on) card.removeAttribute('hidden');
+            else card.setAttribute('hidden', '');
+            var lab = card.querySelector('[data-eo-subject-label]');
+            if (lab) lab.textContent = 'Question ' + n + ' / ' + EO_SUBJECT_MAX;
+        });
+        wizard.querySelectorAll('[data-eo-q-goto]').forEach(function (dot) {
+            var n = Number(dot.getAttribute('data-eo-q-goto') || 0);
+            var card = wizard.querySelector('[data-eo-subject-card="' + n + '"]');
+            var filled = eoIsSubjectFilled(card);
+            dot.classList.toggle('is-current', n === idx);
+            dot.classList.toggle('is-filled', filled && n !== idx);
+            dot.setAttribute('aria-current', n === idx ? 'true' : 'false');
+        });
+        var prevBtn = wizard.querySelector('[data-eo-q-prev]');
+        var nextBtn = wizard.querySelector('[data-eo-q-next]');
+        var newBtn = wizard.querySelector('[data-eo-q-new]');
+        if (prevBtn) prevBtn.disabled = idx <= 1;
+        if (nextBtn) nextBtn.disabled = idx >= EO_SUBJECT_MAX;
+        if (newBtn) {
+            var lastFilled = eoIsSubjectFilled(wizard.querySelector('[data-eo-subject-card="' + EO_SUBJECT_MAX + '"]'));
+            newBtn.disabled = idx >= EO_SUBJECT_MAX && lastFilled;
+        }
+    }
+
+    function eoShowSubjectIndex(wizard, index) {
+        if (!wizard) return;
+        var idx = Math.max(1, Math.min(EO_SUBJECT_MAX, Number(index) || 1));
+        wizard.setAttribute('data-eo-q-index', String(idx));
+        eoRefreshSubjectWizard(wizard);
+        var active = wizard.querySelector('[data-eo-subject-card="' + idx + '"]');
+        if (active) {
+            var focusEl = active.querySelector('[data-eo-subject-title]');
+            if (focusEl && typeof focusEl.focus === 'function') {
+                try { focusEl.focus({ preventScroll: true }); } catch (err) { focusEl.focus(); }
+            }
+        }
     }
 
     function eoPartieTemplate(n) {
@@ -1705,16 +1782,16 @@
             { key: 'tache3', label: 'Tâche 3', hint: 'Point de vue' }
         ];
         var nav = taskDefs.map(function (t, idx) {
-            return '<button type="button" class="btn btn-outline eo-partie-task-btn' + (idx === 1 ? ' is-active' : '') + '" data-eo-partie-task-tab="' + t.key + '">' + t.label + ' <small style="opacity:.85;">(' + t.hint + ')</small></button>';
+            return '<button type="button" class="btn btn-outline eo-partie-task-btn' + (idx === 1 ? ' is-active' : '') + '" data-eo-partie-task-tab="' + t.key + '">' + t.label + ' <small class="eo-partie-task-hint">(' + t.hint + ')</small></button>';
         }).join('');
         var panels = taskDefs.map(function (t, idx) {
-            return '<div class="eo-partie-task-panel" data-eo-partie-task-panel="' + t.key + '" style="margin-top:10px;' + (idx === 1 ? '' : 'display:none;') + '">' + eoSubjectFieldsHtml(t.key, n) + '</div>';
+            return '<div class="eo-partie-task-panel" data-eo-partie-task-panel="' + t.key + '" style="margin-top:10px;' + (idx === 1 ? '' : 'display:none;') + '">' + eoSubjectFieldsHtml(t.key) + '</div>';
         }).join('');
-        return '<div class="dashboard-section" data-eo-partie style="margin-top:14px;padding:12px;border:1px solid var(--sa-border);border-radius:12px;">' +
+        return '<div class="dashboard-section eo-partie-block" data-eo-partie style="margin-top:14px;padding:12px;border:1px solid var(--sa-border);border-radius:12px;">' +
             '<div class="section-header" style="margin-bottom:8px;"><div class="section-title" style="font-size:1rem;">Partie <span data-eo-partie-label>' + n + '</span></div><button type="button" class="btn btn-outline btn-sm" data-eo-remove-partie>Retirer</button></div>' +
             '<div class="form-group"><label class="form-label">Numéro de partie</label><input type="number" min="1" class="form-control" data-eo-part-number value="' + n + '"></div>' +
             '<div class="form-group"><label class="form-label">Titre partie (optionnel)</label><input type="text" class="form-control" data-eo-part-title placeholder="Ex: Partie 1"></div>' +
-            '<div class="form-group"><label class="form-label">Tâches de cette partie</label><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px;">' + nav + '</div></div>' +
+            '<div class="form-group"><label class="form-label">Tâches de cette partie</label><div class="eo-partie-task-tabs">' + nav + '</div></div>' +
             panels +
             '</div>';
     }
@@ -1726,6 +1803,7 @@
         var n = count || 1;
         for (var i = 1; i <= n; i++) wrap.insertAdjacentHTML('beforeend', eoPartieTemplate(i));
         refreshEoPartieLabels();
+        $all('[data-eo-q-wizard]').forEach(function (w) { eoRefreshSubjectWizard(w); });
     }
 
     function refreshEoPartieLabels() {
@@ -1767,7 +1845,7 @@
             var part = grouped.tasks[tk];
             if (!part) return;
             var subjects = Array.isArray(part.subjects) ? part.subjects : [];
-            subjects.slice(0, 5).forEach(function (s, si) {
+            subjects.slice(0, EO_SUBJECT_MAX).forEach(function (s, si) {
                 var n = si + 1;
                 var t = el.querySelector('[data-eo-subject-title="' + n + '"][data-eo-task-key="' + tk + '"]');
                 var pr = el.querySelector('[data-eo-subject-prompt="' + n + '"][data-eo-task-key="' + tk + '"]');
@@ -1776,6 +1854,8 @@
                 if (pr) pr.value = s.prompt || '';
                 if (co) co.value = s.correction || '';
             });
+            var wizard = el.querySelector('[data-eo-q-wizard][data-eo-task-key="' + tk + '"]');
+            if (wizard) eoShowSubjectIndex(wizard, 1);
         });
     }
 
@@ -1787,7 +1867,7 @@
             ['tache1', 'tache2', 'tache3'].forEach(function (tk) {
                 var subjects = [];
                 var hasContent = false;
-                for (var i = 1; i <= 5; i++) {
+                for (var i = 1; i <= EO_SUBJECT_MAX; i++) {
                     var t = p.querySelector('[data-eo-subject-title="' + i + '"][data-eo-task-key="' + tk + '"]');
                     var pr = p.querySelector('[data-eo-subject-prompt="' + i + '"][data-eo-task-key="' + tk + '"]');
                     var co = p.querySelector('[data-eo-subject-correction="' + i + '"][data-eo-task-key="' + tk + '"]');
@@ -1827,6 +1907,9 @@
         document.getElementById('eo-exam-visibility').value = 'gratuit';
         document.getElementById('eo-exam-published').checked = true;
         resetEoParts(1);
+        try {
+            form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } catch (eScroll) {}
         if (!examId) return;
         var fd = new FormData();
         fd.append('action', 'get_exam_for_edit');
@@ -1866,6 +1949,9 @@
         addBtn.addEventListener('click', function () {
             wrap.insertAdjacentHTML('beforeend', eoPartieTemplate($all('[data-eo-partie]').length + 1));
             refreshEoPartieLabels();
+            var lastPartie = $all('[data-eo-partie]');
+            var last = lastPartie[lastPartie.length - 1];
+            if (last) last.querySelectorAll('[data-eo-q-wizard]').forEach(function (w) { eoRefreshSubjectWizard(w); });
         });
         wrap.addEventListener('click', function (e) {
             var taskTab = e.target.closest('[data-eo-partie-task-tab]');
@@ -1873,12 +1959,70 @@
                 var partieWrap = taskTab.closest('[data-eo-partie]');
                 if (partieWrap) {
                     var tk = taskTab.getAttribute('data-eo-partie-task-tab') || 'tache2';
-                    partieWrap.querySelectorAll('[data-eo-partie-task-btn]').forEach(function (b) {
+                    partieWrap.querySelectorAll('.eo-partie-task-btn').forEach(function (b) {
                         b.classList.toggle('is-active', b === taskTab);
                     });
                     partieWrap.querySelectorAll('[data-eo-partie-task-panel]').forEach(function (panel) {
                         panel.style.display = (panel.getAttribute('data-eo-partie-task-panel') === tk) ? 'block' : 'none';
                     });
+                    var wiz = partieWrap.querySelector('[data-eo-q-wizard][data-eo-task-key="' + tk + '"]');
+                    if (wiz) eoRefreshSubjectWizard(wiz);
+                }
+                return;
+            }
+            var gotoBtn = e.target.closest('[data-eo-q-goto]');
+            if (gotoBtn) {
+                var wizardGoto = gotoBtn.closest('[data-eo-q-wizard]');
+                if (wizardGoto) eoShowSubjectIndex(wizardGoto, Number(gotoBtn.getAttribute('data-eo-q-goto') || 1));
+                return;
+            }
+            var prevBtn = e.target.closest('[data-eo-q-prev]');
+            if (prevBtn) {
+                var wizardPrev = prevBtn.closest('[data-eo-q-wizard]');
+                if (wizardPrev) {
+                    var curPrev = Number(wizardPrev.getAttribute('data-eo-q-index') || 1);
+                    eoShowSubjectIndex(wizardPrev, curPrev - 1);
+                }
+                return;
+            }
+            var nextBtn = e.target.closest('[data-eo-q-next]');
+            if (nextBtn) {
+                var wizardNext = nextBtn.closest('[data-eo-q-wizard]');
+                if (wizardNext) {
+                    var curNext = Number(wizardNext.getAttribute('data-eo-q-index') || 1);
+                    eoShowSubjectIndex(wizardNext, curNext + 1);
+                }
+                return;
+            }
+            var newBtn = e.target.closest('[data-eo-q-new]');
+            if (newBtn) {
+                var wizardNew = newBtn.closest('[data-eo-q-wizard]');
+                if (wizardNew) {
+                    var curNew = Number(wizardNew.getAttribute('data-eo-q-index') || 1);
+                    var target = curNew < EO_SUBJECT_MAX ? curNew + 1 : EO_SUBJECT_MAX;
+                    // Prefer first empty slot after current, else next index
+                    var foundEmpty = 0;
+                    for (var qi = curNew + 1; qi <= EO_SUBJECT_MAX; qi++) {
+                        if (!eoIsSubjectFilled(wizardNew.querySelector('[data-eo-subject-card="' + qi + '"]'))) {
+                            foundEmpty = qi;
+                            break;
+                        }
+                    }
+                    if (!foundEmpty && curNew < EO_SUBJECT_MAX) foundEmpty = curNew + 1;
+                    if (!foundEmpty) {
+                        for (var qj = 1; qj <= EO_SUBJECT_MAX; qj++) {
+                            if (!eoIsSubjectFilled(wizardNew.querySelector('[data-eo-subject-card="' + qj + '"]'))) {
+                                foundEmpty = qj;
+                                break;
+                            }
+                        }
+                    }
+                    if (foundEmpty) {
+                        eoShowSubjectIndex(wizardNew, foundEmpty);
+                    } else {
+                        toast('Les ' + EO_SUBJECT_MAX + ' questions de cette tâche sont déjà créées.', true);
+                        eoShowSubjectIndex(wizardNew, target);
+                    }
                 }
                 return;
             }
@@ -1889,6 +2033,11 @@
             partie.remove();
             if (!$all('[data-eo-partie]').length) resetEoParts(1);
             else refreshEoPartieLabels();
+        });
+        wrap.addEventListener('input', function (e) {
+            if (!e.target.closest('[data-eo-subject-title], [data-eo-subject-prompt], [data-eo-subject-correction]')) return;
+            var wizard = e.target.closest('[data-eo-q-wizard]');
+            if (wizard) eoRefreshSubjectWizard(wizard);
         });
         if (cancelBtn) cancelBtn.addEventListener('click', function () {
             form.style.display = 'none';
@@ -2899,12 +3048,12 @@
 
     function coQuestionTemplate(num) {
         return (
-            '<div class="dashboard-section co-q-block" data-co-q style="margin-top:12px;padding:14px;border:1px solid rgba(148,163,184,.35);border-radius:10px;background:rgba(248,250,252,.6);">' +
+            '<div class="dashboard-section co-q-block" data-co-q hidden style="margin-top:12px;padding:14px;border:1px solid rgba(148,163,184,.35);border-radius:10px;background:rgba(248,250,252,.6);">' +
             '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
             '<strong data-co-q-label>Question ' +
             num +
             '</strong>' +
-            '<button type="button" class="btn btn-outline btn-sm" data-co-remove-q><i class="bx bx-trash"></i></button>' +
+            '<button type="button" class="btn btn-outline btn-sm" data-co-remove-q title="Supprimer cette question"><i class="bx bx-trash"></i></button>' +
             '</div>' +
             '<div class="form-group"><label class="form-label">Énoncé de la question</label>' +
             '<textarea class="form-control" rows="2" data-co-q-text required placeholder="Texte affiché au candidat"></textarea></div>' +
@@ -2962,25 +3111,124 @@
         );
     }
 
-    function refreshCoQuestionLabels() {
-        $all('[data-co-q]').forEach(function (blk, idx) {
+    function coIsQuestionFilled(blk) {
+        if (!blk) return false;
+        var tx = blk.querySelector('[data-co-q-text]');
+        return !!(tx && String(tx.value || '').trim());
+    }
+
+    function ensureCoQuestionWizardShell(wrap) {
+        if (!wrap) return null;
+        var shell = wrap.querySelector('[data-co-q-wizard]');
+        if (shell) return shell;
+        wrap.innerHTML =
+            '<div class="eo-q-wizard" data-co-q-wizard data-co-q-index="0">' +
+            '<div class="eo-q-wizard__toolbar">' +
+            '<div class="eo-q-wizard__meta"><span class="eo-q-wizard__title">Questions</span> <span class="eo-q-wizard__count" data-co-q-count>1 / 1</span></div>' +
+            '<div class="eo-q-dots" data-co-q-dots role="tablist" aria-label="Navigation des questions"></div>' +
+            '</div>' +
+            '<div class="eo-q-wizard__cards" data-co-q-cards></div>' +
+            '<div class="eo-q-wizard__nav">' +
+            '<button type="button" class="btn btn-outline eo-q-nav-btn" data-co-q-prev><i class="bx bx-chevron-left"></i> Précédent</button>' +
+            '<button type="button" class="btn btn-outline eo-q-nav-btn" data-co-q-next>Suivant <i class="bx bx-chevron-right"></i></button>' +
+            '<button type="button" class="btn btn-primary eo-q-nav-btn eo-q-nav-btn--new" data-co-q-new><i class="bx bx-plus"></i> Nouvelle question</button>' +
+            '</div>' +
+            '<p class="eo-q-wizard__hint">Une question à la fois — utilisez les pastilles ou Suivant / Précédent pour naviguer.</p>' +
+            '</div>';
+        return wrap.querySelector('[data-co-q-wizard]');
+    }
+
+    function refreshCoQuestionWizard(preferredIndex) {
+        var wrap = document.getElementById('co-questions-wrap');
+        if (!wrap) return;
+        var shell = ensureCoQuestionWizardShell(wrap);
+        if (!shell) return;
+        var cardsHost = shell.querySelector('[data-co-q-cards]');
+        var dotsHost = shell.querySelector('[data-co-q-dots]');
+        var blocks = cardsHost ? Array.prototype.slice.call(cardsHost.querySelectorAll('[data-co-q]')) : [];
+        if (!blocks.length) {
+            if (cardsHost) cardsHost.insertAdjacentHTML('beforeend', coQuestionTemplate(1));
+            blocks = cardsHost ? Array.prototype.slice.call(cardsHost.querySelectorAll('[data-co-q]')) : [];
+        }
+        var total = blocks.length;
+        var idx = preferredIndex != null ? Number(preferredIndex) : Number(shell.getAttribute('data-co-q-index') || 0);
+        if (isNaN(idx) || idx < 0) idx = 0;
+        if (idx >= total) idx = total - 1;
+        shell.setAttribute('data-co-q-index', String(idx));
+        var countEl = shell.querySelector('[data-co-q-count]');
+        if (countEl) countEl.textContent = (idx + 1) + ' / ' + total;
+        if (dotsHost) {
+            dotsHost.innerHTML = blocks.map(function (blk, i) {
+                var filled = coIsQuestionFilled(blk);
+                var cls = 'eo-q-dot' + (i === idx ? ' is-current' : (filled ? ' is-filled' : ''));
+                return '<button type="button" class="' + cls + '" data-co-q-goto="' + i + '" aria-label="Question ' + (i + 1) + '" aria-current="' + (i === idx ? 'true' : 'false') + '">' + (i + 1) + '</button>';
+            }).join('');
+        }
+        blocks.forEach(function (blk, i) {
+            var on = i === idx;
+            blk.classList.toggle('is-active', on);
+            if (on) blk.removeAttribute('hidden');
+            else blk.setAttribute('hidden', '');
             var lab = blk.querySelector('[data-co-q-label]');
-            if (lab) lab.textContent = 'Question ' + (idx + 1);
+            if (lab) lab.textContent = 'Question ' + (i + 1) + ' / ' + total;
         });
+        var prevBtn = shell.querySelector('[data-co-q-prev]');
+        var nextBtn = shell.querySelector('[data-co-q-next]');
+        if (prevBtn) prevBtn.disabled = idx <= 0;
+        if (nextBtn) nextBtn.disabled = idx >= total - 1;
+    }
+
+    function showCoQuestionIndex(index) {
+        refreshCoQuestionWizard(index);
+        var wrap = document.getElementById('co-questions-wrap');
+        var shell = wrap && wrap.querySelector('[data-co-q-wizard]');
+        if (!shell) return;
+        var idx = Number(shell.getAttribute('data-co-q-index') || 0);
+        var cardsHost = shell.querySelector('[data-co-q-cards]');
+        var blk = cardsHost && cardsHost.querySelectorAll('[data-co-q]')[idx];
+        if (blk) {
+            var focusEl = blk.querySelector('[data-co-q-text]');
+            if (focusEl && typeof focusEl.focus === 'function') {
+                try { focusEl.focus({ preventScroll: true }); } catch (err) { focusEl.focus(); }
+            }
+        }
+    }
+
+    function addCoQuestionAndShow() {
+        var wrap = document.getElementById('co-questions-wrap');
+        if (!wrap) return;
+        var shell = ensureCoQuestionWizardShell(wrap);
+        var cardsHost = shell && shell.querySelector('[data-co-q-cards]');
+        if (!cardsHost) return;
+        var n = cardsHost.querySelectorAll('[data-co-q]').length + 1;
+        cardsHost.insertAdjacentHTML('beforeend', coQuestionTemplate(n));
+        var last = cardsHost.querySelector('[data-co-q]:last-of-type');
+        if (last) {
+            last.removeAttribute('hidden');
+            refreshCoQuestionMediaPreviews(last);
+        }
+        showCoQuestionIndex(n - 1);
+    }
+
+    function refreshCoQuestionLabels() {
+        refreshCoQuestionWizard();
     }
 
     function resetCoQuestions(count) {
         var wrap = document.getElementById('co-questions-wrap');
         if (!wrap) return;
         wrap.innerHTML = '';
+        var shell = ensureCoQuestionWizardShell(wrap);
+        var cardsHost = shell && shell.querySelector('[data-co-q-cards]');
+        if (!cardsHost) return;
         var n = Math.max(1, count || 1);
         for (var i = 0; i < n; i++) {
-            wrap.insertAdjacentHTML('beforeend', coQuestionTemplate(i + 1));
+            cardsHost.insertAdjacentHTML('beforeend', coQuestionTemplate(i + 1));
         }
-        refreshCoQuestionLabels();
-        $all('[data-co-q]').forEach(function (b) {
+        cardsHost.querySelectorAll('[data-co-q]').forEach(function (b) {
             refreshCoQuestionMediaPreviews(b);
         });
+        showCoQuestionIndex(0);
     }
 
     function stripCoAnswerLetterPrefix(text) {
@@ -3130,9 +3378,12 @@
                     resetCoQuestions(1);
                     return;
                 }
+                var shell = ensureCoQuestionWizardShell(wrap);
+                var cardsHost = shell && shell.querySelector('[data-co-q-cards]');
+                if (!cardsHost) return;
                 qs.forEach(function (q, idx) {
-                    wrap.insertAdjacentHTML('beforeend', coQuestionTemplate(idx + 1));
-                    var blk = wrap.querySelectorAll('[data-co-q]')[idx];
+                    cardsHost.insertAdjacentHTML('beforeend', coQuestionTemplate(idx + 1));
+                    var blk = cardsHost.querySelectorAll('[data-co-q]')[idx];
                     if (!blk) return;
                     var tx = blk.querySelector('[data-co-q-text]');
                     if (tx) tx.value = q.question_text || '';
@@ -3157,10 +3408,10 @@
                         if (inp && ans[ai]) inp.value = stripCoAnswerLetterPrefix(ans[ai].text || '');
                     }
                 });
-                refreshCoQuestionLabels();
-                wrap.querySelectorAll('[data-co-q]').forEach(function (b) {
+                cardsHost.querySelectorAll('[data-co-q]').forEach(function (b) {
                     refreshCoQuestionMediaPreviews(b);
                 });
+                showCoQuestionIndex(0);
             })
             .catch(function () { toast('Erreur réseau', true); });
     }
@@ -3175,13 +3426,38 @@
         if (!form || !wrap) return;
         if (addBtn) {
             addBtn.addEventListener('click', function () {
-                wrap.insertAdjacentHTML('beforeend', coQuestionTemplate($all('[data-co-q]').length + 1));
-                refreshCoQuestionLabels();
-                var last = wrap.querySelector('[data-co-q]:last-of-type');
-                if (last) refreshCoQuestionMediaPreviews(last);
+                addCoQuestionAndShow();
             });
         }
         wrap.addEventListener('click', function (e) {
+            var gotoBtn = e.target.closest && e.target.closest('[data-co-q-goto]');
+            if (gotoBtn) {
+                e.preventDefault();
+                showCoQuestionIndex(Number(gotoBtn.getAttribute('data-co-q-goto') || 0));
+                return;
+            }
+            var prevNav = e.target.closest && e.target.closest('[data-co-q-prev]');
+            if (prevNav) {
+                e.preventDefault();
+                var shellP = wrap.querySelector('[data-co-q-wizard]');
+                var curP = Number((shellP && shellP.getAttribute('data-co-q-index')) || 0);
+                showCoQuestionIndex(curP - 1);
+                return;
+            }
+            var nextNav = e.target.closest && e.target.closest('[data-co-q-next]');
+            if (nextNav) {
+                e.preventDefault();
+                var shellN = wrap.querySelector('[data-co-q-wizard]');
+                var curN = Number((shellN && shellN.getAttribute('data-co-q-index')) || 0);
+                showCoQuestionIndex(curN + 1);
+                return;
+            }
+            var newNav = e.target.closest && e.target.closest('[data-co-q-new]');
+            if (newNav) {
+                e.preventDefault();
+                addCoQuestionAndShow();
+                return;
+            }
             var modeBtn = e.target.closest && e.target.closest('[data-co-audio-mode]');
             if (modeBtn) {
                 e.preventDefault();
@@ -3257,12 +3533,19 @@
             if (!rm) return;
             var blk = rm.closest('[data-co-q]');
             if (!blk) return;
-            if ($all('[data-co-q]').length <= 1) {
+            var allQ = wrap.querySelectorAll('[data-co-q]');
+            if (allQ.length <= 1) {
                 toast('Au moins une question est requise.', true);
                 return;
             }
+            var shellRm = wrap.querySelector('[data-co-q-wizard]');
+            var curRm = Number((shellRm && shellRm.getAttribute('data-co-q-index')) || 0);
             blk.remove();
-            refreshCoQuestionLabels();
+            showCoQuestionIndex(Math.max(0, Math.min(curRm, wrap.querySelectorAll('[data-co-q]').length - 1)));
+        });
+        wrap.addEventListener('input', function (e) {
+            if (!e.target.closest('[data-co-q-text]')) return;
+            refreshCoQuestionWizard();
         });
         wrap.addEventListener('change', function (e) {
             var imgIn = e.target.closest && e.target.closest('[data-co-img-file]');
@@ -4956,7 +5239,8 @@
         var tb = document.querySelector('#users-table tbody');
         if (!tb) return;
         if (!rows || !rows.length) {
-            tb.innerHTML = '<tr><td colspan="9" style="padding:12px;color:var(--sa-muted);">Aucun utilisateur.</td></tr>';
+            tb.innerHTML =
+                '<tr><td colspan="9" style="padding:12px;color:var(--sa-muted);">Aucun utilisateur trouvé.</td></tr>';
             return;
         }
         // Plus récent en haut (ordre d’arrivée inversé)
@@ -4966,27 +5250,37 @@
             if (tb2 !== ta) return tb2 - ta;
             return (parseInt(b.id, 10) || 0) - (parseInt(a.id, 10) || 0);
         });
+        var q = ((document.getElementById('sa-users-search') || {}).value || '').trim().toLowerCase();
         tb.innerHTML = rows
             .map(function (u) {
                 var sub = u.subscription_type || 'free';
                 var st = u.status || 'active';
+                var email = String(u.email || '');
+                var name = String(u.name || '');
+                var matchEmail = q && email.toLowerCase().indexOf(q) >= 0;
+                var matchName = q && name.toLowerCase().indexOf(q) >= 0;
+                var rowCls = matchEmail || matchName ? ' class="sa-user-row--hit"' : '';
                 return (
-                    '<tr data-id="' +
+                    '<tr' +
+                    rowCls +
+                    ' data-id="' +
                     escAttr(String(u.id)) +
                     '" data-user-name="' +
-                    escAttr(u.name || '') +
+                    escAttr(name) +
                     '" data-user-email="' +
-                    escAttr(u.email || '') +
+                    escAttr(email) +
                     '" data-user-subscription="' +
                     escAttr(sub) +
                     '" data-user-status="' +
                     escAttr(st) +
                     '">' +
-                    saAvatarCell(u.avatar_url || '', u.name || '') +
+                    saAvatarCell(u.avatar_url || '', name) +
                     '<td>' +
-                    escHtml(u.name || '') +
+                    escHtml(name) +
                     '</td><td>' +
-                    escHtml(u.email || '') +
+                    (matchEmail
+                        ? '<mark class="sa-user-email-hit">' + escHtml(email) + '</mark>'
+                        : escHtml(email)) +
                     '</td><td><span class="sa-badge sa-badge--' +
                     escAttr(sub) +
                     '">' +
@@ -5011,11 +5305,82 @@
             .join('');
     }
 
+    var usersRawCache = [];
+
+    function syncUsersSubFilterOptions(rows) {
+        var sel = document.getElementById('sa-users-filter-sub');
+        if (!sel) return;
+        var cur = sel.value || '';
+        var set = {};
+        (rows || []).forEach(function (u) {
+            var s = String(u.subscription_type || 'free').trim();
+            if (s) set[s] = true;
+        });
+        var keys = Object.keys(set).sort();
+        sel.innerHTML = '<option value="">Tous</option>';
+        keys.forEach(function (k) {
+            var opt = document.createElement('option');
+            opt.value = k;
+            opt.textContent = k;
+            sel.appendChild(opt);
+        });
+        if (cur && set[cur]) sel.value = cur;
+    }
+
+    function filterUsersRows(rows) {
+        var q = ((document.getElementById('sa-users-search') || {}).value || '').trim().toLowerCase();
+        var subF = ((document.getElementById('sa-users-filter-sub') || {}).value || '').trim().toLowerCase();
+        var stF = ((document.getElementById('sa-users-filter-status') || {}).value || '').trim().toLowerCase();
+        return (rows || []).filter(function (u) {
+            var email = String(u.email || '').toLowerCase();
+            var name = String(u.name || '').toLowerCase();
+            var sub = String(u.subscription_type || 'free').toLowerCase();
+            var st = String(u.status || 'active').toLowerCase();
+            if (subF && sub !== subF) return false;
+            if (stF && st !== stF) return false;
+            if (!q) return true;
+            return email.indexOf(q) >= 0 || name.indexOf(q) >= 0;
+        });
+    }
+
+    function updateUsersSearchMeta(total, shown) {
+        var meta = document.getElementById('sa-users-search-meta');
+        if (!meta) return;
+        var q = ((document.getElementById('sa-users-search') || {}).value || '').trim();
+        var subF = ((document.getElementById('sa-users-filter-sub') || {}).value || '').trim();
+        var stF = ((document.getElementById('sa-users-filter-status') || {}).value || '').trim();
+        if (!q && !subF && !stF) {
+            meta.textContent = total ? total + ' utilisateur' + (total > 1 ? 's' : '') : '';
+            return;
+        }
+        meta.textContent =
+            shown +
+            ' résultat' +
+            (shown > 1 ? 's' : '') +
+            ' sur ' +
+            total +
+            (q ? ' · « ' + q + ' »' : '');
+    }
+
+    function applyUsersFilter() {
+        var filtered = filterUsersRows(usersRawCache);
+        renderUsersTable(filtered);
+        updateUsersSearchMeta(usersRawCache.length, filtered.length);
+        if (filtered.length === 1) {
+            var row = document.querySelector('#users-table tbody tr[data-id]');
+            if (row) {
+                row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+    }
+
     function reloadUsers() {
         postForm('get_users')
             .then(function (j) {
                 if (!j || !j.success) return;
-                renderUsersTable(j.data || []);
+                usersRawCache = j.data || [];
+                syncUsersSubFilterOptions(usersRawCache);
+                applyUsersFilter();
             })
             .catch(function () {});
     }
@@ -5047,6 +5412,50 @@
         var addBtn = document.getElementById('add-user-btn');
         var modal = document.getElementById('user-modal');
         var form = document.getElementById('user-form-modal');
+        var search = document.getElementById('sa-users-search');
+        var subF = document.getElementById('sa-users-filter-sub');
+        var stF = document.getElementById('sa-users-filter-status');
+        var clearBtn = document.getElementById('sa-users-search-clear');
+        if (search && !search._saBound) {
+            search._saBound = true;
+            var t = null;
+            search.addEventListener('input', function () {
+                clearTimeout(t);
+                t = setTimeout(applyUsersFilter, 80);
+            });
+            search.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    applyUsersFilter();
+                    var hit = document.querySelector('#users-table tbody tr.sa-user-row--hit, #users-table tbody tr[data-id]');
+                    if (hit) {
+                        var edit = hit.querySelector('.sa-user-edit');
+                        if (edit && ((search.value || '').trim().length > 2)) {
+                            // focus actions for quick edit when one clear email match
+                            edit.focus();
+                        }
+                    }
+                }
+            });
+        }
+        if (subF && !subF._saBound) {
+            subF._saBound = true;
+            subF.addEventListener('change', applyUsersFilter);
+        }
+        if (stF && !stF._saBound) {
+            stF._saBound = true;
+            stF.addEventListener('change', applyUsersFilter);
+        }
+        if (clearBtn && !clearBtn._saBound) {
+            clearBtn._saBound = true;
+            clearBtn.addEventListener('click', function () {
+                if (search) search.value = '';
+                if (subF) subF.value = '';
+                if (stF) stF.value = '';
+                applyUsersFilter();
+                if (search) search.focus();
+            });
+        }
         if (addBtn && modal) {
             addBtn.addEventListener('click', function () {
                 clearTempUserSubscriptionOptions();
@@ -5057,6 +5466,7 @@
                 document.getElementById('user-email').value = '';
                 document.getElementById('user-subscription').value = 'free';
                 document.getElementById('user-status').value = 'active';
+
                 var pwd = document.getElementById('user-password');
                 var pwd2 = document.getElementById('user-password-confirm');
                 if (pwd) {

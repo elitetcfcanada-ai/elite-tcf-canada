@@ -22,12 +22,14 @@ $id = (int) ($_GET['id'] ?? 0);
 $allowed = ['video', 'video_thumb', 'avatar', 'annonce', 'pm'];
 if ($id <= 0 || !in_array($type, $allowed, true)) {
     http_response_code(400);
+    header('Cache-Control: no-store');
     exit('Bad request');
 }
 
 if ($type === 'avatar') {
     if (!tcf_media_stream_avatar_blob($pdo, $id)) {
         http_response_code(404);
+        header('Cache-Control: no-store');
         exit('Not found');
     }
     exit;
@@ -36,6 +38,7 @@ if ($type === 'avatar') {
 if ($type === 'annonce') {
     if (!tcf_media_stream_annonce($pdo, $id)) {
         http_response_code(404);
+        header('Cache-Control: no-store');
         exit('Not found');
     }
     exit;
@@ -44,6 +47,7 @@ if ($type === 'annonce') {
 if ($type === 'pm') {
     if (!tcf_media_stream_persistent($pdo, $id)) {
         http_response_code(404);
+        header('Cache-Control: no-store');
         exit('Not found');
     }
     exit;

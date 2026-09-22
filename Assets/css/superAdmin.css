@@ -2281,6 +2281,44 @@ html[data-sa-theme='dark'] .tcf-superadmin-app .sa-branding-preview-text p {
     gap: 0.65rem;
 }
 
+.sa-users-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.65rem;
+    margin: 0.85rem 0 0.35rem;
+    padding: 0.85rem 0.95rem;
+    border: 1px solid var(--sa-border, #e2e8f0);
+    border-radius: 12px;
+    background: #f8fafc;
+}
+
+.sa-users-search-meta {
+    margin: 0.35rem 0 0.75rem;
+    min-height: 1.1rem;
+    font-size: 0.86rem;
+    color: var(--sa-muted, #64748b);
+    font-weight: 600;
+}
+
+#users-table tbody tr.sa-user-row--hit {
+    outline: 2px solid rgba(211, 13, 13, 0.35);
+    outline-offset: -2px;
+    background: #fff7f7;
+}
+
+#users-table tbody tr.sa-user-row--hit td {
+    background: transparent;
+}
+
+.sa-user-email-hit {
+    background: rgba(211, 13, 13, 0.14);
+    color: #9f1239;
+    padding: 0.05em 0.25em;
+    border-radius: 4px;
+    font-weight: 700;
+}
+
 .sa-activity-field {
     display: flex;
     flex-direction: column;
@@ -3510,3 +3548,184 @@ body.sa-testi-modal-open { overflow: hidden; }
 .tcf-superadmin-app button.is-sa-published {
     pointer-events: none;
 }
+
+/* Expression orale — wizard questions (1 à la fois) */
+.tcf-superadmin-app .eo-partie-task-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+.tcf-superadmin-app .eo-partie-task-hint {
+    opacity: 0.85;
+}
+.tcf-superadmin-app .eo-partie-task-btn.is-active {
+    background: var(--sa-primary, #0f766e);
+    color: #fff;
+    border-color: var(--sa-primary, #0f766e);
+}
+.tcf-superadmin-app .eo-q-wizard {
+    margin-top: 8px;
+    padding: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.4);
+    border-radius: 12px;
+    background: rgba(248, 250, 252, 0.75);
+}
+.tcf-superadmin-app .eo-q-wizard__toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+.tcf-superadmin-app .eo-q-wizard__meta {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
+}
+.tcf-superadmin-app .eo-q-wizard__title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #0f172a;
+}
+.tcf-superadmin-app .eo-q-wizard__count {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #64748b;
+}
+.tcf-superadmin-app .eo-q-dots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: flex-end;
+}
+.tcf-superadmin-app .eo-q-dot {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 999px;
+    border: 1.5px solid #cbd5e1;
+    background: #fff;
+    color: #475569;
+    font-weight: 800;
+    font-size: 0.85rem;
+    cursor: pointer;
+    line-height: 1;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.12s ease;
+}
+.tcf-superadmin-app .eo-q-dot:hover {
+    border-color: #0f766e;
+    color: #0f766e;
+}
+.tcf-superadmin-app .eo-q-dot.is-filled {
+    background: #ecfdf5;
+    border-color: #34d399;
+    color: #047857;
+}
+.tcf-superadmin-app .eo-q-dot.is-current {
+    background: #0f766e;
+    border-color: #0f766e;
+    color: #fff;
+    transform: scale(1.06);
+}
+.tcf-superadmin-app .eo-subject-card {
+    padding: 10px 0 4px;
+}
+.tcf-superadmin-app .eo-subject-card[hidden],
+.tcf-superadmin-app .co-q-block[hidden] {
+    display: none !important;
+}
+.tcf-superadmin-app .eo-subject-card__head {
+    margin-bottom: 10px;
+}
+.tcf-superadmin-app .eo-subject-card__head strong {
+    font-size: 0.95rem;
+    color: #0f172a;
+}
+.tcf-superadmin-app .eo-q-wizard__nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed rgba(148, 163, 184, 0.55);
+}
+.tcf-superadmin-app .eo-q-nav-btn {
+    flex: 1 1 auto;
+    min-width: 7.5rem;
+    justify-content: center;
+}
+.tcf-superadmin-app .eo-q-nav-btn--new {
+    flex: 1 1 100%;
+}
+.tcf-superadmin-app .eo-q-nav-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+.tcf-superadmin-app .eo-q-wizard__hint {
+    margin: 10px 0 0;
+    font-size: 0.78rem;
+    color: #64748b;
+    line-height: 1.35;
+}
+
+@media (min-width: 640px) {
+    .tcf-superadmin-app .eo-q-nav-btn--new {
+        flex: 1 1 auto;
+    }
+}
+
+@media (max-width: 560px) {
+    .tcf-superadmin-app .eo-partie-block {
+        padding: 10px !important;
+    }
+    .tcf-superadmin-app .eo-partie-task-tabs {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+    .tcf-superadmin-app .eo-partie-task-btn {
+        width: 100%;
+        justify-content: center;
+        text-align: center;
+    }
+    .tcf-superadmin-app .eo-partie-task-hint {
+        display: block;
+        margin-top: 2px;
+    }
+    .tcf-superadmin-app .eo-q-wizard {
+        padding: 10px;
+        border-radius: 10px;
+    }
+    .tcf-superadmin-app .eo-q-wizard__toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .tcf-superadmin-app .eo-q-dots {
+        justify-content: space-between;
+        width: 100%;
+    }
+    .tcf-superadmin-app .eo-q-dot {
+        flex: 1 1 0;
+        min-width: 2.4rem;
+        max-width: 3rem;
+        height: 2.5rem;
+    }
+    .tcf-superadmin-app .eo-q-wizard__nav {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+    .tcf-superadmin-app .eo-q-nav-btn {
+        min-width: 0;
+        width: 100%;
+        padding-left: 0.65rem;
+        padding-right: 0.65rem;
+        font-size: 0.9rem;
+    }
+    .tcf-superadmin-app .eo-q-nav-btn--new {
+        grid-column: 1 / -1;
+    }
+}
+

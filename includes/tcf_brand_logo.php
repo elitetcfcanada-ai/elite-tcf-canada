@@ -11,12 +11,14 @@ function tcf_brand_logo_path(): string
 /** URL publique du logo (site_href ou préfixe relatif). */
 function tcf_brand_logo_href(?string $assetPrefix = null): string
 {
-    $path = tcf_brand_logo_path();
+    $path = tcf_brand_logo_path() . '?v=logo-svg-1';
     if ($assetPrefix !== null && $assetPrefix !== '') {
         return $assetPrefix . $path;
     }
     if (function_exists('site_href')) {
-        return site_href($path);
+        // site_href may encode ? — append cache-bust after href
+        $base = site_href(tcf_brand_logo_path());
+        return $base . (str_contains($base, '?') ? '&v=logo-svg-1' : '?v=logo-svg-1');
     }
     return $path;
 }

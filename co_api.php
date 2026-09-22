@@ -256,13 +256,51 @@ function co_resolve_media_url(string $ref): string
     if ($ref === '') {
         return '';
     }
-    if (preg_match('#^https?://#i', $ref) && !preg_match('#/(uploads/)#i', $ref)) {
+    if (preg_match('#^https?://#i', $ref)
+        && !preg_match('#/(uploads/)#i', $ref)
+        && !preg_match('/media_serve\.php/i', $ref)
+    ) {
         return $ref;
     }
     require_once __DIR__ . '/includes/persistent_media.php';
+    if (!$pdo instanceof PDO) {
+        return tcf_uploads_public_href($ref);
+    }
     $kind = preg_match('/\.(mp3|wav|ogg|m4a|aac)$/i', $ref) ? 'co_audio' : 'co_image';
+    $href = tcf_persistent_media_public_href($pdo, $ref, $kind);
+    if ($href !== '') {
+        return $href;
+    }
+    // Dernier recours : chemin public uploads/
+    return tcf_uploads_public_href($ref);
+}
 
-    return tcf_persistent_media_public_href($pdo, $ref, $kind);
+/** Chemin public de secours (fichier disque) pour le quiz si media_serve échoue. */
+function co_media_file_fallback_url(string $ref): string
+{
+    global $pdo;
+    $ref = trim($ref);
+    if ($ref === '' || !$pdo instanceof PDO) {
+        return '';
+    }
+    require_once __DIR__ . '/includes/persistent_media.php';
+    $rel = tcf_persistent_media_resolve_path_key($pdo, $ref);
+    if ($rel === '') {
+        $rel = tcf_persistent_media_normalize_path($ref);
+    }
+    if ($rel === '') {
+        return '';
+    }
+    $abs = tcf_uploads_fs_path($rel);
+    if ($abs === '' || !is_file($abs)) {
+        tcf_persistent_media_restore_file($pdo, $rel);
+        $abs = tcf_uploads_fs_path($rel);
+    }
+    if ($abs !== '' && is_file($abs)) {
+        return tcf_uploads_public_href($rel);
+    }
+
+    return '';
 }
 
 function co_fetch_exam_full(PDO $pdo, int $examId): ?array
@@ -346,7 +384,9 @@ function co_exam_to_quiz_payload(array $exam): array
             'id' => $n++,
             'question' => tcf_normalize_rich((string) ($q['question_text'] ?? '')),
             'image' => co_resolve_media_url((string) ($q['image_src'] ?? '')),
+            'image_fallback' => co_media_file_fallback_url((string) ($q['image_src'] ?? '')),
             'audio' => co_resolve_media_url((string) ($q['audio_src'] ?? '')),
+            'audio_fallback' => co_media_file_fallback_url((string) ($q['audio_src'] ?? '')),
             'audio_text' => trim((string) ($q['audio_text'] ?? '')),
             'points' => (int) ($q['points'] ?? 1),
             'answers' => $answers,
@@ -431,6 +471,7 @@ function co_sync_exam_visibility(PDO $pdo): void
  */
 function co_normalize_questions_input($questions): array
 {
+    global $pdo;
     if (!is_array($questions)) {
         return [];
     }
@@ -447,17 +488,47 @@ function co_normalize_questions_input($questions): array
         $pts = (int) ($q['points'] ?? 1);
         $img = trim((string) ($q['image_src'] ?? $q['image'] ?? ''));
         $aud = trim((string) ($q['audio_src'] ?? $q['audio'] ?? ''));
-        // Normaliser vers uploads/… (évite localhost / chemins absolus cassés en prod)
-        if ($img !== '' && function_exists('tcf_uploads_relative_path')) {
-            $normImg = tcf_uploads_relative_path($img);
-            if ($normImg !== '' && !preg_match('#^https?://#i', $normImg)) {
-                $img = $normImg;
+        // Normaliser vers uploads/… (évite localhost / chemins absolus / media_serve cassés)
+        if ($img !== '') {
+            if (function_exists('tcf_persistent_media_resolve_path_key') && isset($pdo) && $pdo instanceof PDO) {
+                require_once __DIR__ . '/includes/persistent_media.php';
+                $resolved = tcf_persistent_media_resolve_path_key($pdo, $img);
+                if ($resolved !== '') {
+                    $img = $resolved;
+                } elseif (function_exists('tcf_uploads_relative_path')) {
+                    $normImg = tcf_uploads_relative_path($img);
+                    if ($normImg !== '' && !preg_match('#^https?://#i', $normImg) && !preg_match('/media_serve\.php/i', $normImg)) {
+                        $img = $normImg;
+                    } elseif (preg_match('/media_serve\.php/i', $img)) {
+                        $img = '';
+                    }
+                }
+            } elseif (function_exists('tcf_uploads_relative_path')) {
+                $normImg = tcf_uploads_relative_path($img);
+                if ($normImg !== '' && !preg_match('#^https?://#i', $normImg)) {
+                    $img = $normImg;
+                }
             }
         }
-        if ($aud !== '' && function_exists('tcf_uploads_relative_path')) {
-            $normAud = tcf_uploads_relative_path($aud);
-            if ($normAud !== '' && !preg_match('#^https?://#i', $normAud)) {
-                $aud = $normAud;
+        if ($aud !== '') {
+            if (function_exists('tcf_persistent_media_resolve_path_key') && isset($pdo) && $pdo instanceof PDO) {
+                require_once __DIR__ . '/includes/persistent_media.php';
+                $resolvedA = tcf_persistent_media_resolve_path_key($pdo, $aud);
+                if ($resolvedA !== '') {
+                    $aud = $resolvedA;
+                } elseif (function_exists('tcf_uploads_relative_path')) {
+                    $normAud = tcf_uploads_relative_path($aud);
+                    if ($normAud !== '' && !preg_match('#^https?://#i', $normAud) && !preg_match('/media_serve\.php/i', $normAud)) {
+                        $aud = $normAud;
+                    } elseif (preg_match('/media_serve\.php/i', $aud)) {
+                        $aud = '';
+                    }
+                }
+            } elseif (function_exists('tcf_uploads_relative_path')) {
+                $normAud = tcf_uploads_relative_path($aud);
+                if ($normAud !== '' && !preg_match('#^https?://#i', $normAud)) {
+                    $aud = $normAud;
+                }
             }
         }
         $audText = trim((string) ($q['audio_text'] ?? $q['tts'] ?? $q['script'] ?? ''));
@@ -637,12 +708,21 @@ function co_handle_media_upload(string $kind): array
     }
 
     $rel = 'uploads/co_media/' . $base;
+    $pmId = 0;
 
     try {
         require_once __DIR__ . '/includes/persistent_media.php';
         global $pdo;
         if (isset($pdo) && $pdo instanceof PDO) {
-            tcf_persistent_media_store_from_path($pdo, $rel, $kind === 'audio' ? 'co_audio' : 'co_image');
+            $pmKind = $kind === 'audio' ? 'co_audio' : 'co_image';
+            $pmId = tcf_persistent_media_store_from_path($pdo, $rel, $pmKind);
+            if ($pmId <= 0) {
+                usleep(80000);
+                $pmId = tcf_persistent_media_store_from_path($pdo, $rel, $pmKind);
+            }
+            if ($pmId <= 0) {
+                error_log('co_handle_media_upload: blob non enregistré pour ' . $rel);
+            }
         }
     } catch (Throwable $e) {
         error_log('co_handle_media_upload blob: ' . $e->getMessage());
@@ -654,6 +734,7 @@ function co_handle_media_upload(string $kind): array
         'url' => function_exists('tcf_persistent_media_public_href') && isset($pdo) && $pdo instanceof PDO
             ? tcf_persistent_media_public_href($pdo, $rel, $kind === 'audio' ? 'co_audio' : 'co_image')
             : (function_exists('site_href') ? site_href($rel) : '/' . $rel),
+        'persisted' => $pmId > 0,
     ];
 }
 
@@ -722,6 +803,14 @@ try {
             $full = co_fetch_exam_full($pdo, $examId);
             if (!$full || empty($full['questions'])) {
                 co_json(['success' => false, 'message' => 'Contenu incomplet.'], 404);
+            }
+            // Répare / indexe les médias avant de servir le quiz
+            try {
+                require_once __DIR__ . '/includes/persistent_media.php';
+                tcf_persistent_media_backfill_co_dir($pdo);
+                co_persist_questions_media_blobs($pdo, $full['questions'] ?? []);
+            } catch (Throwable $e) {
+                error_log('co get_exam_quiz media repair: ' . $e->getMessage());
             }
             $quiz = co_exam_to_quiz_payload($full);
             $totalPoints = 0;

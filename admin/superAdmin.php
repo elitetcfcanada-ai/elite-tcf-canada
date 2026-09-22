@@ -2671,7 +2671,7 @@ $notifications_json = json_encode($notifications);
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="../Assets/css/sa-theme.css">
     <script src="../Assets/javascript/sa-theme.js"></script>
-    <link rel="stylesheet" href="../Assets/css/superAdmin.css?v=sa-ui-v15">
+    <link rel="stylesheet" href="../Assets/css/superAdmin.css?v=sa-ui-v18">
     <link rel="stylesheet" href="../Assets/css/tcf-brand-logo.css">
     <link rel="stylesheet" href="../Assets/css/sa_subscription_plans.css?v=usd-fixed-2">
     <link rel="stylesheet" href="../Assets/css/sa-partners.css?v=partners-16x9-contain-5">
@@ -3158,6 +3158,34 @@ $notifications_json = json_encode($notifications);
                         <i class='bx bx-plus'></i> Ajouter un utilisateur
                     </button>
                 </div>
+
+                <div class="sa-users-toolbar" role="search">
+                    <label class="sa-activity-field sa-activity-field--grow" for="sa-users-search">
+                        <span class="sa-activity-field-label">Rechercher (e-mail ou nom)</span>
+                        <input type="search" id="sa-users-search" class="form-control" placeholder="ex. eleve@gmail.com" autocomplete="off" enterkeyhint="search">
+                    </label>
+                    <label class="sa-activity-field" for="sa-users-filter-sub">
+                        <span class="sa-activity-field-label">Abonnement</span>
+                        <select id="sa-users-filter-sub" class="form-control">
+                            <option value="">Tous</option>
+                            <option value="free">free</option>
+                            <option value="premium">premium</option>
+                        </select>
+                    </label>
+                    <label class="sa-activity-field" for="sa-users-filter-status">
+                        <span class="sa-activity-field-label">Statut</span>
+                        <select id="sa-users-filter-status" class="form-control">
+                            <option value="">Tous</option>
+                            <option value="active">active</option>
+                            <option value="inactive">inactive</option>
+                            <option value="banned">banned</option>
+                        </select>
+                    </label>
+                    <button type="button" class="btn btn-outline" id="sa-users-search-clear" title="Effacer la recherche">
+                        <i class="bx bx-x"></i> Effacer
+                    </button>
+                </div>
+                <p class="sa-users-search-meta" id="sa-users-search-meta" aria-live="polite"></p>
 
                 <div class="table-container">
                     <table id="users-table">
@@ -4040,8 +4068,8 @@ $notifications_json = json_encode($notifications);
                             <label class="form-label">Durée du test (minutes)</label>
                             <input type="number" class="form-control" id="co-duration-minutes" value="35" min="1" max="180">
                         </div>
-                        <div id="co-questions-wrap"></div>
-                        <div class="form-buttons" style="justify-content:flex-start;gap:8px;">
+                        <div id="co-questions-wrap" class="sa-q-wizard-host"></div>
+                        <div class="form-buttons" style="justify-content:flex-start;gap:8px;display:none;">
                             <button type="button" class="btn btn-outline" id="co-add-question-btn"><i class='bx bx-plus'></i> Ajouter une question</button>
                         </div>
                         <div class="form-buttons">
@@ -4478,7 +4506,7 @@ $notifications_json = json_encode($notifications);
     <script src="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.js"></script>
     <script src="../Assets/javascript/tcf-tts.js?v=6"></script>
     <script src="<?php echo htmlspecialchars(site_href('Assets/javascript/tcf_confirm_dialog.js')); ?>?v=confirm-4"></script>
-    <script src="../Assets/javascript/superAdmin.ui.js?v=sa-ui-v17"></script>
+    <script src="../Assets/javascript/superAdmin.ui.js?v=sa-ui-v20"></script>
     <script src="../Assets/javascript/admin-mobile-nav.js?v=sa-ui-v7"></script>
 
     <div class="tcf-ai-assistant" id="tcf-ai-assistant" data-greeting="Bonjour, je suis votre assistant administration. Comment puis-je vous aider sur la plateforme ?">

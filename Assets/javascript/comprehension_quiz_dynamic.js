@@ -217,17 +217,7 @@
         }
 
         if (situationImage) {
-            if (question.image) {
-                situationImage.src = question.image;
-                situationImage.alt = 'Situation ' + (currentQuestion + 1);
-                situationImage.style.display = '';
-                situationImage.closest('.situation-container').style.display = '';
-            } else {
-                situationImage.removeAttribute('src');
-                situationImage.style.display = 'none';
-                var sit = situationImage.closest('.situation-container');
-                if (sit) sit.style.display = 'none';
-            }
+            setSituationImage(question.image || '', question.image_fallback || '');
         }
 
         prepareQuestionAudio(question);
@@ -473,7 +463,15 @@
             if (box) box.style.display = '';
             if (player) player.style.display = '';
             questionAudio.classList.add('hidden');
-            questionAudio.src = question.audio;
+            var aSrc = question.audio;
+            var aFb = question.audio_fallback || '';
+            questionAudio.onerror = function () {
+                if (aFb && questionAudio.src.indexOf(aFb) < 0) {
+                    questionAudio.src = aFb;
+                    questionAudio.load();
+                }
+            };
+            questionAudio.src = aSrc;
             questionAudio.load();
             setTtsStatus('');
             resetAudioProgressUI(0);
@@ -485,6 +483,69 @@
 
         if (box) box.style.display = 'none';
         setTtsStatus('');
+    }
+
+    function setSituationImage(url, fallback) {
+        if (!situationImage) return;
+        var sit = situationImage.closest('.situation-container');
+        var primary = String(url || '').trim();
+        var alt = String(fallback || '').trim();
+        if (!primary && !alt) {
+            situationImage.removeAttribute('src');
+            situationImage.style.display = 'none';
+            if (sit) {
+                sit.hidden = true;
+                sit.style.display = 'none';
+            }
+            situationImage.onerror = null;
+            situationImage.onload = null;
+            return;
+        }
+        var chain = [];
+        if (primary) chain.push(primary);
+        if (alt && alt !== primary) chain.push(alt);
+        if (primary && primary.indexOf('t=') < 0) {
+            chain.push(primary + (primary.indexOf('?') >= 0 ? '&' : '?') + 't=' + Date.now());
+        }
+        var i = 0;
+        function tryNext() {
+            if (i >= chain.length) {
+                situationImage.style.display = 'none';
+                if (sit) {
+                    sit.hidden = false;
+                    sit.style.display = '';
+                    var err = sit.querySelector('.situation-image-error');
+                    if (!err) {
+                        err = document.createElement('p');
+                        err.className = 'situation-image-error';
+                        err.textContent = 'Image indisponible pour le moment.';
+                        sit.appendChild(err);
+                    }
+                }
+                return;
+            }
+            var src = chain[i++];
+            situationImage.onerror = function () {
+                tryNext();
+            };
+            situationImage.onload = function () {
+                situationImage.style.display = '';
+                if (sit) {
+                    sit.hidden = false;
+                    sit.style.display = '';
+                    var err = sit.querySelector('.situation-image-error');
+                    if (err) err.remove();
+                }
+            };
+            situationImage.alt = 'Situation visuelle';
+            situationImage.style.display = '';
+            if (sit) {
+                sit.hidden = false;
+                sit.style.display = '';
+            }
+            situationImage.src = src;
+        }
+        tryNext();
     }
 
     function prepareQuestionAudio(question) {
@@ -695,7 +756,13 @@
                     '<div class="review-situation__title"><i class="bx bx-image" aria-hidden="true"></i><span>Situation visuelle</span></div>';
                 var sitImg = document.createElement('img');
                 sitImg.className = 'review-situation__img';
+                sitImg.alt = 'Situation';
                 sitImg.src = question.image;
+                sitImg.onerror = function () {
+                    if (question.image_fallback && sitImg.src.indexOf(question.image_fallback) < 0) {
+                        sitImg.src = question.image_fallback;
+                    }
+                };
                 sitImg.alt = 'Situation visuelle — question ' + (index + 1);
                 sitImg.loading = 'lazy';
                 sitImg.decoding = 'async';

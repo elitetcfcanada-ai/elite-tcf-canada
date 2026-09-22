@@ -13,17 +13,17 @@ require_once __DIR__ . '/tcf_seo.php';
 
 $tcf_brand_asset_base = isset($FOOTER_ASSET_PREFIX) ? $FOOTER_ASSET_PREFIX : '';
 if (function_exists('site_href')) {
-    $tcf_favicon_href = site_href('Assets/branding/favicon.svg');
-    $tcf_icon_192_href = site_href('Assets/branding/icon-192.png');
-    $tcf_icon_512_href = site_href('Assets/branding/icon-512.png');
-    $tcf_apple_touch_href = site_href('Assets/branding/apple-touch-icon.png');
-    $tcf_manifest_href = site_href('Assets/branding/site.webmanifest');
+    $tcf_favicon_href = site_href('Assets/branding/favicon.svg') . '?v=logo-svg-1';
+    $tcf_icon_192_href = site_href('Assets/branding/icon-192.png') . '?v=logo-svg-1';
+    $tcf_icon_512_href = site_href('Assets/branding/icon-512.png') . '?v=logo-svg-1';
+    $tcf_apple_touch_href = site_href('Assets/branding/apple-touch-icon.png') . '?v=logo-svg-1';
+    $tcf_manifest_href = site_href('Assets/branding/site.webmanifest') . '?v=logo-svg-1';
 } else {
-    $tcf_favicon_href = $tcf_brand_asset_base . 'Assets/branding/favicon.svg';
-    $tcf_icon_192_href = $tcf_brand_asset_base . 'Assets/branding/icon-192.png';
-    $tcf_icon_512_href = $tcf_brand_asset_base . 'Assets/branding/icon-512.png';
-    $tcf_apple_touch_href = $tcf_brand_asset_base . 'Assets/branding/apple-touch-icon.png';
-    $tcf_manifest_href = $tcf_brand_asset_base . 'Assets/branding/site.webmanifest';
+    $tcf_favicon_href = $tcf_brand_asset_base . 'Assets/branding/favicon.svg?v=logo-svg-1';
+    $tcf_icon_192_href = $tcf_brand_asset_base . 'Assets/branding/icon-192.png?v=logo-svg-1';
+    $tcf_icon_512_href = $tcf_brand_asset_base . 'Assets/branding/icon-512.png?v=logo-svg-1';
+    $tcf_apple_touch_href = $tcf_brand_asset_base . 'Assets/branding/apple-touch-icon.png?v=logo-svg-1';
+    $tcf_manifest_href = $tcf_brand_asset_base . 'Assets/branding/site.webmanifest?v=logo-svg-1';
 }
 
 $tcf_brand_title = $tcf_brand_title ?? (tcf_seo_brand() . ' | Préparation à l\'examen TCF Canada');
@@ -34,8 +34,8 @@ $tcf_seo_og_type = $tcf_seo_og_type ?? 'website';
 $tcf_seo_canonical_url = $tcf_seo_canonical ?? tcf_seo_canonical();
 $tcf_seo_og_image_url = $tcf_seo_og_image ?? (
     function_exists('site_url')
-        ? site_url('Assets/branding/icon-512.png')
-        : $tcf_icon_512_href
+        ? site_url('Assets/branding/favicon.jpg') . '?v=logo-svg-1'
+        : ($tcf_brand_asset_base . 'Assets/branding/favicon.jpg?v=logo-svg-1')
 );
 $tcf_seo_site_url = function_exists('site_url') ? site_url('index.php') : $tcf_seo_canonical_url;
 $tcf_seo_skip_title = !empty($tcf_seo_skip_title);
