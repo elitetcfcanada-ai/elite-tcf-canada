@@ -29,7 +29,7 @@ $aboUrl = site_href('abonnement.php');
     <link rel="stylesheet" href="Assets/css/theme-vars.css">
     <link rel="stylesheet" href="Assets/css/header_footer.css">
     <link rel="stylesheet" href="Assets/css/style_tcf.css">
-    <link rel="stylesheet" href="Assets/css/style_sujets.css?v=consigne-header-2">
+    <link rel="stylesheet" href="Assets/css/style_sujets.css?v=exam-filter-1">
     <link rel="stylesheet" href="Assets/css/style_Expresion_Ecrite.css?v=consigne-header-2">
 </head>
 <body>
@@ -65,6 +65,11 @@ $aboUrl = site_href('abonnement.php');
     </div>
 
     <section class="section_epreuve" id="co-exams-section">
+        <nav class="tcf-exam-filter" id="co-exam-filter" aria-label="Filtrer les épreuves">
+            <button type="button" class="tcf-exam-filter__btn is-active" data-filter="all">Tous</button>
+            <button type="button" class="tcf-exam-filter__btn" data-filter="done">Terminées</button>
+            <button type="button" class="tcf-exam-filter__btn" data-filter="todo">Non terminées</button>
+        </nav>
         <div class="row_arrangement" id="co-exams-list">
             <div class="column_arrangement"><h5>Chargement des épreuves…</h5><i class='bx bx-loader-alt bx-spin'></i></div>
         </div>
@@ -102,6 +107,10 @@ $aboUrl = site_href('abonnement.php');
             var examsSection = document.getElementById('co-exams-section');
             var consigneSection = document.getElementById('co-consignes-section');
             var consignesRoot = document.getElementById('co-consignes-container');
+            var examFilter = document.getElementById('co-exam-filter');
+            var examFilterMode = 'all';
+            var examsCache = [];
+            var progressCache = {};
 
             function esc(s) {
                 return String(s == null ? '' : s).replace(/[&<>"']/g, function (m) {
@@ -119,33 +128,77 @@ $aboUrl = site_href('abonnement.php');
                 });
             }
 
+            function renderExamsList() {
+                if (!listEl) return;
+                var rows = examsCache || [];
+                if (!rows.length) {
+                    listEl.innerHTML = "<div class='column_arrangement'><h5>Aucune épreuve publiée pour le moment.</h5><i class='bx bx-info-circle'></i></div>";
+                    return;
+                }
+                var filtered = rows.filter(function (r) {
+                    var p = progressCache[r.id] || progressCache[String(r.id)] || null;
+                    var done = !!(p && p.attempt_count > 0);
+                    if (examFilterMode === 'done') return done;
+                    if (examFilterMode === 'todo') return !done;
+                    return true;
+                });
+                if (!filtered.length) {
+                    listEl.innerHTML = "<div class='column_arrangement'><h5>Aucune épreuve dans ce filtre.</h5><i class='bx bx-filter-alt'></i></div>";
+                    return;
+                }
+                listEl.innerHTML = filtered.map(function (r) {
+                    var isPremiumExam = String(r.visibility || 'gratuit') === 'premium';
+                    var locked = isPremiumExam && (!viewer || !premiumOk);
+                    var sep = quizBase.indexOf('?') >= 0 ? '&' : '?';
+                    var href = quizBase + sep + 'exam_id=' + encodeURIComponent(String(r.id));
+                    var nextPath = 'comprehension_orale_quiz.php?exam_id=' + encodeURIComponent(String(r.id));
+                    var lockedHref = viewer
+                        ? aboUrl
+                        : (loginUrl + (loginUrl.indexOf('?') >= 0 ? '&' : '?') + 'next=' + encodeURIComponent(nextPath));
+                    var p = progressCache[r.id] || progressCache[String(r.id)] || null;
+                    var done = !!(p && p.attempt_count > 0);
+                    var level = done && p.latest_level ? String(p.latest_level) : '';
+                    var levelHtml = level
+                        ? '<span class="tcf-exam-level" title="Niveau du dernier test">' + esc(level) + '</span>'
+                        : '';
+                    return '<div class="column_arrangement' +
+                        (locked ? ' non_valide' : '') +
+                        (done ? ' is-done' : '') +
+                        '" data-status="' + (done ? 'done' : 'todo') + '">' +
+                        (locked
+                            ? '<a href="' + esc(lockedHref) + '" class="co-locked-link" data-locked="1">' +
+                                '<h5>' + esc(r.title || 'Épreuve') + '</h5></a>'
+                            : '<a href="' + esc(href) + '"><h5>' + esc(r.title || 'Épreuve') + '</h5></a>') +
+                        levelHtml +
+                        '<i class="bx ' + (locked ? 'bx-lock' : 'bx-lock-open') + '"></i></div>';
+                }).join('');
+            }
+
             function loadExams() {
-                post('get_exams_public', {}).then(function (j) {
-                    var rows = (j && j.success && Array.isArray(j.data)) ? j.data : [];
-                    if (!rows.length) {
-                        listEl.innerHTML = "<div class='column_arrangement'><h5>Aucune épreuve publiée pour le moment.</h5><i class='bx bx-info-circle'></i></div>";
-                        return;
-                    }
-                    listEl.innerHTML = rows.map(function (r) {
-                        var isPremiumExam = String(r.visibility || 'gratuit') === 'premium';
-                        var locked = isPremiumExam && (!viewer || !premiumOk);
-                        var sep = quizBase.indexOf('?') >= 0 ? '&' : '?';
-                        var href = quizBase + sep + 'exam_id=' + encodeURIComponent(String(r.id));
-                        var nextPath = 'comprehension_orale_quiz.php?exam_id=' + encodeURIComponent(String(r.id));
-                        var lockedHref = viewer
-                            ? aboUrl
-                            : (loginUrl + (loginUrl.indexOf('?') >= 0 ? '&' : '?') + 'next=' + encodeURIComponent(nextPath));
-                        return '<div class="column_arrangement' + (locked ? ' non_valide' : '') + '">' +
-                            (locked
-                                ? '<a href="' + esc(lockedHref) + '" class="co-locked-link" data-locked="1">' +
-                                    '<h5>' + esc(r.title || 'Épreuve') + '</h5></a>'
-                                : '<a href="' + esc(href) + '"><h5>' + esc(r.title || 'Épreuve') + '</h5></a>') +
-                            '<i class="bx ' + (locked ? 'bx-lock' : 'bx-lock-open') + '"></i></div>';
-                    }).join('');
+                Promise.all([
+                    post('get_exams_public', {}),
+                    viewer ? post('get_my_progress', {}) : Promise.resolve({ success: true, data: {} })
+                ]).then(function (results) {
+                    var j = results[0];
+                    progressCache = (results[1] && results[1].success && results[1].data) ? results[1].data : {};
+                    examsCache = (j && j.success && Array.isArray(j.data)) ? j.data : [];
+                    renderExamsList();
                 }).catch(function () {
                     if (listEl) {
                         listEl.innerHTML = "<div class='column_arrangement'><h5>Impossible de charger les épreuves.</h5><i class='bx bx-error'></i></div>";
                     }
+                });
+            }
+
+            if (examFilter) {
+                examFilter.addEventListener('click', function (e) {
+                    var btn = e.target.closest && e.target.closest('[data-filter]');
+                    if (!btn) return;
+                    examFilterMode = btn.getAttribute('data-filter') || 'all';
+                    examFilter.querySelectorAll('.tcf-exam-filter__btn').forEach(function (b) {
+                        b.classList.toggle('is-active', b === btn);
+                    });
+                    renderExamsList();
                 });
             }
 

@@ -136,32 +136,67 @@ $t1Points = [
 ];
 
 $pageTitle = (string) ($exam['title'] ?? 'Expression Orale');
+$apiHref = site_href('eo_api.php');
+$loginHref = site_href('login.php?next=' . rawurlencode($returnPath));
+$simLocked = !$loggedIn;
 
-function eo_render_subjects(array $subjects): void
+$t1SimPrompt = "Présentez-vous de manière structurée pendant environ 2 minutes, sans temps de préparation. "
+    . "Abordez clairement : 1) Identité (nom, âge, ville) ; 2) Formation / études / travail ; "
+    . "3) Loisirs et passions ; 4) Projets et objectifs (TCF / Canada). "
+    . "Parlez de façon naturelle, organisée et suffisamment développée.";
+
+/**
+ * @param list<array<string,mixed>> $subjects
+ */
+function eo_render_subjects(array $subjects, string $taskKey, int $examId, bool $simLocked): void
 {
+    $maxSec = $taskKey === 'tache3' ? 270 : ($taskKey === 'tache1' ? 120 : 210);
     foreach ($subjects as $s) {
         $corr = trim((string) ($s['correction'] ?? ''));
         $hasCorr = $corr !== '';
+        $prompt = (string) ($s['prompt'] ?? '');
+        $title = (string) ($s['title'] ?? '');
+        $role = (string) ($s['role_label'] ?? '');
+        $sid = (int) ($s['id'] ?? 0);
         ?>
-        <div class="task-card eo-subject-card">
+        <div class="task-card eo-subject-card" data-eo-subject-id="<?php echo $sid; ?>">
             <div class="card-number"><?php echo htmlspecialchars((string) ($s['subject_number'] ?? '')); ?></div>
             <h3>
                 <i class="<?php echo htmlspecialchars((string) ($s['icon_class'] ?? 'bx bx-message-detail')); ?>"></i>
-                <?php echo htmlspecialchars((string) ($s['title'] ?? '')); ?>
+                <?php echo htmlspecialchars($title); ?>
             </h3>
-            <?php if (!empty($s['role_label'])): ?>
-                <p class="eo-role-label"><?php echo htmlspecialchars((string) $s['role_label']); ?></p>
+            <?php if ($role !== ''): ?>
+                <p class="eo-role-label"><?php echo htmlspecialchars($role); ?></p>
             <?php endif; ?>
             <div class="eo-prompt">
                 <h4 class="enonce-label">Énoncé</h4>
-                <div class="ee-rich-text"><?php echo tcf_format_rich((string) ($s['prompt'] ?? '')); ?></div>
+                <div class="ee-rich-text"><?php echo tcf_format_rich($prompt); ?></div>
             </div>
-            <?php if ($hasCorr): ?>
-                <div class="tcf-task-actions">
+            <div class="tcf-task-actions">
+                <button
+                    type="button"
+                    class="tcf-sim-pill eo-sim-toggle<?php echo $simLocked ? ' is-disabled' : ''; ?>"
+                    aria-expanded="false"
+                    title="<?php echo $simLocked ? 'Connectez-vous pour utiliser le simulateur' : 'Simulateur'; ?>"
+                    <?php echo $simLocked ? 'aria-disabled="true"' : ''; ?>
+                    data-task-key="<?php echo htmlspecialchars($taskKey); ?>"
+                    data-exam-id="<?php echo (int) $examId; ?>"
+                    data-subject-id="<?php echo $sid; ?>"
+                    data-max-sec="<?php echo (int) $maxSec; ?>"
+                    data-subject-title="<?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?>"
+                    data-role-label="<?php echo htmlspecialchars($role, ENT_QUOTES, 'UTF-8'); ?>"
+                    data-subject-prompt="<?php echo htmlspecialchars(strip_tags($prompt), ENT_QUOTES, 'UTF-8'); ?>">
+                    <i class="bx bx-microphone" aria-hidden="true"></i>
+                    Simulateur
+                </button>
+                <?php if ($hasCorr): ?>
                     <button type="button" class="tcf-corr-pill eo-corr-toggle" aria-expanded="false">
                         Voir la correction
                     </button>
-                </div>
+                <?php endif; ?>
+            </div>
+            <div class="eo-sim-panel tcf-task-sim-panel" hidden></div>
+            <?php if ($hasCorr): ?>
                 <div class="correction tcf-correction-panel">
                     <h4>Correction</h4>
                     <div class="eo-correction-body ee-rich-text"><?php echo tcf_format_rich($corr); ?></div>
@@ -188,7 +223,7 @@ function eo_render_subjects(array $subjects): void
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/style_tcf.css')); ?>">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/style_sujets.css')); ?>?v=no-glow-1">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/style_Expresion_Ecrite.css')); ?>">
-    <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/expression_orale.css')); ?>?v=frame-margins">
+    <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/expression_orale.css')); ?>?v=eo-sim-4">
     <link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/epreuve_reader.css')); ?>?v=frame-margins">
 </head>
 <body class="tcf-page-epreuve-reader">
@@ -198,7 +233,7 @@ function eo_render_subjects(array $subjects): void
     <div class="hero-content">
         <p class="hero-kicker"><i class="bx bxs-school"></i> Épreuve</p>
         <h1 class="hero-skill-title" style="color:#d30d0d!important;-webkit-text-fill-color:#d30d0d!important;"><?php echo htmlspecialchars($pageTitle); ?></h1>
-        <p class="hero-lead">Ouvrez une partie, choisissez une tâche, puis consultez la correction.</p>
+        <p class="hero-lead">Ouvrez une partie, choisissez une tâche, puis passez au simulateur oral.</p>
     </div>
 </section>
 
@@ -268,9 +303,25 @@ function eo_render_subjects(array $subjects): void
                                             </div>
                                         <?php endforeach; ?>
                                     </div>
-                                    <button type="button" class="eo-t1-soon" disabled>
-                                        <i class="bx bx-play"></i> Bientôt disponible
-                                    </button>
+                                    <div class="tcf-task-actions eo-t1-actions">
+                                        <button
+                                            type="button"
+                                            class="tcf-sim-pill eo-sim-toggle<?php echo $simLocked ? ' is-disabled' : ''; ?>"
+                                            aria-expanded="false"
+                                            title="<?php echo $simLocked ? 'Connectez-vous pour utiliser le simulateur' : 'Simulateur'; ?>"
+                                            <?php echo $simLocked ? 'aria-disabled="true"' : ''; ?>
+                                            data-task-key="tache1"
+                                            data-exam-id="<?php echo (int) $examId; ?>"
+                                            data-subject-id="0"
+                                            data-max-sec="120"
+                                            data-subject-title="Présentation personnelle"
+                                            data-role-label="Candidat"
+                                            data-subject-prompt="<?php echo htmlspecialchars($t1SimPrompt, ENT_QUOTES, 'UTF-8'); ?>">
+                                            <i class="bx bx-microphone" aria-hidden="true"></i>
+                                            Simulateur
+                                        </button>
+                                    </div>
+                                    <div class="eo-sim-panel tcf-task-sim-panel" hidden></div>
                                 </div>
                             </article>
                         </div>
@@ -288,7 +339,7 @@ function eo_render_subjects(array $subjects): void
                                 <?php if (empty($subs2)): ?>
                                     <p class="eo-task-empty">Aucun sujet disponible pour cette tâche.</p>
                                 <?php else: ?>
-                                    <?php eo_render_subjects($subs2); ?>
+                                    <?php eo_render_subjects($subs2, 'tache2', $examId, $simLocked); ?>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -306,7 +357,7 @@ function eo_render_subjects(array $subjects): void
                                 <?php if (empty($subs3)): ?>
                                     <p class="eo-task-empty">Aucun sujet disponible pour cette tâche.</p>
                                 <?php else: ?>
-                                    <?php eo_render_subjects($subs3); ?>
+                                    <?php eo_render_subjects($subs3, 'tache3', $examId, $simLocked); ?>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -320,6 +371,14 @@ function eo_render_subjects(array $subjects): void
 <?php include __DIR__ . '/includes/footer.php'; ?>
 <?php include __DIR__ . '/includes/cookie_banner.php'; ?>
 <script src="<?php echo htmlspecialchars(site_href('Assets/javascript/script_tcf.js')); ?>?v=nav-active-epreuve"></script>
+<script>
+window.EO_SIM_CFG = {
+    api: <?php echo json_encode($apiHref); ?>,
+    loggedIn: <?php echo $loggedIn ? 'true' : 'false'; ?>,
+    loginHref: <?php echo json_encode($loginHref); ?>
+};
+</script>
+<script src="<?php echo htmlspecialchars(site_href('Assets/javascript/eo_simulator.js')); ?>?v=eo-sim-4"></script>
 <script>
 (function () {
     function toggleCombo(combo) {
@@ -362,7 +421,7 @@ function eo_render_subjects(array $subjects): void
 
     document.querySelectorAll('.eo-corr-toggle').forEach(function (btn) {
         btn.addEventListener('click', function () {
-            var card = btn.closest('.eo-subject-card');
+            var card = btn.closest('.eo-subject-card, .eo-t1-card');
             var panel = card ? card.querySelector('.tcf-correction-panel') : null;
             if (!panel) return;
             var open = btn.getAttribute('aria-expanded') === 'true';

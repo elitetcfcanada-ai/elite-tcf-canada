@@ -310,6 +310,7 @@ body .hero-banner h1.hero-skill-title::before {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 0.65rem;
     border-left: 5px solid var(--main-color);
     position: relative;
     overflow: hidden;
@@ -383,6 +384,88 @@ button.column_arrangement {
     color: rgb(6, 241, 6);
 }
 
+/* Filtre Tous / Terminées / Non terminées — toujours une ligne */
+.tcf-exam-filter {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.45rem;
+    align-items: stretch;
+    width: 100%;
+    max-width: 860px;
+    margin: 0 auto 1rem;
+    padding: 0 0.75rem;
+    box-sizing: border-box;
+}
+.tcf-exam-filter__btn {
+    flex: 1 1 0;
+    min-width: 0;
+    border: 0;
+    border-radius: 999px;
+    padding: 0.55rem 0.4rem;
+    font-size: clamp(0.72rem, 2.8vw, 0.9rem);
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+    color: #475569;
+    background: #eef1f5;
+    transition: background 0.15s, color 0.15s;
+}
+.tcf-exam-filter__btn.is-active {
+    background: #d30d0d;
+    color: #fff;
+}
+.tcf-exam-filter__btn:not(.is-active):hover {
+    background: #e2e8f0;
+}
+
+/* Épreuve déjà traitée : autre couleur + niveau CECR en bout */
+.column_arrangement.is-done {
+    background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%);
+    color: #1e293b;
+    border-left-color: #d30d0d;
+    box-shadow: 0 6px 18px rgba(211, 13, 13, 0.12);
+}
+.column_arrangement.is-done a h5,
+.column_arrangement.is-done h5 {
+    color: #1e293b !important;
+    -webkit-text-fill-color: #1e293b !important;
+}
+.column_arrangement.is-done:hover a h5,
+.column_arrangement.is-done:hover h5 {
+    color: #d30d0d !important;
+    -webkit-text-fill-color: #d30d0d !important;
+}
+.column_arrangement > a {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.tcf-exam-level {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.4rem;
+    padding: 0.28rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: #fff;
+    background: #d30d0d;
+    box-shadow: 0 0 0 0 rgba(211, 13, 13, 0.55);
+    animation: tcf-level-pulse 1.8s ease-in-out infinite;
+}
+@keyframes tcf-level-pulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(211, 13, 13, 0.45);
+        filter: brightness(1);
+    }
+    50% {
+        box-shadow: 0 0 14px 4px rgba(211, 13, 13, 0.35);
+        filter: brightness(1.12);
+    }
+}
 
 /* Bouton scroll */
 .scrollbtn {

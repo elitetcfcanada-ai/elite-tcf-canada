@@ -1,0 +1,38 @@
+{
+  "type": "co",
+  "title": "Compréhension orale — Prototype (à renommer)",
+  "subtitle": "",
+  "visibility": "gratuit",
+  "is_published": true,
+  "duration_seconds": 2100,
+  "questions": [
+    {
+      "question_text": "Que dit la personne ?",
+      "points": 1,
+      "image_src": "",
+      "audio_src": "",
+      "audio_text": "Bonjour, je voudrais réserver une table pour deux personnes ce soir.",
+      "correct_index": 0,
+      "answers": [
+        { "text": "Elle réserve une table." },
+        { "text": "Elle annule un rendez-vous." },
+        { "text": "Elle commande un taxi." },
+        { "text": "Elle demande l’heure." }
+      ]
+    },
+    {
+      "question_text": "Où se passe la scène ?",
+      "points": 1,
+      "image_src": "",
+      "audio_src": "",
+      "audio_text": "Bienvenue à la gare centrale. Le train pour Montréal part du quai 3.",
+      "correct_index": 1,
+      "answers": [
+        { "text": "À l’aéroport" },
+        { "text": "À la gare" },
+        { "text": "Au cinéma" },
+        { "text": "Au supermarché" }
+      ]
+    }
+  ]
+}

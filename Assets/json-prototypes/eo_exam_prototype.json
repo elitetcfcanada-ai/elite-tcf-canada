@@ -1,0 +1,150 @@
+{
+  "type": "eo",
+  "title": "Expression orale — Prototype (à renommer)",
+  "subtitle": "Mois / année",
+  "visibility": "gratuit",
+  "is_published": true,
+  "parts": [
+    {
+      "task_key": "tache1",
+      "part_number": 1,
+      "part_title": "Tâche 1 — Entretien dirigé",
+      "subjects": [
+        {
+          "subject_number": 1,
+          "title": "Sujet 1",
+          "prompt": "Présentez-vous et parlez de votre quotidien.",
+          "correction": null,
+          "role_label": null,
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "subject_number": 2,
+          "title": "Sujet 2",
+          "prompt": "Parlez de vos loisirs.",
+          "correction": null,
+          "role_label": null,
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "subject_number": 3,
+          "title": "Sujet 3",
+          "prompt": "Décrivez votre ville.",
+          "correction": null,
+          "role_label": null,
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "subject_number": 4,
+          "title": "Sujet 4",
+          "prompt": "Parlez de votre travail ou études.",
+          "correction": null,
+          "role_label": null,
+          "icon_class": "bx bx-message-detail"
+        },
+        {
+          "subject_number": 5,
+          "title": "Sujet 5",
+          "prompt": "Quels sont vos projets ?",
+          "correction": null,
+          "role_label": null,
+          "icon_class": "bx bx-message-detail"
+        }
+      ]
+    },
+    {
+      "task_key": "tache2",
+      "part_number": 2,
+      "part_title": "Tâche 2 — Interaction",
+      "subjects": [
+        {
+          "subject_number": 1,
+          "title": "Interaction 1",
+          "prompt": "Vous êtes dans un magasin…",
+          "correction": null,
+          "role_label": "Client",
+          "icon_class": "bx bx-group"
+        },
+        {
+          "subject_number": 2,
+          "title": "Interaction 2",
+          "prompt": "Vous appelez un service…",
+          "correction": null,
+          "role_label": "Client",
+          "icon_class": "bx bx-group"
+        },
+        {
+          "subject_number": 3,
+          "title": "Interaction 3",
+          "prompt": "Vous discutez avec un ami…",
+          "correction": null,
+          "role_label": "Ami",
+          "icon_class": "bx bx-group"
+        },
+        {
+          "subject_number": 4,
+          "title": "Interaction 4",
+          "prompt": "Vous êtes au restaurant…",
+          "correction": null,
+          "role_label": "Client",
+          "icon_class": "bx bx-group"
+        },
+        {
+          "subject_number": 5,
+          "title": "Interaction 5",
+          "prompt": "Vous prenez rendez-vous…",
+          "correction": null,
+          "role_label": "Patient",
+          "icon_class": "bx bx-group"
+        }
+      ]
+    },
+    {
+      "task_key": "tache3",
+      "part_number": 3,
+      "part_title": "Tâche 3 — Expression d’un point de vue",
+      "subjects": [
+        {
+          "subject_number": 1,
+          "title": "Opinion 1",
+          "prompt": "Faut-il limiter l’usage des écrans chez les enfants ?",
+          "correction": null,
+          "role_label": null,
+          "icon_class": "bx bx-bulb"
+        },
+        {
+          "subject_number": 2,
+          "title": "Opinion 2",
+          "prompt": "Le télétravail est-il un progrès ?",
+          "correction": null,
+          "role_label": null,
+          "icon_class": "bx bx-bulb"
+        },
+        {
+          "subject_number": 3,
+          "title": "Opinion 3",
+          "prompt": "Faut-il interdire les voitures en centre-ville ?",
+          "correction": null,
+          "role_label": null,
+          "icon_class": "bx bx-bulb"
+        },
+        {
+          "subject_number": 4,
+          "title": "Opinion 4",
+          "prompt": "Les réseaux sociaux sont-ils utiles à l’apprentissage ?",
+          "correction": null,
+          "role_label": null,
+          "icon_class": "bx bx-bulb"
+        },
+        {
+          "subject_number": 5,
+          "title": "Opinion 5",
+          "prompt": "Faut-il rendre le sport obligatoire à l’école ?",
+          "correction": null,
+          "role_label": null,
+          "icon_class": "bx bx-bulb"
+        }
+      ]
+    }
+  ]
+}

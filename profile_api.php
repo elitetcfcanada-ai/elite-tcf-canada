@@ -76,18 +76,23 @@ switch ($action) {
             echo json_encode(['ok' => false, 'message' => 'Date invalide.']);
             break;
         }
+        tcf_maybe_log_daily_activity($pdo, $userId);
         $monthsFr = [
             1 => 'janvier', 2 => 'février', 3 => 'mars', 4 => 'avril', 5 => 'mai', 6 => 'juin',
             7 => 'juillet', 8 => 'août', 9 => 'septembre', 10 => 'octobre', 11 => 'novembre', 12 => 'décembre',
         ];
         try {
+            tcf_activity_days_ensure_table($pdo);
             $stmt = $pdo->prepare(
                 'SELECT activity_date FROM user_activity_days WHERE user_id = ? AND YEAR(activity_date) = ? AND MONTH(activity_date) = ? ORDER BY activity_date'
             );
             $stmt->execute([$userId, $y, $m]);
-            $dates = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            $raw = $stmt->fetchAll(PDO::FETCH_COLUMN) ?: [];
+            $dates = array_values(array_filter(array_map(static function ($d) {
+                return substr((string) $d, 0, 10);
+            }, $raw)));
         } catch (Throwable $e) {
-            echo json_encode(['ok' => false, 'message' => 'Table user_activity_days manquante. Importez database/tcf.sql (schéma complet).']);
+            echo json_encode(['ok' => false, 'message' => 'Impossible de charger le calendrier de présence.']);
             break;
         }
         echo json_encode([

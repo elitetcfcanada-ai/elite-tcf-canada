@@ -2,27 +2,27 @@
 .tcf-brand-logo {
     display: block;
     width: auto;
-    height: var(--tcf-brand-logo-size, 36px);
-    max-width: var(--tcf-brand-logo-size, 36px);
+    height: var(--tcf-brand-logo-size, 28px);
+    max-width: var(--tcf-brand-logo-size, 28px);
     object-fit: contain;
     flex-shrink: 0;
 }
 
 .tcf-brand-logo--header {
-    --tcf-brand-logo-size: 38px;
+    --tcf-brand-logo-size: 28px;
 }
 
 .tcf-brand-logo--footer {
-    --tcf-brand-logo-size: 30px;
+    --tcf-brand-logo-size: 24px;
     margin-right: 0;
 }
 
 .tcf-brand-logo--admin {
-    --tcf-brand-logo-size: 32px;
+    --tcf-brand-logo-size: 26px;
 }
 
 .tcf-brand-logo--chat {
-    --tcf-brand-logo-size: 28px;
+    --tcf-brand-logo-size: 22px;
     border-radius: 50%;
 }
 

@@ -3,14 +3,20 @@ require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/avatar_helper.php';
 require_once __DIR__ . '/includes/site_contact.php';
 require_once __DIR__ . '/includes/tcf_legacy_tables.php';
+require_once __DIR__ . '/includes/tcf_testimonials_schema.php';
 $tcf_index_contact = tcf_site_contact();
 $testimonialsHome = [];
 try {
+    tcf_testimonials_ensure_schema($pdo);
     $tTable = tcf_testimonials_table($pdo);
+    if ($tTable === '') {
+        $tTable = 'temoignages';
+    }
     $testimonialsHome = $pdo->query(
-        'SELECT t.id, t.author_name, t.content, t.rating, t.created_at, t.user_id, u.avatar AS user_avatar '
+        'SELECT t.id, t.author_name, t.content, t.rating, t.photo_path, t.created_at, t.user_id, u.avatar AS user_avatar '
         . 'FROM `' . $tTable . '` t '
         . 'LEFT JOIN users u ON u.id = t.user_id '
+        . 'WHERE t.is_published = 1 '
         . 'ORDER BY t.created_at DESC LIMIT 24'
     )->fetchAll(PDO::FETCH_ASSOC);
 } catch (Throwable $e) {
@@ -245,7 +251,10 @@ unset($_SESSION['contact_flash']);
                             }
                         }
                         $tcfAvatarUrl = null;
-                        if (!empty($tm['user_id'])) {
+                        if (!empty($tm['photo_path'])) {
+                            $tcfAvatarUrl = tcf_testimonial_photo_url((string) $tm['photo_path']);
+                        }
+                        if (!$tcfAvatarUrl && !empty($tm['user_id'])) {
                             $tcfAvatarUrl = tcf_user_avatar_display_url(
                                 $pdo,
                                 (int) $tm['user_id'],

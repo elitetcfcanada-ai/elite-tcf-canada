@@ -58,7 +58,7 @@ $tcf_is_admin_area = strpos((string) ($_SERVER['SCRIPT_NAME'] ?? ''), '/admin/')
         <div class="footer-row">
             <div class="footer-col footer-about">
                 <div class="footer-logo" aria-label="ELITE TCF CANADA">
-                    <?php echo tcf_brand_logo_img(['class' => 'tcf-brand-logo tcf-brand-logo--footer', 'size' => 30, 'prefix' => $FOOTER_ASSET_PREFIX]); ?>
+                    <?php echo tcf_brand_logo_img(['class' => 'tcf-brand-logo tcf-brand-logo--footer', 'size' => 24, 'prefix' => $FOOTER_ASSET_PREFIX]); ?>
                     <span class="footer-logo-text">ELITE&nbsp;TCF&nbsp;CANADA</span>
                 </div>
                 <p class="footer-description">Préparation à l’examen TCF Canada : compréhension et expression, écrites et orales. Votre réussite linguistique pour l’immigration canadienne avec ELITE TCF CANADA.</p>

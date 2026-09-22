@@ -9,12 +9,12 @@ require_once __DIR__ . '/includes/admin_roles.php';
 require_once __DIR__ . '/includes/gemini_client.php';
 require_once __DIR__ . '/includes/tcf_schema.php';
 require_once __DIR__ . '/includes/tcf_exam_store.php';
-
-header('Content-Type: application/json; charset=utf-8');
+require_once __DIR__ . '/includes/tcf_exam_json_io.php';
 
 function eo_json(array $data, int $status = 200): void
 {
     http_response_code($status);
+    header('Content-Type: application/json; charset=utf-8');
     echo json_encode($data, JSON_UNESCAPED_UNICODE);
     exit;
 }
@@ -244,6 +244,220 @@ function eo_gemini_text(string $prompt, string $apiKey): ?string
     $txt = trim((string) preg_replace('/^```[a-z]*\s*/i', '', $txt));
     $txt = trim((string) preg_replace('/```$/', '', $txt));
     return $txt !== '' ? $txt : null;
+}
+
+function eo_try_decode_feedback(string $raw): ?array
+{
+    $raw = trim($raw);
+    if ($raw === '') {
+        return null;
+    }
+    $raw = preg_replace('/^```(?:json)?\s*/i', '', $raw) ?? $raw;
+    $raw = preg_replace('/\s*```$/', '', $raw) ?? $raw;
+    $decoded = json_decode($raw, true);
+    if (is_array($decoded)) {
+        return $decoded;
+    }
+    if (preg_match('/\{[\s\S]*\}/', $raw, $m)) {
+        $decoded = json_decode($m[0], true);
+        if (is_array($decoded)) {
+            return $decoded;
+        }
+    }
+    return null;
+}
+
+function eo_sanitize_highlight_html(string $html): string
+{
+    $html = strip_tags($html, '<mark><span><strong><em><br><b><i>');
+    $html = preg_replace('/\son\w+\s*=\s*("[^"]*"|\'[^\']*\'|[^\s>]+)/i', '', $html) ?? $html;
+    $html = preg_replace('/\s(href|src|style|javascript)\s*=\s*("[^"]*"|\'[^\']*\'|[^\s>]+)/i', '', $html) ?? $html;
+    return trim($html);
+}
+
+/**
+ * @param array<string,mixed> $fb
+ * @return array<string,mixed>
+ */
+function eo_normalize_oral_feedback(array $fb): array
+{
+    $level = strtoupper(trim((string) ($fb['cefr_level'] ?? 'B1')));
+    if (!preg_match('/^(A1|A2|B1|B2|C1|C2)$/', $level)) {
+        $level = 'B1';
+    }
+    $details = $fb['score_details'] ?? [];
+    if (!is_array($details)) {
+        $details = [];
+    }
+    $normDetails = [
+        'linguistique' => (int) ($details['linguistique'] ?? $details['grammaire'] ?? 0),
+        'pragmatique' => (int) ($details['pragmatique'] ?? $details['coherence'] ?? 0),
+        'sociolinguistique' => (int) ($details['sociolinguistique'] ?? $details['registre'] ?? 0),
+        'phonetique' => (int) ($details['phonetique'] ?? $details['prononciation'] ?? 0),
+    ];
+    foreach ($normDetails as $k => $v) {
+        $normDetails[$k] = max(0, min(5, $v));
+    }
+    $errors = [];
+    foreach ((array) ($fb['errors'] ?? []) as $err) {
+        if (!is_array($err)) {
+            continue;
+        }
+        $errors[] = [
+            'type' => trim((string) ($err['type'] ?? 'langue')),
+            'excerpt' => trim((string) ($err['excerpt'] ?? '')),
+            'correction' => trim((string) ($err['correction'] ?? '')),
+            'explanation' => trim((string) ($err['explanation'] ?? '')),
+            'better' => trim((string) ($err['better'] ?? $err['should_say'] ?? '')),
+        ];
+    }
+    $advice = [];
+    foreach ((array) ($fb['advice'] ?? $fb['tips'] ?? []) as $tip) {
+        $t = trim((string) $tip);
+        if ($t !== '') {
+            $advice[] = $t;
+        }
+    }
+    $strengths = [];
+    foreach ((array) ($fb['strengths'] ?? []) as $s) {
+        $t = trim((string) $s);
+        if ($t !== '') {
+            $strengths[] = $t;
+        }
+    }
+    $missing = [];
+    foreach ((array) ($fb['missing_points'] ?? $fb['missing'] ?? []) as $m) {
+        if (is_array($m)) {
+            $title = trim((string) ($m['title'] ?? $m['point'] ?? ''));
+            $detail = trim((string) ($m['detail'] ?? $m['example'] ?? $m['explanation'] ?? ''));
+            if ($title !== '' || $detail !== '') {
+                $missing[] = [
+                    'title' => $title !== '' ? $title : 'Point manquant',
+                    'detail' => $detail,
+                ];
+            }
+            continue;
+        }
+        $t = trim((string) $m);
+        if ($t !== '') {
+            $missing[] = ['title' => $t, 'detail' => ''];
+        }
+    }
+    $reformulations = [];
+    foreach ((array) ($fb['reformulations'] ?? []) as $r) {
+        if (!is_array($r)) {
+            continue;
+        }
+        $youSaid = trim((string) ($r['you_said'] ?? $r['said'] ?? ''));
+        $sayInstead = trim((string) ($r['say_instead'] ?? $r['better'] ?? $r['correction'] ?? ''));
+        if ($youSaid === '' && $sayInstead === '') {
+            continue;
+        }
+        $reformulations[] = [
+            'you_said' => $youSaid,
+            'say_instead' => $sayInstead,
+            'why' => trim((string) ($r['why'] ?? $r['explanation'] ?? '')),
+        ];
+    }
+    $highlight = eo_sanitize_highlight_html((string) ($fb['highlighted_html'] ?? $fb['highlighted_response'] ?? ''));
+    $transcript = trim((string) ($fb['transcript'] ?? ''));
+    $betterAnswer = trim((string) ($fb['better_answer'] ?? $fb['model_answer'] ?? $fb['should_have_said'] ?? ''));
+    $adviceSpoken = trim((string) ($fb['advice_spoken'] ?? ''));
+    if ($adviceSpoken === '') {
+        $parts = ['Merci pour votre oral.'];
+        if ($transcript !== '') {
+            $short = mb_strlen($transcript) > 180 ? mb_substr($transcript, 0, 180) . '…' : $transcript;
+            $parts[] = 'Vous avez dit notamment : ' . $short;
+        }
+        if ($reformulations !== []) {
+            $r0 = $reformulations[0];
+            if ($r0['you_said'] !== '' && $r0['say_instead'] !== '') {
+                $parts[] = 'Quand vous avez dit « ' . $r0['you_said'] . ' », il valait mieux dire « ' . $r0['say_instead'] . ' ».';
+            }
+        }
+        if ($missing !== []) {
+            $parts[] = 'Il manquait surtout : ' . $missing[0]['title'] . '.';
+        }
+        if ($betterAnswer !== '') {
+            $ba = mb_strlen($betterAnswer) > 320 ? mb_substr($betterAnswer, 0, 320) . '…' : $betterAnswer;
+            $parts[] = 'Voici une version plus solide : ' . $ba;
+        } elseif ($advice !== []) {
+            $parts[] = implode('. ', array_slice($advice, 0, 3));
+        }
+        $parts[] = 'Vous n’êtes pas obligé d’utiliser tout le temps imparti : l’essentiel est la clarté, les arguments et les exemples.';
+        $adviceSpoken = implode(' ', $parts);
+    }
+    $scoreGlobal = (int) ($fb['score_global'] ?? array_sum($normDetails));
+    return [
+        'cefr_level' => $level,
+        'score_global' => max(0, min(20, $scoreGlobal)),
+        'score_details' => $normDetails,
+        'transcript' => $transcript,
+        'highlighted_html' => $highlight,
+        'errors' => $errors,
+        'strengths' => $strengths,
+        'missing_points' => $missing,
+        'reformulations' => $reformulations,
+        'better_answer' => $betterAnswer,
+        'advice' => $advice,
+        'advice_spoken' => $adviceSpoken,
+        'remarks' => trim((string) ($fb['remarks'] ?? '')),
+    ];
+}
+
+/**
+ * @return array{ok:bool,mime?:string,bytes?:string,error?:string}
+ */
+function eo_read_uploaded_audio(): array
+{
+    if (empty($_FILES['audio']) || !is_array($_FILES['audio'])) {
+        return ['ok' => false, 'error' => 'missing'];
+    }
+    $f = $_FILES['audio'];
+    if ((int) ($f['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+        return ['ok' => false, 'error' => 'upload_error'];
+    }
+    $tmp = (string) ($f['tmp_name'] ?? '');
+    if ($tmp === '' || !is_uploaded_file($tmp)) {
+        return ['ok' => false, 'error' => 'invalid'];
+    }
+    $size = (int) ($f['size'] ?? 0);
+    if ($size <= 0 || $size > 12 * 1024 * 1024) {
+        return ['ok' => false, 'error' => 'size'];
+    }
+    $mime = strtolower(trim((string) ($f['type'] ?? '')));
+    $name = strtolower((string) ($f['name'] ?? ''));
+    $allowed = [
+        'audio/webm', 'audio/ogg', 'audio/wav', 'audio/x-wav', 'audio/mpeg',
+        'audio/mp3', 'audio/mp4', 'audio/m4a', 'audio/x-m4a', 'audio/aac',
+        'video/webm',
+    ];
+    if ($mime === '' || $mime === 'application/octet-stream') {
+        if (str_ends_with($name, '.webm')) {
+            $mime = 'audio/webm';
+        } elseif (str_ends_with($name, '.ogg')) {
+            $mime = 'audio/ogg';
+        } elseif (str_ends_with($name, '.wav')) {
+            $mime = 'audio/wav';
+        } elseif (str_ends_with($name, '.mp3')) {
+            $mime = 'audio/mpeg';
+        } elseif (str_ends_with($name, '.m4a')) {
+            $mime = 'audio/mp4';
+        } else {
+            $mime = 'audio/webm';
+        }
+    }
+    if (!in_array($mime, $allowed, true)) {
+        return ['ok' => false, 'error' => 'mime'];
+    }
+    $bytes = file_get_contents($tmp);
+    if ($bytes === false || $bytes === '') {
+        return ['ok' => false, 'error' => 'read'];
+    }
+    if ($mime === 'video/webm') {
+        $mime = 'audio/webm';
+    }
+    return ['ok' => true, 'mime' => $mime, 'bytes' => $bytes];
 }
 
 function eo_exam_rank_from_title(string $title): int
@@ -510,6 +724,16 @@ try {
             $exam = eo_fetch_exam($pdo, $examId);
             if (!$exam) eo_json(['success' => false, 'message' => 'Épreuve introuvable.'], 404);
             eo_json(['success' => true, 'data' => $exam]);
+        }
+        case 'export_exam_json': {
+            if (!eo_is_admin()) eo_json(['success' => false, 'message' => 'Accès refusé.'], 403);
+            $examId = (int) ($_POST['exam_id'] ?? $_GET['exam_id'] ?? 0);
+            if ($examId <= 0) eo_json(['success' => false, 'message' => 'Épreuve invalide.'], 422);
+            $exam = eo_fetch_exam($pdo, $examId);
+            if (!$exam) eo_json(['success' => false, 'message' => 'Épreuve introuvable.'], 404);
+            $payload = tcf_exam_export_eo_payload($exam);
+            $slug = eo_slug((string) ($exam['title'] ?? 'eo')) ?: 'eo';
+            tcf_exam_send_json_download($payload, 'eo_' . $slug . '_' . $examId);
         }
         case 'save_exam': {
             if (!eo_is_admin()) eo_json(['success' => false, 'message' => 'Accès refusé.'], 403);
@@ -793,7 +1017,7 @@ try {
         }
         case 'simulator_reply': {
             if (empty($_SESSION['user_id'])) {
-                eo_json(['success' => false, 'reason' => 'login', 'message' => 'Connectez-vous pour utiliser le simulateur IA.'], 401);
+                eo_json(['success' => false, 'reason' => 'login', 'message' => 'Connectez-vous pour utiliser le simulateur.'], 401);
             }
             $taskKey = (string) ($_POST['task_key'] ?? 'tache2');
             if (!in_array($taskKey, ['tache1', 'tache2', 'tache3'], true)) $taskKey = 'tache2';
@@ -825,6 +1049,199 @@ try {
                 $reply = "Merci. Votre réponse est compréhensible. Essayez d'enrichir le vocabulaire et de mieux connecter vos idées. Pouvez-vous développer un exemple précis ?";
             }
             eo_json(['success' => true, 'reply' => trim($reply)]);
+        }
+        case 'ai_correct_oral': {
+            if (empty($_SESSION['user_id'])) {
+                eo_json([
+                    'success' => false,
+                    'reason' => 'login',
+                    'message' => 'Connectez-vous pour utiliser le simulateur.',
+                ], 401);
+            }
+
+            $taskKey = (string) ($_POST['task_key'] ?? 'tache2');
+            if (!in_array($taskKey, ['tache1', 'tache2', 'tache3'], true)) {
+                $taskKey = 'tache2';
+            }
+            $subjectTitle = trim((string) ($_POST['subject_title'] ?? ''));
+            $subjectPrompt = trim((string) ($_POST['subject_prompt'] ?? ''));
+            $roleLabel = trim((string) ($_POST['role_label'] ?? ''));
+            $clientTranscript = trim((string) ($_POST['transcript'] ?? ''));
+            $durationSec = max(0, (int) ($_POST['duration_sec'] ?? 0));
+
+            $audio = eo_read_uploaded_audio();
+            $hasAudio = !empty($audio['ok']);
+            if (!$hasAudio && mb_strlen($clientTranscript) < 12) {
+                eo_json([
+                    'success' => false,
+                    'message' => 'Enregistrez votre oral avant de terminer.',
+                ], 422);
+            }
+
+            $apiKey = eo_api_key();
+            if ($apiKey === '') {
+                eo_json(['success' => false, 'message' => 'Service de correction indisponible.'], 500);
+            }
+
+            $taskLabels = [
+                'tache1' => 'Tâche 1 — Présentation personnelle (entretien dirigé, ~2 min)',
+                'tache2' => 'Tâche 2 — Interaction orale (prép. 2 min, ~3 min 30)',
+                'tache3' => 'Tâche 3 — Expression d’un point de vue (~4 min 30)',
+            ];
+            $taskLabel = $taskLabels[$taskKey];
+
+            $systemPrompt = "Tu es un examinateur-coach professionnel du TCF Canada (expression orale), style simulateur d’examen. "
+                . "Tu corriges VOCALement : advice_spoken est le cœur du produit (monologue de coach fluide, 18–30 phrases). "
+                . "L’écrit sert seulement d’appui minimal. "
+                . "Dans advice_spoken : cite parfois un COURT fragment du candidat (« vous avez dit : … ») puis enchaîne immédiatement « il fallait plutôt… ». "
+                . "Ne relis JAMAIS toute la production du candidat. Citation = 3 à 8 mots max. "
+                . "Couvre comme un vrai pro : hésitations (euh), silences trop longs, rythme, débit trop rapide/lent, "
+                . "répétitions, manque de connecteurs, arguments faibles, exemples absents ou trop vagues, "
+                . "registre, prononciation/liaisons si audible, structure (intro / développement / conclusion), "
+                . "et ce qu’un examinateur attend vraiment sur cette tâche. "
+                . "Propose des arguments et exemples concrets à dire. "
+                . "Durée max indicative : ne sanctionne PAS un oral plus court s’il est clair et riche. "
+                . "better_answer = version orale modèle courte (à faire lire à voix haute aussi). "
+                . "highlighted_html peut rester court. Pas de mention d’IA. "
+                . "Réponds UNIQUEMENT en JSON strict : "
+                . '{"cefr_level":"B1","score_global":12,"score_details":{"linguistique":3,"pragmatique":3,"sociolinguistique":3,"phonetique":3},'
+                . '"transcript":"...","highlighted_html":"...",'
+                . '"errors":[{"type":"hésitation","excerpt":"euh…","correction":"...","better":"...","explanation":"..."}],'
+                . '"reformulations":[{"you_said":"court extrait","say_instead":"...","why":"..."}],'
+                . '"missing_points":[{"title":"Argument / exemple","detail":"..."}],'
+                . '"better_answer":"...","strengths":["..."],"advice":["..."],'
+                . '"advice_spoken":"...","remarks":"..."}';
+
+            $userText = "ÉPREUVE : Expression orale TCF Canada\n"
+                . "TÂCHE : {$taskLabel}\n"
+                . "DURÉE ENREGISTRÉE (secondes) : {$durationSec} (indicatif seulement — ne pas sanctionner si plus court)\n"
+                . "TITRE DU SUJET : " . ($subjectTitle !== '' ? $subjectTitle : '(présentation)') . "\n"
+                . "RÔLE : " . ($roleLabel !== '' ? $roleLabel : 'Candidat') . "\n"
+                . "ÉNONCÉ / CONSIGNE :\n" . ($subjectPrompt !== '' ? $subjectPrompt : 'Présentez-vous.') . "\n\n";
+            if ($clientTranscript !== '') {
+                $userText .= "TRANSCRIPTION PARTIELLE DU CANDIDAT :\n" . $clientTranscript . "\n\n";
+            }
+            if ($hasAudio) {
+                $userText .= "Audio joint : transcris fidèlement, puis corrige en citant ses phrases exactes et en proposant la version attendue + arguments/exemples.\n";
+            } else {
+                $userText .= "Pas d'audio : base-toi sur la transcription. Phonétique = 0 si non évaluable.\n";
+            }
+
+            $parts = [['text' => $systemPrompt . "\n\n" . $userText]];
+            if ($hasAudio) {
+                $parts[] = [
+                    'inline_data' => [
+                        'mime_type' => (string) $audio['mime'],
+                        'data' => base64_encode((string) $audio['bytes']),
+                    ],
+                ];
+            }
+
+            $body = [
+                'contents' => [
+                    ['role' => 'user', 'parts' => $parts],
+                ],
+                'generationConfig' => [
+                    'temperature' => 0.3,
+                    'topP' => 0.9,
+                    'maxOutputTokens' => 6144,
+                ],
+            ];
+
+            $geminiErr = '';
+            $decoded = tcf_gemini_generate($body, $apiKey, $geminiErr, 100);
+            if (!$decoded && $hasAudio) {
+                // Certains modèles refusent l'audio : retenter en texte seul.
+                $textOnlyParts = [[
+                    'text' => $systemPrompt . "\n\n" . $userText
+                        . "\n(Note: l'audio n'a pas pu être analysé ; base-toi sur la transcription.)\n"
+                        . ($clientTranscript !== '' ? '' : "Transcription indisponible — fournis une évaluation prudente.\n"),
+                ]];
+                $bodyText = [
+                    'contents' => [['role' => 'user', 'parts' => $textOnlyParts]],
+                    'generationConfig' => [
+                        'temperature' => 0.3,
+                        'topP' => 0.9,
+                        'maxOutputTokens' => 6144,
+                    ],
+                ];
+                $geminiErr2 = '';
+                $decoded = tcf_gemini_generate($bodyText, $apiKey, $geminiErr2, 70);
+                if ($decoded) {
+                    $geminiErr = '';
+                } elseif ($geminiErr2 !== '') {
+                    $geminiErr = $geminiErr2;
+                }
+            }
+            if (!$decoded) {
+                eo_json([
+                    'success' => false,
+                    'message' => $geminiErr !== '' ? $geminiErr : 'Correction temporairement indisponible.',
+                ], 502);
+            }
+
+            $rawText = tcf_gemini_extract_text($decoded);
+            $feedback = eo_try_decode_feedback($rawText);
+            if (!is_array($feedback)) {
+                $repair = eo_gemini_text(
+                    "Convertis le texte suivant en JSON strict avec les clés cefr_level, score_global, score_details, "
+                    . "transcript, highlighted_html, errors, reformulations, missing_points, better_answer, "
+                    . "strengths, advice, advice_spoken, remarks.\nTexte:\n" . $rawText,
+                    $apiKey
+                );
+                $feedback = is_string($repair) ? eo_try_decode_feedback($repair) : null;
+            }
+            if (!is_array($feedback)) {
+                $fallbackTranscript = $clientTranscript !== '' ? $clientTranscript : 'Production orale reçue.';
+                $feedback = [
+                    'cefr_level' => 'B1',
+                    'score_global' => 10,
+                    'score_details' => [
+                        'linguistique' => 2,
+                        'pragmatique' => 3,
+                        'sociolinguistique' => 2,
+                        'phonetique' => $hasAudio ? 2 : 0,
+                    ],
+                    'transcript' => $fallbackTranscript,
+                    'highlighted_html' => htmlspecialchars($fallbackTranscript, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
+                    'errors' => [[
+                        'type' => 'général',
+                        'excerpt' => '',
+                        'correction' => '',
+                        'better' => '',
+                        'explanation' => 'La correction est temporairement limitée. Réessayez.',
+                    ]],
+                    'reformulations' => [],
+                    'missing_points' => [[
+                        'title' => 'Développer un exemple concret',
+                        'detail' => 'Ajoutez un exemple précis lié au sujet pour renforcer votre point de vue.',
+                    ]],
+                    'better_answer' => '',
+                    'strengths' => ['Vous avez produit une réponse orale liée au sujet.'],
+                    'advice' => [
+                        'Citez un argument clair puis un exemple.',
+                        'Variez les connecteurs (d’abord, ensuite, en revanche, par conséquent).',
+                    ],
+                    'advice_spoken' => 'Merci pour votre oral. Reprenez vos idées une par une, ajoutez un exemple concret, et reformulez les phrases hésitantes plus clairement. Le temps total n’est pas une obligation : visez la qualité.',
+                    'remarks' => 'Correction de secours : réessayez dans un instant.',
+                ];
+            }
+
+            $feedback = eo_normalize_oral_feedback($feedback);
+            if ($feedback['transcript'] === '' && $clientTranscript !== '') {
+                $feedback['transcript'] = $clientTranscript;
+            }
+            if ($feedback['highlighted_html'] === '' && $feedback['transcript'] !== '') {
+                $feedback['highlighted_html'] = htmlspecialchars($feedback['transcript'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            }
+
+            eo_json([
+                'success' => true,
+                'feedback' => $feedback,
+                'task_key' => $taskKey,
+                'duration_sec' => $durationSec,
+                'had_audio' => $hasAudio,
+            ]);
         }
         default:
             eo_json(['success' => false, 'message' => 'Action non reconnue.'], 400);

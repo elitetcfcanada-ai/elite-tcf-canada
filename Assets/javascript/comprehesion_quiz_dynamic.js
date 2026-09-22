@@ -543,6 +543,192 @@ function showResults() {
       window.scrollTo(0, 0);
     }
   }
+
+  saveCeAttempt({
+    score_percent: pct,
+    correct_count: correctCount,
+    wrong_count: wrongCount,
+    unanswered_count: Math.max(0, questions.length - correctCount - wrongCount),
+    total_questions: questions.length,
+    points_earned: totalPointsEarned,
+    level_label: levelLabel,
+    duration_seconds: startTime
+      ? Math.max(0, Math.round((Date.now() - startTime.getTime()) / 1000))
+      : 0,
+  });
+}
+
+function getCeApi() {
+  return typeof window.TCF_CE_API === "string" && window.TCF_CE_API
+    ? window.TCF_CE_API
+    : "../../ce_api.php";
+}
+
+function getCeExamId() {
+  return new URLSearchParams(location.search).get("exam_id") || "";
+}
+
+function saveCeAttempt(payload) {
+  var id = getCeExamId();
+  if (!id) return;
+  var fd = new FormData();
+  fd.append("action", "save_attempt");
+  fd.append("exam_id", id);
+  Object.keys(payload || {}).forEach(function (k) {
+    fd.append(k, String(payload[k]));
+  });
+  fetch(getCeApi(), { method: "POST", body: fd, credentials: "same-origin" }).catch(
+    function () {}
+  );
+}
+
+function formatCeHistoryDate(iso) {
+  if (!iso) return "—";
+  var d = new Date(String(iso).replace(" ", "T"));
+  if (isNaN(d.getTime())) return String(iso);
+  var pad = function (n) {
+    return n < 10 ? "0" + n : String(n);
+  };
+  return (
+    pad(d.getDate()) +
+    "/" +
+    pad(d.getMonth() + 1) +
+    "/" +
+    d.getFullYear() +
+    " · " +
+    pad(d.getHours()) +
+    ":" +
+    pad(d.getMinutes())
+  );
+}
+
+function renderCeEvolution(evo) {
+  var box = document.getElementById("history-evo-summary");
+  if (!box) return;
+  if (!evo || !evo.count) {
+    box.hidden = true;
+    return;
+  }
+  box.hidden = false;
+  var best = document.getElementById("hist-evo-best");
+  var latest = document.getElementById("hist-evo-latest");
+  var count = document.getElementById("hist-evo-count");
+  var trend = document.getElementById("hist-evo-trend");
+  if (best) best.textContent = evo.best_percent + "%";
+  if (latest) latest.textContent = evo.latest_percent + "%";
+  if (count) count.textContent = String(evo.count);
+  if (trend) {
+    trend.classList.remove("is-up", "is-down");
+    if (evo.trend === "up") {
+      trend.textContent = "+" + evo.delta + " pts";
+      trend.classList.add("is-up");
+    } else if (evo.trend === "down") {
+      trend.textContent = evo.delta + " pts";
+      trend.classList.add("is-down");
+    } else if (evo.trend === "flat") {
+      trend.textContent = "Stable";
+    } else {
+      trend.textContent = "—";
+    }
+  }
+}
+
+function openCeHistoryModal() {
+  var modal = document.getElementById("history-modal");
+  var list = document.getElementById("history-list");
+  var evoEl = document.getElementById("history-evo-summary");
+  var chart = document.getElementById("history-chart");
+  if (!modal || !list) return;
+  modal.hidden = false;
+  list.innerHTML = '<p class="tcf-qpro-history-empty">Chargement…</p>';
+  var evoBox = document.getElementById("history-evo-summary");
+  if (evoBox) evoBox.hidden = true;
+  if (chart) chart.innerHTML = "";
+  var id = getCeExamId();
+  if (!id) {
+    list.innerHTML =
+      '<p class="tcf-qpro-history-empty">Épreuve introuvable.</p>';
+    return;
+  }
+  var fd = new FormData();
+  fd.append("action", "get_exam_history");
+  fd.append("exam_id", id);
+  fetch(getCeApi(), { method: "POST", body: fd, credentials: "same-origin" })
+    .then(function (r) {
+      return r.json();
+    })
+    .then(function (j) {
+      if (j && j.reason === "login") {
+        list.innerHTML =
+          '<p class="tcf-qpro-history-empty">Connectez-vous pour voir votre historique.</p>';
+        return;
+      }
+      if (!j || !j.success || !j.data) {
+        list.innerHTML =
+          '<p class="tcf-qpro-history-empty">' +
+          ((j && j.message) || "Impossible de charger l’historique.") +
+          "</p>";
+        return;
+      }
+      var attempts = j.data.attempts || [];
+      var evo = j.data.evolution || {};
+      renderCeEvolution(evo);
+      if (chart && Array.isArray(evo.series) && evo.series.length) {
+        chart.innerHTML = evo.series
+          .map(function (p) {
+            var h = Math.max(8, Math.round((Number(p) / 100) * 64));
+            return (
+              '<div class="tcf-qpro-history-chart__bar" style="height:' +
+              h +
+              'px"><span>' +
+              p +
+              "%</span></div>"
+            );
+          })
+          .join("");
+      }
+      if (!attempts.length) {
+        list.innerHTML =
+          '<p class="tcf-qpro-history-empty">Aucun résultat enregistré pour cette épreuve.</p>';
+        return;
+      }
+      list.innerHTML = attempts
+        .map(function (a) {
+          return (
+            '<div class="tcf-qpro-history-row">' +
+            "<div><small>" +
+            formatCeHistoryDate(a.created_at) +
+            "</small><div>" +
+            (a.correct_count || 0) +
+            "/" +
+            (a.total_questions || 0) +
+            " · " +
+            (a.level_label || "") +
+            "</div></div>" +
+            "<strong>" +
+            (a.score_percent || 0) +
+            "%</strong>" +
+            "<small>" +
+            (a.points_earned || 0) +
+            " pts</small>" +
+            "</div>"
+          );
+        })
+        .join("");
+    })
+    .catch(function () {
+      list.innerHTML =
+        '<p class="tcf-qpro-history-empty">Erreur réseau.</p>';
+    });
+}
+
+function closeCeHistoryModal() {
+  var modal = document.getElementById("history-modal");
+  if (modal) modal.hidden = true;
+}
+
+function loadCeHistoryPreview() {
+  // L’évolution s’affiche uniquement dans le modal Historique
 }
 
 // Créer les indicateurs de résultats
@@ -663,6 +849,17 @@ function bindCeEvents() {
   ceEventsBound = true;
 
   startBtn.addEventListener("click", startQuiz);
+
+  var historyBtn = document.getElementById("history-btn");
+  if (historyBtn) historyBtn.addEventListener("click", openCeHistoryModal);
+  var historyClose = document.getElementById("history-modal-close");
+  if (historyClose) historyClose.addEventListener("click", closeCeHistoryModal);
+  var historyModal = document.getElementById("history-modal");
+  if (historyModal) {
+    historyModal.addEventListener("click", function (e) {
+      if (e.target === historyModal) closeCeHistoryModal();
+    });
+  }
 
   quitBtn.addEventListener("click", () => {
     clearInterval(timerInterval);
@@ -875,6 +1072,7 @@ async function ceBoot() {
 
     updateTimerDisplay();
     bindCeEvents();
+    loadCeHistoryPreview();
     if (startBtn) startBtn.disabled = false;
   } catch (e) {
     showCeLoadError("Erreur réseau ou serveur.");

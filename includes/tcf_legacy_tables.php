@@ -6,7 +6,13 @@ require_once __DIR__ . '/tcf_schema.php';
 
 function tcf_testimonials_table(PDO $pdo): string
 {
-    return tcf_schema_has_table($pdo, 'temoignages') ? 'temoignages' : 'testimonials';
+    if (tcf_schema_has_table($pdo, 'temoignages')) {
+        return 'temoignages';
+    }
+    if (tcf_schema_has_table($pdo, 'testimonials')) {
+        return 'testimonials';
+    }
+    return 'temoignages';
 }
 
 function tcf_activites_table(PDO $pdo): string

@@ -3,8 +3,32 @@
 declare(strict_types=1);
 
 /**
+ * Assure la table du calendrier de présence.
+ */
+function tcf_activity_days_ensure_table(PDO $pdo): void
+{
+    static $done = false;
+    if ($done) {
+        return;
+    }
+    try {
+        $pdo->exec(
+            "CREATE TABLE IF NOT EXISTS user_activity_days (
+                user_id INT UNSIGNED NOT NULL,
+                activity_date DATE NOT NULL,
+                PRIMARY KEY (user_id, activity_date),
+                KEY idx_activity_date (activity_date)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        );
+    } catch (Throwable $e) {
+        error_log('tcf_activity_days_ensure_table: ' . $e->getMessage());
+    }
+    $done = true;
+}
+
+/**
  * Enregistre une visite « jour calendaire » pour le calendrier de présence du profil.
- * Une seule écriture MySQL par session et par jour (évite le spam).
+ * Une seule écriture réussie par session et par jour.
  */
 function tcf_maybe_log_daily_activity(PDO $pdo, int $userId): void
 {
@@ -15,11 +39,14 @@ function tcf_maybe_log_daily_activity(PDO $pdo, int $userId): void
     if (!empty($_SESSION['tcf_activity_day_marked']) && $_SESSION['tcf_activity_day_marked'] === $today) {
         return;
     }
-    $_SESSION['tcf_activity_day_marked'] = $today;
+    tcf_activity_days_ensure_table($pdo);
     try {
-        $pdo->prepare('INSERT IGNORE INTO user_activity_days (user_id, activity_date) VALUES (?, CURDATE())')->execute([$userId]);
+        $st = $pdo->prepare('INSERT IGNORE INTO user_activity_days (user_id, activity_date) VALUES (?, ?)');
+        $st->execute([$userId, $today]);
+        $_SESSION['tcf_activity_day_marked'] = $today;
     } catch (Throwable $e) {
-        // Table absente : importer database/tcf.sql
+        // Ne pas marquer la session si l’écriture a échoué (permet un nouvel essai)
+        error_log('tcf_maybe_log_daily_activity: ' . $e->getMessage());
     }
 }
 
@@ -45,10 +72,15 @@ function tcf_profile_activity_calendar_cells(int $y, int $m, array $datesSet, st
             $classes[] = 'profile-cal__day--future';
         } elseif ($joinDate !== null && $joinDate !== '' && $ds < $joinDate) {
             $classes[] = 'profile-cal__day--na';
-        } elseif (!empty($datesSet[$ds])) {
+        } elseif (!empty($datesSet[$ds]) || $ds === $todayStr) {
+            // Jour courant toujours « présent » dès qu’on consulte le profil
             $classes[] = 'profile-cal__day--present';
         } else {
             $classes[] = 'profile-cal__day--absent';
+        }
+        $isToday = ($ds === $todayStr);
+        if ($isToday) {
+            $classes[] = 'profile-cal__day--today';
         }
         $html .= '<span class="' . htmlspecialchars(implode(' ', $classes), ENT_QUOTES, 'UTF-8') . '" title="' . htmlspecialchars($ds, ENT_QUOTES, 'UTF-8') . '">' . $d . '</span>';
     }

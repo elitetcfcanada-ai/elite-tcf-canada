@@ -176,7 +176,7 @@ $tcf_nav_aria = static function (array $files) use ($tcf_nav_is): string {
 ?>
 <header class="header">
     <div class="logo">
-        <h1><?php echo tcf_brand_logo_img(['class' => 'tcf-brand-logo tcf-brand-logo--header', 'size' => 38]); ?> ELITE TCF <span>CANADA</span></h1>
+        <h1><?php echo tcf_brand_logo_img(['class' => 'tcf-brand-logo tcf-brand-logo--header', 'size' => 28]); ?> ELITE TCF <span>CANADA</span></h1>
     </div>
     <nav>
         <div class="navbar">
@@ -339,7 +339,7 @@ header.header nav .navbar .navLinks li a[aria-current="page"] {
 
 @media (max-width: 1400px) {
     header.header .logo h1 { font-size: 1.1rem; }
-    header.header .logo h1 .tcf-brand-logo--header { --tcf-brand-logo-size: 32px; }
+    header.header .logo h1 .tcf-brand-logo--header { --tcf-brand-logo-size: 22px; }
     header.header nav .navbar .navLinks { gap: 0.55rem; }
     header.header nav .navbar .navLinks li a { font-size: 0.74rem; }
     header.header nav .others { gap: 0.4rem !important; }
@@ -352,7 +352,7 @@ header.header nav .navbar .navLinks li a[aria-current="page"] {
 
 @media (max-width: 1280px) {
     header.header .logo h1 { font-size: 1rem; }
-    header.header .logo h1 .tcf-brand-logo--header { --tcf-brand-logo-size: 28px; }
+    header.header .logo h1 .tcf-brand-logo--header { --tcf-brand-logo-size: 24px; }
     header.header .logo { padding-right: 0.4rem; }
     header.header nav .navbar .navLinks { gap: 0.45rem; }
     header.header nav .navbar .navLinks li a { font-size: 0.68rem; }
@@ -366,7 +366,7 @@ header.header nav .navbar .navLinks li a[aria-current="page"] {
 
 @media (max-width: 1120px) {
     header.header .logo h1 { font-size: 0.9rem; }
-    header.header .logo h1 .tcf-brand-logo--header { --tcf-brand-logo-size: 26px; }
+    header.header .logo h1 .tcf-brand-logo--header { --tcf-brand-logo-size: 22px; }
     header.header nav .navbar .navLinks { gap: 0.35rem; }
     header.header nav .navbar .navLinks li a { font-size: 0.64rem; }
     header.header { width: 100%; max-width: 100%; box-sizing: border-box; }
@@ -377,7 +377,7 @@ header.header nav .navbar .navLinks li a[aria-current="page"] {
     header.header { padding: 0.5rem 1rem; width: 100%; max-width: 100%; box-sizing: border-box; }
     header.header .logo { padding-right: 0.5rem; }
     header.header .logo h1 { font-size: 0.95rem; }
-    header.header .logo h1 .tcf-brand-logo--header { --tcf-brand-logo-size: 28px; }
+    header.header .logo h1 .tcf-brand-logo--header { --tcf-brand-logo-size: 24px; }
     header.header #menuBTN { display: inline-flex !important; align-items: center; justify-content: center; }
     header.header nav {
         position: static !important;
@@ -528,7 +528,7 @@ header.header nav .navbar .navLinks li a[aria-current="page"] {
 @media (max-width: 600px) {
     header.header { padding: 0.45rem 0.85rem; gap: 0.5rem; width: 100%; max-width: 100%; box-sizing: border-box; }
     header.header .logo h1 { font-size: 0.85rem; }
-    header.header .logo h1 .tcf-brand-logo--header { --tcf-brand-logo-size: 26px; }
+    header.header .logo h1 .tcf-brand-logo--header { --tcf-brand-logo-size: 22px; }
     header.header nav .others { gap: 0.4rem !important; }
     header.header nav .others > i { font-size: 1.35rem; }
     header.header #menuBTN { font-size: 1.7rem; }

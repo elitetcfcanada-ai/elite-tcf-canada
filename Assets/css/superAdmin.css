@@ -2628,6 +2628,103 @@ html[data-sa-theme='dark'] .tcf-superadmin-app .sa-branding-preview-text p {
 }
 .sa-testi-empty--error { color: #d30d0d; }
 
+.sa-testi-publish-form {
+    background: var(--sa-surface, #fff);
+    border: 1px solid var(--sa-border, #e2e8f0);
+    border-radius: 14px;
+    padding: 1.15rem 1.25rem;
+    margin-bottom: 1.25rem;
+}
+.sa-testi-publish-title {
+    margin: 0 0 1rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--sa-text, #1e293b);
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+.sa-testi-publish-title i { color: #d30d0d; }
+.sa-testi-publish-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.85rem;
+    margin-bottom: 0.75rem;
+}
+@media (max-width: 900px) {
+    .sa-testi-publish-grid { grid-template-columns: 1fr; }
+}
+.sa-testi-publish-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+.sa-testi-publish-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.9rem;
+    color: var(--sa-muted, #64748b);
+    cursor: pointer;
+}
+.sa-testi-crop-wrap {
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+    border: 1px solid var(--sa-border, #e2e8f0);
+    border-radius: 12px;
+    background: #f8fafc;
+}
+.sa-testi-crop-stage {
+    max-height: 280px;
+    overflow: hidden;
+    background: #0f172a;
+    border-radius: 8px;
+}
+.sa-testi-crop-stage img {
+    display: block;
+    max-width: 100%;
+}
+.sa-testi-crop-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: flex-end;
+    margin-top: 0.65rem;
+}
+.sa-testi-photo-preview {
+    margin-top: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+.sa-testi-photo-preview img {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(211, 13, 13, 0.35);
+    background: #e2e8f0;
+}
+.sa-testi-card--draft {
+    opacity: 0.78;
+    border-style: dashed;
+}
+.sa-testi-card__badge {
+    display: inline-block;
+    margin-top: 0.25rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #92400e;
+    background: #fef3c7;
+    border-radius: 999px;
+    padding: 0.12rem 0.5rem;
+}
+
 .sa-testi-card {
     background: var(--sa-surface, #fff);
     border: 1px solid var(--sa-border, #e2e8f0);

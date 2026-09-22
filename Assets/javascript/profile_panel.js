@@ -460,8 +460,13 @@
     function buildActivityCalendarGrid(year, month, dateList, joinDate, todayStr) {
         var dateSet = {};
         (dateList || []).forEach(function (d) {
-            dateSet[d] = true;
+            var key = String(d || '').slice(0, 10);
+            if (key) dateSet[key] = true;
         });
+        // Si l’utilisateur ouvre le profil aujourd’hui, forcer le jour courant en « présent »
+        if (todayStr && todayStr.slice(0, 7) === String(year) + '-' + String(month).padStart(2, '0')) {
+            dateSet[todayStr] = true;
+        }
         var first = new Date(year, month - 1, 1);
         var dim = new Date(year, month, 0).getDate();
         var dow = first.getDay();
@@ -481,6 +486,7 @@
                 '-' +
                 String(d).padStart(2, '0');
             var cls = 'profile-cal__cell profile-cal__day';
+            if (ds === todayStr) cls += ' profile-cal__day--today';
             if (ds > todayStr) cls += ' profile-cal__day--future';
             else if (joinDate && ds < joinDate) cls += ' profile-cal__day--na';
             else if (dateSet[ds]) cls += ' profile-cal__day--present';
@@ -499,7 +505,16 @@
         if (!root || !grid || !titleEl) return;
 
         var joinDate = (root.getAttribute('data-join') || '').trim();
-        var todayStr = (root.getAttribute('data-today') || '').trim() || new Date().toISOString().slice(0, 10);
+        var todayStr = (root.getAttribute('data-today') || '').trim();
+        if (!todayStr) {
+            var now = new Date();
+            todayStr =
+                now.getFullYear() +
+                '-' +
+                String(now.getMonth() + 1).padStart(2, '0') +
+                '-' +
+                String(now.getDate()).padStart(2, '0');
+        }
         var y = parseInt(root.getAttribute('data-year'), 10);
         var m = parseInt(root.getAttribute('data-month'), 10);
         if (!y || !m) return;
@@ -527,6 +542,14 @@
 
         if (prev) prev.addEventListener('click', function () { step(-1); });
         if (next) next.addEventListener('click', function () { step(1); });
+
+        // Rafraîchir dès l’ouverture du profil (marque le jour + recharge les verts)
+        profileApi('activity_calendar_month', { year: y, month: m })
+            .then(function (j) {
+                if (!j || !j.ok) return;
+                applyMonth(j.year, j.month, j.dates, j.title);
+            })
+            .catch(function () {});
     }
 
     /**

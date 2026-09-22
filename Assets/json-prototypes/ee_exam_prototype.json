@@ -1,0 +1,62 @@
+{
+  "type": "ee",
+  "title": "Expression écrite — Prototype (à renommer)",
+  "subtitle": "Mois / année",
+  "visibility": "gratuit",
+  "is_published": true,
+  "combinations": [
+    {
+      "combo_number": 1,
+      "title": "Combinaison 1",
+      "tasks": [
+        {
+          "task_number": 1,
+          "prompt": "Rédigez un message court (tâche 1).",
+          "correction": null,
+          "word_min": 60,
+          "word_max": 120,
+          "documents": [
+            {
+              "doc_number": 1,
+              "title": "Document 1",
+              "content": "Contenu du document support…"
+            }
+          ]
+        },
+        {
+          "task_number": 2,
+          "prompt": "Rédigez un article / lettre (tâche 2).",
+          "correction": null,
+          "word_min": 120,
+          "word_max": 180,
+          "documents": [
+            {
+              "doc_number": 1,
+              "title": "Document 1",
+              "content": "Contenu…"
+            }
+          ]
+        },
+        {
+          "task_number": 3,
+          "prompt": "Comparez les points de vue (tâche 3).",
+          "correction": null,
+          "word_min": 120,
+          "word_max": 180,
+          "documents": [
+            {
+              "doc_number": 1,
+              "title": "Document A",
+              "content": "Point de vue A…"
+            },
+            {
+              "doc_number": 2,
+              "title": "Document B",
+              "content": "Point de vue B…"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

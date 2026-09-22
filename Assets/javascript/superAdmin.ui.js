@@ -367,15 +367,165 @@
         return !!SA_ADMIN_SECTIONS[sectionId];
     }
 
-    /** Boutons actions épreuve : admin peut modifier, seul super peut supprimer */
+    /** Boutons actions épreuve : modifier, JSON update, télécharger JSON ; super = supprimer */
     function saExamEditDeleteButtons() {
         var html =
-            '<button type="button" class="btn btn-outline btn-sm sa-btn-icon sa-topic-edit" aria-label="Modifier"><i class="bx bx-edit-alt" aria-hidden="true"></i></button>';
+            '<button type="button" class="btn btn-outline btn-sm sa-btn-icon sa-topic-edit" title="Modifier (formulaire)" aria-label="Modifier"><i class="bx bx-edit-alt" aria-hidden="true"></i></button>' +
+            '<button type="button" class="btn btn-outline btn-sm sa-btn-icon sa-topic-json-up" title="Mettre à jour via JSON" aria-label="Mettre à jour via JSON"><i class="bx bx-upload" aria-hidden="true"></i></button>' +
+            '<button type="button" class="btn btn-outline btn-sm sa-btn-icon sa-topic-json-dl" title="Télécharger JSON" aria-label="Télécharger JSON"><i class="bx bx-download" aria-hidden="true"></i></button>';
         if (SA_IS_SUPER) {
             html +=
                 '<button type="button" class="btn btn-outline btn-sm sa-btn-icon btn-danger-outline sa-topic-del" aria-label="Supprimer"><i class="bx bx-trash" aria-hidden="true"></i></button>';
         }
         return saActionsRow(html);
+    }
+
+    function saExamJsonEndpoint(kind) {
+        if (kind === 'ce') return CE_ENDPOINT;
+        if (kind === 'co') return CO_ENDPOINT;
+        if (kind === 'ee') return EE_ENDPOINT;
+        if (kind === 'eo') return EO_ENDPOINT;
+        return '';
+    }
+
+    function saDownloadExamJson(kind, examId) {
+        var endpoint = saExamJsonEndpoint(kind);
+        if (!endpoint || !examId) return;
+        var fd = new FormData();
+        fd.append('action', 'export_exam_json');
+        fd.append('exam_id', String(examId));
+        fetch(endpoint, { method: 'POST', body: fd, credentials: 'same-origin' })
+            .then(function (r) {
+                var ct = (r.headers.get('Content-Type') || '').toLowerCase();
+                if (ct.indexOf('application/json') >= 0 && !r.headers.get('Content-Disposition')) {
+                    return r.json().then(function (j) {
+                        throw new Error((j && j.message) || 'Export impossible');
+                    });
+                }
+                var cd = r.headers.get('Content-Disposition') || '';
+                var m = /filename=\"?([^\";]+)\"?/i.exec(cd);
+                var filename = m ? m[1] : kind + '_exam_' + examId + '.json';
+                return r.blob().then(function (blob) {
+                    return { blob: blob, filename: filename };
+                });
+            })
+            .then(function (pack) {
+                var url = URL.createObjectURL(pack.blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = pack.filename;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
+                toast('JSON téléchargé');
+            })
+            .catch(function (err) {
+                toast((err && err.message) || 'Échec du téléchargement JSON', true);
+            });
+    }
+
+    function saOpenJsonUpdateForm(kind, examId) {
+        var map = {
+            ce: {
+                form: 'ce-exam-json-form',
+                manual: 'ce-exam-form',
+                id: 'ce-json-exam-id',
+                title: 'ce-json-exam-title',
+                vis: 'ce-json-exam-visibility',
+                pub: 'ce-json-exam-published',
+                dur: 'ce-json-duration-minutes',
+                file: 'ce-json-file',
+                paste: 'ce-json-paste',
+                endpoint: CE_ENDPOINT,
+                reset: resetCeJsonForm,
+                heading: 'Mettre à jour CE via JSON'
+            },
+            co: {
+                form: 'co-exam-json-form',
+                manual: 'co-exam-form',
+                id: 'co-json-exam-id',
+                title: 'co-json-exam-title',
+                vis: 'co-json-exam-visibility',
+                pub: 'co-json-exam-published',
+                dur: 'co-json-duration-minutes',
+                file: 'co-json-file',
+                paste: 'co-json-paste',
+                endpoint: CO_ENDPOINT,
+                reset: resetCoJsonForm,
+                heading: 'Mettre à jour CO via JSON'
+            },
+            ee: {
+                form: 'ee-exam-json-form',
+                manual: 'ee-exam-form',
+                id: 'ee-json-exam-id',
+                title: 'ee-json-exam-title',
+                subtitle: 'ee-json-exam-subtitle',
+                vis: 'ee-json-exam-visibility',
+                pub: 'ee-json-exam-published',
+                file: 'ee-json-file',
+                paste: 'ee-json-paste',
+                endpoint: EE_ENDPOINT,
+                reset: resetEeJsonForm,
+                heading: 'Mettre à jour EE via JSON'
+            },
+            eo: {
+                form: 'eo-exam-json-form',
+                manual: 'eo-exam-form',
+                id: 'eo-json-exam-id',
+                title: 'eo-json-exam-title',
+                subtitle: 'eo-json-exam-subtitle',
+                vis: 'eo-json-exam-visibility',
+                pub: 'eo-json-exam-published',
+                file: 'eo-json-file',
+                paste: 'eo-json-paste',
+                endpoint: EO_ENDPOINT,
+                reset: resetEoJsonForm,
+                heading: 'Mettre à jour EO via JSON'
+            }
+        };
+        var cfg = map[kind];
+        if (!cfg || !examId) return;
+        cfg.reset();
+        var manual = document.getElementById(cfg.manual);
+        if (manual) manual.style.display = 'none';
+        var form = document.getElementById(cfg.form);
+        if (form) form.style.display = 'block';
+        var idEl = document.getElementById(cfg.id);
+        if (idEl) idEl.value = String(examId);
+        updateTopicTopActions();
+        var fd = new FormData();
+        fd.append('action', 'get_exam_for_edit');
+        fd.append('exam_id', String(examId));
+        fetch(cfg.endpoint, { method: 'POST', body: fd, credentials: 'same-origin' })
+            .then(function (r) { return r.json(); })
+            .then(function (j) {
+                if (!j || !j.success || !j.data) {
+                    toast((j && j.message) || 'Impossible de charger l’épreuve', true);
+                    return;
+                }
+                var d = j.data;
+                var titleEl = document.getElementById(cfg.title);
+                if (titleEl) titleEl.value = d.title || '';
+                if (cfg.subtitle) {
+                    var subEl = document.getElementById(cfg.subtitle);
+                    if (subEl) subEl.value = d.subtitle || '';
+                }
+                var visEl = document.getElementById(cfg.vis);
+                if (visEl) visEl.value = d.visibility || 'gratuit';
+                var pubEl = document.getElementById(cfg.pub);
+                if (pubEl) pubEl.checked = Number(d.is_published || 0) === 1;
+                if (cfg.dur && d.duration_seconds) {
+                    var durEl = document.getElementById(cfg.dur);
+                    if (durEl) durEl.value = String(Math.max(1, Math.round(Number(d.duration_seconds) / 60)));
+                }
+                toast(cfg.heading + ' — sélectionnez le fichier JSON');
+                if (cfg.file) {
+                    var fi = document.getElementById(cfg.file);
+                    if (fi) fi.focus();
+                }
+            })
+            .catch(function () { toast('Erreur réseau', true); });
     }
 
     // ---------------- Router ----------------
@@ -934,6 +1084,14 @@
                     var eeId = tr.getAttribute('data-id');
                     if (eeId) openEeExamForm(eeId);
                 }
+                if (e.target.closest('.sa-topic-json-dl')) {
+                    var eeDl = tr.getAttribute('data-id');
+                    if (eeDl) saDownloadExamJson('ee', eeDl);
+                }
+                if (e.target.closest('.sa-topic-json-up')) {
+                    var eeUp = tr.getAttribute('data-id');
+                    if (eeUp) saOpenJsonUpdateForm('ee', eeUp);
+                }
                 if (e.target.closest('.sa-topic-del')) {
                     if (!SA_IS_SUPER) {
                         toast('Seul le super administrateur peut supprimer une épreuve.', true);
@@ -965,6 +1123,14 @@
                 if (e.target.closest('.sa-topic-edit')) {
                     var eoId = tr.getAttribute('data-id');
                     if (eoId) openEoExamForm(eoId);
+                }
+                if (e.target.closest('.sa-topic-json-dl')) {
+                    var eoDl = tr.getAttribute('data-id');
+                    if (eoDl) saDownloadExamJson('eo', eoDl);
+                }
+                if (e.target.closest('.sa-topic-json-up')) {
+                    var eoUp = tr.getAttribute('data-id');
+                    if (eoUp) saOpenJsonUpdateForm('eo', eoUp);
                 }
                 if (e.target.closest('.sa-topic-del')) {
                     if (!SA_IS_SUPER) {
@@ -998,6 +1164,14 @@
                     var ceId = tr.getAttribute('data-id');
                     if (ceId) openCeExamForm(ceId);
                 }
+                if (e.target.closest('.sa-topic-json-dl')) {
+                    var ceDl = tr.getAttribute('data-id');
+                    if (ceDl) saDownloadExamJson('ce', ceDl);
+                }
+                if (e.target.closest('.sa-topic-json-up')) {
+                    var ceUp = tr.getAttribute('data-id');
+                    if (ceUp) saOpenJsonUpdateForm('ce', ceUp);
+                }
                 if (e.target.closest('.sa-topic-del')) {
                     if (!SA_IS_SUPER) {
                         toast('Seul le super administrateur peut supprimer une épreuve.', true);
@@ -1029,6 +1203,14 @@
                 if (e.target.closest('.sa-topic-edit')) {
                     var coid = tr.getAttribute('data-id');
                     if (coid) openCoExamForm(coid);
+                }
+                if (e.target.closest('.sa-topic-json-dl')) {
+                    var coDl = tr.getAttribute('data-id');
+                    if (coDl) saDownloadExamJson('co', coDl);
+                }
+                if (e.target.closest('.sa-topic-json-up')) {
+                    var coUp = tr.getAttribute('data-id');
+                    if (coUp) saOpenJsonUpdateForm('co', coUp);
                 }
                 if (e.target.closest('.sa-topic-del')) {
                     if (!SA_IS_SUPER) {
@@ -2086,12 +2268,33 @@
         if (cancelBtn) cancelBtn.addEventListener('click', hideJson);
         form.addEventListener('submit', function (e) {
             e.preventDefault();
-            var title = (document.getElementById('ce-json-exam-title').value || '').trim();
-            if (!title) return toast("Le titre de l'épreuve est requis.", true);
-            var paste = (document.getElementById('ce-json-paste').value || '').trim();
-            var fileInput = document.getElementById('ce-json-file');
-
             function submitJsonPayload(jsonStr) {
+                try {
+                    var parsed = JSON.parse(jsonStr);
+                    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                        var titleEl = document.getElementById('ce-json-exam-title');
+                        if (titleEl && !(titleEl.value || '').trim() && parsed.title) {
+                            titleEl.value = String(parsed.title);
+                        }
+                        if (parsed.visibility) {
+                            var visEl = document.getElementById('ce-json-exam-visibility');
+                            if (visEl) visEl.value = parsed.visibility;
+                        }
+                        if (typeof parsed.is_published === 'boolean') {
+                            var pubEl = document.getElementById('ce-json-exam-published');
+                            if (pubEl) pubEl.checked = parsed.is_published;
+                        }
+                        if (parsed.duration_seconds) {
+                            var durEl = document.getElementById('ce-json-duration-minutes');
+                            if (durEl) durEl.value = String(Math.max(1, Math.round(Number(parsed.duration_seconds) / 60)));
+                        }
+                        if (Array.isArray(parsed.questions)) {
+                            jsonStr = JSON.stringify(parsed.questions);
+                        }
+                    }
+                } catch (ignore) {}
+                var title = (document.getElementById('ce-json-exam-title').value || '').trim();
+                if (!title) return toast("Le titre de l'épreuve est requis.", true);
                 var mins = parseInt(document.getElementById('ce-json-duration-minutes').value, 10) || 60;
                 var durSec = Math.min(86400, Math.max(60, mins * 60));
                 var fd = new FormData();
@@ -2109,7 +2312,7 @@
                     .then(function (r) { return r.json(); })
                     .then(function (j) {
                         if (j && j.success) {
-                            toast(j.message || 'Épreuve enregistrée');
+                            toast(j.message || (examId ? 'Épreuve mise à jour' : 'Épreuve enregistrée'));
                             hideJson();
                             loadCeExamsTable();
                         } else {
@@ -2118,6 +2321,10 @@
                     })
                     .catch(function () { toast('Erreur réseau', true); });
             }
+
+            var titleCheck = (document.getElementById('ce-json-exam-title').value || '').trim();
+            var paste = (document.getElementById('ce-json-paste').value || '').trim();
+            var fileInput = document.getElementById('ce-json-file');
 
             if (fileInput && fileInput.files && fileInput.files[0]) {
                 var fr = new FileReader();
@@ -2131,6 +2338,9 @@
                 return;
             }
             if (!paste) return toast('Choisissez un fichier JSON ou collez le contenu.', true);
+            if (!titleCheck) {
+                // laisser submitJsonPayload remplir depuis l'enveloppe JSON
+            }
             submitJsonPayload(paste);
         });
     }
@@ -2146,12 +2356,33 @@
         if (cancelBtn) cancelBtn.addEventListener('click', hideJson);
         form.addEventListener('submit', function (e) {
             e.preventDefault();
-            var title = (document.getElementById('co-json-exam-title').value || '').trim();
-            if (!title) return toast("Le titre de l'épreuve est requis.", true);
-            var paste = (document.getElementById('co-json-paste').value || '').trim();
-            var fileInput = document.getElementById('co-json-file');
-
             function submitJsonPayload(jsonStr) {
+                try {
+                    var parsed = JSON.parse(jsonStr);
+                    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                        var titleEl = document.getElementById('co-json-exam-title');
+                        if (titleEl && !(titleEl.value || '').trim() && parsed.title) {
+                            titleEl.value = String(parsed.title);
+                        }
+                        if (parsed.visibility) {
+                            var visEl = document.getElementById('co-json-exam-visibility');
+                            if (visEl) visEl.value = parsed.visibility;
+                        }
+                        if (typeof parsed.is_published === 'boolean') {
+                            var pubEl = document.getElementById('co-json-exam-published');
+                            if (pubEl) pubEl.checked = parsed.is_published;
+                        }
+                        if (parsed.duration_seconds) {
+                            var durEl = document.getElementById('co-json-duration-minutes');
+                            if (durEl) durEl.value = String(Math.max(1, Math.round(Number(parsed.duration_seconds) / 60)));
+                        }
+                        if (Array.isArray(parsed.questions)) {
+                            jsonStr = JSON.stringify(parsed.questions);
+                        }
+                    }
+                } catch (ignore) {}
+                var title = (document.getElementById('co-json-exam-title').value || '').trim();
+                if (!title) return toast("Le titre de l'épreuve est requis.", true);
                 var mins = parseInt(document.getElementById('co-json-duration-minutes').value, 10) || 35;
                 var durSec = Math.min(86400, Math.max(60, mins * 60));
                 var fd = new FormData();
@@ -2169,7 +2400,7 @@
                     .then(function (r) { return r.json(); })
                     .then(function (j) {
                         if (j && j.success) {
-                            toast(j.message || 'Épreuve enregistrée');
+                            toast(j.message || (examId ? 'Épreuve mise à jour' : 'Épreuve enregistrée'));
                             hideJson();
                             loadCoExamsTable();
                         } else {
@@ -2178,6 +2409,9 @@
                     })
                     .catch(function () { toast('Erreur réseau', true); });
             }
+
+            var paste = (document.getElementById('co-json-paste').value || '').trim();
+            var fileInput = document.getElementById('co-json-file');
 
             if (fileInput && fileInput.files && fileInput.files[0]) {
                 var fr = new FileReader();
@@ -2605,6 +2839,19 @@
         return base + '/' + s;
     }
 
+    function setCoAudioMode(blk, mode) {
+        if (!blk) return;
+        var useFile = mode === 'file';
+        blk.querySelectorAll('[data-co-audio-mode]').forEach(function (b) {
+            b.classList.toggle('is-active', b.getAttribute('data-co-audio-mode') === mode);
+        });
+        var ttsPanel = blk.querySelector('[data-co-audio-panel="tts"]');
+        var filePanel = blk.querySelector('[data-co-audio-panel="file"]');
+        if (ttsPanel) ttsPanel.style.display = useFile ? 'none' : '';
+        if (filePanel) filePanel.style.display = useFile ? '' : 'none';
+        blk.setAttribute('data-co-audio-active', mode);
+    }
+
     function refreshCoQuestionMediaPreviews(blk) {
         if (!blk) return;
         var imgPath = (blk.querySelector('[data-co-q-image]') && blk.querySelector('[data-co-q-image]').value) || '';
@@ -2618,6 +2865,19 @@
             } else {
                 imgEl.removeAttribute('src');
                 imgWrap.style.display = 'none';
+            }
+        }
+        var audPath = (blk.querySelector('[data-co-q-audio]') && blk.querySelector('[data-co-q-audio]').value) || '';
+        var audWrap = blk.querySelector('[data-co-audio-preview-wrap]');
+        var audEl = blk.querySelector('[data-co-audio-preview]');
+        if (audEl && audWrap) {
+            if (audPath.trim()) {
+                audEl.src = tcfCoPublicUrl(audPath.trim());
+                audWrap.style.display = 'block';
+                setCoAudioMode(blk, 'file');
+            } else {
+                audEl.removeAttribute('src');
+                audWrap.style.display = 'none';
             }
         }
     }
@@ -2658,14 +2918,28 @@
             '</div></div>' +
             '<div class="form-group"><label class="form-label">Image (facultatif) — chemin ou URL</label>' +
             '<input type="text" class="form-control" data-co-q-image placeholder="ex. uploads/co_media/… ou URL https://…"></div>' +
-            '<div class="form-group"><label class="form-label">Texte audio — obligatoire</label>' +
-            '<textarea class="form-control" rows="4" data-co-q-audio-text required placeholder="Saisissez le script audio (français recommandé). La plateforme le lira automatiquement côté candidat."></textarea>' +
+            '<div class="form-group"><label class="form-label">Audio de la question</label>' +
+            '<div class="co-audio-mode-tabs" style="display:flex;flex-wrap:nowrap;gap:6px;margin-bottom:10px;">' +
+            '<button type="button" class="btn btn-outline btn-sm is-active" data-co-audio-mode="tts">1 · Texte (lecture auto)</button>' +
+            '<button type="button" class="btn btn-outline btn-sm" data-co-audio-mode="file">2 · Fichier audio</button>' +
+            '</div>' +
+            '<div data-co-audio-panel="tts">' +
+            '<label class="form-label" style="font-weight:600;">Texte audio</label>' +
+            '<textarea class="form-control" rows="4" data-co-q-audio-text placeholder="Script lu automatiquement côté candidat (français recommandé)."></textarea>' +
             '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px;">' +
             '<button type="button" class="btn btn-outline btn-sm" data-co-tts-listen><i class="bx bx-play"></i> Écouter / Pause</button>' +
             '<button type="button" class="btn btn-outline btn-sm" data-co-tts-stop><i class="bx bx-stop"></i> Stop</button>' +
             '<small data-co-tts-status style="color:#64748b;"></small>' +
+            '</div></div>' +
+            '<div data-co-audio-panel="file" style="display:none;">' +
+            '<label class="form-label" style="font-weight:600;">Importer un fichier audio</label>' +
+            '<input type="file" class="form-control" data-co-audio-file accept="audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/mp4,audio/x-m4a,.mp3,.wav,.ogg,.m4a,.aac">' +
+            '<input type="text" class="form-control" data-co-q-audio style="margin-top:8px;" placeholder="Chemin uploads/co_media/… (rempli après import)">' +
+            '<div data-co-audio-preview-wrap style="display:none;margin-top:10px;">' +
+            '<audio data-co-audio-preview controls preload="metadata" style="width:100%;max-width:420px;"></audio>' +
             '</div>' +
-            '<small style="color:#64748b;display:block;margin-top:6px;">Plus besoin d’importer un fichier : l’extrait audio est généré à partir de ce texte.</small></div>' +
+            '<small style="color:#64748b;display:block;margin-top:6px;">Formats : MP3, WAV, OGG, M4A. Remplace le texte TTS pour cette question.</small>' +
+            '</div></div>' +
             '<div class="form-group"><label class="form-label">Réponses A · B · C · D</label>' +
             '<small style="color:#64748b;display:block;margin-bottom:8px;">Les lettres sont déjà affichées côté candidat. Texte facultatif — laissez vide si seule la lettre suffit. N’écrivez pas « A) », « B) », etc.</small>' +
             '<div class="co-ans-row" style="display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;">' +
@@ -2725,6 +2999,17 @@
             var audText =
                 (blk.querySelector('[data-co-q-audio-text]') && blk.querySelector('[data-co-q-audio-text]').value) ||
                 '';
+            var audSrc =
+                (blk.querySelector('[data-co-q-audio]') && blk.querySelector('[data-co-q-audio]').value) ||
+                '';
+            var mode = blk.getAttribute('data-co-audio-active') || '';
+            if (mode === 'file') {
+                audText = '';
+            } else if (mode === 'tts') {
+                audSrc = '';
+            } else if (audSrc.trim()) {
+                audText = '';
+            }
             var correctIdx = parseInt(blk.querySelector('[data-co-correct]').value, 10) || 0;
             var answers = [];
             for (var ai = 0; ai < 4; ai++) {
@@ -2735,7 +3020,7 @@
                 question_text: text.trim(),
                 points: Math.max(1, pts),
                 image_src: img.trim(),
-                audio_src: '',
+                audio_src: audSrc.trim(),
                 audio_text: audText.trim(),
                 correct_index: Math.min(3, Math.max(0, correctIdx)),
                 answers: answers
@@ -2857,6 +3142,13 @@
                     if (im) im.value = q.image_src || '';
                     var at = blk.querySelector('[data-co-q-audio-text]');
                     if (at) at.value = q.audio_text || '';
+                    var au = blk.querySelector('[data-co-q-audio]');
+                    if (au) au.value = q.audio_src || '';
+                    if ((q.audio_src || '').trim()) {
+                        setCoAudioMode(blk, 'file');
+                    } else {
+                        setCoAudioMode(blk, 'tts');
+                    }
                     var sel = blk.querySelector('[data-co-correct]');
                     if (sel) sel.value = String(Math.min(3, Math.max(0, Number(q.correct_index || 0))));
                     var ans = q.answers || [];
@@ -2890,6 +3182,13 @@
             });
         }
         wrap.addEventListener('click', function (e) {
+            var modeBtn = e.target.closest && e.target.closest('[data-co-audio-mode]');
+            if (modeBtn) {
+                e.preventDefault();
+                var blkMode = modeBtn.closest('[data-co-q]');
+                setCoAudioMode(blkMode, modeBtn.getAttribute('data-co-audio-mode') || 'tts');
+                return;
+            }
             var listenBtn = e.target.closest && e.target.closest('[data-co-tts-listen]');
             if (listenBtn) {
                 e.preventDefault();
@@ -2992,11 +3291,38 @@
                     toast('Image importée et sauvegardée en base');
                     imgIn.value = '';
                 });
+                return;
+            }
+            var audIn = e.target.closest && e.target.closest('[data-co-audio-file]');
+            if (audIn && audIn.files && audIn.files[0]) {
+                var blkA = audIn.closest('[data-co-q]');
+                var fa = audIn.files[0];
+                uploadCoMediaFile(fa, 'audio', function (j) {
+                    if (!j || !j.success) {
+                        toast((j && j.message) || "Échec de l'import audio", true);
+                        audIn.value = '';
+                        return;
+                    }
+                    var t = blkA && blkA.querySelector('[data-co-q-audio]');
+                    if (t) t.value = j.path || '';
+                    setCoAudioMode(blkA, 'file');
+                    refreshCoQuestionMediaPreviews(blkA);
+                    if (j.url && blkA) {
+                        var audEl = blkA.querySelector('[data-co-audio-preview]');
+                        var audWrap = blkA.querySelector('[data-co-audio-preview-wrap]');
+                        if (audEl && audWrap) {
+                            audEl.src = j.url;
+                            audWrap.style.display = 'block';
+                        }
+                    }
+                    toast('Fichier audio importé');
+                    audIn.value = '';
+                });
             }
         });
         wrap.addEventListener('input', function (e) {
             var t = e.target;
-            if (t && t.matches && t.matches('[data-co-q-image]')) {
+            if (t && t.matches && (t.matches('[data-co-q-image]') || t.matches('[data-co-q-audio]'))) {
                 refreshCoQuestionMediaPreviews(t.closest('[data-co-q]'));
             }
         });
@@ -3044,8 +3370,8 @@
                     ok = false;
                     return;
                 }
-                if (!q.audio_text) {
-                    toast('Question ' + (qi + 1) + ' : texte audio obligatoire.', true);
+                if (!q.audio_text && !q.audio_src) {
+                    toast('Question ' + (qi + 1) + ' : texte audio ou fichier audio obligatoire.', true);
                     ok = false;
                     return;
                 }
@@ -5793,6 +6119,7 @@
                 ? (t.content || '').substring(0, 140) + '…'
                 : (t.content || '');
             var avUrl = t.avatar_url ? String(t.avatar_url) : '';
+            var isPub = parseInt(t.is_published, 10) !== 0;
             var avatarHtml = avUrl
                 ? '<div class="sa-testi-card__avatar sa-testi-card__avatar--photo">' +
                   '<img src="' + escAttr(avUrl) + '" alt="" loading="lazy" decoding="async">' +
@@ -5801,7 +6128,7 @@
                   escHtml(saTestiAvatar(t.author_name)) +
                   '</div>';
             return (
-                '<div class="sa-testi-card" id="sa-testimonial-' + escAttr(String(t.id)) + '" ' +
+                '<div class="sa-testi-card' + (!isPub ? ' sa-testi-card--draft' : '') + '" id="sa-testimonial-' + escAttr(String(t.id)) + '" ' +
                     'data-id="' + escAttr(String(t.id)) + '" role="button" tabindex="0" ' +
                     'aria-label="Voir le témoignage de ' + escAttr(t.author_name) + '">' +
                 '<div class="sa-testi-card__top">' +
@@ -5809,6 +6136,7 @@
                 '<div class="sa-testi-card__meta">' +
                 '<strong class="sa-testi-card__name">' + escHtml(t.author_name) + '</strong>' +
                 '<div class="sa-testi-card__stars">' + saTestiStars(t.rating) + '</div>' +
+                (!isPub ? '<span class="sa-testi-card__badge">Brouillon</span>' : '') +
                 '</div>' +
                 '<button type="button" class="sa-testi-card__del js-del-testimonial-card" ' +
                 'data-id="' + escAttr(String(t.id)) + '" aria-label="Supprimer">' +
@@ -5831,12 +6159,14 @@
     function saTestiApplyFilter() {
         var q      = (document.getElementById('sa-testi-search')    ? document.getElementById('sa-testi-search').value    : '').toLowerCase().trim();
         var rating = (document.getElementById('sa-testi-filter-rating') ? document.getElementById('sa-testi-filter-rating').value : '');
+        var pub    = (document.getElementById('sa-testi-filter-pub') ? document.getElementById('sa-testi-filter-pub').value : '');
         var filtered = saTestiAllData.filter(function (t) {
             var matchQ = !q || (t.author_name || '').toLowerCase().indexOf(q) > -1 || (t.content || '').toLowerCase().indexOf(q) > -1;
             var matchR = rating === '' ? true :
                          rating === '0' ? (!t.rating || parseInt(t.rating,10) === 0) :
                          (parseInt(t.rating,10) === parseInt(rating,10));
-            return matchQ && matchR;
+            var matchP = pub === '' ? true : String(parseInt(t.is_published, 10) !== 0 ? 1 : 0) === pub;
+            return matchQ && matchR && matchP;
         });
         saTestiRenderGrid(filtered);
     }
@@ -5949,8 +6279,164 @@
         // Search / filter
         var searchEl  = document.getElementById('sa-testi-search');
         var filterEl  = document.getElementById('sa-testi-filter-rating');
+        var pubEl     = document.getElementById('sa-testi-filter-pub');
         if (searchEl) searchEl.addEventListener('input', saTestiApplyFilter);
         if (filterEl) filterEl.addEventListener('change', saTestiApplyFilter);
+        if (pubEl) pubEl.addEventListener('change', saTestiApplyFilter);
+
+        var createForm = document.getElementById('sa-testi-create-form');
+        var testiCropper = null;
+        var testiCroppedBlob = null;
+
+        function saTestiDestroyCropper() {
+            if (testiCropper) {
+                try { testiCropper.destroy(); } catch (e) {}
+                testiCropper = null;
+            }
+        }
+
+        function saTestiResetPhotoUi() {
+            saTestiDestroyCropper();
+            testiCroppedBlob = null;
+            var photoEl = document.getElementById('sa-testi-create-photo');
+            var dataEl = document.getElementById('sa-testi-create-photo-data');
+            var cropWrap = document.getElementById('sa-testi-crop-wrap');
+            var preview = document.getElementById('sa-testi-photo-preview');
+            var cropImg = document.getElementById('sa-testi-crop-image');
+            var prevImg = document.getElementById('sa-testi-photo-preview-img');
+            if (photoEl) photoEl.value = '';
+            if (dataEl) dataEl.value = '';
+            if (cropWrap) cropWrap.hidden = true;
+            if (preview) preview.hidden = true;
+            if (cropImg) { cropImg.removeAttribute('src'); }
+            if (prevImg) { prevImg.removeAttribute('src'); }
+        }
+
+        var photoElBoot = document.getElementById('sa-testi-create-photo');
+        if (photoElBoot) {
+            photoElBoot.addEventListener('change', function () {
+                var f = photoElBoot.files && photoElBoot.files[0];
+                if (!f) return;
+                if (!/^image\//i.test(f.type)) {
+                    toast('Choisissez une image (JPG, PNG, WebP…).', true);
+                    photoElBoot.value = '';
+                    return;
+                }
+                var reader = new FileReader();
+                reader.onload = function (ev) {
+                    saTestiDestroyCropper();
+                    testiCroppedBlob = null;
+                    var dataEl = document.getElementById('sa-testi-create-photo-data');
+                    if (dataEl) dataEl.value = '';
+                    var cropWrap = document.getElementById('sa-testi-crop-wrap');
+                    var preview = document.getElementById('sa-testi-photo-preview');
+                    var cropImg = document.getElementById('sa-testi-crop-image');
+                    if (preview) preview.hidden = true;
+                    if (!cropWrap || !cropImg) return;
+                    cropImg.src = ev.target.result;
+                    cropWrap.hidden = false;
+                    if (typeof Cropper !== 'undefined') {
+                        testiCropper = new Cropper(cropImg, {
+                            aspectRatio: 1,
+                            viewMode: 1,
+                            dragMode: 'move',
+                            autoCropArea: 0.9,
+                            background: false
+                        });
+                    } else {
+                        toast('Recadrage indisponible (Cropper non chargé).', true);
+                    }
+                };
+                reader.readAsDataURL(f);
+            });
+        }
+        var cropOk = document.getElementById('sa-testi-crop-ok');
+        if (cropOk) {
+            cropOk.addEventListener('click', function () {
+                if (!testiCropper) {
+                    toast('Choisissez une image à recadrer.', true);
+                    return;
+                }
+                var canvas = testiCropper.getCroppedCanvas({
+                    width: 400,
+                    height: 400,
+                    imageSmoothingQuality: 'high'
+                });
+                if (!canvas) return;
+                canvas.toBlob(function (blob) {
+                    if (!blob) return;
+                    testiCroppedBlob = blob;
+                    var dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+                    var dataEl = document.getElementById('sa-testi-create-photo-data');
+                    if (dataEl) dataEl.value = dataUrl;
+                    var prevImg = document.getElementById('sa-testi-photo-preview-img');
+                    var preview = document.getElementById('sa-testi-photo-preview');
+                    var cropWrap = document.getElementById('sa-testi-crop-wrap');
+                    if (prevImg) prevImg.src = dataUrl;
+                    if (preview) preview.hidden = false;
+                    if (cropWrap) cropWrap.hidden = true;
+                    saTestiDestroyCropper();
+                    toast('Cadrage validé');
+                }, 'image/jpeg', 0.9);
+            });
+        }
+        var cropCancel = document.getElementById('sa-testi-crop-cancel');
+        if (cropCancel) cropCancel.addEventListener('click', saTestiResetPhotoUi);
+        var photoClear = document.getElementById('sa-testi-photo-clear');
+        if (photoClear) photoClear.addEventListener('click', saTestiResetPhotoUi);
+
+        if (createForm) {
+            createForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                var author = (document.getElementById('sa-testi-create-author') || {}).value || '';
+                var content = (document.getElementById('sa-testi-create-content') || {}).value || '';
+                var rating = (document.getElementById('sa-testi-create-rating') || {}).value || '5';
+                var pubCb = document.getElementById('sa-testi-create-published');
+                var photoEl = document.getElementById('sa-testi-create-photo');
+                var dataEl = document.getElementById('sa-testi-create-photo-data');
+                if (!author.trim() || !content.trim()) {
+                    toast('Nom et texte obligatoires', true);
+                    return;
+                }
+                if (document.getElementById('sa-testi-crop-wrap') && !document.getElementById('sa-testi-crop-wrap').hidden) {
+                    toast('Validez d’abord le recadrage de la photo.', true);
+                    return;
+                }
+                var fd = new FormData();
+                fd.append('action', 'create_testimonial');
+                fd.append('author_name', author.trim());
+                fd.append('content', content.trim());
+                fd.append('rating', rating);
+                fd.append('is_published', pubCb && pubCb.checked ? '1' : '0');
+                if (testiCroppedBlob) {
+                    fd.append('photo', testiCroppedBlob, 'testimonial.jpg');
+                } else if (dataEl && dataEl.value) {
+                    fd.append('photo_data', dataEl.value);
+                } else if (photoEl && photoEl.files && photoEl.files[0]) {
+                    fd.append('photo', photoEl.files[0]);
+                }
+                var submitBtn = document.getElementById('sa-testi-create-submit');
+                if (submitBtn) submitBtn.disabled = true;
+                fetch(ENDPOINT, { method: 'POST', body: fd, credentials: 'same-origin' })
+                    .then(function (r) { return r.json(); })
+                    .then(function (j) {
+                        if (j && j.success) {
+                            toast(j.message || 'Publié');
+                            createForm.reset();
+                            saTestiResetPhotoUi();
+                            var pcb = document.getElementById('sa-testi-create-published');
+                            if (pcb) pcb.checked = true;
+                            loadTestimonialsAdmin(j.id || null);
+                        } else {
+                            toast((j && j.message) || 'Erreur', true);
+                        }
+                    })
+                    .catch(function () { toast('Erreur réseau', true); })
+                    .finally(function () {
+                        if (submitBtn) submitBtn.disabled = false;
+                    });
+            });
+        }
         
         // Edit form submit
         var editForm = document.getElementById('sa-testi-edit-form');
@@ -5961,18 +6447,26 @@
                 var author = document.getElementById('sa-testi-edit-author').value;
                 var rating = document.getElementById('sa-testi-edit-rating').value;
                 var content = document.getElementById('sa-testi-edit-content').value;
+                var pubCb = document.getElementById('sa-testi-edit-published');
+                var photoEl = document.getElementById('sa-testi-edit-photo');
                 
                 if (!id || !author || !content) {
                     toast('Veuillez remplir tous les champs', true);
                     return;
                 }
-                
-                postForm('update_testimonial', {
-                    id: id,
-                    author_name: author,
-                    rating: rating,
-                    content: content
-                })
+
+                var fd = new FormData();
+                fd.append('action', 'update_testimonial');
+                fd.append('id', id);
+                fd.append('author_name', author);
+                fd.append('rating', rating);
+                fd.append('content', content);
+                fd.append('is_published', pubCb && pubCb.checked ? '1' : '0');
+                if (photoEl && photoEl.files && photoEl.files[0]) {
+                    fd.append('photo', photoEl.files[0]);
+                }
+                fetch(ENDPOINT, { method: 'POST', body: fd, credentials: 'same-origin' })
+                .then(function (r) { return r.json(); })
                 .then(function (j) {
                     if (j && j.success) {
                         toast(j.message || 'Modifié');
@@ -6493,6 +6987,10 @@
         document.getElementById('sa-testi-edit-author').value = item.author_name || '';
         document.getElementById('sa-testi-edit-rating').value = item.rating || 0;
         document.getElementById('sa-testi-edit-content').value = item.content || '';
+        var pubCb = document.getElementById('sa-testi-edit-published');
+        if (pubCb) pubCb.checked = parseInt(item.is_published, 10) !== 0;
+        var photoEl = document.getElementById('sa-testi-edit-photo');
+        if (photoEl) photoEl.value = '';
         
         document.getElementById('sa-testi-view-mode').style.display = 'none';
         document.getElementById('sa-testi-edit-mode').style.display = 'block';

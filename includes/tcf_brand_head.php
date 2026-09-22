@@ -14,11 +14,15 @@ require_once __DIR__ . '/tcf_seo.php';
 $tcf_brand_asset_base = isset($FOOTER_ASSET_PREFIX) ? $FOOTER_ASSET_PREFIX : '';
 if (function_exists('site_href')) {
     $tcf_favicon_href = site_href('Assets/branding/favicon.svg');
-    $tcf_favicon_jpg_href = site_href('Assets/branding/favicon.jpg');
+    $tcf_icon_192_href = site_href('Assets/branding/icon-192.png');
+    $tcf_icon_512_href = site_href('Assets/branding/icon-512.png');
+    $tcf_apple_touch_href = site_href('Assets/branding/apple-touch-icon.png');
     $tcf_manifest_href = site_href('Assets/branding/site.webmanifest');
 } else {
     $tcf_favicon_href = $tcf_brand_asset_base . 'Assets/branding/favicon.svg';
-    $tcf_favicon_jpg_href = $tcf_brand_asset_base . 'Assets/branding/favicon.jpg';
+    $tcf_icon_192_href = $tcf_brand_asset_base . 'Assets/branding/icon-192.png';
+    $tcf_icon_512_href = $tcf_brand_asset_base . 'Assets/branding/icon-512.png';
+    $tcf_apple_touch_href = $tcf_brand_asset_base . 'Assets/branding/apple-touch-icon.png';
     $tcf_manifest_href = $tcf_brand_asset_base . 'Assets/branding/site.webmanifest';
 }
 
@@ -30,8 +34,8 @@ $tcf_seo_og_type = $tcf_seo_og_type ?? 'website';
 $tcf_seo_canonical_url = $tcf_seo_canonical ?? tcf_seo_canonical();
 $tcf_seo_og_image_url = $tcf_seo_og_image ?? (
     function_exists('site_url')
-        ? site_url('Assets/branding/favicon.jpg')
-        : $tcf_favicon_jpg_href
+        ? site_url('Assets/branding/icon-512.png')
+        : $tcf_icon_512_href
 );
 $tcf_seo_site_url = function_exists('site_url') ? site_url('index.php') : $tcf_seo_canonical_url;
 $tcf_seo_skip_title = !empty($tcf_seo_skip_title);
@@ -99,12 +103,12 @@ $tcf_seo_jsonld = [
 <meta name="googlebot" content="<?php echo htmlspecialchars($tcf_seo_robots, ENT_QUOTES, 'UTF-8'); ?>">
 <link rel="canonical" href="<?php echo htmlspecialchars($tcf_seo_canonical_url, ENT_QUOTES, 'UTF-8'); ?>">
 <link rel="icon" href="<?php echo htmlspecialchars($tcf_favicon_href, ENT_QUOTES, 'UTF-8'); ?>" type="image/svg+xml" sizes="any">
-<link rel="alternate icon" href="<?php echo htmlspecialchars($tcf_favicon_jpg_href, ENT_QUOTES, 'UTF-8'); ?>" type="image/jpeg" sizes="512x512">
-<link rel="apple-touch-icon" href="<?php echo htmlspecialchars($tcf_favicon_jpg_href, ENT_QUOTES, 'UTF-8'); ?>" sizes="512x512">
+<link rel="icon" href="<?php echo htmlspecialchars($tcf_icon_192_href, ENT_QUOTES, 'UTF-8'); ?>" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="<?php echo htmlspecialchars($tcf_apple_touch_href, ENT_QUOTES, 'UTF-8'); ?>" sizes="180x180">
 <link rel="manifest" href="<?php echo htmlspecialchars($tcf_manifest_href, ENT_QUOTES, 'UTF-8'); ?>">
 <meta name="application-name" content="<?php echo htmlspecialchars(tcf_seo_brand(), ENT_QUOTES, 'UTF-8'); ?>">
 <meta name="apple-mobile-web-app-title" content="ELITE TCF">
-<meta name="theme-color" content="#c8102e" id="tcf-theme-color-meta">
+<meta name="theme-color" content="#d30d0d" id="tcf-theme-color-meta">
 <meta name="format-detection" content="telephone=no">
 <meta name="language" content="French">
 <meta name="geo.region" content="CA">

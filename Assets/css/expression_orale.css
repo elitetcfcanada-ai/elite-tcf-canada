@@ -514,3 +514,555 @@
         padding: 16px !important;
     }
 }
+
+/* ===== Simulateur Expression Orale (cabine d’examen) ===== */
+.eo-sim-panel.tcf-task-sim-panel {
+    display: none;
+    margin-top: 1rem;
+    padding: 0;
+    border: 1px solid #e8eaef;
+    border-radius: 18px;
+    background: #0f1117;
+    color: #f1f5f9;
+    overflow: hidden;
+    box-shadow: 0 18px 40px rgba(15, 17, 23, 0.22);
+}
+
+.eo-sim-panel.tcf-task-sim-panel:not([hidden]) {
+    display: block;
+}
+
+.eo-sim-inner {
+    padding: 1.35rem 1.2rem 1.15rem;
+}
+
+.eo-sim-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.4rem 0 0.2rem;
+}
+
+.eo-sim-timer-wrap {
+    display: flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.eo-sim-timer {
+    font-size: clamp(1.75rem, 4vw, 2.25rem);
+    font-weight: 750;
+    letter-spacing: 0.04em;
+    color: #fff;
+    line-height: 1;
+}
+
+.eo-sim-timer.is-warn {
+    color: #ff6b6b;
+    animation: eo-sim-blink 1s steps(1) infinite;
+}
+
+@keyframes eo-sim-blink {
+    50% { opacity: 0.45; }
+}
+
+.eo-sim-timer-max {
+    font-size: 0.95rem;
+    color: #94a3b8;
+    font-weight: 600;
+}
+
+.eo-sim-wave {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    width: min(100%, 340px);
+    height: 56px;
+    margin: 0.15rem 0;
+}
+
+.eo-sim-wave i {
+    display: block;
+    width: 4px;
+    height: var(--h, 12%);
+    min-height: 6px;
+    max-height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(180deg, #ff4d4d 0%, #d30d0d 55%, #8b0000 100%);
+    opacity: 0.85;
+    transition: height 0.05s linear;
+}
+
+.eo-sim-inner[data-phase="idle"] .eo-sim-wave i,
+.eo-sim-inner[data-phase="done"] .eo-sim-wave i {
+    background: linear-gradient(180deg, #64748b, #334155);
+    opacity: 0.55;
+}
+
+.eo-sim-inner[data-phase="rec"] .eo-sim-wave i {
+    opacity: 1;
+}
+
+.eo-sim-mic {
+    position: relative;
+    width: 84px;
+    height: 84px;
+    border: 0;
+    border-radius: 50%;
+    background: #d30d0d;
+    color: #fff;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    box-shadow: 0 10px 28px rgba(211, 13, 13, 0.45);
+    transition: transform 0.15s ease, background 0.15s ease;
+    z-index: 1;
+}
+
+.eo-sim-mic i {
+    font-size: 2rem;
+    position: relative;
+    z-index: 2;
+}
+
+.eo-sim-mic:hover {
+    transform: scale(1.04);
+}
+
+.eo-sim-mic:active {
+    transform: scale(0.96);
+}
+
+.eo-sim-mic.is-rec {
+    background: #fff;
+    color: #d30d0d;
+    box-shadow: 0 0 0 3px rgba(211, 13, 13, 0.35), 0 10px 28px rgba(0, 0, 0, 0.35);
+}
+
+.eo-sim-mic-ring {
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+    border: 2px solid rgba(211, 13, 13, 0.55);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.eo-sim-mic.is-rec .eo-sim-mic-ring {
+    animation: eo-sim-ring 1.6s ease-out infinite;
+}
+
+.eo-sim-mic.is-rec .eo-sim-mic-ring--delay {
+    animation-delay: 0.55s;
+}
+
+@keyframes eo-sim-ring {
+    0% { transform: scale(0.92); opacity: 0.7; }
+    100% { transform: scale(1.45); opacity: 0; }
+}
+
+.eo-sim-caption {
+    margin: 0;
+    min-height: 1.25rem;
+    font-size: 0.92rem;
+    color: #94a3b8;
+    text-align: center;
+}
+
+.eo-sim-inner[data-phase="rec"] .eo-sim-caption {
+    color: #fecaca;
+}
+
+.eo-sim-inner[data-phase="loading"] .eo-sim-caption {
+    color: #fbbf24;
+}
+
+.eo-sim-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+}
+
+.eo-sim-tool {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1px solid #2a2f3a;
+    background: #1a1e27;
+    color: #e2e8f0;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.eo-sim-tool:hover:not(:disabled) {
+    border-color: #d30d0d;
+    color: #fff;
+}
+
+.eo-sim-tool:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.eo-sim-submit {
+    min-width: 7.5rem;
+    height: 42px;
+    padding: 0 1.25rem;
+    border: 0;
+    border-radius: 999px;
+    background: #d30d0d;
+    color: #fff;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.eo-sim-submit:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.eo-sim-submit:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.eo-sim-audio {
+    width: 100%;
+    margin-top: 0.85rem;
+    filter: invert(1) hue-rotate(180deg);
+    opacity: 0.9;
+}
+
+.eo-sim-result {
+    margin-top: 1rem;
+    padding: 1rem 1.05rem 1.1rem;
+    border-radius: 14px;
+    background: #fff;
+    color: #0f172a;
+}
+
+.eo-sim-fb-top {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.9rem;
+}
+
+.eo-sim-level {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 3.4rem;
+    height: 3.4rem;
+    border-radius: 14px;
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    color: #fff;
+    background: #d30d0d;
+    box-shadow: 0 6px 16px rgba(211, 13, 13, 0.28);
+    animation: eo-sim-level-in 0.45s ease;
+}
+
+@keyframes eo-sim-level-in {
+    from { transform: scale(0.7); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.eo-sim-fb-score strong {
+    display: block;
+    font-size: 1.35rem;
+    color: #0f172a;
+    line-height: 1.1;
+}
+
+.eo-sim-fb-score span {
+    font-size: 0.82rem;
+    color: #64748b;
+}
+
+.eo-sim-scores {
+    display: grid;
+    gap: 0.45rem;
+    margin-bottom: 0.85rem;
+}
+
+.eo-sim-score-row {
+    display: grid;
+    grid-template-columns: minmax(7rem, 9rem) 1fr auto;
+    gap: 0.55rem;
+    align-items: center;
+    font-size: 0.88rem;
+}
+
+.eo-sim-score-track {
+    height: 8px;
+    border-radius: 999px;
+    background: #e2e8f0;
+    overflow: hidden;
+}
+
+.eo-sim-score-track i {
+    display: block;
+    height: 100%;
+    background: linear-gradient(90deg, #d30d0d, #f97316);
+    border-radius: inherit;
+}
+
+.eo-sim-remarks {
+    background: #f8fafc;
+    border-left: 3px solid #d30d0d;
+    padding: 0.65rem 0.85rem;
+    border-radius: 0 10px 10px 0;
+    color: #334155;
+    line-height: 1.45;
+}
+
+.eo-sim-fb h4 {
+    margin: 1rem 0 0.55rem;
+    font-size: 0.95rem;
+    color: #0f172a;
+}
+
+.eo-sim-highlight {
+    padding: 0.85rem 1rem;
+    border-radius: 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    line-height: 1.65;
+    color: #1e293b;
+}
+
+.eo-sim-highlight mark.eo-err,
+.eo-sim-highlight mark {
+    background: rgba(211, 13, 13, 0.16);
+    color: #9f1239;
+    padding: 0.05em 0.2em;
+    border-radius: 4px;
+    font-weight: 650;
+}
+
+.eo-sim-highlight span.eo-ok {
+    background: rgba(16, 185, 129, 0.14);
+    color: #047857;
+    padding: 0.05em 0.2em;
+    border-radius: 4px;
+}
+
+.eo-sim-errors {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.7rem;
+}
+
+.eo-sim-errors li {
+    border: 1px solid #fee2e2;
+    background: #fffafa;
+    border-radius: 12px;
+    padding: 0.75rem 0.9rem;
+}
+
+.eo-sim-err-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.35rem;
+}
+
+.eo-sim-err-n {
+    display: inline-flex;
+    width: 1.5rem;
+    height: 1.5rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #d30d0d;
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.eo-sim-err-ex {
+    margin: 0.25rem 0;
+    color: #9f1239;
+    font-style: italic;
+}
+
+.eo-sim-err-fix {
+    margin: 0.25rem 0;
+    color: #065f46;
+}
+
+.eo-sim-err-fix span {
+    font-weight: 700;
+}
+
+.eo-sim-err-why {
+    margin: 0.25rem 0 0;
+    color: #475569;
+    font-size: 0.92rem;
+}
+
+.eo-sim-advice-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.eo-sim-advice-head h4 {
+    margin: 1rem 0 0;
+}
+
+.eo-sim-speak-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border: 1.5px solid #d30d0d;
+    background: #fff;
+    color: #d30d0d;
+    border-radius: 999px;
+    padding: 0.45rem 0.85rem;
+    font: inherit;
+    font-weight: 650;
+    font-size: 0.88rem;
+    cursor: pointer;
+    margin-top: 0.85rem;
+}
+
+.eo-sim-speak-btn:hover,
+.eo-sim-speak-btn.is-speaking {
+    background: #d30d0d;
+    color: #fff;
+}
+
+.eo-sim-speak-btn--main {
+    width: 100%;
+    justify-content: center;
+    margin-top: 0.85rem;
+    padding: 0.7rem 1rem;
+    font-size: 0.95rem;
+}
+
+.eo-sim-details {
+    margin-top: 0.85rem;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 0.65rem;
+    color: #475569;
+}
+
+.eo-sim-details summary {
+    cursor: pointer;
+    font-weight: 650;
+    color: #64748b;
+    list-style: none;
+}
+
+.eo-sim-details summary::-webkit-details-marker {
+    display: none;
+}
+
+.eo-sim-fb--voice .eo-sim-remarks {
+    font-size: 0.9rem;
+}
+
+.eo-sim-advice,
+.eo-sim-strengths {
+    margin: 0.55rem 0 0;
+    padding-left: 1.15rem;
+    color: #334155;
+    line-height: 1.5;
+}
+
+.eo-sim-strengths li::marker {
+    color: #10b981;
+}
+
+.eo-sim-advice li::marker {
+    color: #d30d0d;
+}
+
+.eo-sim-reforms {
+    display: grid;
+    gap: 0.65rem;
+}
+
+.eo-sim-reform {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 0.75rem 0.9rem;
+    background: #f8fafc;
+}
+
+.eo-sim-reform-you {
+    margin: 0 0 0.35rem;
+    color: #9f1239;
+    line-height: 1.45;
+}
+
+.eo-sim-reform-you span,
+.eo-sim-reform-better span {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 750;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-right: 0.35rem;
+    opacity: 0.8;
+}
+
+.eo-sim-reform-better {
+    margin: 0;
+    color: #065f46;
+    line-height: 1.45;
+}
+
+.eo-sim-missing {
+    margin: 0.4rem 0 0;
+    padding-left: 1.15rem;
+    color: #334155;
+    line-height: 1.5;
+}
+
+.eo-sim-model {
+    padding: 0.85rem 1rem;
+    border-radius: 12px;
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    color: #064e3b;
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+.eo-t1-actions {
+    justify-content: flex-start;
+    margin-top: 1.1rem;
+}
+
+@media (max-width: 640px) {
+    .eo-sim-score-row {
+        grid-template-columns: 1fr;
+        gap: 0.2rem;
+    }
+
+    .eo-sim-mic {
+        width: 76px;
+        height: 76px;
+    }
+}
+
+

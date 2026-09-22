@@ -857,6 +857,188 @@
                 window.scrollTo(0, 0);
             }
         }
+
+        saveCoAttempt({
+            score_percent: pct,
+            correct_count: correctCount,
+            wrong_count: wrongCount,
+            unanswered_count: Math.max(0, quizData.length - correctCount - wrongCount),
+            total_questions: quizData.length,
+            points_earned: totalPointsEarned,
+            level_label: level,
+            duration_seconds: startTime
+                ? Math.max(0, Math.round((Date.now() - startTime.getTime()) / 1000))
+                : 0
+        });
+    }
+
+    function getCoApi() {
+        return window.TCF_CO_API || '';
+    }
+
+    function getCoExamId() {
+        return new URLSearchParams(window.location.search).get('exam_id') || '';
+    }
+
+    function saveCoAttempt(payload) {
+        var api = getCoApi();
+        var id = getCoExamId();
+        if (!api || !id) return;
+        var fd = new FormData();
+        fd.append('action', 'save_attempt');
+        fd.append('exam_id', id);
+        Object.keys(payload || {}).forEach(function (k) {
+            fd.append(k, String(payload[k]));
+        });
+        fetch(api, { method: 'POST', body: fd, credentials: 'same-origin' }).catch(function () {});
+    }
+
+    function formatCoHistoryDate(iso) {
+        if (!iso) return '—';
+        var d = new Date(String(iso).replace(' ', 'T'));
+        if (isNaN(d.getTime())) return String(iso);
+        var pad = function (n) {
+            return n < 10 ? '0' + n : String(n);
+        };
+        return (
+            pad(d.getDate()) +
+            '/' +
+            pad(d.getMonth() + 1) +
+            '/' +
+            d.getFullYear() +
+            ' · ' +
+            pad(d.getHours()) +
+            ':' +
+            pad(d.getMinutes())
+        );
+    }
+
+    function renderCoEvolution(evo) {
+        var box = $('history-evo-summary');
+        if (!box) return;
+        if (!evo || !evo.count) {
+            box.hidden = true;
+            return;
+        }
+        box.hidden = false;
+        var best = $('hist-evo-best');
+        var latest = $('hist-evo-latest');
+        var count = $('hist-evo-count');
+        var trend = $('hist-evo-trend');
+        if (best) best.textContent = evo.best_percent + '%';
+        if (latest) latest.textContent = evo.latest_percent + '%';
+        if (count) count.textContent = String(evo.count);
+        if (trend) {
+            trend.classList.remove('is-up', 'is-down');
+            if (evo.trend === 'up') {
+                trend.textContent = '+' + evo.delta + ' pts';
+                trend.classList.add('is-up');
+            } else if (evo.trend === 'down') {
+                trend.textContent = evo.delta + ' pts';
+                trend.classList.add('is-down');
+            } else if (evo.trend === 'flat') {
+                trend.textContent = 'Stable';
+            } else {
+                trend.textContent = '—';
+            }
+        }
+    }
+
+    function closeCoHistoryModal() {
+        var modal = $('history-modal');
+        if (modal) modal.hidden = true;
+    }
+
+    function openCoHistoryModal() {
+        var modal = $('history-modal');
+        var list = $('history-list');
+        var evoEl = $('history-evo-summary');
+        var chart = $('history-chart');
+        if (!modal || !list) return;
+        modal.hidden = false;
+        list.innerHTML = '<p class="tcf-qpro-history-empty">Chargement…</p>';
+        var evoBox = $('history-evo-summary');
+        if (evoBox) evoBox.hidden = true;
+        if (chart) chart.innerHTML = '';
+        var api = getCoApi();
+        var id = getCoExamId();
+        if (!api || !id) {
+            list.innerHTML = '<p class="tcf-qpro-history-empty">Épreuve introuvable.</p>';
+            return;
+        }
+        var fd = new FormData();
+        fd.append('action', 'get_exam_history');
+        fd.append('exam_id', id);
+        fetch(api, { method: 'POST', body: fd, credentials: 'same-origin' })
+            .then(function (r) {
+                return r.json();
+            })
+            .then(function (j) {
+                if (j && j.reason === 'login') {
+                    list.innerHTML =
+                        '<p class="tcf-qpro-history-empty">Connectez-vous pour voir votre historique.</p>';
+                    return;
+                }
+                if (!j || !j.success || !j.data) {
+                    list.innerHTML =
+                        '<p class="tcf-qpro-history-empty">' +
+                        ((j && j.message) || 'Impossible de charger l’historique.') +
+                        '</p>';
+                    return;
+                }
+                var attempts = j.data.attempts || [];
+                var evo = j.data.evolution || {};
+                renderCoEvolution(evo);
+                if (chart && Array.isArray(evo.series) && evo.series.length) {
+                    chart.innerHTML = evo.series
+                        .map(function (p) {
+                            var h = Math.max(8, Math.round((Number(p) / 100) * 64));
+                            return (
+                                '<div class="tcf-qpro-history-chart__bar" style="height:' +
+                                h +
+                                'px"><span>' +
+                                p +
+                                '%</span></div>'
+                            );
+                        })
+                        .join('');
+                }
+                if (!attempts.length) {
+                    list.innerHTML =
+                        '<p class="tcf-qpro-history-empty">Aucun résultat enregistré pour cette épreuve.</p>';
+                    return;
+                }
+                list.innerHTML = attempts
+                    .map(function (a) {
+                        return (
+                            '<div class="tcf-qpro-history-row">' +
+                            '<div><small>' +
+                            formatCoHistoryDate(a.created_at) +
+                            '</small><div>' +
+                            (a.correct_count || 0) +
+                            '/' +
+                            (a.total_questions || 0) +
+                            ' · ' +
+                            (a.level_label || '') +
+                            '</div></div>' +
+                            '<strong>' +
+                            (a.score_percent || 0) +
+                            '%</strong>' +
+                            '<small>' +
+                            (a.points_earned || 0) +
+                            ' pts</small>' +
+                            '</div>'
+                        );
+                    })
+                    .join('');
+            })
+            .catch(function () {
+                list.innerHTML = '<p class="tcf-qpro-history-empty">Erreur réseau.</p>';
+            });
+    }
+
+    function loadCoHistoryPreview() {
+        // L’évolution s’affiche uniquement dans le modal Historique
     }
 
     function initResultsIndicators() {
@@ -939,6 +1121,16 @@
         if (eventsBound) return;
         eventsBound = true;
         if (startBtn) startBtn.addEventListener('click', startQuiz);
+        var historyBtn = $('history-btn');
+        if (historyBtn) historyBtn.addEventListener('click', openCoHistoryModal);
+        var historyClose = $('history-modal-close');
+        if (historyClose) historyClose.addEventListener('click', closeCoHistoryModal);
+        var historyModal = $('history-modal');
+        if (historyModal) {
+            historyModal.addEventListener('click', function (e) {
+                if (e.target === historyModal) closeCoHistoryModal();
+            });
+        }
         function askConfirm(opts) {
             if (typeof window.tcfQuizConfirm === 'function') {
                 return window.tcfQuizConfirm(opts);
@@ -1284,6 +1476,7 @@
                 if (metaD) metaD.textContent = Math.max(1, Math.round(durSec / 60)) + ' min';
 
                 initCoQuizRuntime();
+                loadCoHistoryPreview();
                 if (btn) btn.disabled = questions.length === 0;
             })
             .catch(function () {

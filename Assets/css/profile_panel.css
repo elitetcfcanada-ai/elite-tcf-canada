@@ -1182,14 +1182,37 @@ nav .others.nav-others--user .nav-avatar-fallback {
     border-radius: 3px;
 }
 
+.profile-cal__day--present {
+    background: #16a34a !important;
+    color: #ffffff !important;
+    border: 1px solid #15803d !important;
+    font-weight: 700;
+}
+
+.profile-cal__day--absent {
+    background: #dc2626 !important;
+    color: #ffffff !important;
+    border: 1px solid #b91c1c !important;
+    font-weight: 700;
+}
+
+.profile-cal__day--today.profile-cal__day--present {
+    box-shadow: 0 0 0 2px #14532d, 0 0 0 4px rgba(22, 163, 74, 0.35);
+    font-weight: 800;
+}
+
+.profile-cal__day--today.profile-cal__day--absent {
+    box-shadow: 0 0 0 2px #7f1d1d, 0 0 0 4px rgba(220, 38, 38, 0.35);
+}
+
 .profile-cal__sw--present {
-    background: #22c55e;
-    box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.35);
+    background: #16a34a;
+    box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.35);
 }
 
 .profile-cal__sw--absent {
-    background: #ef4444;
-    box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.35);
+    background: #dc2626;
+    box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.35);
 }
 
 .profile-cal__weekdays {
@@ -1224,18 +1247,6 @@ nav .others.nav-others--user .nav-avatar-fallback {
 .profile-cal__cell--pad {
     visibility: hidden;
     pointer-events: none;
-}
-
-.profile-cal__day--present {
-    background: #dcfce7;
-    color: #166534;
-    border: 1px solid #86efac;
-}
-
-.profile-cal__day--absent {
-    background: #fee2e2;
-    color: #991b1b;
-    border: 1px solid #fca5a5;
 }
 
 .profile-cal__day--future {

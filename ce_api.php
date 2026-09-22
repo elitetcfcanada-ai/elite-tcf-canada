@@ -8,12 +8,13 @@ require_once __DIR__ . '/includes/rich_text.php';
 require_once __DIR__ . '/includes/admin_roles.php';
 require_once __DIR__ . '/includes/tcf_schema.php';
 require_once __DIR__ . '/includes/tcf_exam_store.php';
-
-header('Content-Type: application/json; charset=utf-8');
+require_once __DIR__ . '/includes/tcf_exam_json_io.php';
+require_once __DIR__ . '/includes/tcf_exam_attempts.php';
 
 function ce_json(array $data, int $status = 200): void
 {
     http_response_code($status);
+    header('Content-Type: application/json; charset=utf-8');
     echo json_encode($data, JSON_UNESCAPED_UNICODE);
     exit;
 }
@@ -355,74 +356,11 @@ function ce_sort_exams_public_user_order(array &$rows): void
 }
 
 /**
- * Auto-visibilité comme EE/EO :
- * les 3 épreuves publiées les plus récentes (rang titre) → gratuit
- * (sauf si l’admin a forcé Premium) ; les autres → premium.
+ * Auto-visibilité CE désactivée : l’admin choisit gratuit / premium manuellement.
  */
 function ce_sync_exam_visibility(PDO $pdo): void
 {
-    ce_ensure_tables($pdo);
-    try {
-        if (tcf_schema_has_table($pdo, 'comprehension_ecrite')) {
-            $rows = $pdo->query(
-                "SELECT id, title, visibility FROM comprehension_ecrite WHERE kind='exam' AND is_published=1"
-            )->fetchAll(PDO::FETCH_ASSOC);
-            if (!$rows) {
-                return;
-            }
-            ce_sort_exams_by_title($rows);
-            $top3Ids = [];
-            foreach ($rows as $row) {
-                $top3Ids[] = (int) ($row['id'] ?? 0);
-                if (count($top3Ids) >= 3) {
-                    break;
-                }
-            }
-            if ($top3Ids) {
-                $in = implode(',', array_map('intval', $top3Ids));
-                $pdo->exec(
-                    "UPDATE comprehension_ecrite SET visibility='premium'
-                     WHERE kind='exam' AND is_published=1 AND id NOT IN ($in)"
-                );
-                $pdo->exec(
-                    "UPDATE comprehension_ecrite SET visibility='gratuit'
-                     WHERE kind='exam' AND is_published=1 AND id IN ($in) AND visibility<>'premium'"
-                );
-            } else {
-                $pdo->exec(
-                    "UPDATE comprehension_ecrite SET visibility='premium' WHERE kind='exam' AND is_published=1"
-                );
-            }
-            return;
-        }
-
-        $rows = $pdo->query(
-            'SELECT id, title, visibility FROM tcf_ce_exams WHERE is_published=1'
-        )->fetchAll(PDO::FETCH_ASSOC);
-        if (!$rows) {
-            return;
-        }
-        ce_sort_exams_by_title($rows);
-        $top3Ids = [];
-        foreach ($rows as $row) {
-            $top3Ids[] = (int) ($row['id'] ?? 0);
-            if (count($top3Ids) >= 3) {
-                break;
-            }
-        }
-        if ($top3Ids) {
-            $in = implode(',', array_map('intval', $top3Ids));
-            $pdo->exec("UPDATE tcf_ce_exams SET visibility='premium' WHERE is_published=1 AND id NOT IN ($in)");
-            $pdo->exec(
-                "UPDATE tcf_ce_exams SET visibility='gratuit'
-                 WHERE is_published=1 AND id IN ($in) AND visibility<>'premium'"
-            );
-        } else {
-            $pdo->exec("UPDATE tcf_ce_exams SET visibility='premium' WHERE is_published=1");
-        }
-    } catch (Throwable $e) {
-        // ignore sync errors
-    }
+    // no-op — ne plus forcer les 3 sujets récents en gratuit
 }
 
 ce_ensure_tables($pdo);
@@ -584,6 +522,50 @@ try {
             ce_json(['success' => true, 'data' => $exam]);
         }
 
+        case 'export_exam_json': {
+            if (!ce_is_admin()) {
+                ce_json(['success' => false, 'message' => 'Accès refusé.'], 403);
+            }
+            $examId = (int) ($_POST['exam_id'] ?? $_GET['exam_id'] ?? 0);
+            if ($examId <= 0) {
+                ce_json(['success' => false, 'message' => 'ID invalide.'], 422);
+            }
+            $exam = ce_fetch_exam_full($pdo, $examId);
+            if (!$exam) {
+                ce_json(['success' => false, 'message' => 'Introuvable.'], 404);
+            }
+            $quiz = [];
+            foreach ($exam['questions'] as $q) {
+                $correctIndex = 0;
+                $ans = [];
+                $idx = 0;
+                foreach ($q['answers'] as $a) {
+                    if (!empty($a['is_correct'])) {
+                        $correctIndex = $idx;
+                    }
+                    $ans[] = [
+                        'key' => $a['answer_key'],
+                        'text' => $a['answer_text'],
+                        'correct' => (int) $a['is_correct'] === 1,
+                    ];
+                    $idx++;
+                }
+                $quiz[] = [
+                    'id' => (int) $q['id'],
+                    'situation' => $q['situation'],
+                    'question_text' => $q['question_text'],
+                    'points' => (int) $q['points'],
+                    'correct_index' => $correctIndex,
+                    'answers' => $ans,
+                ];
+            }
+            unset($exam['questions']);
+            $exam['quiz_questions'] = $quiz;
+            $payload = tcf_exam_export_ce_payload($exam);
+            $slug = ce_slug((string) ($exam['title'] ?? 'ce')) ?: 'ce';
+            tcf_exam_send_json_download($payload, 'ce_' . $slug . '_' . $examId);
+        }
+
         case 'save_exam': {
             if (!ce_is_admin()) {
                 ce_json(['success' => false, 'message' => 'Accès refusé.'], 403);
@@ -601,7 +583,25 @@ try {
             $questions = $_POST['questions'] ?? null;
             if (!is_array($questions) || count($questions) === 0) {
                 $questionsRaw = (string) ($_POST['questions_json'] ?? '[]');
-                $questions = json_decode($questionsRaw, true);
+                $decoded = json_decode($questionsRaw, true);
+                $unwrapped = tcf_exam_unwrap_import_json($decoded, 'questions');
+                $questions = is_array($unwrapped['body']) ? $unwrapped['body'] : [];
+                $meta = $unwrapped['meta'];
+                if ($title === '' && !empty($meta['title'])) {
+                    $title = trim((string) $meta['title']);
+                }
+                if ($subtitle === '' && isset($meta['subtitle'])) {
+                    $subtitle = trim((string) $meta['subtitle']);
+                }
+                if (isset($meta['visibility']) && in_array((string) $meta['visibility'], ['gratuit', 'premium'], true)) {
+                    $visibility = (string) $meta['visibility'];
+                }
+                if (array_key_exists('is_published', $meta) && !isset($_POST['is_published'])) {
+                    $isPublished = !empty($meta['is_published']) ? 1 : 0;
+                }
+                if (!empty($meta['duration_seconds']) && !isset($_POST['duration_seconds'])) {
+                    $durationSeconds = max(60, min(86400, (int) $meta['duration_seconds']));
+                }
             }
             if (!is_array($questions)) {
                 $questions = [];
@@ -950,6 +950,62 @@ try {
             }
             }
             ce_json(['success' => true, 'message' => 'Consignes enregistrées.']);
+        }
+
+        case 'save_attempt': {
+            $uid = (int) ($_SESSION['user_id'] ?? 0);
+            if ($uid <= 0) {
+                ce_json(['success' => false, 'message' => 'Connectez-vous pour enregistrer votre score.', 'reason' => 'login'], 401);
+            }
+            $examId = (int) ($_POST['exam_id'] ?? 0);
+            if ($examId <= 0) {
+                ce_json(['success' => false, 'message' => 'Épreuve invalide.'], 422);
+            }
+            try {
+                $id = tcf_exam_attempt_save($pdo, [
+                    'skill' => 'ce',
+                    'exam_id' => $examId,
+                    'user_id' => $uid,
+                    'score_percent' => (int) ($_POST['score_percent'] ?? 0),
+                    'correct_count' => (int) ($_POST['correct_count'] ?? 0),
+                    'wrong_count' => (int) ($_POST['wrong_count'] ?? 0),
+                    'unanswered_count' => (int) ($_POST['unanswered_count'] ?? 0),
+                    'total_questions' => (int) ($_POST['total_questions'] ?? 0),
+                    'points_earned' => (int) ($_POST['points_earned'] ?? 0),
+                    'level_label' => trim((string) ($_POST['level_label'] ?? '')),
+                    'duration_seconds' => (int) ($_POST['duration_seconds'] ?? 0),
+                ]);
+                ce_json(['success' => true, 'attempt_id' => $id, 'message' => 'Résultat enregistré.']);
+            } catch (Throwable $e) {
+                ce_json(['success' => false, 'message' => 'Impossible d’enregistrer le résultat.'], 500);
+            }
+        }
+
+        case 'get_exam_history': {
+            $uid = (int) ($_SESSION['user_id'] ?? 0);
+            if ($uid <= 0) {
+                ce_json(['success' => false, 'message' => 'Connectez-vous pour voir l’historique.', 'reason' => 'login'], 401);
+            }
+            $examId = (int) ($_POST['exam_id'] ?? $_GET['exam_id'] ?? 0);
+            if ($examId <= 0) {
+                ce_json(['success' => false, 'message' => 'Épreuve invalide.'], 422);
+            }
+            $attempts = tcf_exam_attempts_list($pdo, 'ce', $examId, $uid, 40);
+            ce_json([
+                'success' => true,
+                'data' => [
+                    'attempts' => $attempts,
+                    'evolution' => tcf_exam_attempts_evolution($attempts),
+                ],
+            ]);
+        }
+
+        case 'get_my_progress': {
+            $uid = (int) ($_SESSION['user_id'] ?? 0);
+            if ($uid <= 0) {
+                ce_json(['success' => true, 'data' => []]);
+            }
+            ce_json(['success' => true, 'data' => tcf_exam_attempts_progress_map($pdo, 'ce', $uid)]);
         }
 
         case 'delete_exam': {

@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/admin_notifications.php';
 require_once __DIR__ . '/includes/tcf_legacy_tables.php';
+require_once __DIR__ . '/includes/tcf_testimonials_schema.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -34,7 +35,11 @@ function tcf_is_admin(): bool
 }
 
 try {
+    tcf_testimonials_ensure_schema($pdo);
     $tTable = tcf_testimonials_table($pdo);
+    if ($tTable === '') {
+        $tTable = 'temoignages';
+    }
     switch ($action) {
 
         case 'list': {
@@ -42,11 +47,21 @@ try {
                 tcf_testimonials_json(['ok' => false, 'message' => 'Méthode non autorisée.'], 405);
             }
             $limit = min(50, max(1, (int) ($_GET['limit'] ?? 30)));
-            $publishedSql = $tTable === 'temoignages' ? ' WHERE is_published=1' : '';
-            $st = $pdo->prepare("SELECT id, author_name, content, rating, created_at FROM `$tTable`{$publishedSql} ORDER BY created_at DESC LIMIT ?");
+            $st = $pdo->prepare(
+                "SELECT id, author_name, content, rating, photo_path, created_at
+                 FROM `$tTable`
+                 WHERE is_published = 1
+                 ORDER BY created_at DESC
+                 LIMIT ?"
+            );
             $st->bindValue(1, $limit, PDO::PARAM_INT);
             $st->execute();
-            $rows = $st->fetchAll(PDO::FETCH_ASSOC);
+            $rows = $st->fetchAll(PDO::FETCH_ASSOC) ?: [];
+            foreach ($rows as &$row) {
+                $row['photo_url'] = tcf_testimonial_photo_url(isset($row['photo_path']) ? (string) $row['photo_path'] : null);
+                unset($row['photo_path']);
+            }
+            unset($row);
             tcf_testimonials_json(['ok' => true, 'items' => $rows]);
         }
 
@@ -73,7 +88,9 @@ try {
             $content = preg_replace('/\s+/u', ' ', $content) ?? $content;
             $ratingVal = $rating >= 1 && $rating <= 5 ? $rating : null;
 
-            $stmt = $pdo->prepare("INSERT INTO `$tTable` (author_name, content, user_id, rating) VALUES (?, ?, ?, ?)");
+            $stmt = $pdo->prepare(
+                "INSERT INTO `$tTable` (author_name, content, user_id, rating, is_published) VALUES (?, ?, ?, ?, 1)"
+            );
             $stmt->execute([$author, $content, $uid, $ratingVal]);
             $tid = (int) $pdo->lastInsertId();
             $prev = mb_strlen($content) > 100 ? mb_substr($content, 0, 100) . '…' : $content;
@@ -108,14 +125,17 @@ try {
             if (mb_strlen($author) < 2 || mb_strlen($author) > 120) {
                 tcf_testimonials_json(['ok' => false, 'message' => 'Indiquez votre nom (2 à 120 caractères).'], 400);
             }
-            if (mb_strlen($content) < 10 || mb_strlen($content) > 350) {
-                tcf_testimonials_json(['ok' => false, 'message' => 'Votre témoignage doit contenir entre 10 et 350 caractères.'], 400);
+            if (mb_strlen($content) < 10 || mb_strlen($content) > 800) {
+                tcf_testimonials_json(['ok' => false, 'message' => 'Le témoignage doit contenir entre 10 et 800 caractères.'], 400);
             }
             $content = preg_replace('/\s+/u', ' ', $content) ?? $content;
             $ratingVal = $rating >= 1 && $rating <= 5 ? $rating : null;
+            $published = isset($_POST['is_published']) ? ((int) $_POST['is_published'] ? 1 : 0) : 1;
 
-            $stmt = $pdo->prepare("UPDATE `$tTable` SET author_name=?, content=?, rating=? WHERE id=?");
-            $stmt->execute([$author, $content, $ratingVal, $tid]);
+            $stmt = $pdo->prepare(
+                "UPDATE `$tTable` SET author_name=?, content=?, rating=?, is_published=? WHERE id=?"
+            );
+            $stmt->execute([$author, $content, $ratingVal, $published, $tid]);
             tcf_testimonials_json(['ok' => true, 'message' => 'Témoignage modifié.']);
         }
 

@@ -380,12 +380,17 @@ $tcf_notif_relative = static function (string $createdAt): string {
         $tcf_cal_title = ($monthsFrCal[$tcf_cal_m] ?? '') . ' ' . $tcf_cal_y;
         if (!empty($user['id'])) {
             try {
+                tcf_maybe_log_daily_activity($pdo, (int) $user['id']);
+                tcf_activity_days_ensure_table($pdo);
                 $tcfCalStmt = $pdo->prepare(
                     'SELECT activity_date FROM user_activity_days WHERE user_id = ? AND YEAR(activity_date) = ? AND MONTH(activity_date) = ?'
                 );
                 $tcfCalStmt->execute([(int) $user['id'], $tcf_cal_y, $tcf_cal_m]);
                 while ($tcfCalRow = $tcfCalStmt->fetch(PDO::FETCH_ASSOC)) {
-                    $tcf_activity_dates[$tcfCalRow['activity_date']] = true;
+                    $dayKey = substr((string) ($tcfCalRow['activity_date'] ?? ''), 0, 10);
+                    if ($dayKey !== '') {
+                        $tcf_activity_dates[$dayKey] = true;
+                    }
                 }
             } catch (Throwable $e) {
             }
@@ -711,8 +716,8 @@ $tcf_notif_relative = static function (string $createdAt): string {
 
 <?php if (empty($tcf_profile_panel_skip_assets)) { ?>
 <?php /* Rechargement en fin de page : gagne sur style_tcf / legacy notifications. */ ?>
-<link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/profile_panel.css')); ?>?v=notif-tout-lu-14">
+<link rel="stylesheet" href="<?php echo htmlspecialchars(site_href('Assets/css/profile_panel.css')); ?>?v=cal-present-green-1">
 <link rel="stylesheet" href="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.css">
 <script src="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.js"></script>
-<script src="<?php echo htmlspecialchars(site_href('Assets/javascript/profile_panel.js')); ?>?v=notif-ui-3"></script>
+<script src="<?php echo htmlspecialchars(site_href('Assets/javascript/profile_panel.js')); ?>?v=cal-present-green-1"></script>
 <?php } ?>

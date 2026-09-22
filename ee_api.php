@@ -10,12 +10,12 @@ require_once __DIR__ . '/includes/gemini_client.php';
 require_once __DIR__ . '/includes/tcf_schema.php';
 require_once __DIR__ . '/includes/tcf_exam_store.php';
 require_once __DIR__ . '/includes/tcf_legacy_tables.php';
-
-header('Content-Type: application/json; charset=utf-8');
+require_once __DIR__ . '/includes/tcf_exam_json_io.php';
 
 function ee_json(array $data, int $status = 200): void
 {
     http_response_code($status);
+    header('Content-Type: application/json; charset=utf-8');
     echo json_encode($data, JSON_UNESCAPED_UNICODE);
     exit;
 }
@@ -1259,6 +1259,27 @@ switch ($action) {
                 ee_json(['success' => false, 'message' => 'Épreuve introuvable.']);
             }
             ee_json(['success' => true, 'data' => $exam]);
+        } catch (Throwable $e) {
+            ee_json(['success' => false, 'message' => $e->getMessage()]);
+        }
+        break;
+
+    case 'export_exam_json':
+        if (!ee_is_admin()) {
+            ee_json(['success' => false, 'message' => 'Accès refusé.'], 403);
+        }
+        $examId = (int) ($_POST['exam_id'] ?? $_GET['exam_id'] ?? 0);
+        if ($examId <= 0) {
+            ee_json(['success' => false, 'message' => 'ID invalide.'], 422);
+        }
+        try {
+            $exam = ee_fetch_exam_full($pdo, $examId);
+            if (!$exam) {
+                ee_json(['success' => false, 'message' => 'Épreuve introuvable.'], 404);
+            }
+            $payload = tcf_exam_export_ee_payload($exam);
+            $slug = preg_replace('/[^a-z0-9]+/i', '_', (string) ($exam['title'] ?? 'ee')) ?: 'ee';
+            tcf_exam_send_json_download($payload, 'ee_' . $slug . '_' . $examId);
         } catch (Throwable $e) {
             ee_json(['success' => false, 'message' => $e->getMessage()]);
         }

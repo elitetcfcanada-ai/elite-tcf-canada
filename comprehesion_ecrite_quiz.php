@@ -52,7 +52,7 @@ $aboUrl = site_href('abonnement.php');
     <link rel="stylesheet" href="Assets/css/header_footer.css">
     <link rel="stylesheet" href="Assets/css/tcf-responsive-pills.css">
     <link rel="stylesheet" href="Assets/css/quiz-site-chrome.css?v=21">
-    <link rel="stylesheet" href="Assets/css/tcf-quiz-pro.css?v=results-board-pro-14">
+    <link rel="stylesheet" href="Assets/css/tcf-quiz-pro.css?v=results-board-pro-17">
 </head>
 
 <body class="tcf-quiz-with-site-nav">
@@ -83,9 +83,43 @@ $aboUrl = site_href('abonnement.php');
                 </li>
             </ul>
             <div class="tcf-qpro-start-actions">
-                <button type="button" id="start-btn" class="btn btn-primary" disabled>
-                    <i class='bx bx-play-circle'></i> Commencer le test
+                <button type="button" id="history-btn" class="btn btn-outline">
+                    <i class='bx bx-history'></i> Historique
                 </button>
+                <button type="button" id="start-btn" class="btn btn-primary" disabled>
+                    <i class='bx bx-play-circle'></i> Commencer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="tcf-qpro-history-overlay" id="history-modal" hidden>
+        <div class="tcf-qpro-history-modal" role="dialog" aria-modal="true" aria-labelledby="history-modal-title">
+            <button type="button" class="tcf-qpro-history-close" id="history-modal-close" aria-label="Fermer">
+                <i class='bx bx-x'></i>
+            </button>
+            <h3 id="history-modal-title"><i class='bx bx-history'></i> Historique de l’épreuve</h3>
+            <div class="tcf-qpro-evolution tcf-qpro-evolution--history" id="history-evo-summary" hidden>
+                <div class="tcf-qpro-evolution__item">
+                    <span class="tcf-qpro-evolution__lbl">Meilleur</span>
+                    <strong id="hist-evo-best">—</strong>
+                </div>
+                <div class="tcf-qpro-evolution__item">
+                    <span class="tcf-qpro-evolution__lbl">Dernier</span>
+                    <strong id="hist-evo-latest">—</strong>
+                </div>
+                <div class="tcf-qpro-evolution__item">
+                    <span class="tcf-qpro-evolution__lbl">Tentatives</span>
+                    <strong id="hist-evo-count">—</strong>
+                </div>
+                <div class="tcf-qpro-evolution__item tcf-qpro-evolution__item--trend">
+                    <span class="tcf-qpro-evolution__lbl">Évolution</span>
+                    <strong id="hist-evo-trend">—</strong>
+                </div>
+            </div>
+            <div class="tcf-qpro-history-chart" id="history-chart" aria-hidden="true"></div>
+            <div class="tcf-qpro-history-list" id="history-list">
+                <p class="tcf-qpro-history-empty">Chargement…</p>
             </div>
         </div>
     </div>
@@ -143,6 +177,11 @@ $aboUrl = site_href('abonnement.php');
             <div class="indicators-container">
                 <div class="indicators" id="question-indicators"></div>
             </div>
+            <ul class="tcf-qpro-legend" aria-label="Légende des indicateurs">
+                <li><span class="tcf-qpro-legend__swatch is-current"></span> Actuelle</li>
+                <li><span class="tcf-qpro-legend__swatch is-answered"></span> Répondue</li>
+                <li><span class="tcf-qpro-legend__swatch is-todo"></span> Non rép.</li>
+            </ul>
         </footer>
     </div>
 
@@ -253,7 +292,7 @@ $aboUrl = site_href('abonnement.php');
     <link rel="stylesheet" href="Assets/css/tcf-confirm-dialog.css?v=confirm-4">
     <script src="Assets/javascript/tcf_confirm_dialog.js?v=confirm-4"></script>
     <script src="Assets/javascript/tcf_quiz_dialog.js?v=4"></script>
-    <script src="Assets/javascript/comprehesion_quiz_dynamic.js?v=10"></script>
+    <script src="Assets/javascript/comprehesion_quiz_dynamic.js?v=12"></script>
 </div>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>

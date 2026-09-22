@@ -14,9 +14,11 @@ require_once __DIR__ . '/../includes/video_optimize.php';
 require_once __DIR__ . '/../includes/video_social.php';
 require_once __DIR__ . '/../includes/tcf_schema.php';
 require_once __DIR__ . '/../includes/partners_helper.php';
+require_once __DIR__ . '/../includes/tcf_testimonials_schema.php';
 try {
     tcf_community_posts_ensure_tables($pdo);
     tcf_community_drop_channel_tables($pdo);
+    tcf_testimonials_ensure_schema($pdo);
 } catch (Throwable $e) {
     // ignore bootstrap DB cleanup errors
 }
@@ -94,6 +96,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             break;
         case 'get_testimonials':
             getTestimonials();
+            break;
+        case 'create_testimonial':
+            createTestimonial();
             break;
         case 'delete_testimonial':
             deleteTestimonial();
@@ -684,23 +689,107 @@ function getTestimonials()
 {
     global $pdo;
     try {
+        tcf_testimonials_ensure_schema($pdo);
         $table = tcf_testimonials_table($pdo);
+        if ($table === '') {
+            $table = 'temoignages';
+        }
         $stmt = $pdo->query(
-            "SELECT t.id, t.author_name, t.content, t.user_id, t.rating, t.created_at, u.avatar AS user_avatar
+            "SELECT t.id, t.author_name, t.content, t.user_id, t.rating, t.photo_path, t.is_published, t.created_at, u.avatar AS user_avatar
              FROM `{$table}` t
              LEFT JOIN users u ON u.id = t.user_id
              ORDER BY t.created_at DESC"
         );
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
         foreach ($rows as &$t) {
+            $photoUrl = tcf_testimonial_photo_url(isset($t['photo_path']) ? (string) $t['photo_path'] : null);
             $uid = (int) ($t['user_id'] ?? 0);
-            $t['avatar_url'] = $uid > 0
+            $userAv = $uid > 0
                 ? tcf_user_avatar_display_url($pdo, $uid, isset($t['user_avatar']) ? (string) $t['user_avatar'] : null)
                 : null;
+            $t['avatar_url'] = $photoUrl ?: $userAv;
+            $t['photo_url'] = $photoUrl;
+            $t['is_published'] = (int) ($t['is_published'] ?? 1);
             unset($t['user_avatar']);
         }
         unset($t);
         echo json_encode(['success' => true, 'data' => $rows], JSON_UNESCAPED_UNICODE);
+    } catch (PDOException $e) {
+        echo json_encode(['success' => false, 'message' => 'Erreur base de données: ' . $e->getMessage()]);
+    }
+    exit();
+}
+
+function createTestimonial()
+{
+    global $pdo;
+    if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['admin', 'super_admin'], true)) {
+        echo json_encode(['success' => false, 'message' => 'Accès refusé.']);
+        exit();
+    }
+    try {
+        tcf_testimonials_ensure_schema($pdo);
+        $author = trim((string) ($_POST['author_name'] ?? ''));
+        $content = trim((string) ($_POST['content'] ?? ''));
+        $rating = (int) ($_POST['rating'] ?? 5);
+        $published = isset($_POST['is_published']) ? ((int) $_POST['is_published'] ? 1 : 0) : 1;
+        if (mb_strlen($author) < 2 || $content === '') {
+            echo json_encode(['success' => false, 'message' => 'Nom et texte obligatoires.']);
+            exit();
+        }
+        if (mb_strlen($content) < 10 || mb_strlen($content) > 800) {
+            echo json_encode(['success' => false, 'message' => 'Le texte doit contenir entre 10 et 800 caractères.']);
+            exit();
+        }
+        if ($rating < 0 || $rating > 5) {
+            $rating = 5;
+        }
+        $photoPath = null;
+        if (!empty($_FILES['photo']['tmp_name']) && is_uploaded_file($_FILES['photo']['tmp_name'])) {
+            $uploaded = uploadFile($_FILES['photo'], 'testimonials');
+            if ($uploaded === false) {
+                echo json_encode(['success' => false, 'message' => 'Photo invalide (JPG, PNG, WebP, max 5 Mo).']);
+                exit();
+            }
+            $photoPath = $uploaded;
+        } elseif (!empty($_POST['photo_data']) && is_string($_POST['photo_data'])) {
+            $dataUrl = (string) $_POST['photo_data'];
+            if (preg_match('#^data:image/(jpeg|jpg|png|webp);base64,#i', $dataUrl, $m)) {
+                $raw = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $dataUrl), true);
+                if ($raw !== false && strlen($raw) > 32) {
+                    $ext = strtolower($m[1]) === 'jpg' ? 'jpg' : strtolower($m[1]);
+                    if ($ext === 'jpeg') {
+                        $ext = 'jpg';
+                    }
+                    $root = dirname(__DIR__);
+                    $dir = $root . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'testimonials' . DIRECTORY_SEPARATOR;
+                    if (!is_dir($dir)) {
+                        mkdir($dir, 0777, true);
+                    }
+                    $fileName = time() . '_crop_' . bin2hex(random_bytes(4)) . '.' . $ext;
+                    if (file_put_contents($dir . $fileName, $raw) !== false) {
+                        $photoPath = 'uploads/testimonials/' . $fileName;
+                    }
+                }
+            }
+        }
+        $table = tcf_testimonials_table($pdo);
+        if ($table === '') {
+            $table = 'temoignages';
+        }
+        $ratingVal = $rating >= 1 && $rating <= 5 ? $rating : null;
+        $stmt = $pdo->prepare(
+            "INSERT INTO `{$table}` (author_name, content, user_id, rating, photo_path, is_published)
+             VALUES (?, ?, NULL, ?, ?, ?)"
+        );
+        $ok = $stmt->execute([$author, $content, $ratingVal, $photoPath, $published]);
+        if ($ok) {
+            $id = (int) $pdo->lastInsertId();
+            addActivity($_SESSION['user_id'], 'message', 'Témoignage publié', "Témoignage #$id publié");
+            echo json_encode(['success' => true, 'message' => 'Témoignage publié.', 'id' => $id]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Erreur lors de la publication.']);
+        }
     } catch (PDOException $e) {
         echo json_encode(['success' => false, 'message' => 'Erreur base de données: ' . $e->getMessage()]);
     }
@@ -720,10 +809,23 @@ function deleteTestimonial()
             echo json_encode(['success' => false, 'message' => 'Identifiant invalide.']);
             exit();
         }
+        tcf_testimonials_ensure_schema($pdo);
         $table = tcf_testimonials_table($pdo);
+        if ($table === '') {
+            $table = 'temoignages';
+        }
+        $stPhoto = $pdo->prepare("SELECT photo_path FROM `{$table}` WHERE id = ?");
+        $stPhoto->execute([$id]);
+        $oldPhoto = (string) ($stPhoto->fetchColumn() ?: '');
         $stmt = $pdo->prepare("DELETE FROM `{$table}` WHERE id = ?");
         $success = $stmt->execute([$id]);
         if ($success) {
+            if ($oldPhoto !== '' && strpos($oldPhoto, 'uploads/testimonials/') === 0) {
+                $full = dirname(__DIR__) . '/' . ltrim(str_replace('\\', '/', $oldPhoto), '/');
+                if (is_file($full)) {
+                    @unlink($full);
+                }
+            }
             addActivity($_SESSION['user_id'], 'message', 'Témoignage supprimé', "Témoignage #$id supprimé");
             echo json_encode(['success' => true, 'message' => 'Témoignage supprimé.']);
         } else {
@@ -743,18 +845,39 @@ function updateTestimonial()
         exit();
     }
     try {
+        tcf_testimonials_ensure_schema($pdo);
         $id      = (int)   ($_POST['id']          ?? 0);
         $author  = trim(   ($_POST['author_name'] ?? ''));
         $content = trim(   ($_POST['content']     ?? ''));
         $rating  = (int)   ($_POST['rating']      ?? 0);
+        $published = isset($_POST['is_published']) ? ((int) $_POST['is_published'] ? 1 : 0) : 1;
         if ($id <= 0 || $author === '' || $content === '') {
             echo json_encode(['success' => false, 'message' => 'Champs obligatoires manquants.']);
             exit();
         }
-        if ($rating < 0 || $rating > 5) $rating = 0;
+        if ($rating < 0 || $rating > 5) {
+            $rating = 0;
+        }
         $table = tcf_testimonials_table($pdo);
-        $stmt = $pdo->prepare("UPDATE `{$table}` SET author_name = ?, content = ?, rating = ? WHERE id = ?");
-        $ok   = $stmt->execute([$author, $content, $rating, $id]);
+        if ($table === '') {
+            $table = 'temoignages';
+        }
+        $photoSql = '';
+        $params = [$author, $content, $rating, $published];
+        if (!empty($_FILES['photo']['tmp_name']) && is_uploaded_file($_FILES['photo']['tmp_name'])) {
+            $uploaded = uploadFile($_FILES['photo'], 'testimonials');
+            if ($uploaded === false) {
+                echo json_encode(['success' => false, 'message' => 'Photo invalide (JPG, PNG, WebP, max 5 Mo).']);
+                exit();
+            }
+            $photoSql = ', photo_path = ?';
+            $params[] = $uploaded;
+        }
+        $params[] = $id;
+        $stmt = $pdo->prepare(
+            "UPDATE `{$table}` SET author_name = ?, content = ?, rating = ?, is_published = ?{$photoSql} WHERE id = ?"
+        );
+        $ok = $stmt->execute($params);
         if ($ok) {
             addActivity($_SESSION['user_id'], 'message', 'Témoignage modifié', "Témoignage #$id modifié");
             echo json_encode(['success' => true, 'message' => 'Témoignage mis à jour.']);
@@ -2354,6 +2477,9 @@ function uploadFile($file, $folder)
     } elseif ($folder === 'channel') {
         $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/jpg', 'image/webp'];
         $maxSize = 8 * 1024 * 1024; // 8MB (bannière large)
+    } elseif ($folder === 'testimonials') {
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/jpg', 'image/webp'];
+        $maxSize = 5 * 1024 * 1024; // 5MB photo profil témoignage
     }
 
     $fileType = '';
@@ -2545,7 +2671,7 @@ $notifications_json = json_encode($notifications);
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="../Assets/css/sa-theme.css">
     <script src="../Assets/javascript/sa-theme.js"></script>
-    <link rel="stylesheet" href="../Assets/css/superAdmin.css?v=sa-ui-v13">
+    <link rel="stylesheet" href="../Assets/css/superAdmin.css?v=sa-ui-v15">
     <link rel="stylesheet" href="../Assets/css/tcf-brand-logo.css">
     <link rel="stylesheet" href="../Assets/css/sa_subscription_plans.css?v=usd-fixed-2">
     <link rel="stylesheet" href="../Assets/css/sa-partners.css?v=partners-16x9-contain-5">
@@ -2581,7 +2707,7 @@ $notifications_json = json_encode($notifications);
         </button>
         <div class="logo-container">
             <div class="logo">
-                <?php echo tcf_brand_logo_img(['class' => 'tcf-brand-logo tcf-brand-logo--admin', 'size' => 32]); ?>
+                <?php echo tcf_brand_logo_img(['class' => 'tcf-brand-logo tcf-brand-logo--admin', 'size' => 26]); ?>
             </div>
             <div class="logo-text">ELITE TCF <span>CANADA</span></div>
         </div>
@@ -3234,6 +3360,59 @@ $notifications_json = json_encode($notifications);
                         <i class="bx bx-refresh"></i> Actualiser
                     </button>
                 </div>
+
+                <form class="sa-testi-publish-form" id="sa-testi-create-form" enctype="multipart/form-data">
+                    <h3 class="sa-testi-publish-title"><i class="bx bx-message-square-add"></i> Publier un témoignage</h3>
+                    <div class="sa-testi-publish-grid">
+                        <div class="form-group">
+                            <label class="form-label" for="sa-testi-create-photo">Photo de profil</label>
+                            <input type="file" class="form-control" id="sa-testi-create-photo" name="photo" accept="image/jpeg,image/png,image/webp,image/gif">
+                            <input type="hidden" id="sa-testi-create-photo-data" value="">
+                            <div class="sa-testi-crop-wrap" id="sa-testi-crop-wrap" hidden>
+                                <div class="sa-testi-crop-stage">
+                                    <img id="sa-testi-crop-image" alt="Recadrage">
+                                </div>
+                                <div class="sa-testi-crop-actions">
+                                    <button type="button" class="btn btn-outline btn-sm" id="sa-testi-crop-cancel">Annuler</button>
+                                    <button type="button" class="btn btn-primary btn-sm" id="sa-testi-crop-ok"><i class="bx bx-check"></i> Valider le cadrage</button>
+                                </div>
+                            </div>
+                            <div class="sa-testi-photo-preview" id="sa-testi-photo-preview" hidden>
+                                <img id="sa-testi-photo-preview-img" alt="Aperçu">
+                                <button type="button" class="btn btn-outline btn-sm" id="sa-testi-photo-clear">Changer</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="sa-testi-create-author">Nom</label>
+                            <input type="text" class="form-control" id="sa-testi-create-author" name="author_name" maxlength="120" required placeholder="Prénom ou nom affiché">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="sa-testi-create-rating">Note</label>
+                            <select class="form-control" id="sa-testi-create-rating" name="rating">
+                                <option value="5" selected>5 étoiles</option>
+                                <option value="4">4 étoiles</option>
+                                <option value="3">3 étoiles</option>
+                                <option value="2">2 étoiles</option>
+                                <option value="1">1 étoile</option>
+                                <option value="0">Sans note</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="sa-testi-create-content">Texte du témoignage</label>
+                        <textarea class="form-control" id="sa-testi-create-content" name="content" rows="3" maxlength="800" required placeholder="Le message affiché sur la page d’accueil…"></textarea>
+                    </div>
+                    <div class="sa-testi-publish-actions">
+                        <label class="sa-testi-publish-check">
+                            <input type="checkbox" id="sa-testi-create-published" checked>
+                            Publier immédiatement sur le site
+                        </label>
+                        <button type="submit" class="btn btn-primary" id="sa-testi-create-submit">
+                            <i class="bx bx-send"></i> Publier
+                        </button>
+                    </div>
+                </form>
+
                 <div class="sa-testi-stats" id="sa-testi-stats">
                     <div class="sa-testi-stat-card">
                         <i class="bx bxs-comment-detail"></i>
@@ -3271,6 +3450,11 @@ $notifications_json = json_encode($notifications);
                         <option value="2">2 étoiles</option>
                         <option value="1">1 étoile</option>
                         <option value="0">Sans note</option>
+                    </select>
+                    <select id="sa-testi-filter-pub" class="sa-testi-select">
+                        <option value="">Tous</option>
+                        <option value="1">Publiés</option>
+                        <option value="0">Brouillons</option>
                     </select>
                 </div>
 
@@ -3315,7 +3499,7 @@ $notifications_json = json_encode($notifications);
                 <!-- Mode édition -->
                 <div id="sa-testi-edit-mode" style="display:none;">
                     <h3 class="sa-testi-modal-author">Modifier le témoignage</h3>
-                    <form id="sa-testi-edit-form">
+                    <form id="sa-testi-edit-form" enctype="multipart/form-data">
                         <input type="hidden" id="sa-testi-edit-id">
                         <div class="form-group">
                             <label class="form-label">Nom de l'auteur</label>
@@ -3333,8 +3517,18 @@ $notifications_json = json_encode($notifications);
                             </select>
                         </div>
                         <div class="form-group">
+                            <label class="form-label">Photo de profil (optionnel)</label>
+                            <input type="file" class="form-control" id="sa-testi-edit-photo" accept="image/jpeg,image/png,image/webp,image/gif">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">
+                                <input type="checkbox" id="sa-testi-edit-published" checked>
+                                Publié sur le site
+                            </label>
+                        </div>
+                        <div class="form-group">
                             <label class="form-label">Contenu du témoignage</label>
-                            <textarea class="form-control" id="sa-testi-edit-content" rows="4" required></textarea>
+                            <textarea class="form-control" id="sa-testi-edit-content" rows="4" required maxlength="800"></textarea>
                         </div>
                         <div class="sa-testi-modal-actions">
                             <button type="button" class="btn btn-outline" id="sa-testi-edit-cancel">Annuler</button>
@@ -3662,7 +3856,10 @@ $notifications_json = json_encode($notifications);
                         <div class="form-group">
                             <label class="form-label">Fichier JSON des combinaisons</label>
                             <input type="file" class="form-control" id="ee-json-file" accept=".json,application/json">
-                            <small style="color:#64748b;display:block;margin-top:6px;">Tableau de combinaisons, ou objet <code>{"combinations":[...]}</code>. Chaque combinaison : title, tasks[{task_number, prompt, correction, documents[{title, content}]}].</small>
+                            <small style="color:#64748b;display:block;margin-top:6px;">
+                                Prototype : <a href="../Assets/json-prototypes/ee_exam_prototype.json" download>télécharger ee_exam_prototype.json</a>
+                                — objet <code>{"type":"ee","combinations":[...]}</code> ou tableau de combinaisons.
+                            </small>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Ou coller le JSON</label>
@@ -3769,7 +3966,10 @@ $notifications_json = json_encode($notifications);
                         <div class="form-group">
                             <label class="form-label">Fichier JSON des questions</label>
                             <input type="file" class="form-control" id="ce-json-file" accept=".json,application/json">
-                            <small style="color:#64748b;display:block;margin-top:6px;">Tableau de questions : situation, question_text, points, correct_index (0–3), answers[{text}] — ou un objet <code>{"questions":[...]}</code>.</small>
+                            <small style="color:#64748b;display:block;margin-top:6px;">
+                                Prototype : <a href="../Assets/json-prototypes/ce_exam_prototype.json" download>télécharger ce_exam_prototype.json</a>
+                                — format <code>{"type":"ce","title":"...","questions":[...]}</code> ou tableau de questions.
+                            </small>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Ou coller le JSON</label>
@@ -3876,7 +4076,10 @@ $notifications_json = json_encode($notifications);
                         <div class="form-group">
                             <label class="form-label">Fichier JSON des questions</label>
                             <input type="file" class="form-control" id="co-json-file" accept=".json,application/json">
-                            <small style="color:#64748b;display:block;margin-top:6px;">Champs : question_text, points, image_src, audio_text (script audio), correct_index (0–3), answers[{text}].</small>
+                            <small style="color:#64748b;display:block;margin-top:6px;">
+                                Prototype : <a href="../Assets/json-prototypes/co_exam_prototype.json" download>télécharger co_exam_prototype.json</a>
+                                — champs : question_text, audio_text, correct_index (0–3), answers[{text}].
+                            </small>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Ou coller le JSON</label>
@@ -3983,7 +4186,10 @@ $notifications_json = json_encode($notifications);
                         <div class="form-group">
                             <label class="form-label">Fichier JSON des parties</label>
                             <input type="file" class="form-control" id="eo-json-file" accept=".json,application/json">
-                            <small style="color:#64748b;display:block;margin-top:6px;">Tableau de parties, ou objet <code>{"parts":[...]}</code>. Chaque partie publiée doit avoir <strong>exactement 5 sujets</strong> : task_key (tache1|tache2|tache3), subjects[{title, prompt, correction}].</small>
+                            <small style="color:#64748b;display:block;margin-top:6px;">
+                                Prototype : <a href="../Assets/json-prototypes/eo_exam_prototype.json" download>télécharger eo_exam_prototype.json</a>
+                                — objet <code>{"type":"eo","parts":[...]}</code> ; chaque partie publiée = <strong>exactement 5 sujets</strong>.
+                            </small>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Ou coller le JSON</label>
@@ -4118,10 +4324,10 @@ $notifications_json = json_encode($notifications);
         <div class="modal-content" style="max-width:440px;">
             <button type="button" class="modal-close" id="quiz-publish-method-close" aria-label="Fermer">&times;</button>
             <h2 class="modal-title" id="quiz-publish-method-title">Nouvelle épreuve</h2>
-            <p style="color:#64748b;font-size:0.95rem;margin-bottom:14px;">Choisissez comment publier cette épreuve.</p>
+            <p style="color:#64748b;font-size:0.95rem;margin-bottom:14px;">Choisissez comment publier cette épreuve. Pour une publication rapide, téléchargez le prototype JSON, complétez-le, puis importez-le.</p>
             <div style="display:flex;flex-direction:column;gap:10px;">
                 <button type="button" class="btn btn-primary" id="quiz-publish-method-manual">Saisie manuelle</button>
-                <button type="button" class="btn btn-outline" id="quiz-publish-method-json">Importer un fichier JSON</button>
+                <button type="button" class="btn btn-outline" id="quiz-publish-method-json">Importer / publier via JSON</button>
             </div>
         </div>
     </div>
@@ -4269,9 +4475,10 @@ $notifications_json = json_encode($notifications);
         window.TCF_COMMUNITY_API = <?php echo json_encode(site_href('community_api.php')); ?>;
         window.TCF_PARTNERS_API = <?php echo json_encode(site_href('partners_api.php')); ?>;
     </script>
+    <script src="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.js"></script>
     <script src="../Assets/javascript/tcf-tts.js?v=6"></script>
     <script src="<?php echo htmlspecialchars(site_href('Assets/javascript/tcf_confirm_dialog.js')); ?>?v=confirm-4"></script>
-    <script src="../Assets/javascript/superAdmin.ui.js?v=sa-ui-v13"></script>
+    <script src="../Assets/javascript/superAdmin.ui.js?v=sa-ui-v17"></script>
     <script src="../Assets/javascript/admin-mobile-nav.js?v=sa-ui-v7"></script>
 
     <div class="tcf-ai-assistant" id="tcf-ai-assistant" data-greeting="Bonjour, je suis votre assistant administration. Comment puis-je vous aider sur la plateforme ?">
